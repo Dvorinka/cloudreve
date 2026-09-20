@@ -65,7 +65,6 @@ const ReadMeContent = () => {
           <Suspense fallback={<Loading />}>
             <MarkdownEditor
               displayOnly
-              value={value}
               darkMode={theme.palette.mode === "dark"}
               readOnly={true}
               onChange={() => {}}

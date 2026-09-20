@@ -61,7 +61,6 @@ const AnnouncementDialog = () => {
         <Suspense fallback={<Loading />}>
           <MarkdownEditor
             displayOnly
-            value={content}
             darkMode={theme.palette.mode === "dark"}
             readOnly={true}
             onChange={() => {}}

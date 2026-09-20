@@ -197,11 +197,10 @@ const MarkdownViewer = () => {
       {loaded && (
         <Suspense fallback={<ViewerLoading />}>
           <MarkdownEditor
-            value={changedValue}
             readOnly={!supportUpdate}
             darkMode={theme.palette.mode === "dark"}
             initialValue={value}
-            onChange={(v) => onChange(v as string)}
+            onChange={onChange}
             onSaveShortcut={onSaveShortcut}
             imagePreviewHandler={imagePreviewHandler}
             imageAutocompleteSuggestions={imageAutocompleteSuggestions}
