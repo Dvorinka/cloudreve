@@ -90,6 +90,7 @@ export interface Share {
   source_uri?: string;
   password?: string;
   show_readme?: boolean;
+  hide_readme?: boolean;
   allow_upload?: boolean;
   allow_edit?: boolean;
   preview_only?: boolean;
@@ -361,6 +362,7 @@ export interface ShareCreateService {
   expire?: number;
   share_view?: boolean;
   show_readme?: boolean;
+  hide_readme?: boolean;
   allow_upload?: boolean;
   allow_edit?: boolean;
   preview_only?: boolean;
@@ -372,11 +374,15 @@ export interface ShareCreateService {
 
 export interface CreateFileService {
   uri: string;
-  type: "file" | "folder";
+  type: "file" | "folder" | "share";
   err_on_conflict?: boolean;
   metadata?: {
     [key: string]: string;
   };
+  // share_id + share_password create a symbolic share shortcut when
+  // type == "share", persisting a saved share link in the file list.
+  share_id?: string;
+  share_password?: string;
 }
 
 export interface FileURLService extends MultipleUriService {

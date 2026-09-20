@@ -71,7 +71,10 @@
       "sso_no_email": "The identity provider did not return an email address.",
       "sso_account_unavailable": "No account is available for this identity. Registration may be restricted."
     },
-    "browsePublicShares": "Browse public shares"
+    "browsePublicShares": "Browse public shares",
+    "inputBackupCode": "Enter one of your recovery codes",
+    "useBackupCode": "Use a recovery code instead",
+    "use2FACode": "Use authenticator code instead"
   },
   "oauth": {
     "authorize": "Authorize Application",
@@ -692,7 +695,9 @@
     "shareTargetsCount_one": "{{count}} file selected",
     "shareTargetsCount_other": "{{count}} files selected",
     "publicListing": "List in public directory",
-    "publicListingDes": "Show this share on the Discover page, visible to anyone including anonymous visitors. Not available for password-protected shares."
+    "publicListingDes": "Show this share on the Discover page, visible to anyone including anonymous visitors. Not available for password-protected shares.",
+    "hideReadme": "Hide readme file",
+    "hideReadmeDes": "Keep the README file itself out of the share listing. Visitors still see the rendered readme."
   },
   "uploader": {
     "fileCopyName": "Copy of ",
@@ -842,7 +847,16 @@
     "paidShareDes": "This is a paid share. Purchasing costs {{price}} points and unlocks downloads.",
     "purchaseForPoints": "Purchase for {{price}} pts",
     "signInToPurchase": "Sign in to purchase",
-    "yourBalance": "Balance: {{credits}} points"
+    "yourBalance": "Balance: {{credits}} points",
+    "saveToMyFiles": "Save to my files",
+    "savedToMyFiles": "Share saved to your files.",
+    "saveShareLink": "Save share link",
+    "saveShareLinkHint": "Paste a share link like https://example.com/s/abc123",
+    "shareLink": "Share link",
+    "savedAs": "Saved as (optional)",
+    "sharePassword": "Share password (optional)",
+    "sharePasswordRequired": "This share requires a password.",
+    "invalidShareLink": "Cannot parse this share link."
   },
   "download": {
     "noFilesFound": "No files found",
@@ -1148,7 +1162,11 @@
     "deleteTagDes": "Remove tag \"{{name}}\" from {{count}} file(s)? The files themselves are kept.",
     "tagUpdated": "Tag updated",
     "tagDeleted": "Tag deleted",
-    "tagNameInvalid": "Tag name cannot be empty or contain \":\""
+    "tagNameInvalid": "Tag name cannot be empty or contain \":\"",
+    "backup2FACodes": "Recovery codes",
+    "backupCodesDes": "Recovery codes let you sign in when your authenticator is unavailable. Generating a new batch invalidates all previous codes.",
+    "backupCodesWarning": "Save these codes now. Each can be used once and they will not be shown again.",
+    "copyCodes": "Copy codes"
   },
   "vas": {
     "points": "Points",

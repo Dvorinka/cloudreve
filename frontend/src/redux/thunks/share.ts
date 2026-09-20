@@ -1,11 +1,16 @@
 import i18next from "i18next";
 import { closeSnackbar, enqueueSnackbar, SnackbarKey } from "notistack";
-import { getFileInfo, getFileList, getShareInfo, sendCreateShare, sendUpdateShare } from "../../api/api.ts";
+import {
+  getFileInfo,
+  getShareInfo,
+  sendCreateFile,
+  sendCreateShare,
+  sendUpdateShare,
+} from "../../api/api.ts";
 import { FileResponse, Share, ShareCreateService } from "../../api/explorer.ts";
 import { DefaultCloseAction, OpenReadMeAction } from "../../component/Common/Snackbar/snackbar.tsx";
 import { ShareSetting } from "../../component/FileManager/Dialogs/Share/ShareSetting.tsx";
-import { getPaginationState } from "../../component/FileManager/Pagination/PaginationFooter.tsx";
-import CrUri from "../../util/uri.ts";
+import CrUri, { Filesystem } from "../../util/uri.ts";
 import { fileUpdated } from "../fileManagerSlice.ts";
 import {
   addShareInfo,
@@ -32,6 +37,7 @@ export function createOrUpdateShareLink(
       password: setting.password,
       share_view: setting.share_view,
       show_readme: setting.show_readme,
+      hide_readme: setting.show_readme ? setting.hide_readme : false,
       allow_upload: setting.allow_upload || setting.allow_edit,
       allow_edit: setting.allow_edit,
       preview_only: setting.preview_only,
@@ -122,6 +128,54 @@ export function queueLoadShareInfo(uri: CrUri, countViews: boolean = false): App
   };
 }
 
+export interface ParsedShareLink {
+  id: string;
+  password?: string;
+}
+
+// parseShareLink accepts "https://host/s/<id>[/password]", "/s/<id>[/password]",
+// "cloudreve://<id>[:<password>]@share", or a bare share id.
+export function parseShareLink(input: string): ParsedShareLink | undefined {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  if (trimmed.startsWith("cloudreve://")) {
+    const uri = new CrUri(trimmed);
+    return uri.fs() == Filesystem.share && uri.id()
+      ? { id: uri.id(), password: uri.password() || undefined }
+      : undefined;
+  }
+  const match = trimmed.match(/\/s\/([A-Za-z0-9]+)(?:\/([^/?#]+))?/);
+  if (match) {
+    return { id: match[1], password: match[2] ? decodeURIComponent(match[2]) : undefined };
+  }
+  return /^[A-Za-z0-9]+$/.test(trimmed) ? { id: trimmed } : undefined;
+}
+
+export function saveShareToMyFiles(shareInfo: Share, password?: string, name?: string): AppThunk<Promise<void>> {
+  return async (dispatch) => {
+    const displayName =
+      name?.trim() ||
+      shareInfo.name ||
+      i18next.t("application:share.somebodyShare", { name: shareInfo.owner.nickname });
+    const uri = new CrUri("cloudreve://" + Filesystem.my).join(displayName);
+    await dispatch(
+      sendCreateFile({
+        uri: uri.toString(),
+        type: "share",
+        share_id: shareInfo.id,
+        share_password: password ?? shareInfo.password,
+      }),
+    );
+    enqueueSnackbar({
+      message: i18next.t("application:share.savedToMyFiles"),
+      variant: "success",
+      action: DefaultCloseAction,
+    });
+  };
+}
+
 export function openShareEditByID(shareId: string, password?: string, singleFile?: boolean): AppThunk {
   return async (dispatch) => {
     try {
@@ -148,7 +202,7 @@ const supportedReadMeFiles = ["README.md", "README.txt"];
 
 export function detectReadMe(index: number, isTablet: boolean): AppThunk<Promise<void>> {
   return async (dispatch, getState) => {
-    const { files: list, pagination } = getState().fileManager[index]?.list ?? {};
+    const { files: list } = getState().fileManager[index]?.list ?? {};
     if (list) {
       // Find readme file from highest to lowest priority
       for (const readmeFile of supportedReadMeFiles) {
@@ -160,10 +214,11 @@ export function detectReadMe(index: number, isTablet: boolean): AppThunk<Promise
       }
     }
 
-    // Not found in current file list, try to get file directly
+    // Not found in current file list, try to get file directly. Always
+    // probe: the readme may be filtered out of the listing entirely
+    // (hide_readme) or live on a page we have not fetched yet.
     const path = getState().fileManager[index]?.pure_path;
-    const hasMorePages = getPaginationState(pagination).moreItems;
-    if (path && hasMorePages) {
+    if (path) {
       const uri = new CrUri(path);
       for (const readmeFile of supportedReadMeFiles) {
         try {
