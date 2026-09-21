@@ -62,7 +62,7 @@ fn item_count_state(items: Option<&IShellItemArray>) -> Result<u32> {
 }
 
 macro_rules! share_command_handler {
-    ($name:ident, $title_key:literal, $icon:literal, $guid:literal, $variant:ident) => {
+    ($name:ident, $impl_name:ident, $title_key:literal, $icon:literal, $guid:literal, $variant:ident) => {
         #[implement(IExplorerCommand, IObjectWithSite)]
         pub struct $name {
             drive_manager: Arc<DriveManager>,
@@ -80,7 +80,7 @@ macro_rules! share_command_handler {
             }
         }
 
-        impl IObjectWithSite_Impl for [<$name _Impl>] {
+        impl IObjectWithSite_Impl for $impl_name {
             fn SetSite(&self, punksite: Option<&IUnknown>) -> Result<()> {
                 *self.site.lock().unwrap() = punksite.cloned();
                 Ok(())
@@ -100,7 +100,7 @@ macro_rules! share_command_handler {
             }
         }
 
-        impl IExplorerCommand_Impl for [<$name _Impl>] {
+        impl IExplorerCommand_Impl for $impl_name {
             fn GetTitle(&self, _items: Option<&IShellItemArray>) -> Result<PWSTR> {
                 let title = t!($title_key);
                 let hstring = HSTRING::from(title.as_ref());
@@ -159,6 +159,7 @@ macro_rules! share_command_handler {
 
 share_command_handler!(
     ShareLinkCommandHandler,
+    ShareLinkCommandHandler_Impl,
     "shareLink",
     "people.ico",
     0x7d2b8f1c_3a9e_4c5d_b6f2_9e8a1d4c6f0b,
@@ -167,6 +168,7 @@ share_command_handler!(
 
 share_command_handler!(
     CopyShareLinkCommandHandler,
+    CopyShareLinkCommandHandler_Impl,
     "copyShareLink",
     "globe7.ico",
     0x4a1f9e2d_8b7c_4d3e_a5f1_2c7b9d8e6a4f,
