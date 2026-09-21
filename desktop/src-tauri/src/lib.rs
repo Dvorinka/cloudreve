@@ -232,6 +232,39 @@ impl AppStateHandle {
     }
 }
 
+/// Route an incoming `cloudreve://` deep link. `cloudreve://share/<url-encoded
+/// local path>` opens the share dialog via the same pipeline as the Explorer
+/// context menu — this is the Linux/macOS file-manager entry point (Nautilus
+/// scripts, Dolphin service menus, `xdg-open`). Everything else keeps the
+/// existing behavior: forward to the frontend and show the add-drive window.
+fn handle_deeplink_url(app: &AppHandle, url: &str) {
+    if let Some(encoded_path) = url.strip_prefix("cloudreve://share/") {
+        let Ok(decoded) = urlencoding::decode(encoded_path) else {
+            tracing::warn!(target: "main", url = %url, "Malformed share deep link");
+            return;
+        };
+        let path = std::path::PathBuf::from(decoded.as_ref());
+        match APP_STATE.get() {
+            Some(state) => {
+                if let Err(e) = state
+                    .drive_manager
+                    .get_command_sender()
+                    .send(cloudreve_sync::drive::commands::ManagerCommand::ShareLink { path })
+                {
+                    tracing::error!(target: "main", error = %e, "Failed to dispatch share deep link");
+                }
+            }
+            None => {
+                tracing::warn!(target: "main", url = %url, "Share deep link arrived before sync service init; dropping");
+            }
+        }
+        return;
+    }
+
+    let _ = app.emit("deeplink", url.to_string());
+    show_add_drive_window_impl(app);
+}
+
 /// Spawn a task that bridges EventBroadcaster to Tauri events
 fn spawn_event_bridge(app_handle: AppHandle, event_broadcaster: &EventBroadcaster) {
     let mut receiver = event_broadcaster.subscribe();
@@ -394,8 +427,7 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             tracing::info!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
             if argv.len() > 1 {
-                let _ = app.emit("deeplink", argv[1].clone());
-                show_add_drive_window_impl(app);
+                handle_deeplink_url(app, &argv[1]);
             }
             // when defining deep link schemes at runtime, you must also check `argv` here
         }))
@@ -428,8 +460,7 @@ pub fn run() {
                 if let Ok(urls) = serde_json::from_str::<Vec<String>>(event.payload()) {
                     if let Some(url) = urls.first() {
                         tracing::info!(target: "main", "Received deep-link URL: {}", url);
-                        let _ = app_handle.emit("deeplink", url.clone());
-                        show_add_drive_window_impl(&app_handle);
+                        handle_deeplink_url(&app_handle, url);
                     }
                 }
             });
