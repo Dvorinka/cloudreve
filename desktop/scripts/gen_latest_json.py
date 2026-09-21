@@ -13,13 +13,18 @@ import json
 import os
 import sys
 
+# Updater artifacts are the NSIS setup exe (Windows), the raw AppImage
+# (Linux) and the .app.tar.gz bundle (macOS). tauri names the macOS bundle
+# "<product>.app.tar.gz" without an arch infix, and macos-latest runners are
+# aarch64 — the only app.tar.gz this pipeline produces.
 PLATFORM_MAP = [
     ("_x64-setup.exe", "windows-x86_64"),
     ("_arm64-setup.exe", "windows-aarch64"),
-    ("_aarch64.app.tar.gz", "darwin-aarch64"),
-    ("_x64.app.tar.gz", "darwin-x86_64"),
-    ("amd64.AppImage.tar.gz", "linux-x86_64"),
-    ("aarch64.AppImage.tar.gz", "linux-aarch64"),
+    ("aarch64.app.tar.gz", "darwin-aarch64"),
+    ("x64.app.tar.gz", "darwin-x86_64"),
+    ("Cloudreve.app.tar.gz", "darwin-aarch64"),
+    ("amd64.AppImage", "linux-x86_64"),
+    ("aarch64.AppImage", "linux-aarch64"),
 ]
 
 REPO = "Dvorinka/cloudreve"
