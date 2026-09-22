@@ -1,8 +1,10 @@
-<h1 align="center">
-  <br>
-  Cloudreve — Community Fork
-  <br>
-</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="desktop/ui/src/assets/logo_light.svg">
+    <img alt="Cloudreve" src="desktop/ui/src/assets/logo.svg" width="380">
+  </picture>
+</p>
+<h3 align="center">Community Fork</h3>
 <h4 align="center">Self-hosted file management and sharing platform — fully open source, actively maintained.</h4>
 
 <p align="center">
@@ -16,6 +18,14 @@
 > development had slowed: it continues the project as a **complete, fully open-source distribution** —
 > backend, web frontend, desktop clients for Windows/macOS/Linux, and a native Android app — with every
 > "Pro"-class feature reimplemented as free software. See [NOTICE](NOTICE) for attribution.
+
+## Downloads
+
+| | |
+|---|---|
+| **Server** | `docker run -d -p 5212:5212 -v backend_data:/cloudreve/data ghcr.io/dvorinka/cloudreve:latest` — or a standalone binary from [Releases](https://github.com/Dvorinka/cloudreve/releases) |
+| **Desktop** | Windows/macOS/Linux sync client — on-demand files, Explorer share menu, in-app updates: [latest desktop release](https://github.com/Dvorinka/cloudreve/releases/latest) |
+| **Android** | Signed APK (sideload) and AAB (Play): [android-v1.1.0](https://github.com/Dvorinka/cloudreve/releases/tag/android-v1.1.0) |
 
 ## What this fork does differently
 
@@ -35,8 +45,8 @@
 
 ## Migrating from upstream Cloudreve
 
-This fork is a drop-in replacement: same 4.19.x schema baseline, same `/cloudreve/data` volume
-layout, same `CR_CONF_*` env vars, same port 5212. Existing accounts, files, shares, and settings
+This fork is a drop-in replacement: same schema lineage (4.19.x → 4.20.x), same `/cloudreve/data`
+volume layout, same `CR_CONF_*` env vars, same port 5212. Existing accounts, files, shares, and settings
 carry over — schema migrations run automatically on first boot. Back up your data volume and
 database first, as with any upgrade.
 
@@ -75,7 +85,7 @@ docker run -d --name cloudreve --restart unless-stopped \
 
 Notes:
 
-- Tags: `latest` / `slim` track the newest release; pin `ghcr.io/dvorinka/cloudreve:v4.19.2` for
+- Tags: `latest` / `slim` track the newest release; pin `ghcr.io/dvorinka/cloudreve:v4.20.0` for
   reproducibility. Slim drops aria2, LibreOffice, ffmpeg, and font/media tooling.
 - `CR_LICENSE_KEY` has no effect — Pro-class features are reimplemented as free features; the key
   is simply ignored.
@@ -87,9 +97,9 @@ Notes:
 ```
 .                    Go backend — Gin + ent ORM (SQLite/MySQL/PostgreSQL)
 frontend/            Web SPA — React + TypeScript + Vite + MUI (vendored, no submodule)
-desktop/             Desktop client — Tauri/Rust sync engine (Windows cfapi today;
-                     macOS/Linux hydration providers on the roadmap)
-android/             Native Android client — Kotlin + Jetpack Compose (scaffolded, Phase E)
+desktop/             Desktop client — Tauri/Rust sync engine (Windows cfapi, Linux FUSE;
+                     macOS hydration on the roadmap)
+android/             Native Android client — Kotlin + Jetpack Compose (v1.1.0 shipped)
 .github/workflows/   CI (backend, frontend, desktop matrix) + release pipeline
 ```
 
@@ -110,6 +120,9 @@ android/             Native Android client — Kotlin + Jetpack Compose (scaffol
 - Preview: image (progressive thumbnail→full-res), video, audio, ePub, Markdown, diagrams,
   Office documents (WOPI), 3D models.
 - PWA, dark mode, i18n (en-US, zh-CN, and more), theme customization, custom HTML injection.
+- Desktop client: on-demand placeholder sync (Windows cfapi, Linux FUSE), FileCloud-style share
+  dialog from the Explorer right-click menu, in-app self-updates.
+- Server self-update: admins can upgrade in place from the dashboard.
 
 ## Build from source
 
@@ -142,11 +155,11 @@ jobs before merge.
 
 | Area | State |
 |---|---|
-| Backend / frontend | Stable — 4.19.1 line, all CI green |
+| Backend / frontend | Stable — 4.20.x line, all CI green |
 | Upstream issues | ~70% of the 137 migrated issues closed; remainder are feature-scale, Pro-surface, or device-bound |
 | Code health | desloppify strict score 77.1 (was 18.9); 73 review items dispositioned |
-| Desktop client | Windows functional (cfapi sync + shell integration); macOS/Linux providers planned |
-| Android client | Scaffolded — Kotlin/Compose skeleton, Phase E in [ROADMAP.md](ROADMAP.md) |
+| Desktop client | Shipped for Windows (cfapi sync + Explorer share menu) and Linux (FUSE hydration); in-app updater live |
+| Android client | Shipped — v1.1.0 signed APK/AAB on Releases |
 | Pro-free features | Share collaboration ✓, OIDC SSO ✓, delegated admins ✓; storage-policy migration, VAS/billing, audit surface in progress |
 
 Known limitations and the full plan: [ROADMAP.md](ROADMAP.md) · issue tracker has honest per-issue status.
