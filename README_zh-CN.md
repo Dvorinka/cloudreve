@@ -1,14 +1,24 @@
-<h1 align="center">
-  <br>
-  Cloudreve — 社区维护分支
-  <br>
-</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="desktop/ui/src/assets/logo_light.svg">
+    <img alt="Cloudreve" src="desktop/ui/src/assets/logo.svg" width="380">
+  </picture>
+</p>
+<h3 align="center">社区维护分支</h3>
 <h4 align="center">自托管文件管理与分享平台 — 完全开源，持续维护中。</h4>
 
 > 本仓库是 [cloudreve/cloudreve](https://github.com/cloudreve/cloudreve) 的积极维护分支。
 > 所有原始工作归属 Cloudreve 原作者（cloudreve.org）。由于上游开发放缓，本分支将项目延续为
 > **完整、完全开源的发行版**：后端、Web 前端、Windows/macOS/Linux 桌面客户端以及原生 Android
 > 应用，并将所有 “Pro” 级功能以自由软件方式重新实现。署名说明见 [NOTICE](NOTICE)。
+
+## 下载
+
+| | |
+|---|---|
+| **服务端** | `docker run -d -p 5212:5212 -v backend_data:/cloudreve/data ghcr.io/dvorinka/cloudreve:latest` — 或从 [Releases](https://github.com/Dvorinka/cloudreve/releases) 获取独立二进制 |
+| **桌面端** | Windows/macOS/Linux 同步客户端 — 按需文件、资源管理器分享菜单、应用内更新：[最新桌面版](https://github.com/Dvorinka/cloudreve/releases/latest) |
+| **Android** | 已签名 APK（侧载）与 AAB（Play）：[android-v1.1.0](https://github.com/Dvorinka/cloudreve/releases/tag/android-v1.1.0) |
 
 ## 与上游的差异
 
@@ -27,9 +37,9 @@
 ```
 .                    Go 后端 — Gin + ent ORM（SQLite/MySQL/PostgreSQL）
 frontend/            Web 前端 — React + TypeScript + Vite + MUI（已内嵌，无 submodule）
-desktop/             桌面客户端 — Tauri/Rust 同步引擎（当前为 Windows cfapi；
-                     macOS/Linux 待接入，见路线图）
-android/             原生 Android 客户端 — Kotlin + Jetpack Compose（脚手架阶段）
+desktop/             桌面客户端 — Tauri/Rust 同步引擎（Windows cfapi、Linux FUSE；
+                     macOS 接入在路线图中）
+android/             原生 Android 客户端 — Kotlin + Jetpack Compose（v1.1.0 已发布）
 .github/workflows/   CI（后端、前端、桌面端矩阵）+ 发布流水线
 ```
 
@@ -48,6 +58,9 @@ android/             原生 Android 客户端 — Kotlin + Jetpack Compose（脚
   按用户组离线下载配额。
 - 预览：图片（缩略图渐进加载到原图）、视频、音频、ePub、Markdown、图表、Office 文档、3D 模型。
 - PWA、深色模式、多语言、主题自定义、自定义 HTML 注入。
+- 桌面客户端：按需占位同步（Windows cfapi、Linux FUSE），资源管理器右键菜单
+  FileCloud 式分享对话框，应用内自动更新。
+- 服务端自更新：管理员可在后台一键升级。
 
 ## 从源码构建
 
@@ -79,11 +92,11 @@ PR 一律走功能分支，禁止直接推送 `master`，合并前必须通过�
 
 | 领域 | 状态 |
 |---|---|
-| 后端 / 前端 | 稳定 — 4.19.1 基线，CI 全绿 |
+| 后端 / 前端 | 稳定 — 4.20.x 基线，CI 全绿 |
 | 上游 issue | 137 个迁移 issue 约 70% 已关闭；其余为大型功能、Pro 表面或依赖设备 |
 | 代码健康 | desloppify 严格分 77.1（原 18.9）；73 项评审全部处置 |
-| 桌面客户端 | Windows 可用（cfapi 同步 + 外壳集成）；macOS/Linux 计划中 |
-| Android 客户端 | 脚手架完成 — Kotlin/Compose 骨架，见 [ROADMAP.md](ROADMAP.md) Phase E |
+| 桌面客户端 | 已发布 Windows（cfapi 同步 + 资源管理器分享菜单）与 Linux（FUSE 按需加载）；应用内更新已上线 |
+| Android 客户端 | 已发布 — v1.1.0 已签名 APK/AAB，见 Releases |
 | Pro 免费化 | 分享协作 ✓、OIDC SSO ✓、委派管理员 ✓；存储策略迁移、VAS/计费、审计界面进行中 |
 
 完整计划与已知限制见 [ROADMAP.md](ROADMAP.md)；issue 跟踪器中每项均有真实状态说明。
