@@ -5,7 +5,11 @@
 .DESCRIPTION
     The Explorer context menu (Share link, View online, Sync now, ...) and other
     shell integration require MSIX package identity, which a plain NSIS/MSI
-    install does not provide. Two registration paths, in order of preference:
+    install does not provide. Note: the app itself does this natively via
+    `cloudreve-desktop.exe --install-identity` (PackageManager API, no
+    PowerShell) - this script is the manual/diagnostic equivalent.
+
+    Two registration paths, in order of preference:
 
     1. Signed sparse package (production): if Cloudreve-Identity.msix and
        cloudreve-identity.cer ship with the install, the cert is trusted into
