@@ -40,6 +40,7 @@
     "active": true,
     "targets": "all",
     "resources": {
+      "../package/AppxManifest.xml": "AppxManifest.xml",
       "../package/AppxManifest.sparse.xml": "AppxManifest.sparse.xml",
       "../package/Images/": "Images/",
       "../register-identity.ps1": "register-identity.ps1"
