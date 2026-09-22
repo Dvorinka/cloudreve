@@ -39,6 +39,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": {
+      "../package/AppxManifest.sparse.xml": "AppxManifest.sparse.xml",
+      "../package/Images/": "Images/"
+    },
     "linux": {
       "deb": {
         "depends": [

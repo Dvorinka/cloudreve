@@ -5,13 +5,14 @@ use cloudreve_sync::drive::commands::ConflictAction;
 use cloudreve_sync::{
     config::LogLevel, ConfigManager, Credentials, DriveConfig, DriveInfo, StatusSummary,
 };
+#[cfg(not(windows))]
+use tauri::utils::config::Color;
 #[cfg(windows)]
 use tauri::utils::{config::WindowEffectsConfig, WindowEffect};
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 use tauri::{
     tray::TrayIcon,
-    utils::config::Color,
     webview::{WebviewWindow, WebviewWindowBuilder},
     AppHandle, Manager, State, WebviewUrl,
 };

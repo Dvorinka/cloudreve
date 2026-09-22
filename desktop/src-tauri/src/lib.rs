@@ -17,6 +17,7 @@ use tokio::sync::OnceCell;
 use crate::commands::{show_add_drive_window_impl, show_main_window, show_settings_window_impl};
 mod commands;
 mod event_handler;
+mod identity;
 
 #[macro_use]
 extern crate rust_i18n;
@@ -108,6 +109,12 @@ static APP_STATE: OnceCell<AppState> = OnceCell::const_new();
 
 /// Initialize the sync service (DriveManager, shell services, etc.)
 async fn init_sync_service(app: AppHandle) -> anyhow::Result<()> {
+    // Give unpackaged installs (setup.exe/MSI) MSIX package identity so the
+    // Explorer context menu and other shell extensions can activate. No-op
+    // when already packaged; takes effect from the next process launch.
+    // Blocking I/O + a powershell child process, so run it off the runtime.
+    let _ = tokio::task::spawn_blocking(identity::ensure_package_identity).await;
+
     // Initialize app root (Windows Package detection)
     cloudreve_sync::init_app_root();
 
