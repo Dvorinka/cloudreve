@@ -12,6 +12,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { platform } from "@tauri-apps/plugin-os";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DenseFilledTextField } from "../common/StyledComponent";
@@ -29,6 +30,9 @@ const RELEASES_URL = "https://github.com/Dvorinka/cloudreve/releases";
 
 export default function Update() {
   const { t } = useTranslation();
+  // Windows draws caption buttons via tauri-plugin-frame, macOS via the
+  // overlay title bar; only Linux has no native controls to close with.
+  const needsCloseButton = platform() === "linux";
   const [phase, setPhase] = useState<Phase>("checking");
   const [info, setInfo] = useState<UpdateInfo | null>(null);
   const [progress, setProgress] = useState(0);
@@ -113,13 +117,15 @@ export default function Update() {
         <Typography variant="subtitle1" fontWeight={600} noWrap>
           {t("update.title")}
         </Typography>
-        <IconButton
-          size="small"
-          onClick={() => getCurrentWindow().close()}
-          sx={{ WebkitAppRegion: "no-drag", appRegion: "no-drag" }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
+        {needsCloseButton && (
+          <IconButton
+            size="small"
+            onClick={() => getCurrentWindow().close()}
+            sx={{ WebkitAppRegion: "no-drag", appRegion: "no-drag" }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       </Box>
 
       <Box

@@ -15,6 +15,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { platform } from "@tauri-apps/plugin-os";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -32,6 +33,9 @@ const EXPIRE_OPTIONS = [
 
 export default function Share() {
   const { t } = useTranslation();
+  // Windows draws caption buttons via tauri-plugin-frame, macOS via the
+  // overlay title bar; only Linux has no native controls to close with.
+  const needsCloseButton = platform() === "linux";
   const [params] = useSearchParams();
   const driveId = params.get("drive") ?? "";
   const uri = params.get("uri") ?? "";
@@ -104,13 +108,15 @@ export default function Share() {
         <Typography variant="subtitle1" fontWeight={600} noWrap>
           {t("share.title", { name })}
         </Typography>
-        <IconButton
-          size="small"
-          onClick={() => getCurrentWindow().close()}
-          sx={{ WebkitAppRegion: "no-drag", appRegion: "no-drag" }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
+        {needsCloseButton && (
+          <IconButton
+            size="small"
+            onClick={() => getCurrentWindow().close()}
+            sx={{ WebkitAppRegion: "no-drag", appRegion: "no-drag" }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       </Box>
 
       <Box sx={{ flex: 1, overflow: "auto", px: 3, pb: 2 }}>

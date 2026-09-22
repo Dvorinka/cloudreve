@@ -90,6 +90,9 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
   const isReauthorize = mode === "reauthorize" && driveId && encodedSiteUrl;
   const decodedSiteUrl = encodedSiteUrl ? decodeURIComponent(encodedSiteUrl) : "";
   const isWindows10 = useIsWindows10();
+  // Windows draws caption buttons via tauri-plugin-frame, macOS via the
+  // overlay title bar; only Linux has no native controls to close with.
+  const needsCloseButton = platform() === "linux";
 
   const [siteUrl, setSiteUrl] = useState(isReauthorize ? decodedSiteUrl : "");
   const [loading, setLoading] = useState(false);
@@ -399,17 +402,19 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
             zIndex: 1,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={() => getCurrentWindow().close()}
-            sx={{
-              // Keep the button itself draggable-region-free so clicks work.
-              WebkitAppRegion: "no-drag",
-              appRegion: "no-drag",
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
+          {needsCloseButton && (
+            <IconButton
+              size="small"
+              onClick={() => getCurrentWindow().close()}
+              sx={{
+                // Keep the button itself draggable-region-free so clicks work.
+                WebkitAppRegion: "no-drag",
+                appRegion: "no-drag",
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
         <Box
           sx={{

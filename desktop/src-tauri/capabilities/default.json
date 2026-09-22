@@ -6,7 +6,9 @@
     "main",
     "add-drive",
     "main_popup",
-    "settings"
+    "settings",
+    "update",
+    "share"
   ],
   "permissions": [
     "core:default",
@@ -40,6 +42,14 @@
     },
     "opener:default",
     {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://*"
+        }
+      ]
+    },
+    {
       "identifier": "opener:allow-open-path",
       "allow": [
         {
@@ -49,6 +59,7 @@
     },
     "dialog:allow-open",
     "dialog:allow-ask",
-    "os:allow-version"
+    "os:allow-version",
+    "os:allow-platform"
   ]
 }

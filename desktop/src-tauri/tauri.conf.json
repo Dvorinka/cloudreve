@@ -39,6 +39,16 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": {
+      "../package/AppxManifest.sparse.xml": "AppxManifest.sparse.xml",
+      "../package/Images/": "Images/",
+      "../register-identity.ps1": "register-identity.ps1"
+    },
+    "windows": {
+      "nsis": {
+        "installerHooks": "installer-hooks.nsh"
+      }
+    },
     "linux": {
       "deb": {
         "depends": [

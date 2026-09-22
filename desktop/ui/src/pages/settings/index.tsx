@@ -10,6 +10,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { platform } from "@tauri-apps/plugin-os";
 import CloudreveLogo from "../../common/CloudreveLogo";
 import DrivesSection from "./DrivesSection";
 import GeneralSection from "./GeneralSection";
@@ -22,6 +23,9 @@ type SettingsSection = "drives" | "general" | "about";
 
 export default function Settings() {
   const { t } = useTranslation();
+  // Windows draws caption buttons via tauri-plugin-frame, macOS via the
+  // overlay title bar; only Linux has no native controls to close with.
+  const needsCloseButton = platform() === "linux";
   const [activeSection, setActiveSection] = useState<SettingsSection>("drives");
 
   const sections = [
@@ -124,17 +128,19 @@ export default function Settings() {
             px: 0.5,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={() => getCurrentWindow().close()}
-            sx={{
-              // Keep the button itself draggable-region-free so clicks work.
-              WebkitAppRegion: "no-drag",
-              appRegion: "no-drag",
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
+          {needsCloseButton && (
+            <IconButton
+              size="small"
+              onClick={() => getCurrentWindow().close()}
+              sx={{
+                // Keep the button itself draggable-region-free so clicks work.
+                WebkitAppRegion: "no-drag",
+                appRegion: "no-drag",
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
         {/* Content */}
         <Box sx={{ flex: 1, overflow: "auto", px: 3, pb: 3,pt:1 }}>
