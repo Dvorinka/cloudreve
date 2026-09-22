@@ -162,7 +162,15 @@
     "create": "Create share",
     "cancel": "Cancel",
     "done": "Done",
-    "copied": "Link copied to clipboard"
+    "copied": "Link copied to clipboard",
+    "access": "Who can access",
+    "accessLink": "Anyone with the link",
+    "accessPassword": "Anyone with the link and password",
+    "copyLink": "Copy link",
+    "openLink": "Open link",
+    "root": "My Files",
+    "modifyLink": "Modify link",
+    "removeShare": "Remove share"
   },
   "update": {
     "title": "Software Update",

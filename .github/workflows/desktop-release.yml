@@ -42,12 +42,44 @@ jobs:
         working-directory: desktop/ui
         run: yarn install --frozen-lockfile
 
+      # Build + sign the sparse identity package that gives the NSIS-installed
+      # app package identity (Explorer context menu, packaged COM) without
+      # Developer Mode. The msix + public cert land in package/ and the NSIS
+      # hook (installer-hooks.nsh) files them into $INSTDIR when present.
+      - name: Build signed sparse identity package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          SPARSE_SIGNING_PFX_BASE64: ${{ secrets.SPARSE_SIGNING_PFX_BASE64 }}
+          SPARSE_SIGNING_PFX_PASSWORD: ${{ secrets.SPARSE_SIGNING_PFX_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ver = (Select-String -Path desktop/src-tauri/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          if ($ver.Split('.').Count -eq 3) { $ver = "$ver.0" }
+
+          $stage = New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\sparse-pkg"
+          $manifest = Get-Content desktop/package/AppxManifest.sparse.xml -Raw
+          $manifest = $manifest -replace '__VERSION__', $ver -replace '__ARCH__', 'x64'
+          [IO.File]::WriteAllText("$stage\AppxManifest.xml", $manifest, (New-Object System.Text.UTF8Encoding $true))
+          Copy-Item desktop/package/Images "$stage\Images" -Recurse
+
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+          & $makeappx.FullName pack /o /d $stage /nv /p "$env:RUNNER_TEMP\Cloudreve-Identity.msix"
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
+
+          $pfx = "$env:RUNNER_TEMP\sparse-sign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SPARSE_SIGNING_PFX_BASE64))
+          & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:SPARSE_SIGNING_PFX_PASSWORD "$env:RUNNER_TEMP\Cloudreve-Identity.msix"
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+
+          Copy-Item "$env:RUNNER_TEMP\Cloudreve-Identity.msix" desktop/package/Cloudreve-Identity.msix -Force
+
       # tauri-action runs `tauri build` (which triggers beforeBuildCommand ->
       # the UI build), produces the platform bundles and attaches them to the
       # GitHub release for the pushed tag:
       #   Windows -> .msi + .exe (NSIS), macOS -> .dmg + .app.tar.gz,
       #   Linux -> .deb + .AppImage
-      # MSIX requires separate packaging + store signing; not covered here.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

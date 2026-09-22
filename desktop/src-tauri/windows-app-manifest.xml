@@ -1,0 +1,26 @@
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <!--
+    Sparse-package identity binding. When the signed Cloudreve-Identity.msix
+    (package/AppxManifest.sparse.xml) is installed with -ExternalLocation
+    pointing at the install dir, this element makes a directly-launched exe
+    run with package identity - no Developer Mode, no package-activation
+    launch required. publisher/packageName/applicationId must match the
+    appx manifest exactly.
+  -->
+  <msix xmlns="urn:schemas-microsoft-com:msix.v1"
+        publisher="CN=F536B6E6-7669-4531-8549-562FBE156594"
+        packageName="2106abslant.Cloudreve"
+        applicationId="Cloudreve.Sync" />
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+        type="win32"
+        name="Microsoft.Windows.Common-Controls"
+        version="6.0.0.0"
+        processorArchitecture="*"
+        publicKeyToken="6595b64144ccf1df"
+        language="*"
+      />
+    </dependentAssembly>
+  </dependency>
+</assembly>

@@ -1010,6 +1010,88 @@ pub async fn create_share(
         .map_err(|e| e.to_string())
 }
 
+/// Existing share for the given URI, or null. The share dialog uses this to
+/// show the current link and offer Modify/Remove instead of a fresh create.
+#[tauri::command]
+pub async fn get_share(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    uri: String,
+) -> CommandResult<Option<cloudreve_sync::Share>> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount
+        .get_share_for_uri(&uri)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Edit an existing share, returning the share URL.
+#[tauri::command]
+pub async fn update_share(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    share_id: String,
+    uri: String,
+    options: ShareOptions,
+) -> CommandResult<String> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    let password = options.password.filter(|p| !p.is_empty());
+    let request = cloudreve_sync::ShareCreateService {
+        uri,
+        is_private: password.is_some(),
+        password,
+        downloads: options.downloads.filter(|d| *d > 0),
+        expire: options.expire.filter(|e| *e > 0),
+        preview_only: options.preview_only.unwrap_or(false),
+        allow_edit: options.allow_edit.unwrap_or(false),
+        allow_upload: options.allow_upload.unwrap_or(false),
+        upload_only: options.upload_only.unwrap_or(false),
+    };
+
+    mount
+        .update_share(&share_id, request)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Delete a share link.
+#[tauri::command]
+pub async fn delete_share(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    share_id: String,
+) -> CommandResult<()> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount.delete_share(&share_id).await.map_err(|e| e.to_string())
+}
+
 /// The TaskId defined in AppxManifest.xml for the startup task
 #[cfg(windows)]
 const STARTUP_TASK_ID: &str = "cloudreve";
