@@ -38,6 +38,7 @@
 param(
     [string]$InstallDir,
     [string]$ImagesDir,
+    [string]$Version,
     [switch]$Unregister
 )
 
@@ -73,18 +74,31 @@ if (-not $InstallDir -or -not (Test-Path (Join-Path $InstallDir "cloudreve-deskt
 }
 
 $InstallDir = (Resolve-Path $InstallDir).Path
-$Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x64" }
-$Version = "0.3.0.0"  # identity version; independent of the app version
+$ExePath = Join-Path $InstallDir "cloudreve-desktop.exe"
+$Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") { "arm64" } else { "x64" }
+
+# Identity version tracks the installed exe's FileVersion so the package is
+# re-registered automatically after every update.
+if (-not $Version) {
+    $Version = [Diagnostics.FileVersionInfo]::GetVersionInfo($ExePath).FileVersion
+}
+if (-not $Version) { $Version = "0.3.0.0" }
 
 Write-Host "Install dir: $InstallDir" -ForegroundColor Cyan
+Write-Host "Identity version: $Version" -ForegroundColor Cyan
 
 # --- Optional: copy menu icons ----------------------------------------------
+# Newer installers already drop Images/ next to the exe; copying is only
+# needed when icons come from elsewhere (e.g. a repo checkout).
 
-if ($ImagesDir -and (Test-Path $ImagesDir)) {
-    Copy-Item $ImagesDir -Destination (Join-Path $InstallDir "Images") -Recurse -Force
+$ImagesDest = Join-Path $InstallDir "Images"
+if ($ImagesDir -and (Test-Path $ImagesDir) -and ((Resolve-Path $ImagesDir).Path -ne $ImagesDest)) {
+    Copy-Item $ImagesDir -Destination $ImagesDest -Recurse -Force
     Write-Host "Images copied into install dir." -ForegroundColor Green
+} elseif (Test-Path $ImagesDest) {
+    Write-Host "Images already present in install dir." -ForegroundColor Green
 } else {
-    Write-Host "No -ImagesDir given (or not found); menu items will have no icons." -ForegroundColor Yellow
+    Write-Host "No -ImagesDir given and none shipped; menu items will have no icons." -ForegroundColor Yellow
 }
 
 # --- Render and stage the sparse manifest ------------------------------------
