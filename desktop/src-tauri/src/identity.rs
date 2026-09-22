@@ -90,15 +90,22 @@ fn try_ensure_package_identity() -> anyhow::Result<()> {
         manifest = ps_manifest,
     );
 
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let output = Command::new("powershell.exe")
         .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .context("failed to spawn powershell.exe")?;
 
     if !output.status.success() {
+        let detail = String::from_utf8_lossy(&output.stderr);
+        let detail = detail.trim();
         bail!(
-            "Add-AppxPackage failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
+            "Add-AppxPackage failed: {detail}. If the error mentions signing or \
+             developer mode, enable Developer Mode (Settings -> System -> For \
+             developers) and restart the app, or run register-identity.ps1 from \
+             the install folder to see the full error."
         );
     }
 

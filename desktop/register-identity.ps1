@@ -82,7 +82,9 @@ $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6
 if (-not $Version) {
     $Version = [Diagnostics.FileVersionInfo]::GetVersionInfo($ExePath).FileVersion
 }
-if (-not $Version) { $Version = "0.3.0.0" }
+if (-not $Version) { $Version = "0.3.1.0" }
+# Appx requires a four-part X.Y.Z.W version; FileVersion may return fewer.
+while ($Version.Split('.').Count -lt 4) { $Version += ".0" }
 
 Write-Host "Install dir: $InstallDir" -ForegroundColor Cyan
 Write-Host "Identity version: $Version" -ForegroundColor Cyan
@@ -122,7 +124,7 @@ $Manifest = @"
   xmlns:cloudfiles2="http://schemas.microsoft.com/appx/manifest/cloudfiles/windows10/2"
   xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
   xmlns:uap8="http://schemas.microsoft.com/appx/manifest/uap/windows10/8"
-  IgnorableNamespaces="uap mp rescap desktop desktop3 desktop4 cloudfiles2 uap7 uap8 uap10">
+  IgnorableNamespaces="uap mp rescap desktop desktop3 desktop4 cloudfiles2 uap7 uap8">
 
   <Identity
     Name="$PackageName"
