@@ -1,12 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
-<!-- Sparse package manifest: grants package identity to an unpackaged
-     (setup.exe/MSI-installed) desktop app so that Windows features that
-     require identity - most importantly the Cloudreve Explorer context
-     menu (windows.cloudFiles / IExplorerCommand) - become available.
-     The package declares no payload; content is bound via -ExternalLocation
-     (the install directory). Registered at runtime by ensure_package_identity()
-     or manually via register-identity.ps1. -->
+<!-- Sparse package manifest (production path): a signed sparse .msix grants
+     package identity to an unpackaged (setup.exe/MSI-installed) desktop app so
+     that Windows features requiring identity - most importantly the Cloudreve
+     Explorer context menu (windows.cloudFiles / IExplorerCommand) - become
+     available without Developer Mode. The package declares no payload; content
+     is bound via -ExternalLocation (the install directory).
+
+     To use it the manifest must be packed and signed:
+       MakeAppx.exe pack /o /d <dir with this manifest> /nv /p Cloudreve.msix
+       SignTool sign ... Cloudreve.msix   (Publisher must equal cert Subject)
+       Add-AppxPackage -Path Cloudreve.msix -ExternalLocation <install dir>
+
+     Note: loose `Add-AppxPackage -Register` of THIS file fails with
+     E_INVALIDARG - sparse packages cannot be loose-registered unsigned.
+     The dev-mode path is registering the regular AppxManifest.xml instead
+     (see register-identity.ps1 / identity.rs). -->
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -21,7 +30,7 @@
   xmlns:cloudfiles2="http://schemas.microsoft.com/appx/manifest/cloudfiles/windows10/2"
   xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
   xmlns:uap8="http://schemas.microsoft.com/appx/manifest/uap/windows10/8"
-  IgnorableNamespaces="uap mp rescap desktop desktop3 desktop4 cloudfiles2 uap7 uap8">
+  IgnorableNamespaces="uap mp rescap desktop desktop3 desktop4 cloudfiles2 uap7 uap8 uap10">
 
   <Identity
     Name="2106abslant.Cloudreve"
