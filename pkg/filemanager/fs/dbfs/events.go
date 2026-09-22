@@ -79,6 +79,13 @@ func (f *DBFS) emitFileMoved(ctx context.Context, src, dst *File) {
 		return subscriber.ID(), &subscriber
 	})
 
+	// Files moved out of the trash bin carry the name they had when they were deleted in
+	// MetadataRestoreUri; their model name is the trash-side name (a UUID). Emitting that name
+	// makes clients look for a path that does not exist, so the restored entry never shows up
+	// locally (the desktop client syncs the event path, finds nothing and gives up). DisplayName
+	// resolves the original name for trashed files and is identical to Name for everything else.
+	movedName := src.DisplayName()
+
 	for _, subscriber := range srcSubMap {
 		subId := subscriber.ID()
 		if dstSub, ok := dstSubMap[subId]; ok {
@@ -87,7 +94,7 @@ func (f *DBFS) emitFileMoved(ctx context.Context, src, dst *File) {
 				Type:   eventhub.EventTypeRename,
 				FileID: hashid.EncodeFileID(f.hasher, src.Model.ID),
 				From:   subscriber.relativePath(src),
-				To:     path.Join(dstSub.relativePath(dst), src.Name()),
+				To:     path.Join(dstSub.relativePath(dst), movedName),
 			})
 			delete(dstSubMap, subId)
 		} else {
@@ -105,7 +112,7 @@ func (f *DBFS) emitFileMoved(ctx context.Context, src, dst *File) {
 		subscriber.Publish(eventhub.Event{
 			Type:   eventhub.EventTypeCreate,
 			FileID: hashid.EncodeFileID(f.hasher, src.Model.ID),
-			From:   path.Join(subscriber.relativePath(dst), src.Name()),
+			From:   path.Join(subscriber.relativePath(dst), movedName),
 		})
 	}
 
