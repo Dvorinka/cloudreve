@@ -475,6 +475,13 @@ fn setup_tray(app: &tauri::App) -> anyhow::Result<()> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Headless identity installation runs before any GUI/plugin setup and
+    // exits immediately (NSIS hook, self-elevated cert import, manual runs).
+    #[cfg(windows)]
+    if let Some(code) = identity::run_identity_cli() {
+        std::process::exit(code);
+    }
+
     // Initialize config manager first so i18n can read language setting
     if let Err(e) = ConfigManager::init() {
         eprintln!("Failed to initialize config manager: {}", e);
@@ -563,6 +570,9 @@ pub fn run() {
             commands::get_file_icon,
             commands::show_file_in_explorer,
             commands::create_share,
+            commands::get_share,
+            commands::update_share,
+            commands::delete_share,
             commands::check_update,
             commands::install_update,
             commands::restart_app,

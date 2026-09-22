@@ -23,8 +23,8 @@ use cloudreve_api::{
     api::{ExplorerApi, ShareApi, explorer::ExplorerApiExt},
     models::{
         explorer::{
-            DeleteFileService, FileResponse, FileURLService, MoveFileService, RenameFileService,
-            metadata,
+            DeleteFileService, FileResponse, FileURLService, GetFileInfoService,
+            MoveFileService, RenameFileService, metadata,
         },
         share::ShareCreateService,
         uri::CrUri,
@@ -482,6 +482,35 @@ impl Mount {
     /// Create a share link from a full share request, returning the share URL.
     pub async fn create_share(&self, request: ShareCreateService) -> Result<String> {
         Ok(self.cr_client.create_share(&request).await?)
+    }
+
+    /// Fetch the existing share for a cloudreve URI, if one exists.
+    /// The file info `extended` payload carries `shares` for the file.
+    pub async fn get_share_for_uri(&self, uri: &str) -> Result<Option<cloudreve_api::models::explorer::Share>> {
+        let info = self
+            .cr_client
+            .get_file_info(&GetFileInfoService {
+                uri: Some(uri.to_string()),
+                id: None,
+                extended: Some(true),
+                folder_summary: None,
+            })
+            .await?;
+        Ok(info
+            .extended_info
+            .and_then(|e| e.shares)
+            .and_then(|s| s.into_iter().next()))
+    }
+
+    /// Edit an existing share, returning the share URL.
+    pub async fn update_share(&self, id: &str, request: ShareCreateService) -> Result<String> {
+        Ok(self.cr_client.update_share(id, &request).await?)
+    }
+
+    /// Delete a share by id.
+    pub async fn delete_share(&self, id: &str) -> Result<()> {
+        self.cr_client.delete_share(id).await?;
+        Ok(())
     }
 
     pub async fn rename_completed(&self, source: PathBuf, destination: PathBuf) -> Result<()> {
