@@ -21,7 +21,7 @@
   xmlns:cloudfiles2="http://schemas.microsoft.com/appx/manifest/cloudfiles/windows10/2"
   xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
   xmlns:uap8="http://schemas.microsoft.com/appx/manifest/uap/windows10/8"
-  IgnorableNamespaces="uap mp rescap desktop desktop3 desktop4 cloudfiles2 uap7 uap8 uap10">
+  IgnorableNamespaces="uap mp rescap desktop desktop3 desktop4 cloudfiles2 uap7 uap8">
 
   <Identity
     Name="2106abslant.Cloudreve"
