@@ -164,6 +164,8 @@ export interface GlobalStateSlice {
   // Per-file activity (audit) dialog
   activityDialogOpen?: boolean;
   activityDialogFile?: FileResponse;
+  // Set when the feed is narrowed to one share's history (Shares page).
+  activityDialogShareId?: string;
 
   // Report abuse dialog
   reportAbuseDialogOpen?: boolean;
@@ -835,12 +837,17 @@ export const globalStateSlice = createSlice({
     closeAclDialog: (state) => {
       state.aclDialogOpen = false;
     },
-    setActivityDialog: (state, action: PayloadAction<{ open: boolean; file: FileResponse }>) => {
+    setActivityDialog: (
+      state,
+      action: PayloadAction<{ open: boolean; file: FileResponse; shareId?: string }>,
+    ) => {
       state.activityDialogOpen = action.payload.open;
       state.activityDialogFile = action.payload.file;
+      state.activityDialogShareId = action.payload.shareId;
     },
     closeActivityDialog: (state) => {
       state.activityDialogOpen = false;
+      state.activityDialogShareId = undefined;
     },
     setReportAbuseDialog: (
       state,

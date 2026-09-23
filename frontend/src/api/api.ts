@@ -3144,11 +3144,18 @@ export function adminListEvents(args: {
   };
 }
 
-export function getFileActivity(uri: string, page: number, pageSize: number): ThunkResponse<ActivityEventListResponse> {
+export function getFileActivity(
+  uri: string | undefined,
+  page: number,
+  pageSize: number,
+  shareId?: string,
+): ThunkResponse<ActivityEventListResponse> {
   return async (dispatch, _getState) => {
+    const uriParam = uri ? `uri=${encodeURIComponent(uri)}&` : "";
+    const shareParam = shareId ? `&share_id=${encodeURIComponent(shareId)}` : "";
     return await dispatch(
       send(
-        `/file/activity?uri=${encodeURIComponent(uri)}&page=${page}&page_size=${pageSize}`,
+        `/file/activity?${uriParam}page=${page}&page_size=${pageSize}${shareParam}`,
         { method: "GET" },
         {
           ...defaultOpts,

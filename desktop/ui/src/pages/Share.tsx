@@ -15,17 +15,25 @@ import {
   Radio,
   RadioGroup,
   Snackbar,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
+import AddLinkIcon from "@mui/icons-material/AddLink";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DownloadIcon from "@mui/icons-material/Download";
+import EditIcon from "@mui/icons-material/Edit";
 import FolderIcon from "@mui/icons-material/Folder";
 import GroupIcon from "@mui/icons-material/Group";
+import HistoryIcon from "@mui/icons-material/History";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PersonIcon from "@mui/icons-material/Person";
 import PublicIcon from "@mui/icons-material/Public";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -86,6 +94,56 @@ interface AclSubject {
   name: string;
 }
 
+// Audit feed rows (`GET /file/activity`). `type` matches the server's
+// Event* constants; only share-scoped ones surface in the history tab.
+interface ActivityEvent {
+  id: string;
+  type: number;
+  actor_id?: string;
+  actor_name?: string;
+  ip?: string;
+  extra?: Record<string, unknown>;
+  created_at: number;
+}
+
+interface FileActivityResponse {
+  events: ActivityEvent[];
+  total: number;
+}
+
+const HIST_PAGE_SIZE = 50;
+
+// Event types rendered in the history tab. Labels live in locales under
+// `share.hist*`; unknown types fall back to `share.histUnknown`.
+const HIST_EVENT_KEYS: Record<number, string> = {
+  9: "histAcl",
+  11: "histDownload",
+  17: "histShare",
+  18: "histViewed",
+  24: "histEdited",
+  25: "histDeleted",
+};
+
+function HistEventIcon({ type }: { type: number }) {
+  const sx = { fontSize: 18 } as const;
+  switch (type) {
+    case 9:
+      return <GroupIcon sx={sx} color="action" />;
+    case 11:
+      return <DownloadIcon sx={sx} color="action" />;
+    case 17:
+      return <AddLinkIcon sx={sx} color="action" />;
+    case 18:
+      return <VisibilityIcon sx={sx} color="action" />;
+    case 24:
+      return <EditIcon sx={sx} color="action" />;
+    case 25:
+      return <DeleteOutlineIcon sx={sx} color="action" />;
+    default:
+      return <HistoryIcon sx={sx} color="action" />;
+  }
+}
+
 /** Render the cloudreve uri as a readable breadcrumb: My Files / a / b. */
 function uriBreadcrumb(uri: string, name: string, t: (k: string) => string) {
   // cloudreve://my/path/to/item -> ["path", "to", "item"]
@@ -141,6 +199,12 @@ export default function Share() {
   const [aclKeyword, setAclKeyword] = useState("");
   const [aclBusy, setAclBusy] = useState<number | "add" | null>(null);
   const [aclError, setAclError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"settings" | "history">("settings");
+  const [histEvents, setHistEvents] = useState<ActivityEvent[]>([]);
+  const [histTotal, setHistTotal] = useState(0);
+  const [histPage, setHistPage] = useState(1);
+  const [histLoading, setHistLoading] = useState(false);
+  const [histError, setHistError] = useState<string | null>(null);
 
   const shareUrl = existing?.url ?? null;
   // "https://host/s/" — the fixed part of the link shown while editing.
@@ -268,6 +332,39 @@ export default function Share() {
     setExisting(share);
   };
 
+  // Owner-scoped audit feed filtered to this share. `append` pages more
+  // rows under the existing ones.
+  const loadHistory = async (page: number, append: boolean) => {
+    if (!existing?.id) return;
+    setHistLoading(true);
+    setHistError(null);
+    try {
+      const res = await invoke<FileActivityResponse>("list_file_activity", {
+        driveId,
+        uri,
+        page,
+        pageSize: HIST_PAGE_SIZE,
+        shareId: existing.id,
+      });
+      setHistEvents((prev) => (append ? [...prev, ...res.events] : res.events));
+      setHistTotal(res.total);
+      setHistPage(page);
+    } catch (e) {
+      setHistError(String(e));
+    } finally {
+      setHistLoading(false);
+    }
+  };
+
+  // Fetch on first switch to the tab; re-fetch after a save so the edit
+  // event shows up immediately.
+  useEffect(() => {
+    if (tab === "history" && existing?.id) {
+      loadHistory(1, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, existing?.id]);
+
   const createOrUpdate = async () => {
     setWorking(true);
     setError(null);
@@ -305,6 +402,8 @@ export default function Share() {
       setExpire(0);
       setPermission("view");
       setEditingLink(false);
+      setTab("settings");
+      setHistEvents([]);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -466,10 +565,92 @@ export default function Share() {
         )}
       </Box>
 
+      {/* Settings / History tabs — history needs an existing share */}
+      {existing?.id && (
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          sx={{
+            px: 2,
+            minHeight: 34,
+            flexShrink: 0,
+            "& .MuiTab-root": { minHeight: 34, py: 0.5, textTransform: "none" },
+          }}
+        >
+          <Tab value="settings" label={t("share.tabSettings")} />
+          <Tab value="history" label={t("share.tabHistory")} />
+        </Tabs>
+      )}
+
       <Box sx={{ flex: 1, overflow: "auto", px: 3, pb: 2 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
             <CircularProgress size={24} />
+          </Box>
+        ) : tab === "history" ? (
+          <Box sx={{ mt: 1 }}>
+            {histError && <Alert severity="error">{histError}</Alert>}
+            {!histLoading && !histError && histEvents.length === 0 && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ py: 4, textAlign: "center" }}
+              >
+                {t("share.histEmpty")}
+              </Typography>
+            )}
+            {histEvents.map((e) => {
+              const detail = [
+                e.actor_name || t("share.histVisitor"),
+                new Date(e.created_at * 1000).toLocaleString(),
+                e.ip,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              const changed =
+                (e.type === 17 || e.type === 24) && e.extra
+                  ? Object.keys(e.extra)
+                      .map((k) => t(`share.histF_${k}`, { defaultValue: k }))
+                      .join(", ")
+                  : "";
+              return (
+                <Box
+                  key={e.id}
+                  sx={{ display: "flex", gap: 1, py: 0.75, alignItems: "flex-start" }}
+                >
+                  <Box sx={{ pt: 0.25 }}>
+                    <HistEventIcon type={e.type} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2">
+                      {t(`share.${HIST_EVENT_KEYS[e.type] ?? "histUnknown"}`)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {detail}
+                    </Typography>
+                    {changed && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {changed}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              );
+            })}
+            {histLoading && (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <CircularProgress size={20} />
+              </Box>
+            )}
+            {!histLoading && histEvents.length < histTotal && (
+              <Button
+                size="small"
+                onClick={() => loadHistory(histPage + 1, true)}
+                sx={{ textTransform: "none", mt: 0.5 }}
+              >
+                {t("share.histLoadMore")}
+              </Button>
+            )}
           </Box>
         ) : (
           <>

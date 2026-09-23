@@ -20,7 +20,7 @@ use anyhow::{Context, Result};
 use bytes::Bytes;
 use cloudreve_api::{
     ApiError,
-    api::{AclApi, ExplorerApi, ShareApi, explorer::ExplorerApiExt},
+    api::{AclApi, ActivityApi, ExplorerApi, ShareApi, explorer::ExplorerApiExt},
     models::{
         explorer::{
             DeleteFileService, FileResponse, FileURLService, GetFileInfoService,
@@ -531,6 +531,21 @@ impl Mount {
     /// Remove an ACL entry by id.
     pub async fn delete_acl(&self, uri: &str, id: i64) -> Result<()> {
         Ok(self.cr_client.delete_acl(uri, id).await?)
+    }
+
+    /// List audit events for a file; `share_id` narrows the feed to one
+    /// share's history.
+    pub async fn list_file_activity(
+        &self,
+        uri: &str,
+        page: u32,
+        page_size: u32,
+        share_id: Option<&str>,
+    ) -> Result<cloudreve_api::models::activity::FileActivityResponse> {
+        Ok(self
+            .cr_client
+            .list_file_activity(uri, page, page_size, share_id)
+            .await?)
     }
 
     /// Delete a share by id.

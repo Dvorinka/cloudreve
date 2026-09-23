@@ -1,6 +1,8 @@
 package explorer
 
 import (
+	"context"
+
 	"github.com/cloudreve/Cloudreve/v4/application/dependency"
 	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
@@ -29,10 +31,14 @@ type (
 	}
 
 	// FileActivityService lists audit events for a file the caller owns.
+	// A share hashid narrows the feed to events of that share — the
+	// share-history view — and then doubles as the owner check, so `uri`
+	// is optional in that mode.
 	FileActivityService struct {
-		Uri      string `form:"uri" binding:"required"`
+		Uri      string `form:"uri"`
 		Page     int    `form:"page" binding:"min=1"`
 		PageSize int    `form:"page_size" binding:"min=1,max=100"`
+		ShareID  string `form:"share_id"`
 	}
 	FileActivityParamCtx struct{}
 
@@ -74,34 +80,63 @@ func BuildEventResponse(e *ent.ActivityEvent, actors map[int]*ent.User, hasher h
 func (s *FileActivityService) Get(c *gin.Context) (*FileActivityResponse, error) {
 	dep := dependency.FromContext(c)
 	user := inventory.UserFromContext(c)
-	m := manager.NewFileManager(dep, user)
-	defer m.Recycle()
 
-	uri, err := fs.NewUriFromString(s.Uri)
-	if err != nil {
-		return nil, serializer.NewError(serializer.CodeParamErr, "unknown uri", err)
-	}
+	var fileID, shareID int
+	if s.ShareID != "" {
+		// Share-scoped feed: the share's owner is the file's owner, so the
+		// share alone authorizes the request.
+		id, err := dep.HashIDEncoder().Decode(s.ShareID, hashid.ShareID)
+		if err != nil {
+			return nil, serializer.NewError(serializer.CodeParamErr, "unknown share id", err)
+		}
+		share, err := dep.ShareClient().GetByID(context.WithValue(
+			context.WithValue(c, inventory.LoadShareFile{}, true),
+			inventory.LoadShareUser{}, true), id)
+		if err != nil {
+			return nil, serializer.NewError(serializer.CodeNotFound, "share not found", err)
+		}
+		if share.Edges.User.ID != user.ID {
+			return nil, serializer.NewError(serializer.CodeNoPermissionErr, "Only the owner can view activity", nil)
+		}
+		shareID = id
+		if share.Edges.File != nil {
+			fileID = share.Edges.File.ID
+		}
+	} else {
+		if s.Uri == "" {
+			return nil, serializer.NewError(serializer.CodeParamErr, "uri or share_id is required", nil)
+		}
+		m := manager.NewFileManager(dep, user)
+		defer m.Recycle()
 
-	file, err := m.Get(c, uri, dbfs.WithNotRoot())
-	if err != nil {
-		return nil, err
-	}
-	dbFile, ok := file.(*dbfs.File)
-	if !ok || dbFile.Model.OwnerID != user.ID {
-		return nil, serializer.NewError(serializer.CodeNoPermissionErr, "Only the owner can view activity", nil)
+		uri, err := fs.NewUriFromString(s.Uri)
+		if err != nil {
+			return nil, serializer.NewError(serializer.CodeParamErr, "unknown uri", err)
+		}
+		file, err := m.Get(c, uri, dbfs.WithNotRoot())
+		if err != nil {
+			return nil, err
+		}
+		dbFile, ok := file.(*dbfs.File)
+		if !ok || dbFile.Model.OwnerID != user.ID {
+			return nil, serializer.NewError(serializer.CodeNoPermissionErr, "Only the owner can view activity", nil)
+		}
+		fileID = dbFile.Model.ID
 	}
 
 	pageSize := s.PageSize
 	if pageSize == 0 {
 		pageSize = 20
 	}
-	events, total, err := dep.ActivityClient().List(c, &inventory.ListActivityArgs{
+	listArgs := &inventory.ListActivityArgs{
 		PaginationArgs: inventory.PaginationArgs{
 			Page:     max(s.Page-1, 0),
 			PageSize: pageSize,
 		},
-		FileID: dbFile.Model.ID,
-	})
+		FileID:  fileID,
+		ShareID: shareID,
+	}
+	events, total, err := dep.ActivityClient().List(c, listArgs)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to list activity", err)
 	}

@@ -586,6 +586,7 @@ pub fn run() {
             commands::search_acl_subjects,
             commands::upsert_acl,
             commands::delete_acl,
+            commands::list_file_activity,
             commands::check_update,
             commands::install_update,
             commands::restart_app,

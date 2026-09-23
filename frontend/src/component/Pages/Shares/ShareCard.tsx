@@ -19,7 +19,8 @@ import { useTranslation } from "react-i18next";
 import { useInView } from "react-intersection-observer";
 import { useNavigate } from "react-router-dom";
 import { sendDeleteShare } from "../../../api/api.ts";
-import { FileType, Share } from "../../../api/explorer.ts";
+import { FileResponse, FileType, Share } from "../../../api/explorer.ts";
+import { setActivityDialog } from "../../../redux/globalStateSlice.ts";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { confirmOperation } from "../../../redux/thunks/dialog.ts";
 import { openShareEditByID } from "../../../redux/thunks/share.ts";
@@ -34,6 +35,7 @@ import Clipboard from "../../Icons/Clipboard.tsx";
 import CloudDownloadOutlined from "../../Icons/CloudDownloadOutlined.tsx";
 import DeleteOutlined from "../../Icons/DeleteOutlined.tsx";
 import Eye from "../../Icons/Eye.tsx";
+import HistoryOutlined from "../../Icons/HistoryOutlined.tsx";
 import LinkEdit from "../../Icons/LinkEdit.tsx";
 import LockClosedOutlined from "../../Icons/LockClosedOutlined.tsx";
 import Open from "../../Icons/Open.tsx";
@@ -89,6 +91,23 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
     onClose && onClose({}, "backdropClick");
   }, [share, onClose, t]);
 
+  // Share history: same activity feed as the file manager, narrowed to
+  // this share via share_id. The list row carries no file payload, so a
+  // stub FileResponse supplies only what the dialog renders.
+  const openHistory = useCallback(() => {
+    const stub: FileResponse = {
+      type: share.source_type ?? FileType.file,
+      id: "",
+      name: share.name ?? "",
+      created_at: share.created_at ?? "",
+      updated_at: "",
+      size: 0,
+      path: share.source_uri ?? "",
+    };
+    dispatch(setActivityDialog({ open: true, file: stub, shareId: share.id }));
+    onClose && onClose({}, "backdropClick");
+  }, [dispatch, share, onClose]);
+
   return (
     <Menu
       onClose={onClose}
@@ -121,6 +140,12 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
           <ListItemText>{t(`fileManager.${share?.expired ? "editAndReactivate" : "edit"}`)}</ListItemText>
         </SquareMenuItem>
       )}
+      <SquareMenuItem dense onClick={openHistory}>
+        <ListItemIcon>
+          <HistoryOutlined fontSize="small" />
+        </ListItemIcon>
+        <ListItemText>{t(`fileManager.activity`)}</ListItemText>
+      </SquareMenuItem>
       <DenseDivider />
       <SquareMenuItem hoverColor={theme.palette.error.light} dense onClick={deleteShare}>
         <ListItemIcon>
