@@ -69,7 +69,9 @@ pub struct FolderSummary {
 pub struct ExtendedInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_policy: Option<StoragePolicy>,
+    #[serde(default)]
     pub storage_policy_inherited: bool,
+    #[serde(default)]
     pub storage_used: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shares: Option<Vec<Share>>,
@@ -130,17 +132,20 @@ pub struct Share {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub permission_setting: Option<PermissionSettingReq>,
     pub url: String,
+    #[serde(default)]
     pub visited: i32,
     #[serde(default)]
     pub downloaded: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expired: Option<bool>,
+    #[serde(default)]
     pub unlocked: bool,
     #[serde(default)]
     pub password_protected: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_type: Option<i32>,
-    pub owner: User,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owner: Option<User>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub permissions: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
