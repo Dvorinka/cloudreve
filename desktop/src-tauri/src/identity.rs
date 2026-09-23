@@ -28,10 +28,6 @@
 //! Identity is bound at process creation, so registration takes effect from
 //! the next app launch.
 
-/// Package identity name, must match AppxManifest.xml Identity.
-#[cfg(windows)]
-const PACKAGE_NAME: &str = "2106abslant.Cloudreve";
-
 /// File name of the signed sparse package and its public cert, shipped by the
 /// installer beside the exe.
 #[cfg(windows)]
@@ -39,9 +35,18 @@ const SPARSE_MSIX: &str = "Cloudreve-Identity.msix";
 #[cfg(windows)]
 const IDENTITY_CERT: &str = "cloudreve-identity.cer";
 
-/// CERT_E_UNTRUSTEDROOT - package signature doesn't chain to a trusted root.
+/// Package family name + application id, used to build the AUMID
+/// (`PFN!AppId`) for package-activated relaunch. The family name derives from
+/// the identity name and publisher hash, stable for this certificate.
 #[cfg(windows)]
-const CERT_E_UNTRUSTEDROOT: u32 = 0x800B_0109;
+const PACKAGE_FAMILY: &str = "2106abslant.Cloudreve_sb8s8nw07jjsw";
+#[cfg(windows)]
+const PACKAGE_APP_ID: &str = "Cloudreve.Sync";
+
+/// Arg carried by the package-activated relaunch so a child that somehow still
+/// lacks identity does not relaunch in a loop.
+#[cfg(windows)]
+const NO_RELAUNCH_ARG: &str = "--no-packaged-relaunch";
 
 /// Handle `--install-identity` / `--install-identity-cert` before the GUI
 /// starts. Returns the process exit code when an identity flag was present.
@@ -67,6 +72,72 @@ pub fn run_identity_cli() -> Option<i32> {
         });
     }
     None
+}
+
+/// If the identity package is installed but this process launched without
+/// identity, relaunch through IApplicationActivationManager and exit. The
+/// embedded <msix> element binds direct launches, but the binding only
+/// propagates some time after package registration - launches right after an
+/// install/update can still come up unpackaged, and an unpackaged process
+/// registers sync roots with no package association (no Explorer menu). The
+/// activation path binds identity immediately, so routing through it is
+/// always correct. Runs before GUI setup and before single-instance takes
+/// the instance lock; returns the exit code when a relaunch happened.
+#[cfg(windows)]
+pub fn relaunch_packaged_if_needed() -> Option<i32> {
+    use windows::ApplicationModel::Package;
+
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == NO_RELAUNCH_ARG) {
+        return None;
+    }
+    // COM out-of-process activation (-Embedding) already comes through the
+    // package; relaunching would break the local-server handshake.
+    if args.iter().any(|a| a.starts_with("-Embedding")) {
+        return None;
+    }
+    if Package::Current().is_ok() {
+        return None;
+    }
+    match activate_package_self() {
+        Ok(()) => Some(0),
+        Err(e) => {
+            eprintln!("packaged relaunch skipped: {e:#}");
+            None
+        }
+    }
+}
+
+/// Activate `PFN!AppId` when the identity package is registered for this user.
+#[cfg(windows)]
+fn activate_package_self() -> anyhow::Result<()> {
+    use anyhow::{bail, Context};
+    use windows::core::HSTRING;
+    use windows::Management::Deployment::PackageManager;
+    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL};
+    use windows::Win32::UI::Shell::{
+        ApplicationActivationManager, IApplicationActivationManager, AO_NOSPLASHSCREEN,
+    };
+
+    let mgr = PackageManager::new().context("PackageManager::new failed")?;
+    let installed = mgr
+        .FindPackagesByPackageFamilyName(&HSTRING::from(PACKAGE_FAMILY))
+        .map(|packages| packages.into_iter().next().is_some())
+        .unwrap_or(false);
+    if !installed {
+        bail!("identity package not installed");
+    }
+
+    let aumid = HSTRING::from(format!("{PACKAGE_FAMILY}!{PACKAGE_APP_ID}"));
+    unsafe {
+        let activator: IApplicationActivationManager =
+            CoCreateInstance(&ApplicationActivationManager, None, CLSCTX_ALL)
+                .context("ApplicationActivationManager failed")?;
+        activator
+            .ActivateApplication(&aumid, &HSTRING::from(NO_RELAUNCH_ARG), AO_NOSPLASHSCREEN)
+            .context("ActivateApplication failed")?;
+    }
+    Ok(())
 }
 
 /// Register the package when the app runs without package identity.
@@ -100,9 +171,11 @@ fn try_ensure_package_identity() -> anyhow::Result<()> {
     let msix_path = install_dir.join(SPARSE_MSIX);
     let manifest_path = install_dir.join("AppxManifest.xml");
 
-    // Signed sparse package first: succeeds when the cert is already trusted
-    // (the NSIS hook's --install-identity run imports it).
-    if msix_path.exists() && add_sparse_package(&msix_path, &install_dir).is_ok() {
+    // When a signed package shipped it owns registration: a failed add means
+    // the cert is not trusted yet (the installer handles elevation) or a real
+    // deployment error - retrying a loose register would just be noise.
+    if msix_path.exists() {
+        add_sparse_package(&msix_path, &install_dir)?;
         tracing::info!(target: "main",
             "Signed identity package installed; restart for package identity.");
         return Ok(());
@@ -128,21 +201,77 @@ fn headless_install() -> anyhow::Result<()> {
     let msix_path = install_dir.join(SPARSE_MSIX);
 
     if msix_path.exists() {
-        match add_sparse_package(&msix_path, &install_dir) {
-            Ok(()) => return Ok(()),
-            Err(e) if untrusted_root(&e) => {
-                ensure_cert_trusted(&install_dir)?;
-                return add_sparse_package(&msix_path, &install_dir)
-                    .context("sparse package install failed after cert trust");
-            }
-            Err(e) => return Err(e),
+        // Signature validation fails before deployment even starts, and the
+        // reported error code is unreliable (0x800B0109 may surface as
+        // 0x87E80034), so check the store up front instead of matching codes.
+        let cer = install_dir.join(IDENTITY_CERT);
+        if cer.exists() && !cert_is_trusted(&cer)? {
+            ensure_cert_trusted(&install_dir)?;
         }
+        return add_sparse_package(&msix_path, &install_dir)
+            .context("sparse package install failed");
     }
 
     // No signed package shipped - loose registration (Developer Mode).
     let manifest_path = install_dir.join("AppxManifest.xml");
     render_manifest(&manifest_path)?;
     register_loose_manifest(&manifest_path)
+}
+
+/// True when the shipping .cer is already in LocalMachine\TrustedPeople -
+/// the machine store package signature validation checks.
+#[cfg(windows)]
+fn cert_is_trusted(cer_path: &std::path::Path) -> anyhow::Result<bool> {
+    use anyhow::Context;
+    use windows::core::HSTRING;
+    use windows::Win32::Security::Cryptography::*;
+
+    let path_w = HSTRING::from(cer_path.to_string_lossy().as_ref());
+    unsafe {
+        let mut ctx: *mut CERT_CONTEXT = std::ptr::null_mut();
+        CryptQueryObject(
+            CERT_QUERY_OBJECT_FILE,
+            path_w.as_ptr() as *const core::ffi::c_void,
+            CERT_QUERY_CONTENT_FLAG_CERT,
+            CERT_QUERY_FORMAT_FLAG_ALL,
+            0,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(&mut ctx as *mut *mut CERT_CONTEXT as *mut *mut core::ffi::c_void),
+        )
+        .context("failed to read certificate file")?;
+        let name = HSTRING::from("TrustedPeople");
+        let store = CertOpenStore(
+            CERT_STORE_PROV_SYSTEM_W,
+            CERT_QUERY_ENCODING_TYPE(X509_ASN_ENCODING.0 | PKCS_7_ASN_ENCODING.0),
+            None,
+            CERT_OPEN_STORE_FLAGS(
+                CERT_SYSTEM_STORE_LOCAL_MACHINE
+                    | CERT_STORE_OPEN_EXISTING_FLAG.0
+                    | CERT_STORE_READONLY_FLAG.0,
+            ),
+            Some(name.as_ptr() as *const core::ffi::c_void),
+        )
+        .context("failed to open LocalMachine\\TrustedPeople")?;
+        let found = CertFindCertificateInStore(
+            store,
+            CERT_QUERY_ENCODING_TYPE(X509_ASN_ENCODING.0 | PKCS_7_ASN_ENCODING.0),
+            0,
+            CERT_FIND_EXISTING,
+            Some(ctx as *const core::ffi::c_void),
+            None,
+        );
+        let trusted = !found.is_null();
+        if !found.is_null() {
+            let _ = CertFreeCertificateContext(Some(found));
+        }
+        let _ = CertFreeCertificateContext(Some(ctx));
+        let _ = CertCloseStore(store, 0);
+        Ok(trusted)
+    }
 }
 
 /// Install the sparse msix bound to `external_dir` as its external content.
@@ -206,14 +335,6 @@ fn register_loose_manifest(manifest_path: &std::path::Path) -> anyhow::Result<()
         );
     }
     Ok(())
-}
-
-/// True when the deployment failure was CERT_E_UNTRUSTEDROOT.
-#[cfg(windows)]
-fn untrusted_root(e: &anyhow::Error) -> bool {
-    e.chain()
-        .filter_map(|c| c.downcast_ref::<windows::core::Error>())
-        .any(|w| w.code().0 as u32 == CERT_E_UNTRUSTEDROOT)
 }
 
 /// Make sure LocalMachine\TrustedPeople contains the signing cert, elevating a

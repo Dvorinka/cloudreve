@@ -140,8 +140,8 @@ export async function validateSiteVersion(siteUrl: string): Promise<string> {
     } as ValidationError;
   }
 
-  // Remove -pro suffix if present
-  const version = data.data.replace(/-pro$/, "");
+  // Normalize version: servers built from git tags report e.g. "v4.20.0-pro"
+  const version = data.data.trim().replace(/^v/i, "").replace(/-pro$/, "");
 
   // Check if version is >= MIN_VERSION
   if (compareSemver(version, MIN_VERSION) < 0) {

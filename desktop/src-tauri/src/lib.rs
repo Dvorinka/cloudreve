@@ -482,6 +482,15 @@ pub fn run() {
         std::process::exit(code);
     }
 
+    // When the identity package is installed but this launch is unpackaged
+    // (the embedded <msix> binding can lag right after registration), relaunch
+    // through package activation - it binds identity immediately. Before
+    // single-instance so the instance lock isn't held across the handoff.
+    #[cfg(windows)]
+    if let Some(code) = identity::relaunch_packaged_if_needed() {
+        std::process::exit(code);
+    }
+
     // Initialize config manager first so i18n can read language setting
     if let Err(e) = ConfigManager::init() {
         eprintln!("Failed to initialize config manager: {}", e);
