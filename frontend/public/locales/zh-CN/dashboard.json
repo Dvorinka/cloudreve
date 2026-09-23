@@ -107,11 +107,7 @@
     "shareLinks": "分享链接",
     "totalBlobs": "文件 Blob",
     "homepage": "主页",
-    "github": "GitHub",
     "documents": "文档",
-    "discordCommunity": "Discord 社群",
-    "telegram": "Telegram 社群",
-    "forum": "社区论坛",
     "buyPro": "升级到 Pro",
     "publishedAt": "发表于 <0></0>",
     "licenseExpireAt": "授权有效期",
@@ -125,7 +121,13 @@
     "iosVol": "iOS 客户端批量授权 (VOL)",
     "refreshSuccessfully": "刷新成功",
     "manualRefresh": "手动刷新离线授权",
-    "manualRefreshDes": "自动刷新离线授权失败，请尝试登录 <0>授权管理面板</0> 获取最新的离线授权，将其粘贴在下方。"
+    "manualRefreshDes": "自动刷新离线授权失败，请尝试登录 <0>授权管理面板</0> 获取最新的离线授权，将其粘贴在下方。",
+    "issues": "问题反馈",
+    "releases": "版本发布",
+    "aboutFork": "社区分支",
+    "aboutForkDes": "本站点运行的是 Cloudreve 的社区维护分支，专注于 Windows 桌面客户端与资源管理器集成。发现 Bug 或有好的想法？欢迎提交反馈或任何形式的贡献。",
+    "reportIssue": "报告问题",
+    "roadmap": "路线图"
   },
   "queue": {
     "queueName_io_intense": "IO 密集型",
@@ -1612,7 +1614,8 @@
     "deletedState": "删除状态",
     "liveOnly": "仅未删除",
     "trashOnly": "仅回收站",
-    "selectUser": "选择用户"
+    "selectUser": "选择用户",
+    "pleaseSelectUser": "请选择用户"
   },
   "entity": {
     "refenenceCount": "引用次数",
@@ -1747,7 +1750,9 @@
     "finished": "完成",
     "canceled": "取消/停止",
     "unknown": "未知",
-    "errorMsg": "错误信息"
+    "errorMsg": "错误信息",
+    "allTaskStatuses": "全部状态",
+    "allTaskTypes": "全部类型"
   },
   "payment": {
     "tradeNo": "交易单号",
@@ -1790,7 +1795,6 @@
     "confirmDelete": "确认要删除这些订单？",
     "vas": "增值服务",
     "reports": "举报",
-    "orders": "订单",
     "initialFiles": "初始文件",
     "initialFilesDes": "指定用户注册后初始拥有的文件。输入文件 ID 搜索并添加现有文件。",
     "filterEmailProvider": "过滤注册邮箱域",

@@ -107,11 +107,7 @@
     "shareLinks": "Freigabe-Links",
     "totalBlobs": "Blobs",
     "homepage": "Startseite",
-    "github": "GitHub",
     "documents": "Dokumentation",
-    "discordCommunity": "Discord-Community",
-    "telegram": "Telegram-Gruppe",
-    "forum": "GitHub Discussions",
     "buyPro": "Auf Pro upgraden",
     "publishedAt": "veröffentlicht am <0></0>",
     "licenseExpireAt": "Lizenz-Ablaufdatum",
@@ -126,7 +122,13 @@
     "refreshSuccessfully": "Erfolgreich aktualisiert.",
     "manualRefresh": "Offline-Lizenz manuell aktualisieren",
     "manualRefreshDes": "Die automatische Aktualisierung der Offline-Lizenz ist fehlgeschlagen, bitte versuchen Sie, sich beim <0>Lizenzverwaltungs-Dashboard</0> anzumelden, um die neueste Offline-Lizenz zu erhalten und sie unten einzufügen.",
-    "announcement": "Ankündigung"
+    "announcement": "Ankündigung",
+    "issues": "Fehlermeldungen",
+    "releases": "Veröffentlichungen",
+    "aboutFork": "Community-Fork",
+    "aboutForkDes": "Diese Instanz läuft mit einem von der Community gepflegten Cloudreve-Fork mit Fokus auf den Windows-Desktop-Client und die Explorer-Integration. Fehler gefunden oder eine Idee? Meldungen und Beiträge jeder Art sind willkommen.",
+    "reportIssue": "Problem melden",
+    "roadmap": "Roadmap"
   },
   "queue": {
     "queueName_io_intense": "IO-Intensiv",
@@ -1639,7 +1641,8 @@
     "refCountEq": "Gleich",
     "deletedState": "Löschstatus",
     "liveOnly": "Nur aktive Dateien",
-    "trashOnly": "Nur Papierkorb"
+    "trashOnly": "Nur Papierkorb",
+    "pleaseSelectUser": "Bitte wählen Sie einen Benutzer"
   },
   "entity": {
     "refenenceCount": "Referenzzähler",
@@ -1774,7 +1777,9 @@
     "canceled": "Abgebrochen/Gestoppt",
     "unknown": "Unbekannt",
     "errorMsg": "Fehlermeldung",
-    "blobAudit": "Blobs auf Speicherrichtlinie #{{policyID}} prüfen ({{count}} verwaist)"
+    "blobAudit": "Blobs auf Speicherrichtlinie #{{policyID}} prüfen ({{count}} verwaist)",
+    "allTaskStatuses": "Alle Status",
+    "allTaskTypes": "Alle Typen"
   },
   "payment": {
     "tradeNo": "Handels-Nr.",
@@ -1817,7 +1822,6 @@
     "confirmDelete": "Sind Sie sicher, dass Sie diese Bestellungen löschen möchten?",
     "vas": "VAS",
     "reports": "Berichte",
-    "orders": "Zahlungen",
     "initialFiles": "Anfangsdateien",
     "initialFilesDes": "Geben Sie die Dateien an, die der Benutzer nach der Registrierung anfänglich besitzt. Geben Sie eine Datei-ID ein, um vorhandene Dateien zu suchen.",
     "filterEmailProvider": "E-Mail-Anbieter filtern",

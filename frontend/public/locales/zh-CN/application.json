@@ -705,7 +705,8 @@
     "hideReadme": "隐藏 README 文件",
     "hideReadmeDes": "在分享文件列表中隐藏 README 文件本身，访客仍可看到渲染后的说明内容。",
     "anonymous": "匿名",
-    "shareTargetsCount": "{{count}} 个目标"
+    "shareTargetsCount": "{{count}} 个目标",
+    "dontAskAgain": "不再询问"
   },
   "uploader": {
     "fileCopyName": "副本_",
@@ -1181,7 +1182,12 @@
     "backup2FACodes": "备用恢复代码",
     "backupCodesDes": "当验证器不可用时，可使用备用恢复代码登录。重新生成将使所有旧代码失效。",
     "backupCodesWarning": "请立即保存这些代码。每个代码仅可使用一次，且不会再次显示。",
-    "copyCodes": "复制代码"
+    "copyCodes": "复制代码",
+    "relocatedEntities": "已迁移项目",
+    "archiveDownloadMethod": "批量下载方式",
+    "archiveDownloadMethodDes": "下载文件夹或多选文件时使用的方式。选择“每次询问”可在每次下载时手动选择。",
+    "archiveDownloadAsk": "每次询问",
+    "downloadDesktopApp": "下载 Windows 客户端"
   },
   "vas": {
     "points": "积分",
@@ -1211,13 +1217,16 @@
     "permanent": "永久",
     "noProducts": "暂无商品",
     "buyWithPoints": "{{points}} 积分购买",
-    "pointsUnavailable": "不支持积分购买"
+    "pointsUnavailable": "不支持积分购买",
+    "noProductsDescription": "当站点管理员添加会员或套餐后，商品会显示在这里。"
   },
   "announcement": {
     "title": "公告",
     "dontShowAgain": "不再显示"
   },
   "discover": {
-    "searchPlaceholder": "搜索公开分享"
+    "searchPlaceholder": "搜索公开分享",
+    "empty": "暂无公开分享",
+    "emptyDescription": "当分享的所有者将其列入公开目录时，分享会显示在这里。"
   }
 }

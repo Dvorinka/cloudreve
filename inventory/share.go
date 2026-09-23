@@ -40,8 +40,11 @@ type (
 		GetByID(ctx context.Context, id int) (*ent.Share, error)
 		// GetByIDUser returns the share with given id and user id.
 		GetByIDUser(ctx context.Context, id, uid int) (*ent.Share, error)
-		// GetByHashID returns the share with given hash id.
+		// GetByHashID returns the share with given hash id. Falls back to a
+		// slug lookup when the raw id does not decode as a share hashid.
 		GetByHashID(ctx context.Context, idRaw string) (*ent.Share, error)
+		// GetBySlug returns the share with the given owner-defined slug.
+		GetBySlug(ctx context.Context, slug string) (*ent.Share, error)
 		// Upsert creates or update a new share record.
 		Upsert(ctx context.Context, params *CreateShareParams) (*ent.Share, error)
 		// Viewed increase the view count of the share.
@@ -74,6 +77,11 @@ type (
 		FileIDs     []int
 		Props       *types.ShareProps
 		PricePoints int
+		// Slug is the owner-defined custom link name. nil = leave
+		// unchanged (update) or unset (create); "" clears an existing
+		// slug; any other value sets it. Validation lives in the service
+		// layer.
+		Slug *string
 		// ListedPublicly lists the share in the public share directory.
 		ListedPublicly bool
 	}
@@ -148,6 +156,13 @@ func (c *shareClient) Upsert(ctx context.Context, params *CreateShareParams) (*e
 
 		createQuery.SetPricePoints(params.PricePoints)
 		createQuery.SetListedPublicly(params.ListedPublicly)
+		if params.Slug != nil {
+			if *params.Slug == "" {
+				createQuery.ClearSlug()
+			} else {
+				createQuery.SetSlug(*params.Slug)
+			}
+		}
 		return createQuery.Save(ctx)
 	}
 
@@ -173,6 +188,9 @@ func (c *shareClient) Upsert(ctx context.Context, params *CreateShareParams) (*e
 	if params.ListedPublicly {
 		query.SetListedPublicly(true)
 	}
+	if params.Slug != nil && *params.Slug != "" {
+		query.SetSlug(*params.Slug)
+	}
 	if len(params.FileIDs) > 1 {
 		query.AddFileIDs(params.FileIDs...)
 	}
@@ -183,10 +201,21 @@ func (c *shareClient) Upsert(ctx context.Context, params *CreateShareParams) (*e
 func (c *shareClient) GetByHashID(ctx context.Context, idRaw string) (*ent.Share, error) {
 	id, err := c.hasher.Decode(idRaw, hashid.ShareID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode hash id %q: %w", idRaw, err)
+		// Raw ids that are not share hashids may be owner-defined slugs.
+		return c.GetBySlug(ctx, idRaw)
 	}
 
 	return c.GetByID(ctx, id)
+}
+
+func (c *shareClient) GetBySlug(ctx context.Context, slug string) (*ent.Share, error) {
+	s, err := withShareEagerLoading(ctx, c.client.Share.Query().
+		Where(share.SlugEQ(slug))).First(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query share by slug %q: %w", slug, err)
+	}
+
+	return s, nil
 }
 
 func (c *shareClient) GetByID(ctx context.Context, id int) (*ent.Share, error) {

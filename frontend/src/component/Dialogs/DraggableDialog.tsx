@@ -28,7 +28,9 @@ function PaperComponent(props: PaperProps) {
   );
 }
 
-export const StyledDialogActions = styled(DialogActions)<{
+export const StyledDialogActions = styled(DialogActions, {
+  shouldForwardProp: (prop) => prop !== "denseAction",
+})<{
   denseAction?: boolean;
 }>(({ theme, denseAction }) => ({
   padding: `${theme.spacing(denseAction ? 0.5 : 2)} ${theme.spacing(3)}`,
@@ -40,7 +42,9 @@ export const StyledDialogContentText = styled(DialogContentText)(({ theme }) => 
   wordBreak: "break-all",
 }));
 
-export const StyledDialogTitle = styled(DialogTitle)<{ moveable?: boolean }>(({ moveable }) => ({
+export const StyledDialogTitle = styled(DialogTitle, {
+  shouldForwardProp: (prop) => prop !== "moveable",
+})<{ moveable?: boolean }>(({ moveable }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",

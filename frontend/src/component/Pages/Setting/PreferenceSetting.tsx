@@ -19,13 +19,15 @@ import i18next from "i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { sendUpdateUserSetting } from "../../../api/api.ts";
-import { UserSettings as UserSettingsType } from "../../../api/user.ts";
+import { GroupPermission, UserSettings as UserSettingsType } from "../../../api/user.ts";
+import Boolset from "../../../util/boolset.ts";
 import { languages } from "../../../i18n.ts";
 import { setPreferredTheme } from "../../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { ViewersByID } from "../../../redux/siteConfigSlice.ts";
 import { clearLocalCustomView } from "../../../redux/thunks/filemanager.ts";
 import { selectLanguage } from "../../../redux/thunks/settings.ts";
+import { MultipleDownloadOption } from "../../../redux/thunks/download.ts";
 import SessionManager, { UserSettings } from "../../../session";
 import { refreshTimeZone, timeZone } from "../../../util/datetime.ts";
 import {
@@ -86,9 +88,39 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
   const [folderClickAction, setFolderClickAction] = useState(
     SessionManager.getWithFallback(UserSettings.FolderClickAction),
   );
+  const [archiveMethod, setArchiveMethod] = useState<number | "">(
+    SessionManager.get(UserSettings.ArchiveDownloadMethod) ?? "",
+  );
   const [trashRetentionDays, setTrashRetentionDays] = useState(
     Math.round((setting.trash_retention ?? 0) / 86400),
   );
+
+  // Same availability rules as the download picker.
+  const archiveMethodOptions = useMemo(() => {
+    const opts = [MultipleDownloadOption.StreamSaver];
+    // @ts-ignore
+    if (window.isSecureContext && window.showDirectoryPicker) {
+      opts.push(MultipleDownloadOption.Browser);
+    }
+    const permission = new Boolset(SessionManager.currentUser()?.group?.permission);
+    if (permission.enabled(GroupPermission.archive_download)) {
+      opts.push(MultipleDownloadOption.Backend);
+    }
+    return opts;
+  }, []);
+
+  const archiveMethodName = (o: MultipleDownloadOption) =>
+    o === MultipleDownloadOption.Browser
+      ? t("fileManager.browserDownload")
+      : o === MultipleDownloadOption.Backend
+        ? t("fileManager.serverBatchDownload")
+        : t("fileManager.browserBatchDownload");
+
+  const onArchiveMethodChange = (e: { target: { value: unknown } }) => {
+    const v = e.target.value as number | "";
+    setArchiveMethod(v);
+    SessionManager.set(UserSettings.ArchiveDownloadMethod, v === "" ? undefined : v);
+  };
 
   const onTrashRetentionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const days = Math.max(0, parseInt(e.target.value) || 0);
@@ -430,6 +462,23 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
           </ToggleButton>
         </ToggleButtonGroup>
         <FormHelperText>{t("setting.folderClickActionDes")}</FormHelperText>
+      </SettingForm>
+      <SettingForm title={t("setting.archiveDownloadMethod")} lgWidth={6}>
+        <FormControl fullWidth>
+          <DenseSelect value={archiveMethod} onChange={onArchiveMethodChange}>
+            <SquareMenuItem value="">
+              <ListItemText slotProps={{ primary: { variant: "body2" } }}>
+                {t("setting.archiveDownloadAsk")}
+              </ListItemText>
+            </SquareMenuItem>
+            {archiveMethodOptions.map((o) => (
+              <SquareMenuItem key={o} value={o}>
+                <ListItemText slotProps={{ primary: { variant: "body2" } }}>{archiveMethodName(o)}</ListItemText>
+              </SquareMenuItem>
+            ))}
+          </DenseSelect>
+          <FormHelperText>{t("setting.archiveDownloadMethodDes")}</FormHelperText>
+        </FormControl>
       </SettingForm>
       <SettingForm title={t("setting.preferredViewers")} lgWidth={12}>
         <Box>

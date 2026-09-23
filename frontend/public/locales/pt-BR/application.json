@@ -760,7 +760,8 @@
     "publicListing": "Listar no diretório público",
     "publicListingDes": "Mostrar este compartilhamento na página Descobrir, visível para qualquer pessoa, inclusive visitantes anônimos. Indisponível para compartilhamentos protegidos por senha.",
     "hideReadme": "Ocultar arquivo readme",
-    "hideReadmeDes": "Mantenha o arquivo README fora da lista do compartilhamento. Visitantes ainda veem o readme renderizado."
+    "hideReadmeDes": "Mantenha o arquivo README fora da lista do compartilhamento. Visitantes ainda veem o readme renderizado.",
+    "dontAskAgain": "Não perguntar novamente"
   },
   "uploader": {
     "fileCopyName": "Cópia de ",
@@ -1054,7 +1055,7 @@
     "compressFilesDes": "Criar arquivo para espaço de trabalho temporário.",
     "uploadArchiveFileDes": "Transferir arquivo comprimido para a pasta de destino.",
     "uploadWorker": "Worker de envio #{{num}}",
-    "relocatedEntities": "Entidades realocadas",
+    "relocatedEntities": "Itens realocados",
     "queueToStart": "Fila para iniciar",
     "indexingFiles": "Indexar arquivos",
     "indexingFilesDes": "Indexar arquivos a serem realocados, bloqueá-los.",
@@ -1239,7 +1240,11 @@
     "backup2FACodes": "Códigos de recuperação",
     "backupCodesDes": "Códigos de recuperação permitem entrar quando seu autenticador está indisponível. Gerar um novo lote invalida todos os códigos anteriores.",
     "backupCodesWarning": "Salve estes códigos agora. Cada um pode ser usado uma vez e não serão mostrados novamente.",
-    "copyCodes": "Copiar códigos"
+    "copyCodes": "Copiar códigos",
+    "archiveDownloadMethod": "Método de download em lote",
+    "archiveDownloadMethodDes": "Como pastas e seleções de vários arquivos são baixadas. Escolha «Perguntar sempre» para decidir a cada download.",
+    "archiveDownloadAsk": "Perguntar sempre",
+    "downloadDesktopApp": "Baixar para Windows"
   },
   "vas": {
     "points": "Pontos",
@@ -1405,13 +1410,16 @@
     "permanent": "Permanente",
     "noProducts": "Nenhum produto disponível",
     "buyWithPoints": "Comprar por {{points}} pts",
-    "pointsUnavailable": "Não comprável com pontos"
+    "pointsUnavailable": "Não comprável com pontos",
+    "noProductsDescription": "Quando o operador adicionar assinaturas ou pacotes, eles aparecerão aqui."
   },
   "announcement": {
     "title": "Anúncio",
     "dontShowAgain": "Não mostrar novamente"
   },
   "discover": {
-    "searchPlaceholder": "Pesquisar compartilhamentos públicos"
+    "searchPlaceholder": "Pesquisar compartilhamentos públicos",
+    "empty": "Nenhum compartilhamento público ainda",
+    "emptyDescription": "Compartilhamentos aparecem aqui quando seus donos os listam no diretório público."
   }
 }

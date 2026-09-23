@@ -107,11 +107,7 @@
     "shareLinks": "Share links",
     "totalBlobs": "Blobs",
     "homepage": "Homepage",
-    "github": "GitHub",
     "documents": "Documents",
-    "discordCommunity": "Discord community",
-    "telegram": "Telegram group",
-    "forum": "GitHub Discussions",
     "buyPro": "Upgrade to Pro",
     "publishedAt": "published at <0></0>",
     "licenseExpireAt": "License expiration date",
@@ -125,7 +121,13 @@
     "iosVol": "iOS client volume license (VOL)",
     "refreshSuccessfully": "Refreshed successfully.",
     "manualRefresh": "Manually refresh offline license",
-    "manualRefreshDes": "Failed to refresh offline license automatically, please try to log in to the <0>License Management Dashboard</0> to get the latest offline license and paste it below."
+    "manualRefreshDes": "Failed to refresh offline license automatically, please try to log in to the <0>License Management Dashboard</0> to get the latest offline license and paste it below.",
+    "issues": "Issue tracker",
+    "releases": "Releases",
+    "aboutFork": "Community fork",
+    "aboutForkDes": "This instance runs a community-maintained fork of Cloudreve focused on the Windows desktop client and Explorer integration. Found a bug or have an idea? Reports and contributions of any kind are welcome.",
+    "reportIssue": "Report an issue",
+    "roadmap": "Roadmap"
   },
   "queue": {
     "queueName_io_intense": "IO Intensive",
@@ -1612,7 +1614,8 @@
     "deletedState": "Deleted state",
     "liveOnly": "Live files only",
     "trashOnly": "Trash only",
-    "selectUser": "Select user"
+    "selectUser": "Select user",
+    "pleaseSelectUser": "Please select a user"
   },
   "entity": {
     "refenenceCount": "Reference count",
@@ -1747,7 +1750,9 @@
     "finished": "Finished",
     "canceled": "Canceled/Stopped",
     "unknown": "Unknown",
-    "errorMsg": "Error message"
+    "errorMsg": "Error message",
+    "allTaskStatuses": "All statuses",
+    "allTaskTypes": "All types"
   },
   "payment": {
     "tradeNo": "Trade No.",
@@ -1790,7 +1795,6 @@
     "confirmDelete": "Are you sure you want to delete these orders?",
     "vas": "VAS",
     "reports": "Reports",
-    "orders": "Payments",
     "initialFiles": "Initial files",
     "initialFilesDes": "Specify the files that the user initially owns after signups. Enter a file ID to search existing files.",
     "filterEmailProvider": "Filter email provider",

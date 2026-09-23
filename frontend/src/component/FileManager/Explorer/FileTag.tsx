@@ -5,7 +5,9 @@ import { Metadata } from "../../../api/explorer.ts";
 import { searchMetadata } from "../../../redux/thunks/filemanager.ts";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 
-export const TagChip = styled(Chip)<{ defaultStyle?: boolean }>(({ defaultStyle }) => {
+export const TagChip = styled(Chip, {
+  shouldForwardProp: (prop) => prop !== "defaultStyle",
+})<{ defaultStyle?: boolean }>(({ defaultStyle }) => {
   const base = {
     "& .MuiChip-deleteIcon": {},
   };

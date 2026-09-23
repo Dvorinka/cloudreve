@@ -23,7 +23,9 @@ const ThumbSquare = styled(Box)(({ theme }) => ({
   cursor: "pointer",
 }));
 
-const ThumbSquareImg = styled("img")<{ loaded: boolean }>(({ theme, loaded }) => ({
+const ThumbSquareImg = styled("img", {
+  shouldForwardProp: (prop) => prop !== "loaded",
+})<{ loaded: boolean }>(({ theme, loaded }) => ({
   display: "block",
   objectFit: "cover",
   width: "100%",

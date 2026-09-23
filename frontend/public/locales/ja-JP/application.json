@@ -708,7 +708,8 @@
     "publicListingDes": "この共有を発見ページに表示し、匿名の訪問者を含む誰でも閲覧できます。パスワード保護の共有では使用できません。",
     "hideReadme": "readmeファイルを非表示",
     "hideReadmeDes": "READMEファイル自体を共有一覧から外します。訪問者にはレンダリングされたreadmeが引き続き表示されます。",
-    "shareTargetsCount_one": "{{count}} 件の対象"
+    "shareTargetsCount_one": "{{count}} 件の対象",
+    "dontAskAgain": "今後は確認しない"
   },
   "uploader": {
     "fileCopyName": "コピー_",
@@ -1167,7 +1168,12 @@
     "backupCodesDes": "リカバリーコードは認証アプリが使えない時にログインできます。新規生成すると以前のコードはすべて無効になります。",
     "backupCodesWarning": "今すぐこれらのコードを保存してください。各1回のみ使用可能で、再表示されません。",
     "copyCodes": "コードをコピー",
-    "finance": "ファイナンス"
+    "finance": "ファイナンス",
+    "relocatedEntities": "移動済みアイテム",
+    "archiveDownloadMethod": "一括ダウンロード方法",
+    "archiveDownloadMethodDes": "フォルダや複数ファイルのダウンロード方法。「毎回確認」を選ぶとダウンロードごとに選択できます。",
+    "archiveDownloadAsk": "毎回確認",
+    "downloadDesktopApp": "Windows 版をダウンロード"
   },
   "vas": {
     "points": "ポイント",
@@ -1216,13 +1222,16 @@
     "permanent": "永久",
     "noProducts": "商品はありません",
     "buyWithPoints": "{{points}} ポイントで購入",
-    "pointsUnavailable": "ポイントで購入できません"
+    "pointsUnavailable": "ポイントで購入できません",
+    "noProductsDescription": "運営者がメンバーシップやパックを追加すると、ここに表示されます。"
   },
   "announcement": {
     "title": "お知らせ",
     "dontShowAgain": "次回表示しない"
   },
   "discover": {
-    "searchPlaceholder": "公開共有を検索"
+    "searchPlaceholder": "公開共有を検索",
+    "empty": "公開共有はまだありません",
+    "emptyDescription": "所有者が公開ディレクトリに登録した共有がここに表示されます。"
   }
 }

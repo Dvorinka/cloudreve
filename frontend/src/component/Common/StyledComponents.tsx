@@ -73,7 +73,9 @@ export const DenseFilledTextField = styled(FilledTextField)(({ theme }) => ({
   },
 }));
 
-export const NoLabelFilledTextField = styled(FilledTextField)<{ fullSize?: boolean; multiline?: boolean }>(
+export const NoLabelFilledTextField = styled(FilledTextField, {
+  shouldForwardProp: (prop) => prop !== "fullSize",
+})<{ fullSize?: boolean; multiline?: boolean }>(
   ({ theme, fullSize, multiline }) => ({
     "& .MuiInputBase-root": {
       transition: theme.transitions.create(["box-shadow", "border-radius", "background-color"], {

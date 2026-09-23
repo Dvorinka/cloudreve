@@ -107,11 +107,7 @@
     "shareLinks": "Linki udostępniania",
     "totalBlobs": "Bloby",
     "homepage": "Strona główna",
-    "github": "GitHub",
     "documents": "Dokumentacja",
-    "discordCommunity": "Społeczność Discord",
-    "telegram": "Grupa Telegram",
-    "forum": "Dyskusje GitHub",
     "buyPro": "Ulepsz do Pro",
     "publishedAt": "opublikowano <0></0>",
     "licenseExpireAt": "Data wygaśnięcia licencji",
@@ -125,7 +121,13 @@
     "iosVol": "Licencja grupowa klienta iOS (VOL)",
     "refreshSuccessfully": "Odświeżono pomyślnie.",
     "manualRefresh": "Ręcznie odśwież licencję offline",
-    "manualRefreshDes": "Nie udało się automatycznie odświeżyć licencji offline. Spróbuj zalogować się do <0>Panelu Zarządzania Licencjami</0>, aby pobrać najnowszą licencję offline i wkleić ją poniżej."
+    "manualRefreshDes": "Nie udało się automatycznie odświeżyć licencji offline. Spróbuj zalogować się do <0>Panelu Zarządzania Licencjami</0>, aby pobrać najnowszą licencję offline i wkleić ją poniżej.",
+    "issues": "Zgłaszanie problemów",
+    "releases": "Wydania",
+    "aboutFork": "Fork społecznościowy",
+    "aboutForkDes": "Ta instancja działa na utrzymywanym przez społeczność forku Cloudreve, skupionym na kliencie desktopowym Windows i integracji z Eksploratorem. Znalazłeś błąd lub masz pomysł? Zgłoszenia i wszelkie wkłady są mile widziane.",
+    "reportIssue": "Zgłoś problem",
+    "roadmap": "Plan działania"
   },
   "queue": {
     "queueName_io_intense": "Intensywne operacje we/wy",
@@ -1612,7 +1614,8 @@
     "refCountEq": "Równe",
     "deletedState": "Stan usunięcia",
     "liveOnly": "Tylko aktywne pliki",
-    "trashOnly": "Tylko kosz"
+    "trashOnly": "Tylko kosz",
+    "pleaseSelectUser": "Wybierz użytkownika"
   },
   "entity": {
     "refenenceCount": "Liczba odniesień",
@@ -1747,7 +1750,9 @@
     "canceled": "Anulowane/Zatrzymane",
     "unknown": "Nieznane",
     "errorMsg": "Komunikat błędu",
-    "blobAudit": "Audyt blobów w polityce przechowywania #{{policyID}} ({{count}} porzuconych)"
+    "blobAudit": "Audyt blobów w polityce przechowywania #{{policyID}} ({{count}} porzuconych)",
+    "allTaskStatuses": "Wszystkie statusy",
+    "allTaskTypes": "Wszystkie typy"
   },
   "payment": {
     "tradeNo": "Nr transakcji",
@@ -1790,7 +1795,6 @@
     "confirmDelete": "Czy na pewno chcesz usunąć te zamówienia?",
     "vas": "VAS",
     "reports": "Raporty",
-    "orders": "Płatności",
     "initialFiles": "Pliki początkowe",
     "initialFilesDes": "Określ pliki, które użytkownik posiada początkowo po rejestracji. Wpisz ID pliku, aby wyszukać istniejące pliki.",
     "filterEmailProvider": "Filtruj dostawcę e-mail",

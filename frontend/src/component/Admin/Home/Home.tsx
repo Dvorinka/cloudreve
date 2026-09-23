@@ -1,4 +1,3 @@
-import Giscus from "@giscus/react";
 import { GitHub } from "@mui/icons-material";
 import {
   Avatar,
@@ -18,9 +17,7 @@ import {
 } from "@mui/material";
 import { blue, green, red, yellow } from "@mui/material/colors";
 import Grid from "@mui/material/Grid";
-import { useTheme } from "@mui/material/styles";
 import dayjs from "dayjs";
-import i18next from "i18next";
 import { useCallback, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -33,13 +30,11 @@ import { SecondaryButton } from "../../Common/StyledComponents.tsx";
 import TimeBadge from "../../Common/TimeBadge.tsx";
 import Book from "../../Icons/Book.tsx";
 import BoxMultipleFilled from "../../Icons/BoxMultipleFilled.tsx";
-import Discord from "../../Icons/Discord.tsx";
 import DocumentCopyFilled from "../../Icons/DocumentCopyFilled.tsx";
 import HomeIcon from "../../Icons/Home.tsx";
 import OpenFilled from "../../Icons/OpenFilled.tsx";
 import PeopleFilled from "../../Icons/PeopleFilled.tsx";
 import ShareFilled from "../../Icons/ShareFilled.tsx";
-import Telegram from "../../Icons/Telegram.tsx";
 import PageContainer from "../../Pages/PageContainer.tsx";
 import PageHeader from "../../Pages/PageHeader.tsx";
 import SiteUrlWarning from "./SiteUrlWarning.tsx";
@@ -58,7 +53,6 @@ const StyledListItemIcon = styled(ListItemIcon)(() => ({
 
 const Home = () => {
   const { t } = useTranslation("dashboard");
-  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [summary, setSummary] = useState<HomepageSummary | undefined>();
   const [chartLoading, setChartLoading] = useState(false);
@@ -324,7 +318,7 @@ const Home = () => {
               </Box>
               <Divider />
               <List component="nav" aria-label="main mailbox folders" sx={{ mx: 2 }}>
-                <ListItemButton onClick={() => window.open("https://cloudreve.org")}>
+                <ListItemButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve")}>
                   <ListItemIcon>
                     <HomeIcon />
                   </ListItemIcon>
@@ -333,16 +327,7 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve")}>
-                  <ListItemIcon>
-                    <GitHub />
-                  </ListItemIcon>
-                  <ListItemText primary={t("summary.github")} />
-                  <StyledListItemIcon>
-                    <OpenFilled />
-                  </StyledListItemIcon>
-                </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://docs.cloudreve.org/")}>
+                <ListItemButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve#readme")}>
                   <ListItemIcon>
                     <Book />
                   </ListItemIcon>
@@ -351,29 +336,20 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://discord.gg/WTpMFpZT76")}>
-                  <ListItemIcon>
-                    <Discord />
-                  </ListItemIcon>
-                  <ListItemText primary={t("summary.discordCommunity")} />
-                  <StyledListItemIcon>
-                    <OpenFilled />
-                  </StyledListItemIcon>
-                </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://t.me/cloudreve_official")}>
-                  <ListItemIcon>
-                    <Telegram />
-                  </ListItemIcon>
-                  <ListItemText primary={t("summary.telegram")} />
-                  <StyledListItemIcon>
-                    <OpenFilled />
-                  </StyledListItemIcon>
-                </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://github.com/cloudreve/cloudreve/discussions")}>
+                <ListItemButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve/issues")}>
                   <ListItemIcon>
                     <CommentMultiple />
                   </ListItemIcon>
-                  <ListItemText primary={t("summary.forum")} />
+                  <ListItemText primary={t("summary.issues")} />
+                  <StyledListItemIcon>
+                    <OpenFilled />
+                  </StyledListItemIcon>
+                </ListItemButton>
+                <ListItemButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve/releases")}>
+                  <ListItemIcon>
+                    <GitHub />
+                  </ListItemIcon>
+                  <ListItemText primary={t("summary.releases")} />
                   <StyledListItemIcon>
                     <OpenFilled />
                   </StyledListItemIcon>
@@ -386,22 +362,25 @@ const Home = () => {
           <Grid item xs={12} md={7} lg={8}>
             <StyledPaper>
               <Typography variant={"subtitle1"} fontWeight={500}>
-                公告
+                {t("summary.aboutFork")}
               </Typography>
               <Divider sx={{ mb: 2, mt: 1 }} />
-              <Giscus
-                id="comments"
-                repo="cloudreve/cloudreve"
-                repoId="MDEwOlJlcG9zaXRvcnkxMjAxNTYwNzY="
-                mapping={"number"}
-                term={i18next.language == "zh-CN" ? "2170" : "2169"}
-                reactionsEnabled={"1"}
-                emitMetadata={"0"}
-                inputPosition={"bottom"}
-                theme={theme.palette.mode === "dark" ? "dark" : "light"}
-                lang={i18next.language == "zh-CN" ? "zh-CN" : "en"}
-                loading={"lazy"}
-              />
+              <Typography variant={"body2"} color={"text.secondary"} sx={{ mb: 2 }}>
+                {t("summary.aboutForkDes")}
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                <SecondaryButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve/issues")}>
+                  {t("summary.reportIssue")}
+                </SecondaryButton>
+                <SecondaryButton onClick={() => window.open("https://github.com/Dvorinka/cloudreve/releases")}>
+                  {t("summary.releases")}
+                </SecondaryButton>
+                <SecondaryButton
+                  onClick={() => window.open("https://github.com/Dvorinka/cloudreve/blob/master/ROADMAP.md")}
+                >
+                  {t("summary.roadmap")}
+                </SecondaryButton>
+              </Box>
             </StyledPaper>
           </Grid>
         </Grid>

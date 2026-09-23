@@ -709,7 +709,8 @@
     "directLinkWalkDescendants": "جميع الملفات الفرعية",
     "directLinkWalkDescendantsDesc": "التنقل عبر كل المجلدات وإنشاء رابط مباشر لكل ملف بالداخل.",
     "directLinkFolderUrl": "روابط مباشرة للمجلدات",
-    "directLinkFolderUrlDesc": "إنشاء رابط مباشر واحد لكل مجلد محدد ذاته."
+    "directLinkFolderUrlDesc": "إنشاء رابط مباشر واحد لكل مجلد محدد ذاته.",
+    "dontAskAgain": "لا تسأل مرة أخرى"
   },
   "uploader": {
     "fileCopyName": "نسخة من ",
@@ -1166,7 +1167,12 @@
     "backupCodesWarning": "احفظ هذه الرموز الآن. يمكن استخدام كل واحد منها مرة واحدة ولن تظهر مرة أخرى.",
     "copyCodes": "نسخ الرموز",
     "finance": "المالية",
-    "linkedAt": "مرتبط في <0></0>"
+    "linkedAt": "مرتبط في <0></0>",
+    "relocatedEntities": "العناصر المنقولة",
+    "archiveDownloadMethod": "طريقة التنزيل الجماعي",
+    "archiveDownloadMethodDes": "كيفية تنزيل المجلدات والتحديدات المتعددة. اختر «السؤال في كل مرة» للاختيار عند كل تنزيل.",
+    "archiveDownloadAsk": "السؤال في كل مرة",
+    "downloadDesktopApp": "تنزيل لنظام Windows"
   },
   "vas": {
     "points": "النقاط",
@@ -1215,13 +1221,16 @@
     "permanent": "دائم",
     "noProducts": "لا توجد منتجات متاحة",
     "buyWithPoints": "شراء بـ {{points}} نقطة",
-    "pointsUnavailable": "غير قابل للشراء بالنقاط"
+    "pointsUnavailable": "غير قابل للشراء بالنقاط",
+    "noProductsDescription": "عندما يضيف المشرف العضويات أو الحزم، ستظهر هنا."
   },
   "announcement": {
     "title": "إعلان",
     "dontShowAgain": "عدم إظهار هذا مرة أخرى"
   },
   "discover": {
-    "searchPlaceholder": "البحث في المشاركات العامة"
+    "searchPlaceholder": "البحث في المشاركات العامة",
+    "empty": "لا توجد مشاركات عامة بعد",
+    "emptyDescription": "تظهر المشاركات هنا عندما يدرجها مالكوها في الدليل العام."
   }
 }

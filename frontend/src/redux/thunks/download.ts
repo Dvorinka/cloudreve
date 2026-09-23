@@ -11,7 +11,7 @@ import {
   BatchDownloadSecondaryAction,
   BatchDownloadCompleteAction,
 } from "../../component/Common/Snackbar/snackbar.tsx";
-import SessionManager from "../../session";
+import SessionManager, { UserSettings } from "../../session";
 import { getFileLinkedUri } from "../../util";
 import Boolset from "../../util/boolset.ts";
 import { formatLocalTime } from "../../util/datetime.ts";
@@ -27,7 +27,7 @@ import { AppThunk } from "../store.ts";
 import { promiseId, selectOption } from "./dialog.ts";
 import { longRunningTaskWithSnackbar, refreshSingleFileSymbolicLinks, walk, walkAll } from "./file.ts";
 
-enum MultipleDownloadOption {
+export enum MultipleDownloadOption {
   Browser,
   StreamSaver,
   Backend,
@@ -94,12 +94,23 @@ export function downloadMultipleFiles(files: FileResponse[]): AppThunk {
       options.push(MultipleDownloadOption.Backend);
     }
 
+    // A remembered choice (checkbox in the picker or Preferences setting)
+    // skips the prompt when the method is still available.
+    const remembered = SessionManager.get(UserSettings.ArchiveDownloadMethod) as
+      | MultipleDownloadOption
+      | undefined;
     let finalOption = options[0];
-    if (options.length > 1) {
+    if (remembered !== undefined && options.includes(remembered)) {
+      finalOption = remembered;
+    } else if (options.length > 1) {
       try {
-        finalOption = (await dispatch(
-          selectOption(getDownloadSelectOption(options), "fileManager.selectArchiveMethod"),
-        )) as MultipleDownloadOption;
+        const res = await dispatch(
+          selectOption(getDownloadSelectOption(options), "fileManager.selectArchiveMethod", true),
+        );
+        finalOption = res.value as MultipleDownloadOption;
+        if (res.remember) {
+          SessionManager.set(UserSettings.ArchiveDownloadMethod, finalOption);
+        }
       } catch (e) {
         // User cancel selection
         return;

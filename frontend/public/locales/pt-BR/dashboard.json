@@ -107,11 +107,7 @@
     "shareLinks": "Links de compartilhamento",
     "totalBlobs": "Blobs",
     "homepage": "Página inicial",
-    "github": "GitHub",
     "documents": "Documentos",
-    "discordCommunity": "Comunidade Discord",
-    "telegram": "Grupo Telegram",
-    "forum": "GitHub Discussions",
     "buyPro": "Atualizar para Pro",
     "publishedAt": "publicado em <0></0>",
     "licenseExpireAt": "Data de expiração da licença",
@@ -126,7 +122,13 @@
     "refreshSuccessfully": "Atualizado com sucesso.",
     "manualRefresh": "Atualizar licença offline manualmente",
     "manualRefreshDes": "Falha ao atualizar a licença offline automaticamente, tente fazer login no <0>Dashboard de Gerenciamento de Licença</0> para obter a licença offline mais recente e cole-a abaixo.",
-    "announcement": "Anúncio"
+    "announcement": "Anúncio",
+    "issues": "Rastreamento de problemas",
+    "releases": "Versões",
+    "aboutFork": "Fork da comunidade",
+    "aboutForkDes": "Esta instância executa um fork do Cloudreve mantido pela comunidade, focado no cliente de desktop Windows e na integração com o Explorador de Arquivos. Encontrou um bug ou tem uma ideia? Relatos e contribuições de qualquer tipo são bem-vindos.",
+    "reportIssue": "Relatar um problema",
+    "roadmap": "Roadmap"
   },
   "queue": {
     "queueName_io_intense": "IO Intensivo",
@@ -1614,7 +1616,8 @@
     "refCountEq": "Igual a",
     "deletedState": "Estado de exclusão",
     "liveOnly": "Apenas arquivos ativos",
-    "trashOnly": "Apenas lixeira"
+    "trashOnly": "Apenas lixeira",
+    "pleaseSelectUser": "Selecione um usuário"
   },
   "entity": {
     "refenenceCount": "Contagem de referência",
@@ -1749,7 +1752,9 @@
     "canceled": "Cancelado/Parado",
     "unknown": "Desconhecido",
     "errorMsg": "Mensagem de erro",
-    "blobAudit": "Auditar blobs na política de armazenamento #{{policyID}} ({{count}} órfãos)"
+    "blobAudit": "Auditar blobs na política de armazenamento #{{policyID}} ({{count}} órfãos)",
+    "allTaskStatuses": "Todos os status",
+    "allTaskTypes": "Todos os tipos"
   },
   "payment": {
     "tradeNo": "Nº do Comércio",
@@ -1792,7 +1797,6 @@
     "confirmDelete": "Tem certeza de que deseja excluir estes pedidos?",
     "vas": "VAS",
     "reports": "Relatórios",
-    "orders": "Pagamentos",
     "initialFiles": "Arquivos iniciais",
     "initialFilesDes": "Especifique os arquivos que o usuário possui inicialmente após as inscrições. Digite um ID de arquivo para pesquisar arquivos existentes.",
     "filterEmailProvider": "Filtrar provedor de email",

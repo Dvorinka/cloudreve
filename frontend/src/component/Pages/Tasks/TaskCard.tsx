@@ -69,7 +69,9 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 export const getProgressColor = (theme: Theme) =>
   theme.palette.mode === "dark" ? darken(theme.palette.primary.main, 0.4) : lighten(theme.palette.primary.main, 0.85);
 
-export const SummaryButton = styled(DefaultButton)<{
+export const SummaryButton = styled(DefaultButton, {
+  shouldForwardProp: (prop) => prop !== "expanded" && prop !== "percentage",
+})<{
   expanded: boolean;
   percentage?: number;
 }>(({ theme, expanded, percentage }) => {

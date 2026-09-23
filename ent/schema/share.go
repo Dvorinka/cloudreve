@@ -39,6 +39,13 @@ func (Share) Fields() []ent.Field {
 		// password-protected shares; enforced at the service layer.
 		field.Bool("listed_publicly").
 			Default(false),
+		// Owner-defined custom link slug, used instead of the hashid in
+		// share URLs. Lowercased, unique; resolution prefers the slug and
+		// falls back to hashid decode.
+		field.String("slug").
+			Optional().
+			Unique().
+			MaxLen(64),
 		field.JSON("props", &types.ShareProps{}).Optional(),
 	}
 }

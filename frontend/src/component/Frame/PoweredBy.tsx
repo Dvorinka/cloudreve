@@ -11,7 +11,7 @@ const PoweredBy = ({ ...rest }: PoweredByProps) => {
       <Box
         component="a"
         marginBottom={2}
-        href="https://cloudreve.org"
+        href="https://github.com/Dvorinka/cloudreve"
         target="_blank"
         sx={{
           width: "100%",

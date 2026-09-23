@@ -164,6 +164,16 @@ jobs before merge.
 
 Known limitations and the full plan: [ROADMAP.md](ROADMAP.md) · issue tracker has honest per-issue status.
 
+## Contributing
+
+This project is community-maintained and contributions are genuinely welcome — code, translations,
+bug reports, ideas, documentation, testing, anything. If something is broken or missing,
+[open an issue](https://github.com/Dvorinka/cloudreve/issues) — every report gets looked at.
+If you want to fix it yourself, open a PR against `master`; CI must pass before merge.
+
+This project only moves forward because people care enough to use it and report what they find.
+Thank you for being part of that.
+
 ## Security
 
 Report vulnerabilities privately via GitHub's "Report a vulnerability" on this repo — do not open a

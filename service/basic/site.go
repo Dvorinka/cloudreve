@@ -106,6 +106,10 @@ type SiteConfig struct {
 	AppPromotion        bool `json:"app_promotion,omitempty"`
 	DesktopAppPromotion bool `json:"desktop_app_promotion,omitempty"`
 
+	// ShopNav tells clients whether to show the Shop sidebar entry. No
+	// omitempty: the default is visible, so an explicit false must serialize.
+	ShopNav bool `json:"shop_nav"`
+
 	//EmailActive          bool      `json:"emailActive"`
 	//QQLogin              bool      `json:"QQLogin"`
 	//ScoreEnabled         bool      `json:"score_enabled"`
@@ -275,6 +279,7 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 		CapSiteKey:                 capCaptcha.SiteKey,
 		CapAssetServer:             capCaptcha.AssetServer,
 		AppPromotion:               appSetting.Promotion,
+		ShopNav:                    settings.ShopNavEnabled(c),
 		CustomNavItems:             customNavItems,
 		CustomHTML:                 customHTML,
 		ShareDefaultPrivate:        shareDefaults.PrivateByDefault,

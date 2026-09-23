@@ -342,6 +342,8 @@ type Share struct {
 	IsPrivate      bool   `json:"is_private,omitempty"`
 	Password       string `json:"password,omitempty"`
 	ListedPublicly bool   `json:"listed_publicly,omitempty"`
+	// Slug is the owner-defined custom link name, if set.
+	Slug           string `json:"slug,omitempty"`
 	ShareView      bool   `json:"share_view,omitempty"`
 	AllowUpload    bool   `json:"allow_upload,omitempty"`
 	AllowEdit      bool   `json:"allow_edit,omitempty"`
@@ -410,6 +412,7 @@ func BuildShare(ctx context.Context, s *ent.Share, base *url.URL, hasher hashid.
 	if requester.ID == owner.ID {
 		res.IsPrivate = s.Password != ""
 		res.ListedPublicly = s.ListedPublicly
+		res.Slug = s.Slug
 		res.ShareView = s.Props != nil && s.Props.ShareView
 		if s.Props != nil {
 			res.AllowUpload = s.Props.AllowUpload
@@ -541,7 +544,11 @@ func BuildEntity(ctx context.Context, extendedInfo *fs.FileExtendedInfo, e fs.En
 }
 
 func BuildShareLink(s *ent.Share, hasher hashid.Encoder, base *url.URL, unlocked bool) string {
-	shareId := hashid.EncodeShareID(hasher, s.ID)
+	// Owner-defined slugs replace the generated hashid in share URLs.
+	shareId := s.Slug
+	if shareId == "" {
+		shareId = hashid.EncodeShareID(hasher, s.ID)
+	}
 	if unlocked {
 		return routes.MasterShareUrl(base, shareId, s.Password).String()
 	}

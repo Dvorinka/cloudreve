@@ -1002,13 +1002,13 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 			share.POST(":id",
 				middleware.LoginRequired(),
 				middleware.RequiredScopes(types.ScopeSharesWrite),
-				middleware.HashID(hashid.ShareID),
+				middleware.ShareHashID(),
 				controllers.FromJSON[sharesvc.ShareCreateService](sharesvc.ShareCreateParamCtx{}),
 				controllers.EditShare,
 			)
 			// Get share link info
 			share.GET("info/:id",
-				middleware.HashID(hashid.ShareID),
+				middleware.ShareHashID(),
 				controllers.FromQuery[sharesvc.ShareInfoService](sharesvc.ShareInfoParamCtx{}),
 				controllers.GetShare,
 			)
@@ -1021,7 +1021,7 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 			// Purchase a paid share with credits
 			share.POST("purchase/:id",
 				middleware.LoginRequired(),
-				middleware.HashID(hashid.ShareID),
+				middleware.ShareHashID(),
 				controllers.PurchaseShare,
 			)
 			// List my shares
@@ -1034,7 +1034,7 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 			share.DELETE(":id",
 				middleware.LoginRequired(),
 				middleware.RequiredScopes(types.ScopeSharesWrite),
-				middleware.HashID(hashid.ShareID),
+				middleware.ShareHashID(),
 				controllers.DeleteShare,
 			)
 			share.DELETE("",

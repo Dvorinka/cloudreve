@@ -33,7 +33,9 @@ import { FileManagerIndex } from "../FileManager.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 import ShareInfoPopover from "./ShareInfoPopover.tsx";
 
-export const BreadcrumbButtonBase = styled(Button)<{ isDropOver?: boolean }>(({ theme, isDropOver }) => ({
+export const BreadcrumbButtonBase = styled(Button, {
+  shouldForwardProp: (prop) => prop !== "isDropOver",
+})<{ isDropOver?: boolean }>(({ theme, isDropOver }) => ({
   color: theme.palette.text.secondary,
   transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important",
   transitionProperty: "background-color,opacity,box-shadow",

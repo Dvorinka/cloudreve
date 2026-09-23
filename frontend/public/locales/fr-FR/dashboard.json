@@ -107,11 +107,7 @@
     "shareLinks": "Liens de partage",
     "totalBlobs": "Blobs",
     "homepage": "Page d'accueil",
-    "github": "GitHub",
     "documents": "Documents",
-    "discordCommunity": "Communauté Discord",
-    "telegram": "Groupe Telegram",
-    "forum": "Discussions GitHub",
     "buyPro": "Passer à Pro",
     "publishedAt": "publié le <0></0>",
     "licenseExpireAt": "Date d'expiration de la licence",
@@ -126,7 +122,13 @@
     "refreshSuccessfully": "Actualisé avec succès.",
     "manualRefresh": "Actualiser manuellement la licence hors ligne",
     "manualRefreshDes": "Échec de l'actualisation automatique de la licence hors ligne, veuillez essayer de vous connecter au <0>Tableau de bord de gestion des licences</0> pour obtenir la dernière licence hors ligne et la coller ci-dessous.",
-    "announcement": "Annonce"
+    "announcement": "Annonce",
+    "issues": "Suivi des problèmes",
+    "releases": "Versions",
+    "aboutFork": "Fork communautaire",
+    "aboutForkDes": "Cette instance utilise un fork de Cloudreve maintenu par la communauté, axé sur le client de bureau Windows et l'intégration à l'Explorateur. Un bug ou une idée ? Les rapports et contributions de toute sorte sont les bienvenus.",
+    "reportIssue": "Signaler un problème",
+    "roadmap": "Feuille de route"
   },
   "queue": {
     "queueName_io_intense": "IO Intensif",
@@ -1614,7 +1616,8 @@
     "refCountEq": "Égal à",
     "deletedState": "État supprimé",
     "liveOnly": "Fichiers actifs uniquement",
-    "trashOnly": "Corbeille uniquement"
+    "trashOnly": "Corbeille uniquement",
+    "pleaseSelectUser": "Veuillez sélectionner un utilisateur"
   },
   "entity": {
     "refenenceCount": "Nombre de références",
@@ -1749,7 +1752,9 @@
     "canceled": "Annulé/Arrêté",
     "unknown": "Inconnu",
     "errorMsg": "Message d'erreur",
-    "blobAudit": "Auditer les blobs sur la politique de stockage #{{policyID}} ({{count}} orphelins)"
+    "blobAudit": "Auditer les blobs sur la politique de stockage #{{policyID}} ({{count}} orphelins)",
+    "allTaskStatuses": "Tous les statuts",
+    "allTaskTypes": "Tous les types"
   },
   "payment": {
     "tradeNo": "N° de transaction",
@@ -1792,7 +1797,6 @@
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer ces commandes ?",
     "vas": "VAS",
     "reports": "Rapports",
-    "orders": "Paiements",
     "initialFiles": "Fichiers initiaux",
     "initialFilesDes": "Spécifiez les fichiers que l'utilisateur possède initialement après l'inscription. Entrez un ID de fichier pour rechercher les fichiers existants.",
     "filterEmailProvider": "Filtrer le fournisseur d'email",

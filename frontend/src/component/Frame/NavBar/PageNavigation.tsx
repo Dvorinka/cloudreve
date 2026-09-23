@@ -25,8 +25,6 @@ import FolderOutlined from "../../Icons/FolderOutlined.tsx";
 import Globe from "../../Icons/Globe.tsx";
 import GlobeFilled from "../../Icons/GlobeFilled.tsx";
 import HomeOutlined from "../../Icons/HomeOutlined.tsx";
-import Payment from "../../Icons/Payment.tsx";
-import PaymentFilled from "../../Icons/PaymentFilled.tsx";
 import People from "../../Icons/People.tsx";
 import PeopleFilled from "../../Icons/PeopleFilled.tsx";
 import Person from "../../Icons/Person.tsx";
@@ -214,12 +212,6 @@ AdminNavigationItems = [
     permission: GroupPermission.admin_queue,
   },
   {
-    label: "dashboard:vas.orders",
-    icon: [PaymentFilled, Payment],
-    path: "/admin/payment",
-    permission: GroupPermission.admin_payment,
-  },
-  {
     label: "dashboard:nav.events",
     icon: [SendLoggingFilled, SendLogging],
     path: "/admin/event",
@@ -267,6 +259,7 @@ export const AdminPageNavigation = memo(() => {
 
 const PageNavigation = () => {
   const appPromotionEnabled = useAppSelector((state) => state.siteConfig.basic.config.app_promotion);
+  const shopNavEnabled = useAppSelector((state) => state.siteConfig.basic.config.shop_nav !== false);
   const user = SessionManager.currentLoginOrNull();
   const isAdmin = useMemo(() => {
     return isAnyAdmin(GroupBS(user?.user));
@@ -292,7 +285,7 @@ const PageNavigation = () => {
             {connectEnabled && <SideNavItemComponent item={ConnectNavigationItem} />}
             <SideNavItemComponent item={TaskNavigationItem} />
             {remoteDownloadEnabled && <SideNavItemComponent item={RemoteDownloadNavigationItem} />}
-            <SideNavItemComponent item={ShopNavigationItem} />
+            {shopNavEnabled && <SideNavItemComponent item={ShopNavigationItem} />}
           </>
         </Box>
       )}

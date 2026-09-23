@@ -28,6 +28,9 @@ i18n
       backendOptions: [
         {
           expirationTime: 7 * 24 * 60 * 60 * 1000, // 7 days
+          // Bust the localStorage cache on each release so newly added keys
+          // are not hidden behind a stale cached bundle.
+          defaultVersion: __ASSETS_VERSION__,
           loadPath: "/locales/{{lng}}/{{ns}}.json",
         },
       ],

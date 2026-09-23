@@ -407,6 +407,7 @@ func (l *manager) CreateOrUpdateShare(ctx context.Context, paths []*fs.URI, args
 		Props:           props,
 		PricePoints:     args.PricePoints,
 		ListedPublicly:  args.ListedPublicly && password == "",
+		Slug:            args.Slug,
 	})
 
 	if err != nil {

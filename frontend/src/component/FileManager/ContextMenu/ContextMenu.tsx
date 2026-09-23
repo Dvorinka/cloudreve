@@ -1,5 +1,5 @@
 import { Box, Divider, ListItemIcon, ListItemText, Menu, MenuItem, styled, Typography, useTheme } from "@mui/material";
-import { useCallback, useEffect, useMemo } from "react";
+import { Fragment, useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { closeContextMenu } from "../../../redux/fileManagerSlice.ts";
 import { CreateNewDialogType } from "../../../redux/globalStateSlice.ts";
@@ -61,7 +61,9 @@ export const SquareMenu = styled(Menu)(() => ({
   },
 }));
 
-export const SquareMenuItem = styled(MenuItem)<{ hoverColor?: string }>(({ theme, hoverColor }) => ({
+export const SquareMenuItem = styled(MenuItem, {
+  shouldForwardProp: (prop) => prop !== "hoverColor",
+})<{ hoverColor?: string }>(({ theme, hoverColor }) => ({
   "&:hover .MuiListItemIcon-root": {
     color: hoverColor ?? theme.palette.primary.main,
   },
@@ -421,10 +423,10 @@ const ContextMenu = ({ fmIndex = 0 }: ContextMenuProps) => {
       }}
     >
       {allParts.map((part, index) => (
-        <>
+        <Fragment key={index}>
           {part}
           {index < allParts.length - 1 && <DenseDivider />}
-        </>
+        </Fragment>
       ))}
       {allParts.length == 0 && <EmptyMenu />}
     </SquareMenu>

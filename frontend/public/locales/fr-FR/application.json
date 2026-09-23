@@ -760,7 +760,8 @@
     "publicListing": "Lister dans le répertoire public",
     "publicListingDes": "Afficher ce partage sur la page Découvrir, visible par tous, y compris les visiteurs anonymes. Non disponible pour les partages protégés par mot de passe.",
     "hideReadme": "Masquer le fichier readme",
-    "hideReadmeDes": "Garder le fichier README hors de la liste du partage. Les visiteurs voient toujours le readme rendu."
+    "hideReadmeDes": "Garder le fichier README hors de la liste du partage. Les visiteurs voient toujours le readme rendu.",
+    "dontAskAgain": "Ne plus demander"
   },
   "uploader": {
     "fileCopyName": "Copie de ",
@@ -1054,7 +1055,7 @@
     "compressFilesDes": "Créer une archive vers l'espace de travail temporaire.",
     "uploadArchiveFileDes": "Transférer le fichier d'archive vers le dossier cible.",
     "uploadWorker": "Worker de téléchargement #{{num}}",
-    "relocatedEntities": "Entités relocalisées",
+    "relocatedEntities": "Éléments déplacés",
     "queueToStart": "File d'attente pour démarrer",
     "indexingFiles": "Indexer les fichiers",
     "indexingFilesDes": "Indexer les fichiers à relocaliser, les verrouiller.",
@@ -1239,7 +1240,11 @@
     "backup2FACodes": "Codes de récupération",
     "backupCodesDes": "Les codes de récupération vous permettent de vous connecter lorsque votre authentificateur est indisponible. La génération d'une nouvelle série invalide tous les codes précédents.",
     "backupCodesWarning": "Enregistrez ces codes maintenant. Chacun ne peut être utilisé qu'une fois et ils ne seront plus affichés.",
-    "copyCodes": "Copier les codes"
+    "copyCodes": "Copier les codes",
+    "archiveDownloadMethod": "Méthode de téléchargement groupé",
+    "archiveDownloadMethodDes": "Méthode utilisée pour télécharger les dossiers et sélections multiples. Choisissez « Demander à chaque fois » pour décider à chaque téléchargement.",
+    "archiveDownloadAsk": "Demander à chaque fois",
+    "downloadDesktopApp": "Télécharger pour Windows"
   },
   "vas": {
     "points": "Points",
@@ -1405,13 +1410,16 @@
     "permanent": "Permanent",
     "noProducts": "Aucun produit disponible",
     "buyWithPoints": "Acheter pour {{points}} pts",
-    "pointsUnavailable": "Non achetable avec des points"
+    "pointsUnavailable": "Non achetable avec des points",
+    "noProductsDescription": "Lorsque l'opérateur ajoute des abonnements ou des packs, ils apparaîtront ici."
   },
   "announcement": {
     "title": "Annonce",
     "dontShowAgain": "Ne plus afficher"
   },
   "discover": {
-    "searchPlaceholder": "Rechercher des partages publics"
+    "searchPlaceholder": "Rechercher des partages publics",
+    "empty": "Aucun partage public pour le moment",
+    "emptyDescription": "Les partages apparaissent ici lorsque leurs propriétaires les publient dans le répertoire public."
   }
 }

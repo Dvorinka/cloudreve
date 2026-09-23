@@ -41,6 +41,32 @@ func HashID(IDType int) gin.HandlerFunc {
 	}
 }
 
+// ShareHashID resolves the :id param as a share hashid, falling back to an
+// owner-defined slug. Resolution sets the same ObjectIDCtx as HashID so
+// downstream services need no changes.
+func ShareHashID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		dep := dependency.FromContext(c)
+		raw := c.Param("id")
+		if raw == "" {
+			c.Next()
+			return
+		}
+		if id, err := dep.HashIDEncoder().Decode(raw, hashid.ShareID); err == nil {
+			util.WithValue(c, hashid.ObjectIDCtx{}, id)
+			c.Next()
+			return
+		}
+		if s, err := dep.ShareClient().GetBySlug(c, raw); err == nil {
+			util.WithValue(c, hashid.ObjectIDCtx{}, s.ID)
+			c.Next()
+			return
+		}
+		c.JSON(200, serializer.ParamErr(c, "Failed to parse object ID", nil))
+		c.Abort()
+	}
+}
+
 // IsFunctionEnabled 当功能未开启时阻止访问
 func IsFunctionEnabled(check func(c *gin.Context) bool) gin.HandlerFunc {
 	return func(c *gin.Context) {

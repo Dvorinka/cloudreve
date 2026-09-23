@@ -708,7 +708,8 @@
     "publicListing": "收錄到公開目錄",
     "publicListingDes": "將此分享顯示在“發現”頁，任何人（包括未登入訪客）可見。帶密碼的分享不可用。",
     "hideReadme": "隱藏 README 檔案",
-    "hideReadmeDes": "在分享檔案列表中隱藏 README 檔案本身，訪客仍可看到渲染後的說明內容。"
+    "hideReadmeDes": "在分享檔案列表中隱藏 README 檔案本身，訪客仍可看到渲染後的說明內容。",
+    "dontAskAgain": "不再詢問"
   },
   "uploader": {
     "fileCopyName": "副本_",
@@ -1165,7 +1166,12 @@
     "backup2FACodes": "備用恢復程式碼",
     "backupCodesDes": "當驗證器不可用時，可使用備用恢復程式碼登入。重新生成將使所有舊程式碼失效。",
     "backupCodesWarning": "請立即儲存這些程式碼。每個程式碼僅可使用一次，且不會再次顯示。",
-    "copyCodes": "複製程式碼"
+    "copyCodes": "複製程式碼",
+    "relocatedEntities": "已遷移項目",
+    "archiveDownloadMethod": "批量下載方式",
+    "archiveDownloadMethodDes": "下載資料夾或多選檔案時使用的方式。選擇「每次詢問」可在每次下載時手動選擇。",
+    "archiveDownloadAsk": "每次詢問",
+    "downloadDesktopApp": "下載 Windows 客戶端"
   },
   "vas": {
     "points": "積分",
@@ -1214,13 +1220,16 @@
     "permanent": "永久",
     "noProducts": "暫無商品",
     "buyWithPoints": "{{points}} 積分購買",
-    "pointsUnavailable": "不支援積分購買"
+    "pointsUnavailable": "不支援積分購買",
+    "noProductsDescription": "當站點管理員新增會員或套餐後，商品會顯示在這裡。"
   },
   "announcement": {
     "title": "公告",
     "dontShowAgain": "不再顯示"
   },
   "discover": {
-    "searchPlaceholder": "搜尋公開分享"
+    "searchPlaceholder": "搜尋公開分享",
+    "empty": "尚無公開分享",
+    "emptyDescription": "當分享擁有者將其列入公開目錄時，分享會顯示在這裡。"
   }
 }

@@ -134,6 +134,9 @@ type (
 		// ListedPublicly includes the share in the public share directory.
 		// Normalized to false for password-protected shares at creation.
 		ListedPublicly bool
+		// Slug is the owner-defined custom link name. nil = unchanged;
+		// "" clears; other values set it. Validated in the service layer.
+		Slug *string
 	}
 
 	FullTextSearchResults struct {

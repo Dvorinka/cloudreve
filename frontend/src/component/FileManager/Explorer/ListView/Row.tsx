@@ -8,7 +8,14 @@ import { FileBlockProps } from "../Explorer.tsx";
 import { useFileBlockState } from "../GridView/GridFile.tsx";
 import Cell from "./Cell.tsx";
 
-const RowContainer = styled(Box)<{
+const RowContainer = styled(Box, {
+  shouldForwardProp: (prop) =>
+    prop !== "selected" &&
+    prop !== "transparent" &&
+    prop !== "isDropOver" &&
+    prop !== "disabled" &&
+    prop !== "taller",
+})<{
   selected: boolean;
   transparent?: boolean;
   isDropOver?: boolean;
@@ -38,7 +45,9 @@ const RowContainer = styled(Box)<{
   };
 });
 
-const Column = styled(Box)<{ w: number }>(({ theme, w }) => ({
+const Column = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "w",
+})<{ w: number }>(({ theme, w }) => ({
   display: "flex",
   alignItems: "center",
   width: `${w}px`,

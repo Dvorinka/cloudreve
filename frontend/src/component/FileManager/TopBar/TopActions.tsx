@@ -21,7 +21,7 @@ export const ActionButton = styled(Button)(({ theme }) => ({
 export const ActionButtonGroup = styled(ButtonGroup)(({ theme }) => ({
   "& .MuiButtonGroup-firstButton, .MuiButtonGroup-middleButton, .MuiButtonGroup-lastButton": {
     "&:hover": {
-      "border-color": theme.palette.primary.main,
+      borderColor: theme.palette.primary.main,
     },
   },
   height: "100%",

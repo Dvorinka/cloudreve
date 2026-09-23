@@ -142,7 +142,12 @@ const Discover = () => {
 
         {nextPageToken == undefined && shares.length == 0 && !loading && (
           <Box sx={{ p: 1, width: "100%", textAlign: "center" }}>
-            <Nothing size={0.8} top={63} primary={t("setting.listEmpty")} />
+            <Nothing
+              size={0.8}
+              top={63}
+              primary={t("application:discover.empty")}
+              secondary={t("application:discover.emptyDescription")}
+            />
           </Box>
         )}
       </Container>

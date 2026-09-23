@@ -106,7 +106,7 @@ const Shop = () => {
           </Grid2>
         )}
         {tab !== ShopPageTab.Redeem && skus !== undefined && filtered.length === 0 && (
-          <Nothing primary={t("shop.noProducts")} />
+          <Nothing primary={t("shop.noProducts")} secondary={t("shop.noProductsDescription")} />
         )}
         {tab !== ShopPageTab.Redeem && skus !== undefined && filtered.length > 0 && (
           <Grid2 container spacing={2} sx={{ pt: 2 }}>

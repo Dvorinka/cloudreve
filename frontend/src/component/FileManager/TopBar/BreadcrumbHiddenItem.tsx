@@ -11,7 +11,9 @@ export interface BreadcrumbHiddenItem extends BreadcrumbButtonProps {
   onClose: () => void;
 }
 
-export const StyledMenuItem = styled(MenuItem)<{ isDropOver?: boolean }>(({ theme, isDropOver }) => ({
+export const StyledMenuItem = styled(MenuItem, {
+  shouldForwardProp: (prop) => prop !== "isDropOver",
+})<{ isDropOver?: boolean }>(({ theme, isDropOver }) => ({
   transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important",
   transitionProperty: "background-color,opacity,box-shadow",
   boxShadow: isDropOver ? `inset 0 0 0 2px ${theme.palette.primary.light}` : "none",

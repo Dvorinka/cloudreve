@@ -15,7 +15,9 @@ const BorderedCard = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
 }));
 
-const BorderedCardClickable = styled(BorderedCard)<{ disabled?: boolean }>(({ theme, disabled }) => ({
+const BorderedCardClickable = styled(BorderedCard, {
+  shouldForwardProp: (prop) => prop !== "disabled",
+})<{ disabled?: boolean }>(({ theme, disabled }) => ({
   cursor: "pointer",
   "&:hover": {
     backgroundColor: theme.palette.action.hover,

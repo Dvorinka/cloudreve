@@ -149,8 +149,13 @@ func renderShareOGPage(c *gin.Context, dep dependency.Dep, id, password string) 
 
 	shareID, err := dep.HashIDEncoder().Decode(id, hashid.ShareID)
 	if err != nil {
-		data.Description = ogStatusInvalidLink
-		return renderOGHTML(data)
+		// Custom slugs resolve to a share the same way the API middleware does.
+		if s, slugErr := dep.ShareClient().GetBySlug(c, id); slugErr == nil {
+			shareID = s.ID
+		} else {
+			data.Description = ogStatusInvalidLink
+			return renderOGHTML(data)
+		}
 	}
 
 	shareInfo, err := loadShareForOG(c, shareID, password)

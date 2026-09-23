@@ -45,7 +45,9 @@ const StyledTreeItemRoot = styled(TreeItem)(() => ({
   },
 })) as unknown as typeof TreeItem;
 
-export const CaretDownIcon = styled(CaretDown)<{ expanded: boolean }>(({ theme, expanded }) => ({
+export const CaretDownIcon = styled(CaretDown, {
+  shouldForwardProp: (prop) => prop !== "expanded",
+})<{ expanded: boolean }>(({ theme, expanded }) => ({
   fontSize: "12px!important",
   transform: `rotate(${expanded ? 0 : -90}deg)`,
   transition: theme.transitions.create("transform", {
@@ -286,12 +288,13 @@ const TreeFile = React.memo(
       const { level, file, notLoaded, fileIcon, loading, pinned, canDrop } = props;
       return { level, file, notLoaded, fileIcon, loading, pinned, canDrop };
     }, [props.level, props.file, props.notLoaded, props.fileIcon, props.loading, props.canDrop, props.pinned]);
+    const { level, file, notLoaded, fileIcon, loading, pinned, canDrop, ...treeItemProps } = props;
     return (
       <StyledTreeItemRoot
         ContentComponent={CustomContent}
         // @ts-ignore
         ContentProps={contentProps}
-        {...props}
+        {...treeItemProps}
         ref={ref}
       />
     );

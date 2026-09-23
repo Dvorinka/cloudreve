@@ -971,6 +971,8 @@ pub struct ShareOptions {
     pub allow_edit: Option<bool>,
     pub allow_upload: Option<bool>,
     pub upload_only: Option<bool>,
+    /// Custom link slug. Absent = unchanged; "" clears; value sets it.
+    pub slug: Option<String>,
 }
 
 /// Create a share link from the share dialog, returning the share URL.
@@ -1002,6 +1004,7 @@ pub async fn create_share(
         allow_edit: options.allow_edit.unwrap_or(false),
         allow_upload: options.allow_upload.unwrap_or(false),
         upload_only: options.upload_only.unwrap_or(false),
+        slug: options.slug,
     };
 
     mount
@@ -1064,6 +1067,7 @@ pub async fn update_share(
         allow_edit: options.allow_edit.unwrap_or(false),
         allow_upload: options.allow_upload.unwrap_or(false),
         upload_only: options.upload_only.unwrap_or(false),
+        slug: options.slug,
     };
 
     mount

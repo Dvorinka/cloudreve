@@ -3,6 +3,8 @@ package share
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/cloudreve/Cloudreve/v4/application/dependency"
@@ -42,6 +44,10 @@ type (
 		// Requires the group's public-listing permission and is rejected on
 		// password-protected shares.
 		ListedPublicly bool `json:"listed_publicly"`
+		// Slug is an optional owner-defined custom link name used in place
+		// of the generated hashid. nil = leave unchanged; "" clears the
+		// slug on update; other values are validated and set.
+		Slug *string `json:"slug" binding:"omitempty,max=64"`
 	}
 	ShareCreateParamCtx struct{}
 
@@ -75,6 +81,38 @@ func (service *BatchDeleteShareService) Delete(c *gin.Context) error {
 		activity.Record(c, dep.SettingProvider(), dep.ActivityClient(), types.EventDeleteShare, activity.Share(id))
 	}
 	return nil
+}
+
+// shareSlugPattern allows URL-safe custom link names; the filecloud-style
+// "modify link" flow writes these via the same create/update endpoints.
+var shareSlugPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$`)
+
+// normalizeSlug validates a requested slug and returns it lowercased. A nil
+// result means "leave unchanged"; "" clears the slug. Slugs that decode as a
+// valid share hashid are rejected so custom links can never shadow a
+// generated link (or vice versa) at resolution time.
+func normalizeSlug(c *gin.Context, dep dependency.Dep, raw *string, existedID int) (*string, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	slug := strings.ToLower(strings.TrimSpace(*raw))
+	if slug == "" {
+		return &slug, nil
+	}
+	if !shareSlugPattern.MatchString(slug) {
+		return nil, serializer.NewError(serializer.CodeParamErr,
+			"Link name must be 3-64 characters: letters, digits, '-' or '_'", nil)
+	}
+	if _, err := dep.HashIDEncoder().Decode(slug, hashid.ShareID); err == nil {
+		return nil, serializer.NewError(serializer.CodeParamErr,
+			"This link name is reserved, please choose another one", nil)
+	}
+	other, err := dep.ShareClient().GetBySlug(c, slug)
+	if err == nil && other.ID != existedID {
+		return nil, serializer.NewError(serializer.CodeParamErr,
+			"This link name is already in use", nil)
+	}
+	return &slug, nil
 }
 
 // Upsert 创建或更新分享
@@ -133,6 +171,11 @@ func (service *ShareCreateService) Upsert(c *gin.Context, existed int) (string, 
 		*expires = time.Now().Add(time.Duration(service.Expire) * time.Second)
 	}
 
+	slug, err := normalizeSlug(c, dep, service.Slug, existed)
+	if err != nil {
+		return "", err
+	}
+
 	share, err := m.CreateOrUpdateShare(c, uris, &manager.CreateShareArgs{
 		IsPrivate:       service.IsPrivate,
 		Password:        service.Password,
@@ -149,6 +192,7 @@ func (service *ShareCreateService) Upsert(c *gin.Context, existed int) (string, 
 		Note:            service.Note,
 		PricePoints:     service.PricePoints,
 		ListedPublicly:  service.ListedPublicly,
+		Slug:            slug,
 	})
 	if err != nil {
 		return "", err

@@ -64,7 +64,9 @@ const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
   paddingTop: "0!important",
 }));
 
-const CaretDownIcon = styled(ExpandMoreRounded)<{ expanded: boolean }>(({ theme, expanded }) => ({
+const CaretDownIcon = styled(ExpandMoreRounded, {
+  shouldForwardProp: (prop) => prop !== "expanded",
+})<{ expanded: boolean }>(({ theme, expanded }) => ({
   transform: `rotate(${expanded ? 0 : 180}deg)`,
   transition: theme.transitions.create("transform", {
     duration: theme.transitions.duration.shortest,

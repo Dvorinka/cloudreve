@@ -155,10 +155,10 @@ const ChangeIcon = () => {
             <Box sx={{ maxHeight: "200px", overflowY: "auto" }}>
               {emojiStrLoaded ? (
                 Object.keys(emojiSetting).map((key, index) => (
-                  <CustomTabPanel value={tabValue} index={index}>
+                  <CustomTabPanel value={tabValue} index={index} key={key}>
                     <SelectorBox>
                       {emojiSetting[key].map((emoji) => (
-                        <EmojiButton onClick={onAccept(emoji)}>{emoji}</EmojiButton>
+                        <EmojiButton key={emoji} onClick={onAccept(emoji)}>{emoji}</EmojiButton>
                       ))}
                     </SelectorBox>
                   </CustomTabPanel>
@@ -166,8 +166,8 @@ const ChangeIcon = () => {
               ) : (
                 <CustomTabPanel value={tabValue} index={0}>
                   <SelectorBox>
-                    {[...Array(50).keys()].map(() => (
-                      <EmojiButton disabled>
+                    {[...Array(50).keys()].map((i) => (
+                      <EmojiButton disabled key={i}>
                         <Skeleton sx={{ minWidth: "20px" }} />
                       </EmojiButton>
                     ))}

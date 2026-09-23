@@ -36,7 +36,10 @@ import { FileBlockProps } from "../Explorer.tsx";
 import UploadingTag from "../UploadingTag.tsx";
 import { useInlineRename } from "../useInlineRename.ts";
 
-const StyledButtonBase = styled(ButtonBase)<{
+const StyledButtonBase = styled(ButtonBase, {
+  shouldForwardProp: (prop) =>
+    prop !== "selected" && prop !== "square" && prop !== "transparent" && prop !== "isDropOver",
+})<{
   selected: boolean;
   square?: boolean;
   transparent?: boolean;
@@ -113,7 +116,9 @@ export const ThumbBoxContainer = styled(Box)(() => ({
   height: "100%",
 }));
 
-export const ThumbBox = styled("img")<{ loaded: boolean }>(({ theme, loaded }) => ({
+export const ThumbBox = styled("img", {
+  shouldForwardProp: (prop) => prop !== "loaded",
+})<{ loaded: boolean }>(({ theme, loaded }) => ({
   objectFit: "cover",
   width: "100%",
   height: "100%",

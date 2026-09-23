@@ -47,6 +47,8 @@ type (
 		ForgotPasswordCaptchaEnabled(ctx context.Context) bool
 		// AbuseCaptchaEnabled returns true if abuse reports require captcha.
 		AbuseCaptchaEnabled(ctx context.Context) bool
+		// ShopNavEnabled returns true if the sidebar should show the Shop entry.
+		ShopNavEnabled(ctx context.Context) bool
 		// CaptchaType returns the type of captcha used.
 		CaptchaType(ctx context.Context) CaptchaType
 		// ReCaptcha returns the Google reCaptcha settings.
@@ -958,6 +960,10 @@ func (s *settingProvider) ForgotPasswordCaptchaEnabled(ctx context.Context) bool
 
 func (s *settingProvider) AbuseCaptchaEnabled(ctx context.Context) bool {
 	return s.getBoolean(ctx, "abuse_captcha", true)
+}
+
+func (s *settingProvider) ShopNavEnabled(ctx context.Context) bool {
+	return s.getBoolean(ctx, "shop_nav", true)
 }
 
 func (s *settingProvider) ShareScoreRate(ctx context.Context) float64 {

@@ -760,7 +760,8 @@
     "publicListingDes": "이 공유를 발견 페이지에 표시하며, 익명 방문자를 포함한 누구나 볼 수 있습니다. 비밀번호 보호 공유에는 사용할 수 없습니다.",
     "hideReadme": "readme 파일 숨기기",
     "hideReadmeDes": "README 파일 자체를 공유 목록에서 제외합니다. 방문자는 렌더링된 readme을 계속 볼 수 있습니다.",
-    "shareTargetsCount_one": "대상 {{count}}개"
+    "shareTargetsCount_one": "대상 {{count}}개",
+    "dontAskAgain": "다시 묻지 않기"
   },
   "uploader": {
     "fileCopyName": "사본_",
@@ -1054,7 +1055,7 @@
     "compressFilesDes": "파일을 임시 작업 공간으로 압축",
     "uploadArchiveFileDes": "압축 파일을 목적지로 전송",
     "uploadWorker": "업로드 스레드 #{{num}}",
-    "relocatedEntities": "전송된 엔티티",
+    "relocatedEntities": "이동된 항목",
     "queueToStart": "시작 대기",
     "indexingFiles": "파일 검색",
     "indexingFilesDes": "모든 전송할 파일을 검색하고 잠금",
@@ -1239,7 +1240,11 @@
     "backup2FACodes": "복구 코드",
     "backupCodesDes": "복구 코드는 인증기를 사용할 수 없을 때 로그인할 수 있게 합니다. 새 묶음을 생성하면 이전 코드는 모두 무효화됩니다.",
     "backupCodesWarning": "지금 이 코드를 저장하세요. 각각 1회만 사용 가능하며 다시 표시되지 않습니다.",
-    "copyCodes": "코드 복사"
+    "copyCodes": "코드 복사",
+    "archiveDownloadMethod": "일괄 다운로드 방법",
+    "archiveDownloadMethodDes": "폴더와 다중 선택 파일의 다운로드 방식입니다. \"매번 확인\"을 선택하면 다운로드할 때마다 선택할 수 있습니다.",
+    "archiveDownloadAsk": "매번 확인",
+    "downloadDesktopApp": "Windows용 다운로드"
   },
   "vas": {
     "points": "포인트",
@@ -1405,13 +1410,16 @@
     "permanent": "영구",
     "noProducts": "이용 가능한 상품이 없습니다",
     "buyWithPoints": "{{points}} 포인트로 구매",
-    "pointsUnavailable": "포인트로 구매할 수 없습니다"
+    "pointsUnavailable": "포인트로 구매할 수 없습니다",
+    "noProductsDescription": "운영자가 멤버십이나 패키지를 추가하면 여기에 표시됩니다."
   },
   "announcement": {
     "title": "공지",
     "dontShowAgain": "다시 표시하지 않기"
   },
   "discover": {
-    "searchPlaceholder": "공개 공유 검색"
+    "searchPlaceholder": "공개 공유 검색",
+    "empty": "공개 공유가 아직 없습니다",
+    "emptyDescription": "소유자가 공개 디렉터리에 등록한 공유가 여기에 표시됩니다."
   }
 }

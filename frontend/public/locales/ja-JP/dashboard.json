@@ -107,11 +107,7 @@
     "shareLinks": "共有リンク",
     "totalBlobs": "ファイルBlob",
     "homepage": "ホーム",
-    "github": "GitHub",
     "documents": "ドキュメント",
-    "discordCommunity": "Discordコミュニティ",
-    "telegram": "Telegramグループ",
-    "forum": "GitHubディスカッション",
     "buyPro": "Pro にアップグレード",
     "publishedAt": "公開日 <0></0>",
     "licenseExpireAt": "ライセンス有効期限",
@@ -125,7 +121,13 @@
     "iosVol": "iOSクライアント一括ライセンス (VOL)",
     "refreshSuccessfully": "更新が成功しました",
     "manualRefresh": "オフラインライセンスを手動で更新",
-    "manualRefreshDes": "オフラインライセンスの自動更新に失敗しました。<0>ライセンス管理パネル</0> にログインして最新のオフラインライセンスを取得し、下記に貼り付けてください。"
+    "manualRefreshDes": "オフラインライセンスの自動更新に失敗しました。<0>ライセンス管理パネル</0> にログインして最新のオフラインライセンスを取得し、下記に貼り付けてください。",
+    "issues": "問題の報告",
+    "releases": "リリース",
+    "aboutFork": "コミュニティフォーク",
+    "aboutForkDes": "このインスタンスは、Windows デスクトップクライアントとエクスプローラー統合に注力した、コミュニティメンテナンスの Cloudreve フォークで動作しています。バグや改善案があれば、報告やあらゆる貢献を歓迎します。",
+    "reportIssue": "問題を報告",
+    "roadmap": "ロードマップ"
   },
   "queue": {
     "queueName_io_intense": "IO集約型",
@@ -1612,7 +1614,8 @@
     "refCountEq": "等しい",
     "deletedState": "削除状態",
     "liveOnly": "現存ファイルのみ",
-    "trashOnly": "ゴミ箱のみ"
+    "trashOnly": "ゴミ箱のみ",
+    "pleaseSelectUser": "ユーザーを選択してください"
   },
   "entity": {
     "refenenceCount": "参照回数",
@@ -1747,7 +1750,9 @@
     "canceled": "キャンセル/停止",
     "unknown": "不明",
     "errorMsg": "エラーメッセージ",
-    "blobAudit": "ストレージポリシー #{{policyID}} のブロブ監査 ({{count}}個の孤立)"
+    "blobAudit": "ストレージポリシー #{{policyID}} のブロブ監査 ({{count}}個の孤立)",
+    "allTaskStatuses": "すべてのステータス",
+    "allTaskTypes": "すべてのタイプ"
   },
   "payment": {
     "tradeNo": "取引番号",
@@ -1790,7 +1795,6 @@
     "confirmDelete": "これらの注文を削除しますか？",
     "vas": "付加価値サービス",
     "reports": "報告",
-    "orders": "注文",
     "initialFiles": "初期ファイル",
     "initialFilesDes": "ユーザー登録後に初期的に保有するファイルです。ファイルIDを入力して、既存のファイルを追加してください。",
     "filterEmailProvider": "登録メールアドレスドメインフィルタリング",

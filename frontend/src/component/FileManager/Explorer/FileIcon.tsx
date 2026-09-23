@@ -21,7 +21,9 @@ interface StyledBadgeProps extends BadgeProps {
   iconVariant?: "default" | "small" | "large" | "largeMobile" | "shareSingle";
 }
 
-const StyledBadge = styled(Badge)<StyledBadgeProps>(({ iconVariant }) => ({
+const StyledBadge = styled(Badge, {
+  shouldForwardProp: (prop) => prop !== "iconVariant",
+})<StyledBadgeProps>(({ iconVariant }) => ({
   "& .MuiBadge-badge": {
     right: 3,
     top: variantTop[iconVariant ?? "default"],

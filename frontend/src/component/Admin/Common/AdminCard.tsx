@@ -15,7 +15,9 @@ export const BorderedCardClickable = styled(BorderedCard)(({ theme }) => ({
   transition: "background-color 0.3s ease",
 }));
 
-export const BorderedCardClickableBaImg = styled(BorderedCardClickable)<{ img?: string }>(({ theme, img }) => ({
+export const BorderedCardClickableBaImg = styled(BorderedCardClickable, {
+  shouldForwardProp: (prop) => prop !== "img",
+})<{ img?: string }>(({ theme, img }) => ({
   position: "relative",
   overflow: "hidden",
   "&::before": {

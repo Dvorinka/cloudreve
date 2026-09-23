@@ -17,7 +17,9 @@ const StorageHeaderContainer = styled("div")(() => ({
   alignItems: "center",
 }));
 
-const BorderLinearProgress = styled(LinearProgress)<{ warning: boolean }>(({ theme, warning }) => ({
+const BorderLinearProgress = styled(LinearProgress, {
+  shouldForwardProp: (prop) => prop !== "warning",
+})<{ warning: boolean }>(({ theme, warning }) => ({
   height: 8,
   borderRadius: 5,
   [`&.${linearProgressClasses.colorPrimary}`]: {
