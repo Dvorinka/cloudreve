@@ -2,8 +2,13 @@ import { Box, ButtonBase, darken, lighten, styled } from "@mui/material";
 import * as React from "react";
 import { NoWrapTypography } from "../../Common/StyledComponents.tsx";
 
-const StyledButtonBase = styled(ButtonBase)<{
+const StyledButtonBase = styled(ButtonBase, {
+  shouldForwardProp: (prop) =>
+    prop !== "active" && prop !== "isDragging" && prop !== "isDropOver",
+})<{
   active?: boolean;
+  isDragging?: boolean;
+  isDropOver?: boolean;
 }>(({ theme, active }) => ({
   borderRadius: "90px",
   display: "flex",

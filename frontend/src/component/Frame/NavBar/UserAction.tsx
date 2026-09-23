@@ -203,8 +203,11 @@ const UserAction = () => {
   }, []);
   return (
     <>
-      <IconButton size={current ? "large" : undefined} {...(current ? bindTrigger(popupState) : {})}>
-        {!current && <Person onClick={() => navigate("/session")} />}
+      <IconButton
+        size={current ? "large" : undefined}
+        {...(current ? bindTrigger(popupState) : { onClick: () => navigate("/session") })}
+      >
+        {!current && <Person />}
         {current && <UserAvatar sx={{ width: 30, height: 30 }} user={current.user} />}
       </IconButton>
       <UserPopover {...bindPopover(popupState)} />
