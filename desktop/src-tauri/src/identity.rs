@@ -164,9 +164,13 @@ fn add_sparse_package(
             file_uri(external_dir),
         ))?)
         .context("SetExternalLocationUri failed")?;
-    mgr.AddPackageByUriAsync(&package_uri, &options)
+    let result = mgr
+        .AddPackageByUriAsync(&package_uri, &options)
         .and_then(|op| op.get())
         .context("AddPackageByUriAsync failed")?;
+    // The async op completes even when deployment fails - the failure lives
+    // in the result's extended error code (e.g. CERT_E_UNTRUSTEDROOT).
+    result.ExtendedErrorCode()?.ok()?;
     Ok(())
 }
 
@@ -183,10 +187,19 @@ fn register_loose_manifest(manifest_path: &std::path::Path) -> anyhow::Result<()
     options.SetAllowUnsigned(true)?;
     let manifest_uri =
         Uri::CreateUri(&windows::core::HSTRING::from(file_uri(manifest_path)))?;
-    if let Err(e) = mgr
+    let result = match mgr
         .RegisterPackageByUriAsync(&manifest_uri, &options)
         .and_then(|op| op.get())
     {
+        Ok(r) => r,
+        Err(e) => {
+            bail!(
+                "registration failed: {e}. Unsigned loose registration needs \
+                 Developer Mode (Settings -> System -> For developers)."
+            );
+        }
+    };
+    if let Err(e) = result.ExtendedErrorCode()?.ok() {
         bail!(
             "registration failed: {e}. Unsigned loose registration needs \
              Developer Mode (Settings -> System -> For developers)."

@@ -1,12 +1,20 @@
+; Ship the signed sparse identity package when the build produced one (CI
+; signs Cloudreve-Identity.msix into package/ before bundling). __FILEDIR__
+; must be read at parse time in this include - inside a macro it resolves to
+; the invoking .nsi's directory, not this file's.
+!if /FileExists "${__FILEDIR__}\..\package\Cloudreve-Identity.msix"
+  !define CLOUDREVE_IDENTITY_MSIX "${__FILEDIR__}\..\package\Cloudreve-Identity.msix"
+!endif
+!if /FileExists "${__FILEDIR__}\..\package\cloudreve-identity.cer"
+  !define CLOUDREVE_IDENTITY_CER "${__FILEDIR__}\..\package\cloudreve-identity.cer"
+!endif
+
 !macro NSIS_HOOK_PREINSTALL
-  ; Ship the signed sparse identity package when the build produced one
-  ; (CI signs Cloudreve-Identity.msix into package/ before bundling).
-  ; Loose dev registration is the fallback inside register-identity.ps1.
-  !if /FileExists "${__FILEDIR__}\..\package\Cloudreve-Identity.msix"
-    File "${__FILEDIR__}\..\package\Cloudreve-Identity.msix"
+  !ifdef CLOUDREVE_IDENTITY_MSIX
+    File "${CLOUDREVE_IDENTITY_MSIX}"
   !endif
-  !if /FileExists "${__FILEDIR__}\..\package\cloudreve-identity.cer"
-    File "${__FILEDIR__}\..\package\cloudreve-identity.cer"
+  !ifdef CLOUDREVE_IDENTITY_CER
+    File "${CLOUDREVE_IDENTITY_CER}"
   !endif
 !macroend
 
