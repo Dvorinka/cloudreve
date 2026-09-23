@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "policy": {
+    "minimumInclusive": "4.17.0",
+    "maximumExclusive": "5.0.0-0",
+    "includePrerelease": true,
+    "platform": "linux/amd64"
+  },
+  "targets": [
+    {
+      "version": "4.19.1",
+      "expectation": "supported",
+      "image": "cloudreve/cloudreve@sha256:baf6c86e4f5c0e9841c7d88960159066e9c38381c48d7f3a7a6cc762fab5fe5d",
+      "capabilities": {
+        "trashEmpty": true
+      }
+    },
+    {
+      "version": "4.19.0",
+      "expectation": "supported",
+      "image": "cloudreve/cloudreve@sha256:a67046b2d53e9da76bb9f1df635623b13a5cbef0919320c5cf8d4142df475f70",
+      "capabilities": {
+        "trashEmpty": true
+      }
+    },
+    {
+      "version": "4.18.0",
+      "expectation": "supported",
+      "image": "cloudreve/cloudreve@sha256:d24705c8b252ce4755a890c6d668f9311bdb97769e68b255974e6f16de85b886",
+      "indexDigest": "sha256:f7a464100bf6325e9ba58cb2b0ee60f9a24c58fc2eb90647720bc4b8f3cddd9a",
+      "capabilities": {
+        "trashEmpty": true
+      }
+    }
+  ],
+  "services": {
+    "search": {
+      "version": "1.37.0",
+      "revision": "d6c0f4b4c57ad331133f45a4f17c855e5bba2611",
+      "platforms": {
+        "linux/amd64": "getmeili/meilisearch@sha256:18b56892cb9abeab36ec3f82ad11652e51f47aa4dd67d14a921e6df562119f8e",
+        "linux/arm64": "getmeili/meilisearch@sha256:f4a66f0f20af8d77877abc124b590f5e3dc62b740216074dd789e30354d749e0"
+      }
+    },
+    "extractor": "apache/tika@sha256:3fafa194474c5f3a8cff25a0eefd07e7c0513b7f552074ad455e1af58a06bbea"
+  },
+  "qualification": "Latest three stable Community releases at 1.0 qualification. Each E2E receipt records the actual image, binary hash, commands and cleanup outcome."
+}

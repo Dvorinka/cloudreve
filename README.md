@@ -100,6 +100,10 @@ frontend/            Web SPA — React + TypeScript + Vite + MUI (vendored, no s
 desktop/             Desktop client — Tauri/Rust sync engine (Windows cfapi, Linux FUSE;
                      macOS hydration on the roadmap)
 android/             Native Android client — Kotlin + Jetpack Compose (v1.1.0 shipped)
+cli/                 Terminal client — TypeScript CLI on @cloudreve/sdk (vendored from
+                     cloudreve/cli; build with `bun install && bun run build`, binary: `cr`)
+docs/                Documentation site — VitePress, EN + ZH (vendored from cloudreve/docs;
+                     `npm ci && npm run dev`, build with `npm run build`)
 .github/workflows/   CI (backend, frontend, desktop matrix) + release pipeline
 ```
 

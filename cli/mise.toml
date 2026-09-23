@@ -1,0 +1,55 @@
+[tools]
+node = "24.5.0"
+bun = "1.4.0"
+lefthook = "2.1.4"
+python = "3.13.7"
+taplo = "0.10.0"
+shfmt = "3.14.1"
+shellcheck = "0.11.0"
+ruff = "0.13.2"
+[settings]
+lockfile = true
+[tasks.setup]
+run = "bun install --frozen-lockfile --ignore-scripts && lefthook install"
+[tasks.doctor]
+run = "node --version && bun --version"
+[tasks.build]
+run = "bun run build"
+[tasks.test]
+run = "bun run test"
+[tasks.check]
+run = "bun run check"
+[tasks.format]
+run = ["bun run lint:fix", "bun run format", "bun run lint:fix"]
+[tasks."format:check"]
+run = "bun run format:check"
+[tasks.typecheck]
+run = "bun run typecheck"
+
+[tasks."package:check"]
+run = "bun run build && node scripts/package-check.mjs"
+[tasks."arch:check"]
+run = "bun x depcruise src --config .dependency-cruiser.cjs"
+[tasks."arch:test"]
+run = "bun x vitest run tests/architecture"
+[tasks."test:e2e"]
+description = "Run real Community E2E on Linux with Docker (CR_CI_VERSION selects the backend)"
+run = "bun run build && node scripts/ci/e2e.mjs"
+
+[tasks.lint]
+run = "bun run lint"
+[tasks."test:mutation"]
+run = "bun run test:mutation"
+
+[tasks."test:credentials:native"]
+run = "bun run build && node scripts/package-check.mjs --native"
+
+[tasks."ci:local"]
+description = "Optionally test GitHub Actions locally with act"
+run = "bash scripts/ci/act.sh"
+
+[tasks."lint:fix"]
+run = "bun run lint:fix"
+
+[tasks."release:build"]
+run = "bun run build && node scripts/release.mjs"
