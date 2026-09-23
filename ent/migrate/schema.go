@@ -630,6 +630,7 @@ var (
 		{Name: "remain_downloads", Type: field.TypeInt, Nullable: true},
 		{Name: "price_points", Type: field.TypeInt, Default: 0},
 		{Name: "listed_publicly", Type: field.TypeBool, Default: false},
+		{Name: "slug", Type: field.TypeString, Unique: true, Nullable: true, Size: 64},
 		{Name: "props", Type: field.TypeJSON, Nullable: true},
 		{Name: "file_shares", Type: field.TypeInt, Nullable: true},
 		{Name: "user_shares", Type: field.TypeInt, Nullable: true},
@@ -642,13 +643,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "shares_files_shares",
-				Columns:    []*schema.Column{SharesColumns[12]},
+				Columns:    []*schema.Column{SharesColumns[13]},
 				RefColumns: []*schema.Column{FilesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "shares_users_shares",
-				Columns:    []*schema.Column{SharesColumns[13]},
+				Columns:    []*schema.Column{SharesColumns[14]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

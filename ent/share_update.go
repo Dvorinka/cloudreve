@@ -202,6 +202,26 @@ func (su *ShareUpdate) SetNillableListedPublicly(b *bool) *ShareUpdate {
 	return su
 }
 
+// SetSlug sets the "slug" field.
+func (su *ShareUpdate) SetSlug(s string) *ShareUpdate {
+	su.mutation.SetSlug(s)
+	return su
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (su *ShareUpdate) SetNillableSlug(s *string) *ShareUpdate {
+	if s != nil {
+		su.SetSlug(*s)
+	}
+	return su
+}
+
+// ClearSlug clears the value of the "slug" field.
+func (su *ShareUpdate) ClearSlug() *ShareUpdate {
+	su.mutation.ClearSlug()
+	return su
+}
+
 // SetProps sets the "props" field.
 func (su *ShareUpdate) SetProps(tp *types.ShareProps) *ShareUpdate {
 	su.mutation.SetProps(tp)
@@ -390,6 +410,11 @@ func (su *ShareUpdate) check() error {
 			return &ValidationError{Name: "price_points", err: fmt.Errorf(`ent: validator failed for field "Share.price_points": %w`, err)}
 		}
 	}
+	if v, ok := su.mutation.Slug(); ok {
+		if err := share.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Share.slug": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -455,6 +480,12 @@ func (su *ShareUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.ListedPublicly(); ok {
 		_spec.SetField(share.FieldListedPublicly, field.TypeBool, value)
+	}
+	if value, ok := su.mutation.Slug(); ok {
+		_spec.SetField(share.FieldSlug, field.TypeString, value)
+	}
+	if su.mutation.SlugCleared() {
+		_spec.ClearField(share.FieldSlug, field.TypeString)
 	}
 	if value, ok := su.mutation.Props(); ok {
 		_spec.SetField(share.FieldProps, field.TypeJSON, value)
@@ -800,6 +831,26 @@ func (suo *ShareUpdateOne) SetNillableListedPublicly(b *bool) *ShareUpdateOne {
 	return suo
 }
 
+// SetSlug sets the "slug" field.
+func (suo *ShareUpdateOne) SetSlug(s string) *ShareUpdateOne {
+	suo.mutation.SetSlug(s)
+	return suo
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (suo *ShareUpdateOne) SetNillableSlug(s *string) *ShareUpdateOne {
+	if s != nil {
+		suo.SetSlug(*s)
+	}
+	return suo
+}
+
+// ClearSlug clears the value of the "slug" field.
+func (suo *ShareUpdateOne) ClearSlug() *ShareUpdateOne {
+	suo.mutation.ClearSlug()
+	return suo
+}
+
 // SetProps sets the "props" field.
 func (suo *ShareUpdateOne) SetProps(tp *types.ShareProps) *ShareUpdateOne {
 	suo.mutation.SetProps(tp)
@@ -1001,6 +1052,11 @@ func (suo *ShareUpdateOne) check() error {
 			return &ValidationError{Name: "price_points", err: fmt.Errorf(`ent: validator failed for field "Share.price_points": %w`, err)}
 		}
 	}
+	if v, ok := suo.mutation.Slug(); ok {
+		if err := share.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Share.slug": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -1083,6 +1139,12 @@ func (suo *ShareUpdateOne) sqlSave(ctx context.Context) (_node *Share, err error
 	}
 	if value, ok := suo.mutation.ListedPublicly(); ok {
 		_spec.SetField(share.FieldListedPublicly, field.TypeBool, value)
+	}
+	if value, ok := suo.mutation.Slug(); ok {
+		_spec.SetField(share.FieldSlug, field.TypeString, value)
+	}
+	if suo.mutation.SlugCleared() {
+		_spec.ClearField(share.FieldSlug, field.TypeString)
 	}
 	if value, ok := suo.mutation.Props(); ok {
 		_spec.SetField(share.FieldProps, field.TypeJSON, value)

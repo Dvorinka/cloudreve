@@ -166,6 +166,20 @@ func (sc *ShareCreate) SetNillableListedPublicly(b *bool) *ShareCreate {
 	return sc
 }
 
+// SetSlug sets the "slug" field.
+func (sc *ShareCreate) SetSlug(s string) *ShareCreate {
+	sc.mutation.SetSlug(s)
+	return sc
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (sc *ShareCreate) SetNillableSlug(s *string) *ShareCreate {
+	if s != nil {
+		sc.SetSlug(*s)
+	}
+	return sc
+}
+
 // SetProps sets the "props" field.
 func (sc *ShareCreate) SetProps(tp *types.ShareProps) *ShareCreate {
 	sc.mutation.SetProps(tp)
@@ -335,6 +349,11 @@ func (sc *ShareCreate) check() error {
 	if _, ok := sc.mutation.ListedPublicly(); !ok {
 		return &ValidationError{Name: "listed_publicly", err: errors.New(`ent: missing required field "Share.listed_publicly"`)}
 	}
+	if v, ok := sc.mutation.Slug(); ok {
+		if err := share.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Share.slug": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -408,6 +427,10 @@ func (sc *ShareCreate) createSpec() (*Share, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.ListedPublicly(); ok {
 		_spec.SetField(share.FieldListedPublicly, field.TypeBool, value)
 		_node.ListedPublicly = value
+	}
+	if value, ok := sc.mutation.Slug(); ok {
+		_spec.SetField(share.FieldSlug, field.TypeString, value)
+		_node.Slug = value
 	}
 	if value, ok := sc.mutation.Props(); ok {
 		_spec.SetField(share.FieldProps, field.TypeJSON, value)
@@ -687,6 +710,24 @@ func (u *ShareUpsert) UpdateListedPublicly() *ShareUpsert {
 	return u
 }
 
+// SetSlug sets the "slug" field.
+func (u *ShareUpsert) SetSlug(v string) *ShareUpsert {
+	u.Set(share.FieldSlug, v)
+	return u
+}
+
+// UpdateSlug sets the "slug" field to the value that was provided on create.
+func (u *ShareUpsert) UpdateSlug() *ShareUpsert {
+	u.SetExcluded(share.FieldSlug)
+	return u
+}
+
+// ClearSlug clears the value of the "slug" field.
+func (u *ShareUpsert) ClearSlug() *ShareUpsert {
+	u.SetNull(share.FieldSlug)
+	return u
+}
+
 // SetProps sets the "props" field.
 func (u *ShareUpsert) SetProps(v *types.ShareProps) *ShareUpsert {
 	u.Set(share.FieldProps, v)
@@ -929,6 +970,27 @@ func (u *ShareUpsertOne) SetListedPublicly(v bool) *ShareUpsertOne {
 func (u *ShareUpsertOne) UpdateListedPublicly() *ShareUpsertOne {
 	return u.Update(func(s *ShareUpsert) {
 		s.UpdateListedPublicly()
+	})
+}
+
+// SetSlug sets the "slug" field.
+func (u *ShareUpsertOne) SetSlug(v string) *ShareUpsertOne {
+	return u.Update(func(s *ShareUpsert) {
+		s.SetSlug(v)
+	})
+}
+
+// UpdateSlug sets the "slug" field to the value that was provided on create.
+func (u *ShareUpsertOne) UpdateSlug() *ShareUpsertOne {
+	return u.Update(func(s *ShareUpsert) {
+		s.UpdateSlug()
+	})
+}
+
+// ClearSlug clears the value of the "slug" field.
+func (u *ShareUpsertOne) ClearSlug() *ShareUpsertOne {
+	return u.Update(func(s *ShareUpsert) {
+		s.ClearSlug()
 	})
 }
 
@@ -1348,6 +1410,27 @@ func (u *ShareUpsertBulk) SetListedPublicly(v bool) *ShareUpsertBulk {
 func (u *ShareUpsertBulk) UpdateListedPublicly() *ShareUpsertBulk {
 	return u.Update(func(s *ShareUpsert) {
 		s.UpdateListedPublicly()
+	})
+}
+
+// SetSlug sets the "slug" field.
+func (u *ShareUpsertBulk) SetSlug(v string) *ShareUpsertBulk {
+	return u.Update(func(s *ShareUpsert) {
+		s.SetSlug(v)
+	})
+}
+
+// UpdateSlug sets the "slug" field to the value that was provided on create.
+func (u *ShareUpsertBulk) UpdateSlug() *ShareUpsertBulk {
+	return u.Update(func(s *ShareUpsert) {
+		s.UpdateSlug()
+	})
+}
+
+// ClearSlug clears the value of the "slug" field.
+func (u *ShareUpsertBulk) ClearSlug() *ShareUpsertBulk {
+	return u.Update(func(s *ShareUpsert) {
+		s.ClearSlug()
 	})
 }
 

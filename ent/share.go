@@ -41,6 +41,8 @@ type Share struct {
 	PricePoints int `json:"price_points,omitempty"`
 	// ListedPublicly holds the value of the "listed_publicly" field.
 	ListedPublicly bool `json:"listed_publicly,omitempty"`
+	// Slug holds the value of the "slug" field.
+	Slug string `json:"slug,omitempty"`
 	// Props holds the value of the "props" field.
 	Props *types.ShareProps `json:"props,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -121,7 +123,7 @@ func (*Share) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case share.FieldID, share.FieldViews, share.FieldDownloads, share.FieldRemainDownloads, share.FieldPricePoints:
 			values[i] = new(sql.NullInt64)
-		case share.FieldPassword:
+		case share.FieldPassword, share.FieldSlug:
 			values[i] = new(sql.NullString)
 		case share.FieldCreatedAt, share.FieldUpdatedAt, share.FieldDeletedAt, share.FieldExpires:
 			values[i] = new(sql.NullTime)
@@ -212,6 +214,12 @@ func (s *Share) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field listed_publicly", values[i])
 			} else if value.Valid {
 				s.ListedPublicly = value.Bool
+			}
+		case share.FieldSlug:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field slug", values[i])
+			} else if value.Valid {
+				s.Slug = value.String
 			}
 		case share.FieldProps:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -326,6 +334,9 @@ func (s *Share) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("listed_publicly=")
 	builder.WriteString(fmt.Sprintf("%v", s.ListedPublicly))
+	builder.WriteString(", ")
+	builder.WriteString("slug=")
+	builder.WriteString(s.Slug)
 	builder.WriteString(", ")
 	builder.WriteString("props=")
 	builder.WriteString(fmt.Sprintf("%v", s.Props))

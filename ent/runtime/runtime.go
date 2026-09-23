@@ -519,6 +519,10 @@ func init() {
 	shareDescListedPublicly := shareFields[6].Descriptor()
 	// share.DefaultListedPublicly holds the default value on creation for the listed_publicly field.
 	share.DefaultListedPublicly = shareDescListedPublicly.Default.(bool)
+	// shareDescSlug is the schema descriptor for slug field.
+	shareDescSlug := shareFields[7].Descriptor()
+	// share.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	share.SlugValidator = shareDescSlug.Validators[0].(func(string) error)
 	sharepurchaseMixin := schema.SharePurchase{}.Mixin()
 	sharepurchaseMixinHooks0 := sharepurchaseMixin[0].Hooks()
 	sharepurchase.Hooks[0] = sharepurchaseMixinHooks0[0]
