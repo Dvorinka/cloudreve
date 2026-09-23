@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PropsContentProps } from "./CustomPropsItem.tsx";
 
-const NoLabelFilledSelect = styled(Select)<{ fullSize?: boolean }>(({ theme, fullSize }) => ({
+const NoLabelFilledSelect = styled(Select, {
+  shouldForwardProp: (prop) => prop !== "fullSize",
+})<{ fullSize?: boolean }>(({ theme, fullSize }) => ({
   "& .MuiSelect-select": {
     paddingTop: theme.spacing(1),
     paddingBottom: theme.spacing(1),

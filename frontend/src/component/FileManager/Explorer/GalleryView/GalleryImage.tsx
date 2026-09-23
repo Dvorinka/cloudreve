@@ -17,7 +17,10 @@ import {
   useFileBlockState,
 } from "../GridView/GridFile.tsx";
 
-const StyledImageListItem = styled(ImageListItem)<{
+const StyledImageListItem = styled(ImageListItem, {
+  shouldForwardProp: (prop) =>
+    prop !== "transparent" && prop !== "disabled" && prop !== "isDropOver",
+})<{
   transparent?: boolean;
   disabled?: boolean;
   isDropOver?: boolean;

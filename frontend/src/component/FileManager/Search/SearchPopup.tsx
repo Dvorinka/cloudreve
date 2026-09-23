@@ -36,7 +36,9 @@ import FullSearchOption from "./FullSearchOptions.tsx";
 import FullTextSearchResultList from "./FullTextSearchResult.tsx";
 import FuzzySearchResult from "./FuzzySearchResult.tsx";
 
-const StyledDialog = styled(Dialog)<{
+const StyledDialog = styled(Dialog, {
+  shouldForwardProp: (prop) => prop !== "expanded",
+})<{
   expanded?: boolean;
 }>(({ theme, expanded }) => ({
   "& .MuiDialog-container": {

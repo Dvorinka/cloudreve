@@ -240,7 +240,9 @@ export const getColumnTypeDefaults = (
   };
 };
 
-const ColumnContainer = styled(Box)<{
+const ColumnContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "w",
+})<{
   w: number;
 }>(({ w }) => ({
   height: "39px",
@@ -266,7 +268,9 @@ const DividerContainer = styled(Box)(({ theme }) => ({
   right: "-8px",
 }));
 
-const SortArrow = styled(ArrowSortDownFilled)<{
+const SortArrow = styled(ArrowSortDownFilled, {
+  shouldForwardProp: (prop) => prop !== "direction",
+})<{
   direction?: string;
 }>(({ theme, direction }) => ({
   width: "18px",

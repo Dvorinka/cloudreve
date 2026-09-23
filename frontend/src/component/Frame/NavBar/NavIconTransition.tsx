@@ -29,10 +29,10 @@ const NavIconTransition = ({ fileIcon, active, iconProps, ...rest }: NavIconTran
             </span>
           </Fade>
         )}
-        <span key={"sizer"}>
-          <InActive sx={{ visibility: "hidden" }} {...iconProps} />
-        </span>
       </TransitionGroup>
+      <span>
+        <InActive sx={{ visibility: "hidden" }} {...iconProps} />
+      </span>
     </Box>
   );
 };

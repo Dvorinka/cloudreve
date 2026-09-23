@@ -32,54 +32,56 @@ const FileSmallIcon = memo(({ selected, variant, loading, file, ignoreHovered }:
   );
   const isInList = variant === "list";
   return (
-    <TransitionGroup onClick={onIconClick}>
-      {!selected && (!hovered || ignoreHovered) && (
-        <Fade>
-          <FileIcon
-            file={file}
-            loading={loading}
-            sx={
-              isInList
-                ? {
-                    position: "absolute",
-                    p: 0,
-                  }
-                : { position: "absolute" }
-            }
-          />
-        </Fade>
-      )}
-      {!selected && hovered && !ignoreHovered && (
-        <Fade>
-          <Box sx={{ position: "absolute" }}>
-            <CheckUnchecked
-              sx={{
-                width: isInList ? "20px" : "24px",
-                height: "24px",
-                mx: isInList ? "2px" : 2,
-                my: isInList ? 0 : 1.5,
-                position: "absolute",
-              }}
-              color={"action"}
+    <Box onClick={onIconClick} sx={{ position: "relative" }}>
+      <TransitionGroup component={null}>
+        {!selected && (!hovered || ignoreHovered) && (
+          <Fade>
+            <FileIcon
+              file={file}
+              loading={loading}
+              sx={
+                isInList
+                  ? {
+                      position: "absolute",
+                      p: 0,
+                    }
+                  : { position: "absolute" }
+              }
             />
-          </Box>
-        </Fade>
-      )}
-      {selected && (
-        <Fade>
-          <Box sx={{ position: "absolute" }}>
-            <CheckmarkCircle
-              sx={{
-                width: isInList ? "20px" : "24px",
-                height: "24px",
-                mx: isInList ? "2px" : 2,
-                my: isInList ? 0 : 1.5,
-              }}
-              color={"primary"}
-            />
-          </Box>
-        </Fade>
-      )}
+          </Fade>
+        )}
+        {!selected && hovered && !ignoreHovered && (
+          <Fade>
+            <Box sx={{ position: "absolute" }}>
+              <CheckUnchecked
+                sx={{
+                  width: isInList ? "20px" : "24px",
+                  height: "24px",
+                  mx: isInList ? "2px" : 2,
+                  my: isInList ? 0 : 1.5,
+                  position: "absolute",
+                }}
+                color={"action"}
+              />
+            </Box>
+          </Fade>
+        )}
+        {selected && (
+          <Fade>
+            <Box sx={{ position: "absolute" }}>
+              <CheckmarkCircle
+                sx={{
+                  width: isInList ? "20px" : "24px",
+                  height: "24px",
+                  mx: isInList ? "2px" : 2,
+                  my: isInList ? 0 : 1.5,
+                }}
+                color={"primary"}
+              />
+            </Box>
+          </Fade>
+        )}
+      </TransitionGroup>
       <Box
         sx={{
           width: "24px",
@@ -88,7 +90,7 @@ const FileSmallIcon = memo(({ selected, variant, loading, file, ignoreHovered }:
           my: isInList ? 0 : 1.5,
         }}
       />
-    </TransitionGroup>
+    </Box>
   );
 });
 

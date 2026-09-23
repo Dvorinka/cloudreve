@@ -4,7 +4,7 @@ import { NoWrapTypography } from "../../Common/StyledComponents.tsx";
 
 const StyledButtonBase = styled(ButtonBase, {
   shouldForwardProp: (prop) =>
-    prop !== "active" && prop !== "isDragging" && prop !== "isDropOver",
+    prop !== "active" && prop !== "isDragging" && prop !== "isDropOver" && prop !== "level",
 })<{
   active?: boolean;
   isDragging?: boolean;

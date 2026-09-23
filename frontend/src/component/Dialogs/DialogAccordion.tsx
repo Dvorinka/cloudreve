@@ -36,7 +36,9 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
   padding: theme.spacing(2),
 }));
 
-const SummaryButton = styled(DefaultButton)<{ expanded: boolean }>(({ theme, expanded }) => ({
+const SummaryButton = styled(DefaultButton, {
+  shouldForwardProp: (prop) => prop !== "expanded",
+})<{ expanded: boolean }>(({ theme, expanded }) => ({
   justifyContent: "flex-start",
   backgroundColor: expanded
     ? "initial"
