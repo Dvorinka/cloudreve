@@ -308,7 +308,7 @@ const Settings = () => {
                 </SettingsWrapper>
               )}
               {tab === SettingsPageTab.VAS && (
-                <SettingsWrapper settings={[]}>
+                <SettingsWrapper settings={["share_score_rate", "shop_nav"]}>
                   <VAS />
                 </SettingsWrapper>
               )}

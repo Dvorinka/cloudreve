@@ -107,11 +107,7 @@
     "shareLinks": "Enlaces de compartir",
     "totalBlobs": "Blobs",
     "homepage": "Página principal",
-    "github": "GitHub",
     "documents": "Documentos",
-    "discordCommunity": "Comunidad Discord",
-    "telegram": "Grupo Telegram",
-    "forum": "GitHub Discussions",
     "buyPro": "Actualizar a Pro",
     "publishedAt": "publicado en <0></0>",
     "licenseExpireAt": "Fecha de expiración de licencia",
@@ -126,7 +122,13 @@
     "refreshSuccessfully": "Refrescado exitosamente.",
     "manualRefresh": "Refrescar manualmente licencia offline",
     "manualRefreshDes": "Error al refrescar licencia offline automáticamente, por favor intenta iniciar sesión en el <0>Panel de Administración de Licencias</0> para obtener la última licencia offline y pégala a continuación.",
-    "announcement": "Anuncio"
+    "announcement": "Anuncio",
+    "issues": "Seguimiento de errores",
+    "releases": "Versiones",
+    "aboutFork": "Fork comunitario",
+    "aboutForkDes": "Esta instancia ejecuta un fork de Cloudreve mantenido por la comunidad, centrado en el cliente de escritorio de Windows y la integración con el Explorador. ¿Encontraste un error o tienes una idea? Los reportes y contribuciones de todo tipo son bienvenidos.",
+    "reportIssue": "Reportar un error",
+    "roadmap": "Hoja de ruta"
   },
   "queue": {
     "queueName_io_intense": "IO Intensivo",
@@ -1614,7 +1616,8 @@
     "refCountEq": "Igual a",
     "deletedState": "Estado eliminado",
     "liveOnly": "Solo archivos activos",
-    "trashOnly": "Solo papelera"
+    "trashOnly": "Solo papelera",
+    "pleaseSelectUser": "Seleccione un usuario"
   },
   "entity": {
     "refenenceCount": "Conteo de referencia",
@@ -1749,7 +1752,9 @@
     "canceled": "Cancelado/Detenido",
     "unknown": "Desconocido",
     "errorMsg": "Mensaje de error",
-    "blobAudit": "Auditar blobs en la política de almacenamiento #{{policyID}} ({{count}} huérfanos)"
+    "blobAudit": "Auditar blobs en la política de almacenamiento #{{policyID}} ({{count}} huérfanos)",
+    "allTaskStatuses": "Todos los estados",
+    "allTaskTypes": "Todos los tipos"
   },
   "payment": {
     "tradeNo": "No. de Transacción",

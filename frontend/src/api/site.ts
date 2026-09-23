@@ -57,6 +57,7 @@ export interface SiteConfig {
   max_batch_size?: number;
   app_promotion?: boolean;
   desktop_app_promotion?: boolean;
+  shop_nav?: boolean;
   thumbnail_width?: number;
   thumbnail_height?: number;
   custom_props?: CustomProps[];

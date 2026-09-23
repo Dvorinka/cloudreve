@@ -107,11 +107,7 @@
     "shareLinks": "Link condivisioni",
     "totalBlobs": "Blob",
     "homepage": "Homepage",
-    "github": "GitHub",
     "documents": "Documentazione",
-    "discordCommunity": "Community Discord",
-    "telegram": "Gruppo Telegram",
-    "forum": "GitHub Discussions",
     "buyPro": "Aggiorna a Pro",
     "publishedAt": "pubblicato alle <0></0>",
     "licenseExpireAt": "Data scadenza licenza",
@@ -126,7 +122,13 @@
     "refreshSuccessfully": "Aggiornato con successo.",
     "manualRefresh": "Aggiorna manualmente licenza offline",
     "manualRefreshDes": "Aggiornamento automatico licenza offline fallito, prova ad accedere alla <0>Dashboard Gestione Licenze</0> per ottenere l'ultima licenza offline e incollala qui sotto.",
-    "announcement": "Annuncio"
+    "announcement": "Annuncio",
+    "issues": "Segnalazione problemi",
+    "releases": "Versioni",
+    "aboutFork": "Fork della community",
+    "aboutForkDes": "Questa istanza esegue un fork di Cloudreve mantenuto dalla community, incentrato sul client desktop Windows e sull'integrazione con Esplora file. Trovato un bug o hai un'idea? Segnalazioni e contributi di ogni tipo sono benvenuti.",
+    "reportIssue": "Segnala un problema",
+    "roadmap": "Roadmap"
   },
   "queue": {
     "queueName_io_intense": "IO Intensivo",
@@ -1614,7 +1616,8 @@
     "refCountEq": "Uguale a",
     "deletedState": "Stato eliminato",
     "liveOnly": "Solo file attivi",
-    "trashOnly": "Solo cestino"
+    "trashOnly": "Solo cestino",
+    "pleaseSelectUser": "Seleziona un utente"
   },
   "entity": {
     "refenenceCount": "Conteggio riferimenti",
@@ -1749,7 +1752,9 @@
     "canceled": "Annullato/Fermato",
     "unknown": "Sconosciuto",
     "errorMsg": "Messaggio errore",
-    "blobAudit": "Audita blob sulla politica di archiviazione #{{policyID}} ({{count}} orfani)"
+    "blobAudit": "Audita blob sulla politica di archiviazione #{{policyID}} ({{count}} orfani)",
+    "allTaskStatuses": "Tutti gli stati",
+    "allTaskTypes": "Tutti i tipi"
   },
   "payment": {
     "tradeNo": "N. Transazione",

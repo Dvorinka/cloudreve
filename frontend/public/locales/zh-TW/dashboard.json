@@ -107,11 +107,7 @@
     "shareLinks": "分享連結",
     "totalBlobs": "檔案 Blob",
     "homepage": "主頁",
-    "github": "GitHub",
     "documents": "檔案",
-    "discordCommunity": "Discord 社群",
-    "telegram": "Telegram 社群",
-    "forum": "社區論壇",
     "buyPro": "升級到 Pro",
     "publishedAt": "發表於 <0></0>",
     "licenseExpireAt": "授權有效期",
@@ -125,7 +121,13 @@
     "iosVol": "iOS 客戶端批量授權 (VOL)",
     "refreshSuccessfully": "重新整理成功",
     "manualRefresh": "手動重新整理離線授權",
-    "manualRefreshDes": "自動重新整理離線授權失敗，請嘗試登入 <0>授權管理面板</0> 獲取最新的離線授權，將其貼上在下方。"
+    "manualRefreshDes": "自動重新整理離線授權失敗，請嘗試登入 <0>授權管理面板</0> 獲取最新的離線授權，將其貼上在下方。",
+    "issues": "問題回報",
+    "releases": "版本發布",
+    "aboutFork": "社群分支",
+    "aboutForkDes": "本站點運行的是 Cloudreve 的社群維護分支，專注於 Windows 桌面客戶端與檔案總管整合。發現 Bug 或有好想法？歡迎提交回報或任何形式的貢獻。",
+    "reportIssue": "回報問題",
+    "roadmap": "路線圖"
   },
   "queue": {
     "queueName_io_intense": "IO 密集型",
@@ -1612,7 +1614,8 @@
     "refCountEq": "等於",
     "deletedState": "刪除狀態",
     "liveOnly": "僅未刪除",
-    "trashOnly": "僅回收站"
+    "trashOnly": "僅回收站",
+    "pleaseSelectUser": "請選擇使用者"
   },
   "entity": {
     "refenenceCount": "引用次數",
@@ -1747,7 +1750,9 @@
     "canceled": "取消/停止",
     "unknown": "未知",
     "errorMsg": "錯誤資訊",
-    "blobAudit": "審計儲存策略 #{{policyID}} 的 Blob（{{count}} 個孤兒物件）"
+    "blobAudit": "審計儲存策略 #{{policyID}} 的 Blob（{{count}} 個孤兒物件）",
+    "allTaskStatuses": "全部狀態",
+    "allTaskTypes": "全部類型"
   },
   "payment": {
     "tradeNo": "交易單號",

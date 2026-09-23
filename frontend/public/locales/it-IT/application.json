@@ -760,7 +760,8 @@
     "viewSetting": "Impostazione vista",
     "saved": "Salvato",
     "notSet": "Non impostato",
-    "deleteViewSetting": "Elimina impostazione vista"
+    "deleteViewSetting": "Elimina impostazione vista",
+    "dontAskAgain": "Non chiedere più"
   },
   "uploader": {
     "fileCopyName": "Copia di ",
@@ -1054,7 +1055,7 @@
     "compressFilesDes": "Crea archivio nell'area di lavoro temporanea.",
     "uploadArchiveFileDes": "Trasferisci file di archivio nella cartella target.",
     "uploadWorker": "Worker caricamento #{{num}}",
-    "relocatedEntities": "Entità riposizionate",
+    "relocatedEntities": "Elementi spostati",
     "queueToStart": "In coda per iniziare",
     "indexingFiles": "Indicizza file",
     "indexingFilesDes": "Indicizza per file da riposizionare, bloccali.",
@@ -1239,7 +1240,11 @@
     "backup2FACodes": "Codici di ripristino",
     "backupCodesDes": "I codici di ripristino ti permettono di accedere quando l'autenticatore non è disponibile. La generazione di un nuovo lotto invalida tutti i codici precedenti.",
     "backupCodesWarning": "Salva questi codici ora. Ciascuno può essere usato una sola volta e non saranno più mostrati.",
-    "copyCodes": "Copia codici"
+    "copyCodes": "Copia codici",
+    "archiveDownloadMethod": "Metodo di download multiplo",
+    "archiveDownloadMethodDes": "Come vengono scaricate cartelle e selezioni multiple. Scegli «Chiedi ogni volta» per decidere a ogni download.",
+    "archiveDownloadAsk": "Chiedi ogni volta",
+    "downloadDesktopApp": "Scarica per Windows"
   },
   "vas": {
     "points": "Punti",
@@ -1403,13 +1408,16 @@
     "permanent": "Permanente",
     "noProducts": "Nessun prodotto disponibile",
     "buyWithPoints": "Compra per {{points}} pt",
-    "pointsUnavailable": "Non acquistabile con punti"
+    "pointsUnavailable": "Non acquistabile con punti",
+    "noProductsDescription": "Quando l'operatore aggiunge abbonamenti o pacchetti, appariranno qui."
   },
   "announcement": {
     "title": "Annuncio",
     "dontShowAgain": "Non mostrare più"
   },
   "discover": {
-    "searchPlaceholder": "Cerca condivisioni pubbliche"
+    "searchPlaceholder": "Cerca condivisioni pubbliche",
+    "empty": "Nessuna condivisione pubblica",
+    "emptyDescription": "Le condivisioni appaiono qui quando i proprietari le pubblicano nella directory pubblica."
   }
 }

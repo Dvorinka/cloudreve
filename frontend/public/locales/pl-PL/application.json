@@ -707,7 +707,8 @@
     "publicListing": "W katalogu publicznym",
     "publicListingDes": "Pokaż to udostępnienie na stronie Odkrywaj, widoczne dla każdego, w tym anonimowych odwiedzających. Niedostępne dla udostępnień chronionych hasłem.",
     "hideReadme": "Ukryj plik readme",
-    "hideReadmeDes": "Nie pokazuj samego pliku README na liście udostępnienia. Odwiedzający nadal widzą wyrenderowany readme."
+    "hideReadmeDes": "Nie pokazuj samego pliku README na liście udostępnienia. Odwiedzający nadal widzą wyrenderowany readme.",
+    "dontAskAgain": "Nie pytaj ponownie"
   },
   "uploader": {
     "fileCopyName": "Kopia ",
@@ -1166,7 +1167,12 @@
     "backupCodesDes": "Kody odzyskiwania pozwalają się zalogować, gdy authenticator jest niedostępny. Wygenerowanie nowej partii unieważnia wszystkie poprzednie kody.",
     "backupCodesWarning": "Zapisz te kody teraz. Każdy można użyć raz i nie zostaną pokazane ponownie.",
     "copyCodes": "Kopiuj kody",
-    "finance": "Finanse"
+    "finance": "Finanse",
+    "relocatedEntities": "Przeniesione elementy",
+    "archiveDownloadMethod": "Metoda pobierania zbiorczego",
+    "archiveDownloadMethodDes": "Sposób pobierania folderów i wielu plików. Wybierz „Pytaj za każdym razem”, aby decydować przy każdym pobieraniu.",
+    "archiveDownloadAsk": "Pytaj za każdym razem",
+    "downloadDesktopApp": "Pobierz dla Windows"
   },
   "vas": {
     "points": "Punkty",
@@ -1215,13 +1221,16 @@
     "permanent": "Dożywotnio",
     "noProducts": "Brak dostępnych produktów",
     "buyWithPoints": "Kup za {{points}} pkt",
-    "pointsUnavailable": "Niedostępne za punkty"
+    "pointsUnavailable": "Niedostępne za punkty",
+    "noProductsDescription": "Gdy operator doda członkostwa lub pakiety, pojawią się tutaj."
   },
   "announcement": {
     "title": "Ogłoszenie",
     "dontShowAgain": "Nie pokazuj ponownie"
   },
   "discover": {
-    "searchPlaceholder": "Szukaj w udostępnieniach publicznych"
+    "searchPlaceholder": "Szukaj w udostępnieniach publicznych",
+    "empty": "Brak publicznych udostępnień",
+    "emptyDescription": "Udostępnienia pojawiają się tutaj, gdy ich właściciele opublikują je w katalogu publicznym."
   }
 }

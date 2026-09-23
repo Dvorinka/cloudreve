@@ -267,6 +267,7 @@ export const AdminPageNavigation = memo(() => {
 
 const PageNavigation = () => {
   const appPromotionEnabled = useAppSelector((state) => state.siteConfig.basic.config.app_promotion);
+  const shopNavEnabled = useAppSelector((state) => state.siteConfig.basic.config.shop_nav !== false);
   const user = SessionManager.currentLoginOrNull();
   const isAdmin = useMemo(() => {
     return isAnyAdmin(GroupBS(user?.user));
@@ -292,7 +293,7 @@ const PageNavigation = () => {
             {connectEnabled && <SideNavItemComponent item={ConnectNavigationItem} />}
             <SideNavItemComponent item={TaskNavigationItem} />
             {remoteDownloadEnabled && <SideNavItemComponent item={RemoteDownloadNavigationItem} />}
-            <SideNavItemComponent item={ShopNavigationItem} />
+            {shopNavEnabled && <SideNavItemComponent item={ShopNavigationItem} />}
           </>
         </Box>
       )}

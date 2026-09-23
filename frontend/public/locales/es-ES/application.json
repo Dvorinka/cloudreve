@@ -757,7 +757,8 @@
     "viewSetting": "Configuración de vista",
     "saved": "Guardado",
     "notSet": "Sin configurar",
-    "deleteViewSetting": "Eliminar configuración de vista"
+    "deleteViewSetting": "Eliminar configuración de vista",
+    "dontAskAgain": "No volver a preguntar"
   },
   "uploader": {
     "fileCopyName": "Copia de ",
@@ -1051,7 +1052,7 @@
     "compressFilesDes": "Comprimir archivos al espacio de trabajo temporal.",
     "uploadArchiveFileDes": "Transferir archivo comprimido al destino.",
     "uploadWorker": "Hilo de subida #{{num}}",
-    "relocatedEntities": "Entidades transferidas",
+    "relocatedEntities": "Elementos reubicados",
     "queueToStart": "En cola para iniciar",
     "indexingFiles": "Recuperar archivos",
     "indexingFilesDes": "Recuperar todos los archivos a transferir y bloquearlos.",
@@ -1236,7 +1237,11 @@
     "backup2FACodes": "Códigos de recuperación",
     "backupCodesDes": "Los códigos de recuperación te permiten iniciar sesión cuando tu autenticador no está disponible. Generar un nuevo lote invalida todos los códigos anteriores.",
     "backupCodesWarning": "Guarda estos códigos ahora. Cada uno se puede usar una sola vez y no se volverán a mostrar.",
-    "copyCodes": "Copiar códigos"
+    "copyCodes": "Copiar códigos",
+    "archiveDownloadMethod": "Método de descarga por lotes",
+    "archiveDownloadMethodDes": "Cómo se descargan las carpetas y las selecciones múltiples. Elige «Preguntar siempre» para decidir en cada descarga.",
+    "archiveDownloadAsk": "Preguntar siempre",
+    "downloadDesktopApp": "Descargar para Windows"
   },
   "vas": {
     "points": "Puntos",
@@ -1402,13 +1407,16 @@
     "permanent": "Permanente",
     "noProducts": "No hay productos disponibles",
     "buyWithPoints": "Comprar por {{points}} pts",
-    "pointsUnavailable": "No se puede comprar con puntos"
+    "pointsUnavailable": "No se puede comprar con puntos",
+    "noProductsDescription": "Cuando el operador añada membresías o paquetes, aparecerán aquí."
   },
   "announcement": {
     "title": "Anuncio",
     "dontShowAgain": "No mostrar de nuevo"
   },
   "discover": {
-    "searchPlaceholder": "Buscar shares públicos"
+    "searchPlaceholder": "Buscar shares públicos",
+    "empty": "Aún no hay enlaces públicos",
+    "emptyDescription": "Los enlaces aparecen aquí cuando sus propietarios los publican en el directorio público."
   }
 }

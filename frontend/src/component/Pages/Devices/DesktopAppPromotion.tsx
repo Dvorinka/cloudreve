@@ -1,10 +1,11 @@
-import { alpha, Box, Grid, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { alpha, Box, Button, Grid, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "../../../redux/hooks.ts";
+import ArrowDown from "../../Icons/ArrowDown.tsx";
 
 const DesktopAppPromotion = () => {
   const title = useAppSelector((state) => state.siteConfig.basic.config.title);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up("md"), {
     defaultMatches: true,
@@ -58,26 +59,16 @@ const DesktopAppPromotion = () => {
             gap={2}
             marginTop={1}
           >
-            <Box
-              component={"a"}
-              href={"https://apps.microsoft.com/detail/9P3GH5RNNZFD?referrer=appbadge&mode=direct"}
-              target={"_blank"}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                textDecoration: "none",
-              }}
+            <Button
+              variant="contained"
+              size="large"
+              href="https://github.com/Dvorinka/cloudreve/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<ArrowDown />}
             >
-              <Box
-                component={"img"}
-                src={`https://get.microsoft.com/images/${i18n.language.toLowerCase()}%20dark.svg`}
-                alt="Get it from Microsoft Store"
-                sx={{
-                  width: 200,
-                  borderRadius: 1,
-                }}
-              />
-            </Box>
+              {t("setting.downloadDesktopApp")}
+            </Button>
           </Box>
         </Box>
       </Grid>
@@ -92,73 +83,15 @@ const DesktopAppPromotion = () => {
         data-aos-delay="100"
       >
         <Box
+          component={"img"}
+          src={"/static/img/cloudreve.svg"}
+          alt="Cloudreve Desktop"
           sx={{
-            position: "relative",
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "flex-end",
-            minHeight: { xs: 300, md: 400 },
+            width: { xs: "60%", md: "70%" },
+            maxWidth: 360,
+            filter: theme.palette.mode === "dark" ? "brightness(0.9)" : "none",
           }}
-        >
-          {/* Windows Explorer Screenshot - Main larger image */}
-          <Box
-            sx={{
-              position: "relative",
-              zIndex: 1,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              borderRadius: "8px",
-              boxShadow: theme.shadows[10],
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Box
-              component={"img"}
-              src={"https://cloudreve.org/imgs/desktop/explorer.png"}
-              alt="Windows Explorer Integration"
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: theme.palette.mode === "dark" ? "brightness(0.8)" : "none",
-              }}
-            />
-          </Box>
-          {/* Sync UI Screenshot - Smaller overlay image */}
-          <Box
-            sx={{
-              position: "absolute",
-              border: `1px solid ${theme.palette.divider}`,
-              right: { xs: 0, md: -23 },
-              bottom: { xs: -20, md: -40 },
-              width: { xs: "40%", md: "40%" },
-              zIndex: 2,
-              backgroundColor: theme.palette.background.paper,
-              borderRadius: 1,
-              boxShadow: theme.shadows[15],
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Box
-              component={"img"}
-              src={"https://cloudreve.org/imgs/desktop/sync-ui.png"}
-              alt="Sync UI"
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: theme.palette.mode === "dark" ? "brightness(0.8)" : "none",
-              }}
-            />
-          </Box>
-        </Box>
+        />
       </Grid>
     </Grid>
   );

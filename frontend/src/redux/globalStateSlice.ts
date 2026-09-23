@@ -192,6 +192,8 @@ export interface GlobalStateSlice {
   selectOptionDialogOptions?: DialogSelectOption[];
   selectOptionPromiseId?: string;
   selectOptionTitle?: string;
+  selectOptionRememberable?: boolean;
+  selectOptionRememberChecked?: boolean;
 
   // Batch download log dialog
   batchDownloadLogDialogOpen?: boolean;
@@ -553,15 +555,23 @@ export const globalStateSlice = createSlice({
         options?: DialogSelectOption[];
         promiseId: string;
         title?: string;
+        rememberable?: boolean;
       }>,
     ) => {
       state.selectOptionDialogOpen = action.payload.open;
       state.selectOptionDialogOptions = action.payload.options;
       state.selectOptionPromiseId = action.payload.promiseId;
       state.selectOptionTitle = action.payload.title;
+      state.selectOptionRememberable = action.payload.rememberable;
+      state.selectOptionRememberChecked = false;
+    },
+    setSelectOptionRememberChecked: (state, action: PayloadAction<boolean>) => {
+      state.selectOptionRememberChecked = action.payload;
     },
     closeSelectOptionDialog: (state) => {
       state.selectOptionDialogOpen = false;
+      state.selectOptionRememberable = undefined;
+      state.selectOptionRememberChecked = undefined;
     },
     setUploadFromClipboardDialog: (state, action: PayloadAction<boolean>) => {
       state.uploadFromClipboardDialogOpen = action.payload;
@@ -934,6 +944,7 @@ export const {
   setBatchDownloadProgress,
   clearBatchDownloadProgress,
   setSelectOptionDialog,
+  setSelectOptionRememberChecked,
   closeSelectOptionDialog,
   setUploadFromClipboardDialog,
   openUploadTaskList,

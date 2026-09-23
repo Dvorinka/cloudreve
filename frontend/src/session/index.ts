@@ -36,6 +36,7 @@ export enum UserSettings {
   TimeZone = "time_zone",
   TreeViewAutoExpand = "tree_view_auto_expand",
   FolderClickAction = "folder_click_action",
+  ArchiveDownloadMethod = "archive_download_method",
 }
 
 export const UserSettingsDefault: { [key: string]: any } = {

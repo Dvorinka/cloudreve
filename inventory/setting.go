@@ -76,7 +76,13 @@ func (c *settingClient) Gets(ctx context.Context, names []string) (map[string]st
 
 func (c *settingClient) Set(ctx context.Context, settings map[string]string) error {
 	for k, v := range settings {
-		if err := c.client.Setting.Update().Where(setting.Name(k)).SetValue(v).Exec(ctx); err != nil {
+		err := c.client.Setting.Create().
+			SetName(k).
+			SetValue(v).
+			OnConflictColumns(setting.FieldName).
+			UpdateNewValues().
+			Exec(ctx)
+		if err != nil {
 			return fmt.Errorf("failed to create setting %q: %w", k, err)
 		}
 
@@ -531,6 +537,8 @@ var DefaultSettings = map[string]string{
 	"smtpPass":                                   ``,
 	"smtpEncryption":                             `0`,
 	"ban_time":                                   `604800`,
+	"shop_nav":                                   `1`,
+	"share_score_rate":                           `100`,
 	"maxEditSize":                                `52428800`,
 	"archive_timeout":                            `600`,
 	"upload_session_timeout":                     `86400`,
@@ -701,8 +709,8 @@ var DefaultSettings = map[string]string{
 	"media_meta_geocoding_mapbox_ak":             "",
 	"site_logo":                                  "/static/img/logo.svg",
 	"site_logo_light":                            "/static/img/logo_light.svg",
-	"tos_url":                                    "https://cloudreve.org/privacy-policy",
-	"privacy_policy_url":                         "https://cloudreve.org/privacy-policy",
+	"tos_url":                                    "",
+	"privacy_policy_url":                         "",
 	"explorer_category_image_query":              "type=file&case_folding&use_or&name=*.bmp&name=*.iff&name=*.png&name=*.gif&name=*.jpg&name=*.jpeg&name=*.psd&name=*.svg&name=*.webp&name=*.heif&name=*.heic&name=*.tiff&name=*.avif&name=*.3fr&name=*.ari&name=*.arw&name=*.bay&name=*.braw&name=*.crw&name=*.cr2&name=*.cr3&name=*.cap&name=*.dcs&name=*.dcr&name=*.dng&name=*.drf&name=*.eip&name=*.erf&name=*.fff&name=*.gpr&name=*.iiq&name=*.k25&name=*.kdc&name=*.mdc&name=*.mef&name=*.mos&name=*.mrw&name=*.nef&name=*.nrw&name=*.obm&name=*.orf&name=*.pef&name=*.ptx&name=*.pxn&name=*.r3d&name=*.raf&name=*.raw&name=*.rwl&name=*.rw2&name=*.rwz&name=*.sr2&name=*.srf&name=*.srw&name=*.tif&name=*.x3f",
 	"explorer_category_video_query":              "type=file&case_folding&use_or&name=*.mp4&name=*.m3u8&name=*.flv&name=*.avi&name=*.wmv&name=*.mkv&name=*.rm&name=*.rmvb&name=*.mov&name=*.ogv",
 	"explorer_category_audio_query":              "type=file&case_folding&use_or&name=*.mp3&name=*.flac&name=*.ape&name=*.wav&name=*.acc&name=*.ogg&name=*.m4a",

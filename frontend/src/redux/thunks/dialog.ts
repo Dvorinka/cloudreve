@@ -249,7 +249,14 @@ export function requestCreateNew(fmIndex: number, type: string, defaultName?: st
   };
 }
 
-export function selectOption(options: DialogSelectOption[], title: string): AppThunk<Promise<any> | Promise<void>> {
+// selectOption resolves with the chosen option value. When `rememberable`
+// is set, the dialog offers a "don't ask again" checkbox and resolves with
+// { value, remember } so the caller can persist the choice.
+export function selectOption(
+  options: DialogSelectOption[],
+  title: string,
+  rememberable?: boolean,
+): AppThunk<Promise<any> | Promise<void>> {
   return async (dispatch) => {
     const id = promiseId();
     return new Promise<any>((resolve, reject) => {
@@ -260,6 +267,7 @@ export function selectOption(options: DialogSelectOption[], title: string): AppT
           title,
           options,
           promiseId: id,
+          rememberable,
         }),
       );
     });

@@ -757,7 +757,8 @@
     "publicListing": "Im öffentlichen Verzeichnis auflisten",
     "publicListingDes": "Diese Freigabe auf der Entdecken-Seite anzeigen, für jeden sichtbar, auch für anonyme Besucher. Nicht verfügbar für passwortgeschützte Freigaben.",
     "hideReadme": "Readme-Datei ausblenden",
-    "hideReadmeDes": "Die README-Datei selbst aus der Freigabeliste heraushalten. Besucher sehen weiterhin die gerenderte Readme."
+    "hideReadmeDes": "Die README-Datei selbst aus der Freigabeliste heraushalten. Besucher sehen weiterhin die gerenderte Readme.",
+    "dontAskAgain": "Nicht erneut fragen"
   },
   "uploader": {
     "fileCopyName": "Kopie_",
@@ -1049,7 +1050,7 @@
     "compressFilesDes": "Dateien in temporären Arbeitsbereich komprimieren.",
     "uploadArchiveFileDes": "Archiv an Zielort übertragen.",
     "uploadWorker": "Upload-Thread #{{num}}",
-    "relocatedEntities": "Übertragene Entitäten",
+    "relocatedEntities": "Verschobene Elemente",
     "queueToStart": "Warteschlange zum Start",
     "indexingFiles": "Dateien abrufen",
     "indexingFilesDes": "Alle zu übertragenden Dateien abrufen und sperren.",
@@ -1236,7 +1237,11 @@
     "backupCodesWarning": "Diese Codes jetzt speichern. Jeder ist einmalig verwendbar und wird nicht erneut angezeigt.",
     "copyCodes": "Codes kopieren",
     "blockSysFilesUpload": "Upload von Systemdateien blockieren",
-    "blockSysFilesUploadTooltip": "Wenn aktiviert, werden Dateien, die mit <0>.</0> beginnen, vom Upload blockiert."
+    "blockSysFilesUploadTooltip": "Wenn aktiviert, werden Dateien, die mit <0>.</0> beginnen, vom Upload blockiert.",
+    "archiveDownloadMethod": "Methode für Massendownloads",
+    "archiveDownloadMethodDes": "Wie Ordner und Mehrfachauswahlen heruntergeladen werden. „Jedes Mal fragen“ lässt die Wahl bei jedem Download offen.",
+    "archiveDownloadAsk": "Jedes Mal fragen",
+    "downloadDesktopApp": "Für Windows herunterladen"
   },
   "vas": {
     "points": "Punkte",
@@ -1402,13 +1407,16 @@
     "permanent": "Permanent",
     "noProducts": "Keine Produkte verfügbar",
     "buyWithPoints": "Für {{points}} Punkte kaufen",
-    "pointsUnavailable": "Nicht mit Punkten käuflich"
+    "pointsUnavailable": "Nicht mit Punkten käuflich",
+    "noProductsDescription": "Sobald der Betreiber Mitgliedschaften oder Pakete hinzufügt, erscheinen sie hier."
   },
   "announcement": {
     "title": "Ankündigung",
     "dontShowAgain": "Nicht erneut anzeigen"
   },
   "discover": {
-    "searchPlaceholder": "Öffentliche Freigaben suchen"
+    "searchPlaceholder": "Öffentliche Freigaben suchen",
+    "empty": "Noch keine öffentlichen Freigaben",
+    "emptyDescription": "Freigaben erscheinen hier, wenn ihre Besitzer sie im öffentlichen Verzeichnis listen."
   }
 }

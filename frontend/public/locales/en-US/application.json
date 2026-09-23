@@ -704,7 +704,8 @@
     "publicListingDes": "Show this share on the Discover page, visible to anyone including anonymous visitors. Not available for password-protected shares.",
     "hideReadme": "Hide readme file",
     "hideReadmeDes": "Keep the README file itself out of the share listing. Visitors still see the rendered readme.",
-    "anonymous": "Anonymous"
+    "anonymous": "Anonymous",
+    "dontAskAgain": "Don't ask again"
   },
   "uploader": {
     "fileCopyName": "Copy of ",
@@ -1180,7 +1181,12 @@
     "backup2FACodes": "Recovery codes",
     "backupCodesDes": "Recovery codes let you sign in when your authenticator is unavailable. Generating a new batch invalidates all previous codes.",
     "backupCodesWarning": "Save these codes now. Each can be used once and they will not be shown again.",
-    "copyCodes": "Copy codes"
+    "copyCodes": "Copy codes",
+    "relocatedEntities": "Relocated items",
+    "archiveDownloadMethod": "Batch download method",
+    "archiveDownloadMethodDes": "How folders and multi-file selections are downloaded. Choose \"Ask every time\" to pick per download.",
+    "archiveDownloadAsk": "Ask every time",
+    "downloadDesktopApp": "Download for Windows"
   },
   "vas": {
     "points": "Points",
@@ -1210,13 +1216,16 @@
     "permanent": "Permanent",
     "noProducts": "No products available",
     "buyWithPoints": "Buy for {{points}} pts",
-    "pointsUnavailable": "Not purchasable with points"
+    "pointsUnavailable": "Not purchasable with points",
+    "noProductsDescription": "When the site operator adds memberships or packs, they will show up here."
   },
   "announcement": {
     "title": "Announcement",
     "dontShowAgain": "Don't show this again"
   },
   "discover": {
-    "searchPlaceholder": "Search public shares"
+    "searchPlaceholder": "Search public shares",
+    "empty": "No public shares yet",
+    "emptyDescription": "Shares appear here when their owners list them in the public directory."
   }
 }

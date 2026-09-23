@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { DialogContent, List, ListItemButton, ListItemText } from "@mui/material";
+import { Checkbox, DialogContent, FormControlLabel, List, ListItemButton, ListItemText } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
 import React, { useCallback } from "react";
 import DraggableDialog from "./DraggableDialog.tsx";
 import { selectOptionDialogPromisePool } from "../../redux/thunks/dialog.ts";
-import { closeSelectOptionDialog } from "../../redux/globalStateSlice.ts";
+import { closeSelectOptionDialog, setSelectOptionRememberChecked } from "../../redux/globalStateSlice.ts";
 
 const SelectOption = () => {
   const { t } = useTranslation();
@@ -14,6 +14,8 @@ const SelectOption = () => {
   const title = useAppSelector((state) => state.globalState.selectOptionTitle);
   const promiseId = useAppSelector((state) => state.globalState.selectOptionPromiseId);
   const options = useAppSelector((state) => state.globalState.selectOptionDialogOptions);
+  const rememberable = useAppSelector((state) => state.globalState.selectOptionRememberable);
+  const rememberChecked = useAppSelector((state) => state.globalState.selectOptionRememberChecked);
 
   const onClose = useCallback(() => {
     dispatch(closeSelectOptionDialog());
@@ -26,10 +28,12 @@ const SelectOption = () => {
     (v: any) => {
       dispatch(closeSelectOptionDialog());
       if (promiseId) {
-        selectOptionDialogPromisePool[promiseId]?.resolve(v);
+        selectOptionDialogPromisePool[promiseId]?.resolve(
+          rememberable ? { value: v, remember: !!rememberChecked } : v,
+        );
       }
     },
-    [promiseId],
+    [promiseId, rememberable, rememberChecked],
   );
 
   return (
@@ -60,6 +64,18 @@ const SelectOption = () => {
             </ListItemButton>
           ))}
         </List>
+        {rememberable && (
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={!!rememberChecked}
+                onChange={(e) => dispatch(setSelectOptionRememberChecked(e.target.checked))}
+              />
+            }
+            label={t("modals.dontAskAgain")}
+          />
+        )}
       </DialogContent>
     </DraggableDialog>
   );
