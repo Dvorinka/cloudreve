@@ -180,7 +180,16 @@
     "allow": "允许",
     "permViewOnly": "仅查看",
     "permUploadDownload": "上传 + 下载",
-    "permViewUpload": "查看 + 上传"
+    "permViewUpload": "查看 + 上传",
+    "aclSection": "选定的用户和组",
+    "aclSearch": "输入用户邮箱或搜索用户组…",
+    "aclPerm_read": "查看",
+    "aclPerm_create": "上传",
+    "aclPerm_update": "编辑",
+    "aclPerm_delete": "删除",
+    "acl_anonymous": "任何人",
+    "acl_everyone": "所有已登录用户",
+    "aclRemove": "移除"
   },
   "update": {
     "title": "软件更新",

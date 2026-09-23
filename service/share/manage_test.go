@@ -109,12 +109,12 @@ func TestNormalizeSlug(t *testing.T) {
 
 	t.Run("invalid values rejected", func(t *testing.T) {
 		for _, in := range []string{
-			"ab",                      // too short
-			"a b",                     // space
-			"UPPER_OK!",               // invalid char
-			"-badstart",               // must start alphanumeric
-			".bad",                    // must start alphanumeric
-			"//s//weird",              // nested prefix leftovers
+			"ab",         // too short
+			"a b",        // space
+			"UPPER_OK!",  // invalid char
+			"-badstart",  // must start alphanumeric
+			".bad",       // must start alphanumeric
+			"//s//weird", // nested prefix leftovers
 			"averyveryveryveryveryverylongslugnamethatkeepsgoingandgoingandgoingx", // >64
 		} {
 			got, err := normalizeSlug(c, dep, str(in), 0)

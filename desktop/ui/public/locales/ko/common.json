@@ -180,7 +180,16 @@
     "allow": "허용",
     "permViewOnly": "보기만",
     "permUploadDownload": "업로드 + 다운로드",
-    "permViewUpload": "보기 + 업로드"
+    "permViewUpload": "보기 + 업로드",
+    "aclSection": "선택한 사용자 및 그룹",
+    "aclSearch": "사용자 이메일 입력 또는 그룹 검색…",
+    "aclPerm_read": "보기",
+    "aclPerm_create": "업로드",
+    "aclPerm_update": "편집",
+    "aclPerm_delete": "삭제",
+    "acl_anonymous": "모든 사용자",
+    "acl_everyone": "로그인한 모든 사용자",
+    "aclRemove": "제거"
   },
   "update": {
     "title": "소프트웨어 업데이트",

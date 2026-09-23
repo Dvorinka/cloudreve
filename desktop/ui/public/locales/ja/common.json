@@ -180,7 +180,16 @@
     "allow": "許可",
     "permViewOnly": "閲覧のみ",
     "permUploadDownload": "アップロード + ダウンロード",
-    "permViewUpload": "閲覧 + アップロード"
+    "permViewUpload": "閲覧 + アップロード",
+    "aclSection": "選択したユーザーとグループ",
+    "aclSearch": "ユーザーのメールを入力、またはグループを検索…",
+    "aclPerm_read": "閲覧",
+    "aclPerm_create": "アップロード",
+    "aclPerm_update": "編集",
+    "aclPerm_delete": "削除",
+    "acl_anonymous": "全員",
+    "acl_everyone": "すべてのログインユーザー",
+    "aclRemove": "削除"
   },
   "update": {
     "title": "ソフトウェア更新",

@@ -180,7 +180,16 @@
     "allow": "Allow",
     "permViewOnly": "View only",
     "permUploadDownload": "Upload + Download",
-    "permViewUpload": "View + Upload"
+    "permViewUpload": "View + Upload",
+    "aclSection": "Selected users & groups",
+    "aclSearch": "Enter user email or search groups…",
+    "aclPerm_read": "View",
+    "aclPerm_create": "Upload",
+    "aclPerm_update": "Edit",
+    "aclPerm_delete": "Delete",
+    "acl_anonymous": "Anyone",
+    "acl_everyone": "All signed-in users",
+    "aclRemove": "Remove"
   },
   "update": {
     "title": "Software Update",

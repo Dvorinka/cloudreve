@@ -180,7 +180,16 @@
     "allow": "Zezwól",
     "permViewOnly": "Tylko podgląd",
     "permUploadDownload": "Przesyłanie + pobieranie",
-    "permViewUpload": "Podgląd + Wysyłanie"
+    "permViewUpload": "Podgląd + Wysyłanie",
+    "aclSection": "Wybrani użytkownicy i grupy",
+    "aclSearch": "Wpisz e-mail użytkownika lub szukaj grup…",
+    "aclPerm_read": "Podgląd",
+    "aclPerm_create": "Wysyłanie",
+    "aclPerm_update": "Edycja",
+    "aclPerm_delete": "Usuwanie",
+    "acl_anonymous": "Każdy",
+    "acl_everyone": "Wszyscy zalogowani użytkownicy",
+    "aclRemove": "Usuń"
   },
   "update": {
     "title": "Aktualizacja oprogramowania",

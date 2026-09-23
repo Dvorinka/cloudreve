@@ -20,7 +20,7 @@ use anyhow::{Context, Result};
 use bytes::Bytes;
 use cloudreve_api::{
     ApiError,
-    api::{ExplorerApi, ShareApi, explorer::ExplorerApiExt},
+    api::{AclApi, ExplorerApi, ShareApi, explorer::ExplorerApiExt},
     models::{
         explorer::{
             DeleteFileService, FileResponse, FileURLService, GetFileInfoService,
@@ -505,6 +505,32 @@ impl Mount {
     /// Edit an existing share, returning the share URL.
     pub async fn update_share(&self, id: &str, request: ShareCreateService) -> Result<String> {
         Ok(self.cr_client.update_share(id, &request).await?)
+    }
+
+    /// List ACL entries (selected users/groups) on the shared file.
+    pub async fn list_acl(&self, uri: &str) -> Result<Vec<cloudreve_api::models::acl::AclEntry>> {
+        Ok(self.cr_client.list_acl(uri).await?)
+    }
+
+    /// Search users/groups selectable as ACL subjects.
+    pub async fn search_acl_subjects(
+        &self,
+        keyword: &str,
+    ) -> Result<Vec<cloudreve_api::models::acl::AclSubject>> {
+        Ok(self.cr_client.search_acl_subjects(keyword).await?)
+    }
+
+    /// Create or update an ACL entry on the shared file.
+    pub async fn upsert_acl(
+        &self,
+        request: cloudreve_api::models::acl::AclUpsertService,
+    ) -> Result<cloudreve_api::models::acl::AclEntry> {
+        Ok(self.cr_client.upsert_acl(&request).await?)
+    }
+
+    /// Remove an ACL entry by id.
+    pub async fn delete_acl(&self, uri: &str, id: i64) -> Result<()> {
+        Ok(self.cr_client.delete_acl(uri, id).await?)
     }
 
     /// Delete a share by id.

@@ -180,7 +180,16 @@
     "allow": "Autoriser",
     "permViewOnly": "Voir seulement",
     "permUploadDownload": "Envoyer + Télécharger",
-    "permViewUpload": "Voir + Envoyer"
+    "permViewUpload": "Voir + Envoyer",
+    "aclSection": "Utilisateurs et groupes sélectionnés",
+    "aclSearch": "Saisir l'email de l'utilisateur ou chercher des groupes…",
+    "aclPerm_read": "Voir",
+    "aclPerm_create": "Envoyer",
+    "aclPerm_update": "Modifier",
+    "aclPerm_delete": "Supprimer",
+    "acl_anonymous": "Tout le monde",
+    "acl_everyone": "Tous les utilisateurs connectés",
+    "aclRemove": "Retirer"
   },
   "update": {
     "title": "Mise à jour logicielle",

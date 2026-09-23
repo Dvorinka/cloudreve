@@ -180,7 +180,16 @@
     "allow": "Разрешить",
     "permViewOnly": "Только просмотр",
     "permUploadDownload": "Загрузка + скачивание",
-    "permViewUpload": "Просмотр + Загрузка"
+    "permViewUpload": "Просмотр + Загрузка",
+    "aclSection": "Выбранные пользователи и группы",
+    "aclSearch": "Введите email пользователя или найдите группы…",
+    "aclPerm_read": "Просмотр",
+    "aclPerm_create": "Загрузка",
+    "aclPerm_update": "Изменение",
+    "aclPerm_delete": "Удаление",
+    "acl_anonymous": "Все",
+    "acl_everyone": "Все авторизованные пользователи",
+    "aclRemove": "Удалить"
   },
   "update": {
     "title": "Обновление",

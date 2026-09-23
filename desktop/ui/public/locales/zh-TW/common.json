@@ -180,7 +180,16 @@
     "allow": "允許",
     "permViewOnly": "僅檢視",
     "permUploadDownload": "上傳 + 下載",
-    "permViewUpload": "檢視 + 上傳"
+    "permViewUpload": "檢視 + 上傳",
+    "aclSection": "選定的使用者和群組",
+    "aclSearch": "輸入使用者電子郵件或搜尋群組…",
+    "aclPerm_read": "檢視",
+    "aclPerm_create": "上傳",
+    "aclPerm_update": "編輯",
+    "aclPerm_delete": "刪除",
+    "acl_anonymous": "任何人",
+    "acl_everyone": "所有已登入使用者",
+    "aclRemove": "移除"
   },
   "update": {
     "title": "軟體更新",

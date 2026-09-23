@@ -1,3 +1,4 @@
+pub mod acl;
 pub mod common;
 pub mod dashboard;
 pub mod explorer;

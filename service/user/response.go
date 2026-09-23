@@ -56,6 +56,11 @@ type LinkedAccount struct {
 }
 
 func BuildUserSettings(u *ent.User, passkeys []*ent.Passkey, parser *uaparser.Parser, grants []*ent.OAuthGrant, bindings []*ent.SsoBinding) *UserSettings {
+	// Users written without a settings blob (manual inserts, legacy rows)
+	// must not panic the settings page.
+	if u.Settings == nil {
+		u.Settings = &types.UserSetting{}
+	}
 	return &UserSettings{
 		VersionRetentionEnabled: u.Settings.VersionRetention,
 		VersionRetentionExt:     u.Settings.VersionRetentionExt,
@@ -205,6 +210,10 @@ func BuildWebAuthnList(credentials []webauthn.Credential) []WebAuthnCredentials 
 
 // BuildUser 序列化用户
 func BuildUser(user *ent.User, idEncoder hashid.Encoder) User {
+	// A NULL settings column would otherwise panic every dereference below.
+	if user.Settings == nil {
+		user.Settings = &types.UserSetting{}
+	}
 	return User{
 		ID:                  hashid.EncodeUserID(idEncoder, user.ID),
 		Email:               user.Email,

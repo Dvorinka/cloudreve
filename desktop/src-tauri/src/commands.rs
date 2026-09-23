@@ -1076,6 +1076,101 @@ pub async fn update_share(
         .map_err(|e| e.to_string())
 }
 
+/// List ACL entries (selected users/groups) on the shared file.
+#[tauri::command]
+pub async fn list_acl(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    uri: String,
+) -> CommandResult<Vec<cloudreve_sync::AclEntry>> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount.list_acl(&uri).await.map_err(|e| e.to_string())
+}
+
+/// Search users/groups selectable as ACL subjects.
+#[tauri::command]
+pub async fn search_acl_subjects(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    keyword: String,
+) -> CommandResult<Vec<cloudreve_sync::AclSubject>> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount
+        .search_acl_subjects(&keyword)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Create or update an ACL entry on the shared file.
+#[tauri::command]
+pub async fn upsert_acl(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    uri: String,
+    subject_type: String,
+    subject_id: i64,
+    permissions: Vec<String>,
+) -> CommandResult<cloudreve_sync::AclEntry> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount
+        .upsert_acl(cloudreve_sync::AclUpsertService {
+            uri,
+            subject_type,
+            subject_id,
+            permissions,
+        })
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Remove an ACL entry by id.
+#[tauri::command]
+pub async fn delete_acl(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    uri: String,
+    id: i64,
+) -> CommandResult<()> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount.delete_acl(&uri, id).await.map_err(|e| e.to_string())
+}
+
 /// Delete a share link.
 #[tauri::command]
 pub async fn delete_share(

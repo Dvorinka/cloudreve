@@ -180,7 +180,16 @@
     "allow": "Erlauben",
     "permViewOnly": "Nur ansehen",
     "permUploadDownload": "Hochladen + Herunterladen",
-    "permViewUpload": "Ansehen + Hochladen"
+    "permViewUpload": "Ansehen + Hochladen",
+    "aclSection": "Ausgewählte Benutzer & Gruppen",
+    "aclSearch": "Benutzer-E-Mail eingeben oder Gruppen suchen…",
+    "aclPerm_read": "Ansehen",
+    "aclPerm_create": "Hochladen",
+    "aclPerm_update": "Bearbeiten",
+    "aclPerm_delete": "Löschen",
+    "acl_anonymous": "Jeder",
+    "acl_everyone": "Alle angemeldeten Benutzer",
+    "aclRemove": "Entfernen"
   },
   "update": {
     "title": "Software-Update",
