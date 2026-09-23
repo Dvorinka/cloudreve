@@ -25,8 +25,6 @@ import FolderOutlined from "../../Icons/FolderOutlined.tsx";
 import Globe from "../../Icons/Globe.tsx";
 import GlobeFilled from "../../Icons/GlobeFilled.tsx";
 import HomeOutlined from "../../Icons/HomeOutlined.tsx";
-import Payment from "../../Icons/Payment.tsx";
-import PaymentFilled from "../../Icons/PaymentFilled.tsx";
 import People from "../../Icons/People.tsx";
 import PeopleFilled from "../../Icons/PeopleFilled.tsx";
 import Person from "../../Icons/Person.tsx";
@@ -212,12 +210,6 @@ AdminNavigationItems = [
     icon: [CubeSyncFilled, CubeSync],
     path: "/admin/task",
     permission: GroupPermission.admin_queue,
-  },
-  {
-    label: "dashboard:vas.orders",
-    icon: [PaymentFilled, Payment],
-    path: "/admin/payment",
-    permission: GroupPermission.admin_payment,
   },
   {
     label: "dashboard:nav.events",

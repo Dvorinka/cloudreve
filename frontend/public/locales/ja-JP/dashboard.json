@@ -1795,7 +1795,6 @@
     "confirmDelete": "これらの注文を削除しますか？",
     "vas": "付加価値サービス",
     "reports": "報告",
-    "orders": "注文",
     "initialFiles": "初期ファイル",
     "initialFilesDes": "ユーザー登録後に初期的に保有するファイルです。ファイルIDを入力して、既存のファイルを追加してください。",
     "filterEmailProvider": "登録メールアドレスドメインフィルタリング",

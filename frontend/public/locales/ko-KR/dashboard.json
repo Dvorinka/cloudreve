@@ -1797,7 +1797,6 @@
     "confirmDelete": "이 주문들을 삭제하시겠습니까?",
     "vas": "부가 서비스",
     "reports": "신고",
-    "orders": "주문",
     "initialFiles": "초기 파일",
     "initialFilesDes": "사용자 등록 후 초기에 보유하는 파일을 지정합니다. 파일 ID를 입력하여 기존 파일을 검색하고 추가하세요.",
     "filterEmailProvider": "등록 이메일 도메인 필터링",

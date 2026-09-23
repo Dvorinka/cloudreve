@@ -1795,7 +1795,6 @@
     "confirmDelete": "确认要删除这些订单？",
     "vas": "增值服务",
     "reports": "举报",
-    "orders": "订单",
     "initialFiles": "初始文件",
     "initialFilesDes": "指定用户注册后初始拥有的文件。输入文件 ID 搜索并添加现有文件。",
     "filterEmailProvider": "过滤注册邮箱域",

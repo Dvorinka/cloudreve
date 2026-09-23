@@ -1797,7 +1797,6 @@
     "confirmDelete": "¿Estás seguro de que quieres eliminar estas órdenes?",
     "vas": "VAS",
     "reports": "Reportes",
-    "orders": "Pagos",
     "initialFiles": "Archivos iniciales",
     "initialFilesDes": "Especifica los archivos que el usuario posee inicialmente después del registro. Ingresa un ID de archivo para buscar archivos existentes.",
     "filterEmailProvider": "Filtrar proveedor de email",

@@ -1822,7 +1822,6 @@
     "confirmDelete": "Sind Sie sicher, dass Sie diese Bestellungen löschen möchten?",
     "vas": "VAS",
     "reports": "Berichte",
-    "orders": "Zahlungen",
     "initialFiles": "Anfangsdateien",
     "initialFilesDes": "Geben Sie die Dateien an, die der Benutzer nach der Registrierung anfänglich besitzt. Geben Sie eine Datei-ID ein, um vorhandene Dateien zu suchen.",
     "filterEmailProvider": "E-Mail-Anbieter filtern",

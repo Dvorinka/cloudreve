@@ -1795,7 +1795,6 @@
     "confirmDelete": "確認要刪除這些訂單?",
     "vas": "增值服務",
     "reports": "舉報",
-    "orders": "訂單",
     "initialFiles": "初始檔案",
     "initialFilesDes": "指定使用者注冊後初始擁有的檔案。輸入檔案 ID 搜尋並新增現有檔案。",
     "filterEmailProvider": "過濾注冊郵箱域",
