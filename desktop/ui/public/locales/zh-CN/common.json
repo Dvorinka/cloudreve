@@ -144,9 +144,7 @@
   "share": {
     "title": "分享 {{name}} 的链接",
     "linkReady": "分享链接已创建：",
-    "permission": "分享权限",
     "permViewDownload": "查看 + 下载",
-    "permPreviewOnly": "仅预览（禁止下载）",
     "permAllowEdit": "查看 + 下载 + 编辑",
     "permUploadOnly": "仅上传（收集箱）",
     "expires": "过期时间",
@@ -176,9 +174,13 @@
     "save": "保存",
     "saveLink": "保存链接",
     "slugPlaceholder": "自定义链接名",
-    "slugHint": "留空则使用生成的链接。3-64 个字符：字母、数字、'-' 或 '_'。",
-    "slugInvalid": "链接名必须为 3-64 个字符：字母、数字、'-' 或 '_'",
-    "stats": "{{views}} 次查看 · {{downloads}} 次下载"
+    "slugHint": "留空则使用生成的链接。3-64 个字符：字母、数字、'-'、'_'、'.'、'~'。",
+    "slugInvalid": "链接名必须为 3-64 个字符：字母、数字、'-'、'_'、'.'、'~'",
+    "stats": "{{views}} 次查看 · {{downloads}} 次下载",
+    "allow": "允许",
+    "permViewOnly": "仅查看",
+    "permUploadDownload": "上传 + 下载",
+    "permViewUpload": "查看 + 上传"
   },
   "update": {
     "title": "软件更新",

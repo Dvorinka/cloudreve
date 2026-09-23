@@ -708,7 +708,10 @@
     "publicListingDes": "Pokaż to udostępnienie na stronie Odkrywaj, widoczne dla każdego, w tym anonimowych odwiedzających. Niedostępne dla udostępnień chronionych hasłem.",
     "hideReadme": "Ukryj plik readme",
     "hideReadmeDes": "Nie pokazuj samego pliku README na liście udostępnienia. Odwiedzający nadal widzą wyrenderowany readme.",
-    "dontAskAgain": "Nie pytaj ponownie"
+    "dontAskAgain": "Nie pytaj ponownie",
+    "customLink": "Własny link",
+    "customLinkName": "Nazwa linku",
+    "customLinkDes": "Wybierz własną nazwę linku, np. /s/my-files. Pozostaw puste, aby użyć wygenerowanego. 3-64 znaki: litery, cyfry, '-', '_', '.', '~'."
   },
   "uploader": {
     "fileCopyName": "Kopia ",

@@ -97,6 +97,7 @@ export interface Share {
   upload_only?: boolean;
   note?: string;
   listed_publicly?: boolean;
+  slug?: string;
   price?: number;
   paid?: boolean;
   purchase_ticket?: string;
@@ -370,6 +371,7 @@ export interface ShareCreateService {
   note?: string;
   price_points?: number;
   listed_publicly?: boolean;
+  slug?: string;
 }
 
 export interface CreateFileService {

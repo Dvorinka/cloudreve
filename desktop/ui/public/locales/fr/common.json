@@ -144,9 +144,7 @@
   "share": {
     "title": "Lien de partage pour {{name}}",
     "linkReady": "Votre lien de partage est prêt :",
-    "permission": "Permissions de partage",
     "permViewDownload": "Voir + Télécharger",
-    "permPreviewOnly": "Aperçu uniquement (sans téléchargement)",
     "permAllowEdit": "Voir + Télécharger + Modifier",
     "permUploadOnly": "Téléversement uniquement (boîte de dépôt)",
     "expires": "Expire",
@@ -176,9 +174,13 @@
     "save": "Enregistrer",
     "saveLink": "Enregistrer le lien",
     "slugPlaceholder": "nom-de-lien-personnalise",
-    "slugHint": "Laissez vide pour utiliser le lien généré. 3-64 caractères : lettres, chiffres, '-' ou '_'.",
-    "slugInvalid": "Le nom du lien doit contenir 3-64 caractères : lettres, chiffres, '-' ou '_'",
-    "stats": "{{views}} vues · {{downloads}} téléchargements"
+    "slugHint": "Laissez vide pour utiliser le lien généré. 3-64 caractères : lettres, chiffres, '-', '_', '.' ou '~'.",
+    "slugInvalid": "Le nom du lien doit contenir 3-64 caractères : lettres, chiffres, '-', '_', '.' ou '~'",
+    "stats": "{{views}} vues · {{downloads}} téléchargements",
+    "allow": "Autoriser",
+    "permViewOnly": "Voir seulement",
+    "permUploadDownload": "Envoyer + Télécharger",
+    "permViewUpload": "Voir + Envoyer"
   },
   "update": {
     "title": "Mise à jour logicielle",

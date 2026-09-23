@@ -144,9 +144,7 @@
   "share": {
     "title": "{{name}} 的分享連結",
     "linkReady": "您的分享連結已就緒:",
-    "permission": "分享權限",
     "permViewDownload": "檢視 + 下載",
-    "permPreviewOnly": "僅預覽 (不可下載)",
     "permAllowEdit": "檢視 + 下載 + 編輯",
     "permUploadOnly": "僅上傳 (收集箱)",
     "expires": "到期",
@@ -176,9 +174,13 @@
     "save": "儲存",
     "saveLink": "儲存連結",
     "slugPlaceholder": "自訂連結名稱",
-    "slugHint": "留空則使用產生的連結。3-64 個字元：字母、數字、'-' 或 '_'。",
-    "slugInvalid": "連結名稱必須為 3-64 個字元：字母、數字、'-' 或 '_'",
-    "stats": "{{views}} 次檢視 · {{downloads}} 次下載"
+    "slugHint": "留空則使用產生的連結。3-64 個字元：字母、數字、'-'、'_'、'.'、'~'。",
+    "slugInvalid": "連結名稱必須為 3-64 個字元：字母、數字、'-'、'_'、'.'、'~'",
+    "stats": "{{views}} 次檢視 · {{downloads}} 次下載",
+    "allow": "允許",
+    "permViewOnly": "僅檢視",
+    "permUploadDownload": "上傳 + 下載",
+    "permViewUpload": "檢視 + 上傳"
   },
   "update": {
     "title": "軟體更新",

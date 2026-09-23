@@ -758,7 +758,10 @@
     "publicListingDes": "Diese Freigabe auf der Entdecken-Seite anzeigen, für jeden sichtbar, auch für anonyme Besucher. Nicht verfügbar für passwortgeschützte Freigaben.",
     "hideReadme": "Readme-Datei ausblenden",
     "hideReadmeDes": "Die README-Datei selbst aus der Freigabeliste heraushalten. Besucher sehen weiterhin die gerenderte Readme.",
-    "dontAskAgain": "Nicht erneut fragen"
+    "dontAskAgain": "Nicht erneut fragen",
+    "customLink": "Benutzerdefinierter Link",
+    "customLinkName": "Linkname",
+    "customLinkDes": "Eigenen Namen für den Freigabelink wählen, z.B. /s/my-files. Leer lassen für den generierten Link. 3-64 Zeichen: Buchstaben, Ziffern, '-', '_', '.' oder '~'."
   },
   "uploader": {
     "fileCopyName": "Kopie_",

@@ -93,6 +93,8 @@ export interface ShareSetting {
   upload_only?: boolean;
   note?: string;
   listed_publicly?: boolean;
+  slug?: string;
+  use_custom_link?: boolean;
   downloads?: boolean;
   expires?: boolean;
   price_points?: number;
@@ -155,13 +157,20 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
       | "preview_only"
       | "expires"
       | "downloads"
-      | "listed_publicly",
+      | "listed_publicly"
+      | "use_custom_link",
   ) => () => {
     if (!setting[prop]) {
       handleExpand(prop)(null, true);
     }
 
-    onSettingChange({ ...setting, [prop]: !setting[prop] });
+    onSettingChange({
+      ...setting,
+      [prop]: !setting[prop],
+      // Unchecking the custom-link box drops the entered slug so the
+      // update clears it server-side.
+      ...(prop === "use_custom_link" && setting[prop] ? { slug: "" } : {}),
+    });
   };
 
   return (
@@ -221,6 +230,40 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
                 </FormControl>
               </Collapse>
             </Stack>
+          )}
+        </AccordionDetails>
+      </Accordion>
+      <Accordion expanded={expanded === "use_custom_link"} onChange={handleExpand("use_custom_link")}>
+        <AccordionSummary aria-controls="panel-slug-content" id="panel-slug-header">
+          <StyledListItemButton>
+            <ListItemIcon>
+              <RenameOutlined />
+            </ListItemIcon>
+            <ListItemText primary={t("application:modals.customLink")} />
+            <ListItemSecondaryAction>
+              <Checkbox checked={!!setting.use_custom_link} onChange={handleCheck("use_custom_link")} />
+            </ListItemSecondaryAction>
+          </StyledListItemButton>
+        </AccordionSummary>
+        <AccordionDetails sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Typography variant="body2">{t("application:modals.customLinkDes")}</Typography>
+          {setting.use_custom_link && (
+            <FormControl variant="standard" fullWidth sx={{ mt: 1 }}>
+              <FilledTextField
+                label={t("application:modals.customLinkName")}
+                slotProps={{
+                  input: {
+                    startAdornment: <span style={{ marginRight: 4, opacity: 0.6 }}>/s/</span>,
+                  },
+                }}
+                value={setting.slug ?? ""}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase();
+                  if (value !== "" && !/^[a-z0-9][a-z0-9._~-]*$/.test(value)) return;
+                  onSettingChange({ ...setting, slug: value.slice(0, 64) });
+                }}
+              />
+            </FormControl>
           )}
         </AccordionDetails>
       </Accordion>

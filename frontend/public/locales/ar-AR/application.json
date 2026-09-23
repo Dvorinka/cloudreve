@@ -710,7 +710,10 @@
     "directLinkWalkDescendantsDesc": "التنقل عبر كل المجلدات وإنشاء رابط مباشر لكل ملف بالداخل.",
     "directLinkFolderUrl": "روابط مباشرة للمجلدات",
     "directLinkFolderUrlDesc": "إنشاء رابط مباشر واحد لكل مجلد محدد ذاته.",
-    "dontAskAgain": "لا تسأل مرة أخرى"
+    "dontAskAgain": "لا تسأل مرة أخرى",
+    "customLink": "رابط مخصص",
+    "customLinkName": "اسم الرابط",
+    "customLinkDes": "اختر اسمًا مخصصًا لرابط المشاركة، مثل /s/my-files. اتركه فارغًا لاستخدام الرابط المنشأ. 3-64 حرفًا: أحرف وأرقام و'-' و'_' و'.' و'~'."
   },
   "uploader": {
     "fileCopyName": "نسخة من ",

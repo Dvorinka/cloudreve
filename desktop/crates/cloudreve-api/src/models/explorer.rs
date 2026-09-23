@@ -157,6 +157,16 @@ pub struct Share {
     /// Owner-defined custom link slug, used in place of the hashid.
     #[serde(default)]
     pub slug: Option<String>,
+    /// Visitor capabilities, returned to the owner so clients can
+    /// prefill the permission selector.
+    #[serde(default)]
+    pub preview_only: Option<bool>,
+    #[serde(default)]
+    pub allow_edit: Option<bool>,
+    #[serde(default)]
+    pub allow_upload: Option<bool>,
+    #[serde(default)]
+    pub upload_only: Option<bool>,
 }
 
 /// Storage policy type

@@ -706,7 +706,10 @@
     "hideReadmeDes": "在分享文件列表中隐藏 README 文件本身，访客仍可看到渲染后的说明内容。",
     "anonymous": "匿名",
     "shareTargetsCount": "{{count}} 个目标",
-    "dontAskAgain": "不再询问"
+    "dontAskAgain": "不再询问",
+    "customLink": "自定义链接",
+    "customLinkName": "链接名称",
+    "customLinkDes": "为分享链接自定义名称，例如 /s/my-files。留空则使用生成的链接。3-64 个字符：字母、数字、'-'、'_'、'.'、'~'。"
   },
   "uploader": {
     "fileCopyName": "副本_",

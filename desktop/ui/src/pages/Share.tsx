@@ -30,7 +30,10 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { DenseFilledTextField } from "../common/StyledComponent";
 
-type Permission = "view" | "preview" | "edit" | "upload";
+// Permission presets over the server's four boolean flags. "viewup" is
+// preview-only + upload: visitors can browse and add files but cannot
+// download. Upload-shaped presets are folder-only in the UI.
+type Permission = "view" | "preview" | "viewup" | "updown" | "upload" | "edit";
 
 interface ExistingShare {
   id: string;
@@ -42,6 +45,10 @@ interface ExistingShare {
   downloaded: number;
   visited: number;
   slug?: string | null;
+  preview_only?: boolean;
+  allow_edit?: boolean;
+  allow_upload?: boolean;
+  upload_only?: boolean;
 }
 
 const EXPIRE_OPTIONS = [
@@ -52,7 +59,7 @@ const EXPIRE_OPTIONS = [
   { value: 2592000, label: "thirtyDays" },
 ] as const;
 
-const SLUG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$/;
+const SLUG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._~-]{2,63}$/;
 
 /** Render the cloudreve uri as a readable breadcrumb: My Files / a / b. */
 function uriBreadcrumb(uri: string, name: string, t: (k: string) => string) {
@@ -130,6 +137,26 @@ export default function Share() {
           if (share.remain_downloads && share.remain_downloads > 0) {
             setDownloads(String(share.remain_downloads));
           }
+          // Restore the permission selector from the live share flags.
+          if (share.upload_only) setPermission("upload");
+          else if (share.allow_edit) setPermission("edit");
+          else if (share.allow_upload && share.preview_only)
+            setPermission("viewup");
+          else if (share.allow_upload) setPermission("updown");
+          else if (share.preview_only) setPermission("preview");
+          // Expiry: snap remaining seconds to the closest option.
+          if (share.expires) {
+            const secs = Math.max(
+              0,
+              Math.floor(
+                (new Date(share.expires).getTime() - Date.now()) / 1000,
+              ),
+            );
+            const best = EXPIRE_OPTIONS.reduce((a, b) =>
+              Math.abs(b.value - secs) < Math.abs(a.value - secs) ? b : a,
+            );
+            setExpire(best.value);
+          }
         }
       } catch (e) {
         setError(String(e));
@@ -143,9 +170,12 @@ export default function Share() {
     password: access === "password" && password ? password : null,
     downloads: downloads ? parseInt(downloads, 10) : null,
     expire: expire > 0 ? expire : null,
-    previewOnly: permission === "preview",
+    previewOnly: permission === "preview" || permission === "viewup",
     allowEdit: permission === "edit",
-    allowUpload: permission === "upload",
+    allowUpload:
+      permission === "updown" ||
+      permission === "upload" ||
+      permission === "viewup",
     uploadOnly: permission === "upload",
   });
 
@@ -209,7 +239,11 @@ export default function Share() {
 
   const saveLink = async () => {
     if (!existing?.id) return;
-    const slug = slugDraft.trim().toLowerCase();
+    const slug = slugDraft
+      .trim()
+      .toLowerCase()
+      .replace(/^\/+/, "")
+      .replace(/^s\//, "");
     if (slug && !SLUG_PATTERN.test(slug)) {
       setSlugError(t("share.slugInvalid"));
       return;
@@ -490,16 +524,26 @@ export default function Share() {
             <DenseFilledTextField
               select
               fullWidth
-              label={t("share.permission")}
+              label={t("share.allow")}
               value={permission}
               onChange={(e) => setPermission(e.target.value as Permission)}
               sx={{ mt: 2 }}
             >
+              <MenuItem value="preview">{t("share.permViewOnly")}</MenuItem>
               <MenuItem value="view">{t("share.permViewDownload")}</MenuItem>
-              <MenuItem value="preview">{t("share.permPreviewOnly")}</MenuItem>
-              <MenuItem value="edit">{t("share.permAllowEdit")}</MenuItem>
+              {isDir && (
+                <MenuItem value="viewup">{t("share.permViewUpload")}</MenuItem>
+              )}
+              {isDir && (
+                <MenuItem value="updown">
+                  {t("share.permUploadDownload")}
+                </MenuItem>
+              )}
               {isDir && (
                 <MenuItem value="upload">{t("share.permUploadOnly")}</MenuItem>
+              )}
+              {isDir && (
+                <MenuItem value="edit">{t("share.permAllowEdit")}</MenuItem>
               )}
             </DenseFilledTextField>
 

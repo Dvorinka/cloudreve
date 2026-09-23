@@ -45,6 +45,7 @@ export function createOrUpdateShareLink(
       note: setting.note?.trim() || undefined,
       price_points: setting.price_points ?? undefined,
       listed_publicly: setting.listed_publicly,
+      slug: setting.slug?.trim() ?? "",
       downloads: setting.downloads && setting.downloads_val.value > 0 ? setting.downloads_val.value : undefined,
       expire: setting.expires && setting.expires_val.value > 0 ? setting.expires_val.value : undefined,
     };
