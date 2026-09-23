@@ -4,6 +4,7 @@ import {
   Breadcrumbs,
   Button,
   CircularProgress,
+  Divider,
   FormControlLabel,
   IconButton,
   InputAdornment,
@@ -14,6 +15,7 @@ import {
   Snackbar,
   Typography,
 } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FolderIcon from "@mui/icons-material/Folder";
@@ -23,7 +25,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { platform } from "@tauri-apps/plugin-os";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { DenseFilledTextField } from "../common/StyledComponent";
@@ -39,6 +41,7 @@ interface ExistingShare {
   remain_downloads?: number | null;
   downloaded: number;
   visited: number;
+  slug?: string | null;
 }
 
 const EXPIRE_OPTIONS = [
@@ -48,6 +51,8 @@ const EXPIRE_OPTIONS = [
   { value: 604800, label: "sevenDays" },
   { value: 2592000, label: "thirtyDays" },
 ] as const;
+
+const SLUG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$/;
 
 /** Render the cloudreve uri as a readable breadcrumb: My Files / a / b. */
 function uriBreadcrumb(uri: string, name: string, t: (k: string) => string) {
@@ -61,6 +66,18 @@ function uriBreadcrumb(uri: string, name: string, t: (k: string) => string) {
     if (name) segs.push(name);
   }
   return [t("share.root"), ...segs];
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Typography
+      variant="overline"
+      color="text.secondary"
+      sx={{ display: "block", lineHeight: 1.6 }}
+    >
+      {children}
+    </Typography>
+  );
 }
 
 export default function Share() {
@@ -84,8 +101,17 @@ export default function Share() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [editingLink, setEditingLink] = useState(false);
+  const [slugDraft, setSlugDraft] = useState("");
+  const [slugError, setSlugError] = useState<string | null>(null);
 
   const shareUrl = existing?.url ?? null;
+  // "https://host/s/" — the fixed part of the link shown while editing.
+  const linkPrefix = useMemo(() => {
+    if (!shareUrl) return "";
+    const i = shareUrl.indexOf("/s/");
+    return i >= 0 ? shareUrl.slice(0, i + 3) : shareUrl;
+  }, [shareUrl]);
 
   useEffect(() => {
     (async () => {
@@ -123,6 +149,14 @@ export default function Share() {
     uploadOnly: permission === "upload",
   });
 
+  const refresh = async () => {
+    const share = await invoke<ExistingShare | null>("get_share", {
+      driveId,
+      uri,
+    });
+    setExisting(share);
+  };
+
   const createOrUpdate = async () => {
     setWorking(true);
     setError(null);
@@ -139,11 +173,7 @@ export default function Share() {
         await invoke<string>("create_share", { driveId, uri, options });
       }
       // Re-fetch so `id` and the canonical URL come from the server.
-      const share = await invoke<ExistingShare | null>("get_share", {
-        driveId,
-        uri,
-      });
-      setExisting(share);
+      await refresh();
     } catch (e) {
       setError(String(e));
     } finally {
@@ -163,8 +193,45 @@ export default function Share() {
       setDownloads("");
       setExpire(0);
       setPermission("view");
+      setEditingLink(false);
     } catch (e) {
       setError(String(e));
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const startEditLink = () => {
+    setSlugDraft(existing?.slug ?? "");
+    setSlugError(null);
+    setEditingLink(true);
+  };
+
+  const saveLink = async () => {
+    if (!existing?.id) return;
+    const slug = slugDraft.trim().toLowerCase();
+    if (slug && !SLUG_PATTERN.test(slug)) {
+      setSlugError(t("share.slugInvalid"));
+      return;
+    }
+    if (slug === (existing.slug ?? "")) {
+      setEditingLink(false);
+      return;
+    }
+    setWorking(true);
+    setSlugError(null);
+    try {
+      // `slug` rides the normal update: "" clears, a value sets it.
+      await invoke("update_share", {
+        driveId,
+        shareId: existing.id,
+        uri,
+        options: { ...buildOptions(), slug },
+      });
+      await refresh();
+      setEditingLink(false);
+    } catch (e) {
+      setSlugError(String(e));
     } finally {
       setWorking(false);
     }
@@ -221,100 +288,205 @@ export default function Share() {
           </Box>
         ) : (
           <>
-            {/* Link row - always on top once a share exists (FileCloud style) */}
+            {/* Share link — FileCloud-style top row with Modify link */}
             {shareUrl && (
-              <DenseFilledTextField
-                fullWidth
-                value={shareUrl}
-                slotProps={{
-                  input: {
-                    readOnly: true,
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton size="small" onClick={copyLink} title={t("share.copyLink")}>
-                          <ContentCopyIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => openUrl(shareUrl)}
-                          title={t("share.openLink")}
-                          edge="end"
-                        >
-                          <OpenInNewIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+              <Box sx={{ mt: 0.5 }}>
+                <SectionLabel>{t("share.shareLink")}</SectionLabel>
+                {editingLink ? (
+                  <DenseFilledTextField
+                    fullWidth
+                    autoFocus
+                    value={slugDraft}
+                    onChange={(e) => {
+                      setSlugDraft(e.target.value);
+                      setSlugError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveLink();
+                      if (e.key === "Escape") setEditingLink(false);
+                    }}
+                    error={!!slugError}
+                    helperText={slugError ?? t("share.slugHint")}
+                    placeholder={t("share.slugPlaceholder")}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              noWrap
+                              sx={{ maxWidth: 180 }}
+                            >
+                              {linkPrefix}
+                            </Typography>
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={saveLink}
+                              disabled={working}
+                              title={t("share.saveLink")}
+                            >
+                              <CheckIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => setEditingLink(false)}
+                              disabled={working}
+                              title={t("share.cancel")}
+                              edge="end"
+                            >
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    sx={{ mt: 0.5 }}
+                  />
+                ) : (
+                  <DenseFilledTextField
+                    fullWidth
+                    value={shareUrl}
+                    slotProps={{
+                      input: {
+                        readOnly: true,
+                        endAdornment: (
+                          <InputAdornment position="end" sx={{ gap: 0.5 }}>
+                            <Button
+                              size="small"
+                              onClick={startEditLink}
+                              sx={{
+                                textTransform: "none",
+                                minWidth: 0,
+                                px: 1,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {t("share.modifyLink")}
+                            </Button>
+                            <Divider orientation="vertical" flexItem />
+                            <IconButton
+                              size="small"
+                              onClick={copyLink}
+                              title={t("share.copyLink")}
+                            >
+                              <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => openUrl(shareUrl)}
+                              title={t("share.openLink")}
+                              edge="end"
+                            >
+                              <OpenInNewIcon fontSize="small" />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    sx={{ mt: 0.5 }}
+                    onFocus={(e) => e.target.select()}
+                  />
+                )}
+                {existing && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mt: 0.5 }}
+                  >
+                    {t("share.stats", {
+                      views: existing.visited,
+                      downloads: existing.downloaded,
+                    })}
+                  </Typography>
+                )}
+              </Box>
+            )}
+
+            {/* Shared item */}
+            <Box sx={{ mt: 2 }}>
+              <SectionLabel>{t("share.sharedItem")}</SectionLabel>
+              <Breadcrumbs
+                separator="/"
+                sx={{
+                  fontSize: 13,
+                  "& .MuiBreadcrumbs-li": {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
                   },
                 }}
-                sx={{ mt: 1 }}
-                onFocus={(e) => e.target.select()}
-              />
-            )}
+              >
+                {crumbs.map((seg, i) =>
+                  i === crumbs.length - 1 ? (
+                    <Typography
+                      key={i}
+                      variant="body2"
+                      fontWeight={600}
+                      noWrap
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        maxWidth: 220,
+                      }}
+                    >
+                      {isDir ? (
+                        <FolderIcon fontSize="small" color="action" />
+                      ) : (
+                        <InsertDriveFileIcon fontSize="small" color="action" />
+                      )}
+                      {seg}
+                    </Typography>
+                  ) : (
+                    <Link
+                      key={i}
+                      color="text.secondary"
+                      underline="none"
+                      variant="body2"
+                    >
+                      {seg}
+                    </Link>
+                  ),
+                )}
+              </Breadcrumbs>
+            </Box>
 
-            {/* Shared item breadcrumb */}
-            <Breadcrumbs
-              separator="/"
-              sx={{
-                mt: 1.5,
-                fontSize: 13,
-                "& .MuiBreadcrumbs-li": { display: "flex", alignItems: "center", gap: 0.5 },
-              }}
-            >
-              {crumbs.map((seg, i) =>
-                i === crumbs.length - 1 ? (
-                  <Typography
-                    key={i}
-                    variant="body2"
-                    fontWeight={600}
-                    noWrap
-                    sx={{ display: "flex", alignItems: "center", gap: 0.5, maxWidth: 220 }}
-                  >
-                    {isDir ? (
-                      <FolderIcon fontSize="small" color="action" />
-                    ) : (
-                      <InsertDriveFileIcon fontSize="small" color="action" />
-                    )}
-                    {seg}
-                  </Typography>
-                ) : (
-                  <Link key={i} color="text.secondary" underline="none" variant="body2">
-                    {seg}
-                  </Link>
-                )
+            {/* Sharing permissions */}
+            <Box sx={{ mt: 2 }}>
+              <SectionLabel>{t("share.access")}</SectionLabel>
+              <RadioGroup
+                value={access}
+                onChange={(e) => setAccess(e.target.value as "link" | "password")}
+              >
+                <FormControlLabel
+                  value="link"
+                  control={<Radio size="small" />}
+                  label={t("share.accessLink")}
+                />
+                <FormControlLabel
+                  value="password"
+                  control={<Radio size="small" />}
+                  label={t("share.accessPassword")}
+                />
+              </RadioGroup>
+              {access === "password" && (
+                <DenseFilledTextField
+                  fullWidth
+                  label={t("share.password")}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  slotProps={{ htmlInput: { maxLength: 32 } }}
+                  sx={{ mt: 0.5 }}
+                />
               )}
-            </Breadcrumbs>
+            </Box>
 
-            {/* Access level */}
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
-              {t("share.access")}
-            </Typography>
-            <RadioGroup
-              value={access}
-              onChange={(e) => setAccess(e.target.value as "link" | "password")}
-            >
-              <FormControlLabel
-                value="link"
-                control={<Radio size="small" />}
-                label={t("share.accessLink")}
-              />
-              <FormControlLabel
-                value="password"
-                control={<Radio size="small" />}
-                label={t("share.accessPassword")}
-              />
-            </RadioGroup>
-            {access === "password" && (
-              <DenseFilledTextField
-                fullWidth
-                label={t("share.password")}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                slotProps={{ htmlInput: { maxLength: 32 } }}
-                sx={{ mt: 0.5 }}
-              />
-            )}
-
-            {/* Permission level */}
             <DenseFilledTextField
               select
               fullWidth
@@ -396,7 +568,7 @@ export default function Share() {
               working ? <CircularProgress size={16} color="inherit" /> : null
             }
           >
-            {existing ? t("share.modifyLink") : t("share.create")}
+            {existing ? t("share.save") : t("share.create")}
           </Button>
         </Box>
       </Box>

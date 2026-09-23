@@ -49,4 +49,8 @@ pub struct ShareCreateService {
     /// Drop-box share: upload-only, contents hidden from visitors.
     #[serde(default)]
     pub upload_only: bool,
+    /// Owner-defined custom link slug. None = leave unchanged; Some("")
+    /// clears it; Some(value) sets it after server-side validation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slug: Option<String>,
 }

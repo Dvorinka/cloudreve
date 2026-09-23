@@ -170,7 +170,15 @@
     "openLink": "Open link",
     "root": "My Files",
     "modifyLink": "Modify link",
-    "removeShare": "Remove share"
+    "removeShare": "Remove share",
+    "shareLink": "Share link",
+    "sharedItem": "Shared item",
+    "save": "Save",
+    "saveLink": "Save link",
+    "slugPlaceholder": "custom-link-name",
+    "slugHint": "Leave empty to use the generated link. 3-64 characters: letters, digits, '-' or '_'.",
+    "slugInvalid": "Link name must be 3-64 characters: letters, digits, '-' or '_'",
+    "stats": "{{views}} views · {{downloads}} downloads"
   },
   "update": {
     "title": "Software Update",

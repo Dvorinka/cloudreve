@@ -154,6 +154,9 @@ pub struct Share {
     pub password: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show_readme: Option<bool>,
+    /// Owner-defined custom link slug, used in place of the hashid.
+    #[serde(default)]
+    pub slug: Option<String>,
 }
 
 /// Storage policy type
