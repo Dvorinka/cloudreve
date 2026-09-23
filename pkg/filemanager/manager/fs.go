@@ -55,8 +55,11 @@ func (m *manager) CastStoragePolicyOnSlave(ctx context.Context, policy *ent.Stor
 	} else if policy.Type == types.PolicyTypeOss {
 		policyCopy := *policy
 		if policyCopy.Settings != nil {
-			policyCopy.Settings.ServerSideEndpoint = ""
+			settingsCopy := *policyCopy.Settings
+			settingsCopy.ServerSideEndpoint = ""
+			policyCopy.Settings = &settingsCopy
 		}
+		return &policyCopy
 	}
 
 	return policy

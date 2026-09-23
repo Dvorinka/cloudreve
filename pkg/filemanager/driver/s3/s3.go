@@ -73,9 +73,9 @@ func init() {
 
 func New(ctx context.Context, policy *ent.StoragePolicy, settings setting.Provider,
 	config conf.ConfigProvider, l logging.Logger, mime mime.MimeDetector) (*Driver, error) {
-	chunkSize := policy.Settings.ChunkSize
-	if policy.Settings.ChunkSize == 0 {
-		chunkSize = 25 << 20 // 25 MB
+	chunkSize := int64(25 << 20) // 25 MB
+	if policy.Settings != nil && policy.Settings.ChunkSize > 0 {
+		chunkSize = policy.Settings.ChunkSize
 	}
 
 	driver := &Driver{
@@ -87,11 +87,23 @@ func New(ctx context.Context, policy *ent.StoragePolicy, settings setting.Provid
 		mime:      mime,
 	}
 
+	// S3-compatible servers ignore the region value but the AWS SDK still
+	// requires one; an empty region fails every signed request with
+	// MissingRegion (upstream #3592).
+	region := "us-east-1"
+	forcePathStyle := false
+	if policy.Settings != nil {
+		if policy.Settings.Region != "" {
+			region = policy.Settings.Region
+		}
+		forcePathStyle = policy.Settings.S3ForcePathStyle
+	}
+
 	sess, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(policy.AccessKey, policy.SecretKey, ""),
 		Endpoint:         &policy.Server,
-		Region:           &policy.Settings.Region,
-		S3ForcePathStyle: &policy.Settings.S3ForcePathStyle,
+		Region:           &region,
+		S3ForcePathStyle: &forcePathStyle,
 	})
 
 	if err != nil {
