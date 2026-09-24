@@ -1,0 +1,76 @@
+{
+  "name": "cloudreve-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "cr": "dist/bin.js",
+    "cloudreve-cli": "dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs/usage.md"
+  ],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', {recursive:true, force:true})\" && tsc -p tsconfig.build.json",
+    "test": "bun run build && vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write . && bun run format:toml && bun run format:shell && ruff format .",
+    "check": "bun run format:check && bun run lint && tsc --noEmit && bun run build && vitest run --coverage",
+    "format:check": "prettier --check . && bun run format:toml:check && bun run format:shell:check && ruff format --check .",
+    "lint": "eslint . --max-warnings 0 && ruff check . && bun run lint:shell && bun run lint:toml",
+    "test:mutation": "stryker run",
+    "format:toml": "git ls-files -z --cached --others --exclude-standard -- '*.toml' ':!:vendor/**' ':!:.artifacts/**' ':!:.runtime/**' | xargs -0 taplo fmt --option column_width=100",
+    "format:toml:check": "git ls-files -z --cached --others --exclude-standard -- '*.toml' ':!:vendor/**' ':!:.artifacts/**' ':!:.runtime/**' | xargs -0 taplo fmt --check --option column_width=100",
+    "format:shell": "git ls-files -z --cached --others --exclude-standard -- '*.sh' ':!:vendor/**' ':!:.artifacts/**' ':!:.runtime/**' | xargs -0 shfmt -w -i 2",
+    "format:shell:check": "git ls-files -z --cached --others --exclude-standard -- '*.sh' ':!:vendor/**' ':!:.artifacts/**' ':!:.runtime/**' | xargs -0 shfmt -d -i 2",
+    "lint:fix": "eslint . --fix --max-warnings 0 && ruff check . --fix && bun run lint",
+    "lint:shell": "git ls-files -z --cached --others --exclude-standard -- '*.sh' ':!:vendor/**' ':!:.artifacts/**' ':!:.runtime/**' | xargs -0 shellcheck",
+    "lint:toml": "git ls-files -z --cached --others --exclude-standard -- '*.toml' ':!:vendor/**' ':!:.artifacts/**' ':!:.runtime/**' | xargs -0 taplo lint --no-schema"
+  },
+  "devDependencies": {
+    "@cloudreve/quality": "https://github.com/cloudreve/foundation/releases/download/v1.0.0/cloudreve-quality-1.0.0.tgz",
+    "@cloudreve/testkit": "https://github.com/cloudreve/foundation/releases/download/v1.0.0/cloudreve-testkit-1.0.0.tgz",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "@types/node": "24.5.0",
+    "@types/proper-lockfile": "4.1.4",
+    "@types/write-file-atomic": "4.0.3",
+    "@vitest/coverage-v8": "4.1.11",
+    "dependency-cruiser": "18.2.0",
+    "eslint": "9.39.5",
+    "fast-check": "4.3.0",
+    "msw": "2.12.13",
+    "playwright": "1.63.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "dependencies": {
+    "@cloudreve/sdk": "https://github.com/cloudreve/sdk/releases/download/v1.1.0/cloudreve-sdk-1.1.0.tgz",
+    "@commander-js/extra-typings": "15.0.0",
+    "@inquirer/prompts": "8.7.2",
+    "commander": "15.0.0",
+    "open": "11.0.3",
+    "proper-lockfile": "4.1.2",
+    "string-width": "4.2.3",
+    "valibot": "1.5.0",
+    "write-file-atomic": "7.0.1"
+  },
+  "optionalDependencies": {
+    "@napi-rs/keyring": "2.0.0"
+  },
+  "description": "Command-line client for Cloudreve",
+  "homepage": "https://github.com/cloudreve/cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cloudreve/cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cloudreve/cli/issues"
+  },
+  "license": "MIT"
+}

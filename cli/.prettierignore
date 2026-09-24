@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.artifacts/
+.runtime/
+vendor/
+bun.lock
+
+# Local planning and historical verification records
+/AGENTS.md
+/docs/cli-contract.md
+/docs/linux-validation.md
+/docs/parity.md
+/docs/parity/
+/docs/paths.md
+/docs/terminal-output.md
+/docs/validation.md
