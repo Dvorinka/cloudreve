@@ -1,0 +1,6 @@
+{
+  "//": "Upstream refs our vendored directories were last synced to. upstream-watch reports commits past these pins; bump a pin when its directory is re-vendored.",
+  "frontend": { "repo": "cloudreve/frontend", "sha": "c7b6fa5288ed0490a5589ddff4f56ea1f96a5315" },
+  "cli": { "repo": "cloudreve/cli", "sha": "08c4e41faf9391d793b13987ec248546582b690d" },
+  "docs": { "repo": "cloudreve/docs", "sha": "fa73d38c4dc55debcc65a69f369fae4b69ea0e7a" }
+}

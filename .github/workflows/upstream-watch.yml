@@ -1,0 +1,28 @@
+name: Upstream Watch
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # daily 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream backend (divergence report)
+        run: |
+          git remote add upstream https://github.com/cloudreve/cloudreve.git || true
+          git fetch --depth 200 upstream master
+
+      - name: Scan upstream repos and update tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/upstream_watch.py
