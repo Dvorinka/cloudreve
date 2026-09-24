@@ -709,7 +709,10 @@
     "publicListingDes": "將此分享顯示在“發現”頁，任何人（包括未登入訪客）可見。帶密碼的分享不可用。",
     "hideReadme": "隱藏 README 檔案",
     "hideReadmeDes": "在分享檔案列表中隱藏 README 檔案本身，訪客仍可看到渲染後的說明內容。",
-    "dontAskAgain": "不再詢問"
+    "dontAskAgain": "不再詢問",
+    "customLink": "自訂連結",
+    "customLinkName": "連結名稱",
+    "customLinkDes": "為分享連結自訂名稱，例如 /s/my-files。留空則使用產生的連結。3-64 個字元：字母、數字、'-'、'_'、'.'、'~'。"
   },
   "uploader": {
     "fileCopyName": "副本_",

@@ -761,7 +761,10 @@
     "publicListingDes": "Afficher ce partage sur la page Découvrir, visible par tous, y compris les visiteurs anonymes. Non disponible pour les partages protégés par mot de passe.",
     "hideReadme": "Masquer le fichier readme",
     "hideReadmeDes": "Garder le fichier README hors de la liste du partage. Les visiteurs voient toujours le readme rendu.",
-    "dontAskAgain": "Ne plus demander"
+    "dontAskAgain": "Ne plus demander",
+    "customLink": "Lien personnalisé",
+    "customLinkName": "Nom du lien",
+    "customLinkDes": "Choisissez un nom personnalisé pour le lien, p. ex. /s/my-files. Laissez vide pour garder le lien généré. 3-64 caractères : lettres, chiffres, '-', '_', '.' ou '~'."
   },
   "uploader": {
     "fileCopyName": "Copie de ",

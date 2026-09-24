@@ -761,7 +761,10 @@
     "hideReadme": "readme 파일 숨기기",
     "hideReadmeDes": "README 파일 자체를 공유 목록에서 제외합니다. 방문자는 렌더링된 readme을 계속 볼 수 있습니다.",
     "shareTargetsCount_one": "대상 {{count}}개",
-    "dontAskAgain": "다시 묻지 않기"
+    "dontAskAgain": "다시 묻지 않기",
+    "customLink": "사용자 지정 링크",
+    "customLinkName": "링크 이름",
+    "customLinkDes": "공유 링크의 이름을 직접 지정합니다(예: /s/my-files). 비워 두면 생성된 링크를 사용합니다. 3-64자: 문자, 숫자, '-', '_', '.', '~'."
   },
   "uploader": {
     "fileCopyName": "사본_",

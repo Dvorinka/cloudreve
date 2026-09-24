@@ -709,7 +709,10 @@
     "hideReadme": "readmeファイルを非表示",
     "hideReadmeDes": "READMEファイル自体を共有一覧から外します。訪問者にはレンダリングされたreadmeが引き続き表示されます。",
     "shareTargetsCount_one": "{{count}} 件の対象",
-    "dontAskAgain": "今後は確認しない"
+    "dontAskAgain": "今後は確認しない",
+    "customLink": "カスタムリンク",
+    "customLinkName": "リンク名",
+    "customLinkDes": "共有リンクにカスタム名を付けます（例: /s/my-files）。空欄の場合は生成されたリンクを使用。3〜64文字：英数字、'-'、'_'、'.'、'~'。"
   },
   "uploader": {
     "fileCopyName": "コピー_",

@@ -144,9 +144,7 @@
   "share": {
     "title": "Freigabelink für {{name}}",
     "linkReady": "Ihr Freigabelink ist bereit:",
-    "permission": "Freigabeberechtigungen",
     "permViewDownload": "Ansehen + Herunterladen",
-    "permPreviewOnly": "Nur Vorschau (kein Download)",
     "permAllowEdit": "Ansehen + Herunterladen + Bearbeiten",
     "permUploadOnly": "Nur hochladen (Abgabebox)",
     "expires": "Läuft ab",
@@ -176,9 +174,13 @@
     "save": "Speichern",
     "saveLink": "Link speichern",
     "slugPlaceholder": "eigener-link-name",
-    "slugHint": "Leer lassen für den generierten Link. 3-64 Zeichen: Buchstaben, Ziffern, '-' oder '_'.",
-    "slugInvalid": "Der Linkname muss 3-64 Zeichen haben: Buchstaben, Ziffern, '-' oder '_'",
-    "stats": "{{views}} Aufrufe · {{downloads}} Downloads"
+    "slugHint": "Leer lassen für den generierten Link. 3-64 Zeichen: Buchstaben, Ziffern, '-', '_', '.' oder '~'.",
+    "slugInvalid": "Der Linkname muss 3-64 Zeichen haben: Buchstaben, Ziffern, '-', '_', '.' oder '~'",
+    "stats": "{{views}} Aufrufe · {{downloads}} Downloads",
+    "allow": "Erlauben",
+    "permViewOnly": "Nur ansehen",
+    "permUploadDownload": "Hochladen + Herunterladen",
+    "permViewUpload": "Ansehen + Hochladen"
   },
   "update": {
     "title": "Software-Update",

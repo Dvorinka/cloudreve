@@ -85,23 +85,26 @@ func (service *BatchDeleteShareService) Delete(c *gin.Context) error {
 
 // shareSlugPattern allows URL-safe custom link names; the filecloud-style
 // "modify link" flow writes these via the same create/update endpoints.
-var shareSlugPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$`)
+var shareSlugPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._~-]{2,63}$`)
 
 // normalizeSlug validates a requested slug and returns it lowercased. A nil
-// result means "leave unchanged"; "" clears the slug. Slugs that decode as a
-// valid share hashid are rejected so custom links can never shadow a
-// generated link (or vice versa) at resolution time.
+// result means "leave unchanged"; "" clears the slug. Leading "/" and "/s/"
+// prefixes are tolerated so users can paste the whole link tail. Slugs that
+// decode as a valid share hashid are rejected so custom links can never
+// shadow a generated link (or vice versa) at resolution time.
 func normalizeSlug(c *gin.Context, dep dependency.Dep, raw *string, existedID int) (*string, error) {
 	if raw == nil {
 		return nil, nil
 	}
 	slug := strings.ToLower(strings.TrimSpace(*raw))
+	slug = strings.TrimLeft(slug, "/")
+	slug = strings.TrimPrefix(slug, "s/")
 	if slug == "" {
 		return &slug, nil
 	}
 	if !shareSlugPattern.MatchString(slug) {
 		return nil, serializer.NewError(serializer.CodeParamErr,
-			"Link name must be 3-64 characters: letters, digits, '-' or '_'", nil)
+			"Link name must be 3-64 characters: letters, digits, '-', '_', '.' or '~'", nil)
 	}
 	if _, err := dep.HashIDEncoder().Decode(slug, hashid.ShareID); err == nil {
 		return nil, serializer.NewError(serializer.CodeParamErr,

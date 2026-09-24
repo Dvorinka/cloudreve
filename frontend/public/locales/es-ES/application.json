@@ -758,7 +758,10 @@
     "saved": "Guardado",
     "notSet": "Sin configurar",
     "deleteViewSetting": "Eliminar configuración de vista",
-    "dontAskAgain": "No volver a preguntar"
+    "dontAskAgain": "No volver a preguntar",
+    "customLink": "Enlace personalizado",
+    "customLinkName": "Nombre del enlace",
+    "customLinkDes": "Elige un nombre personalizado para el enlace, p. ej. /s/my-files. Déjalo vacío para usar el generado. 3-64 caracteres: letras, dígitos, '-', '_', '.' o '~'."
   },
   "uploader": {
     "fileCopyName": "Copia de ",

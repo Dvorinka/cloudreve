@@ -705,7 +705,10 @@
     "hideReadme": "Hide readme file",
     "hideReadmeDes": "Keep the README file itself out of the share listing. Visitors still see the rendered readme.",
     "anonymous": "Anonymous",
-    "dontAskAgain": "Don't ask again"
+    "dontAskAgain": "Don't ask again",
+    "customLink": "Custom link",
+    "customLinkName": "Link name",
+    "customLinkDes": "Choose a custom name for the share link, e.g. /s/my-files. Leave empty to keep the generated link. 3-64 characters: letters, digits, '-', '_', '.' or '~'."
   },
   "uploader": {
     "fileCopyName": "Copy of ",

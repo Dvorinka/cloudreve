@@ -144,9 +144,7 @@
   "share": {
     "title": "{{name}} の共有リンク",
     "linkReady": "共有リンクの準備ができました:",
-    "permission": "共有権限",
     "permViewDownload": "表示 + ダウンロード",
-    "permPreviewOnly": "プレビューのみ (ダウンロード不可)",
     "permAllowEdit": "表示 + ダウンロード + 編集",
     "permUploadOnly": "アップロードのみ (ドロップボックス)",
     "expires": "有効期限",
@@ -176,9 +174,13 @@
     "save": "保存",
     "saveLink": "リンクを保存",
     "slugPlaceholder": "カスタムリンク名",
-    "slugHint": "空欄のままにすると生成されたリンクを使用します。3〜64文字：英数字、'-'、'_'。",
-    "slugInvalid": "リンク名は3〜64文字で、英数字、'-'、'_'のみ使用できます",
-    "stats": "{{views}} 回表示 · {{downloads}} 回ダウンロード"
+    "slugHint": "空欄のままにすると生成されたリンクを使用します。3〜64文字：英数字、'-'、'_'、'.'、'~'。",
+    "slugInvalid": "リンク名は3〜64文字で、英数字、'-'、'_'、'.'、'~'のみ使用できます",
+    "stats": "{{views}} 回表示 · {{downloads}} 回ダウンロード",
+    "allow": "許可",
+    "permViewOnly": "閲覧のみ",
+    "permUploadDownload": "アップロード + ダウンロード",
+    "permViewUpload": "閲覧 + アップロード"
   },
   "update": {
     "title": "ソフトウェア更新",

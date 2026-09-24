@@ -144,9 +144,7 @@
   "share": {
     "title": "Link do udostępnienia dla {{name}}",
     "linkReady": "Twój link do udostępnienia jest gotowy:",
-    "permission": "Uprawnienia udostępniania",
     "permViewDownload": "Podgląd + Pobieranie",
-    "permPreviewOnly": "Tylko podgląd (bez pobierania)",
     "permAllowEdit": "Podgląd + Pobieranie + Edycja",
     "permUploadOnly": "Tylko przesyłanie (skrzynka nadawcza)",
     "expires": "Wygasa",
@@ -176,9 +174,13 @@
     "save": "Zapisz",
     "saveLink": "Zapisz link",
     "slugPlaceholder": "wlasna-nazwa-linku",
-    "slugHint": "Pozostaw puste, aby użyć wygenerowanego linku. 3-64 znaki: litery, cyfry, '-' lub '_'.",
-    "slugInvalid": "Nazwa linku musi mieć 3-64 znaki: litery, cyfry, '-' lub '_'",
-    "stats": "{{views}} wyświetleń · {{downloads}} pobrań"
+    "slugHint": "Pozostaw puste, aby użyć wygenerowanego linku. 3-64 znaki: litery, cyfry, '-', '_', '.', '~'.",
+    "slugInvalid": "Nazwa linku musi mieć 3-64 znaki: litery, cyfry, '-', '_', '.' lub '~'",
+    "stats": "{{views}} wyświetleń · {{downloads}} pobrań",
+    "allow": "Zezwól",
+    "permViewOnly": "Tylko podgląd",
+    "permUploadDownload": "Przesyłanie + pobieranie",
+    "permViewUpload": "Podgląd + Wysyłanie"
   },
   "update": {
     "title": "Aktualizacja oprogramowania",

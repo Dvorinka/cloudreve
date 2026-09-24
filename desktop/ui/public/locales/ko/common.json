@@ -144,9 +144,7 @@
   "share": {
     "title": "{{name}} 공유 링크",
     "linkReady": "공유 링크가 준비되었습니다:",
-    "permission": "공유 권한",
     "permViewDownload": "보기 + 다운로드",
-    "permPreviewOnly": "미리보기 전용 (다운로드 불가)",
     "permAllowEdit": "보기 + 다운로드 + 편집",
     "permUploadOnly": "업로드 전용 (드롭 박스)",
     "expires": "만료",
@@ -176,9 +174,13 @@
     "save": "저장",
     "saveLink": "링크 저장",
     "slugPlaceholder": "사용자-지정-링크-이름",
-    "slugHint": "비워 두면 생성된 링크를 사용합니다. 3-64자: 문자, 숫자, '-' 또는 '_'.",
-    "slugInvalid": "링크 이름은 3-64자여야 하며 문자, 숫자, '-' 또는 '_'만 사용할 수 있습니다",
-    "stats": "조회 {{views}}회 · 다운로드 {{downloads}}회"
+    "slugHint": "비워 두면 생성된 링크를 사용합니다. 3-64자: 문자, 숫자, '-', '_', '.', '~'.",
+    "slugInvalid": "링크 이름은 3-64자여야 하며 문자, 숫자, '-', '_', '.', '~'만 사용할 수 있습니다",
+    "stats": "조회 {{views}}회 · 다운로드 {{downloads}}회",
+    "allow": "허용",
+    "permViewOnly": "보기만",
+    "permUploadDownload": "업로드 + 다운로드",
+    "permViewUpload": "보기 + 업로드"
   },
   "update": {
     "title": "소프트웨어 업데이트",

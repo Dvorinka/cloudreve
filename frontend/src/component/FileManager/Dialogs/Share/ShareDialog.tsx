@@ -27,7 +27,8 @@ const initialSetting = (privateByDefault: boolean): ShareSetting => ({
 });
 
 // lastUsedSetting hydrates the dialog from the previously saved share
-// settings (#2519). Password fields are never persisted.
+// settings (#2519). Password and link-name fields are never persisted —
+// they are per-share, not preferences.
 const lastUsedSetting = (privateByDefault: boolean): ShareSetting => {
   try {
     const raw = localStorage.getItem(shareSettingStorageKey);
@@ -42,7 +43,7 @@ const lastUsedSetting = (privateByDefault: boolean): ShareSetting => {
 
 const rememberSetting = (setting: ShareSetting) => {
   try {
-    const { password, use_custom_password, ...rest } = setting;
+    const { password, use_custom_password, slug, use_custom_link, ...rest } = setting;
     localStorage.setItem(shareSettingStorageKey, JSON.stringify(rest));
   } catch {
     // storage unavailable; remembering is best-effort
@@ -68,6 +69,8 @@ const shareToSetting = (share: ShareModel, t: TFunction): ShareSetting => {
     upload_only: share.upload_only,
     note: share.note,
     listed_publicly: share.listed_publicly,
+    slug: share.slug,
+    use_custom_link: !!share.slug,
     price_points: share.price && share.price > 0 ? share.price : undefined,
     downloads: share.remain_downloads != undefined && share.remain_downloads > 0,
 

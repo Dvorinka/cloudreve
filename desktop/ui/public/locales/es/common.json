@@ -144,9 +144,7 @@
   "share": {
     "title": "Enlace para compartir de {{name}}",
     "linkReady": "Tu enlace para compartir está listo:",
-    "permission": "Permisos de uso compartido",
     "permViewDownload": "Ver + Descargar",
-    "permPreviewOnly": "Solo vista previa (sin descarga)",
     "permAllowEdit": "Ver + Descargar + Editar",
     "permUploadOnly": "Solo subir (buzón)",
     "expires": "Caduca",
@@ -176,9 +174,13 @@
     "save": "Guardar",
     "saveLink": "Guardar enlace",
     "slugPlaceholder": "nombre-enlace-personalizado",
-    "slugHint": "Déjalo vacío para usar el enlace generado. 3-64 caracteres: letras, dígitos, '-' o '_'.",
-    "slugInvalid": "El nombre del enlace debe tener 3-64 caracteres: letras, dígitos, '-' o '_'",
-    "stats": "{{views}} visitas · {{downloads}} descargas"
+    "slugHint": "Déjalo vacío para usar el enlace generado. 3-64 caracteres: letras, dígitos, '-', '_', '.' o '~'.",
+    "slugInvalid": "El nombre del enlace debe tener 3-64 caracteres: letras, dígitos, '-', '_', '.' o '~'",
+    "stats": "{{views}} visitas · {{downloads}} descargas",
+    "allow": "Permitir",
+    "permViewOnly": "Solo ver",
+    "permUploadDownload": "Subir + Descargar",
+    "permViewUpload": "Ver + Subir"
   },
   "update": {
     "title": "Actualización de software",
