@@ -20,12 +20,18 @@
 
 !macro NSIS_HOOK_POSTINSTALL
   ; Register package identity so the Cloudreve Explorer context menu
-  ; (windows.cloudFiles) works for non-MSIX installs. The exe does this
-  ; natively via PackageManager: installs the shipped signed sparse package,
-  ; self-elevating a hidden child for the one-time cert trust (a single UAC
-  ; prompt, no console window), and falls back to loose Developer Mode
-  ; registration. Best-effort: the app retries at startup and
-  ; register-identity.ps1 can be run manually.
+  ; (windows.cloudFiles) works for non-MSIX installs. The PowerShell path runs
+  ; first on purpose: a damaged leftover registration (e.g. an update that
+  ; moved the install dir the sparse package's ExternalLocation pointed at)
+  ; can block the exe from even starting via its embedded <msix> binding, so
+  ; a repair that needs the exe would never run. register-identity.ps1 removes
+  ; damaged registrations, trusts the signing cert (elevating once if needed),
+  ; and installs the sparse package - all without the exe. The native
+  ; --install-identity call stays as backstop. Both are best-effort; the app
+  ; also retries at startup.
+  nsExec::ExecToStack 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\register-identity.ps1" -InstallDir "$INSTDIR"'
+  Pop $0
+  Pop $1
   nsExec::ExecToStack '"$INSTDIR\cloudreve-desktop.exe" --install-identity'
   Pop $0
   Pop $1
