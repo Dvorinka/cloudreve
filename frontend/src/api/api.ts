@@ -1145,6 +1145,23 @@ export function sendOneDriveCompleteUpload(sessionId: string, sessionKey: string
   };
 }
 
+export function sendObsCompleteUpload(sessionId: string, sessionKey: string): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        `/callback/obs/${sessionId}/${sessionKey}`,
+        {
+          method: "POST",
+        },
+        {
+          ...defaultOpts,
+          bypassSnackbar: (_e) => true,
+        },
+      ),
+    );
+  };
+}
+
 export function sendCreateArchive(req: ArchiveWorkflowService): ThunkResponse<TaskResponse> {
   return async (dispatch, _getState) => {
     return await dispatch(

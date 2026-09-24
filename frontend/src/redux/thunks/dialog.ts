@@ -256,6 +256,7 @@ export function selectOption(
   options: DialogSelectOption[],
   title: string,
   rememberable?: boolean,
+  subtitle?: string,
 ): AppThunk<Promise<any> | Promise<void>> {
   return async (dispatch) => {
     const id = promiseId();
@@ -267,6 +268,7 @@ export function selectOption(
           title,
           options,
           promiseId: id,
+          subtitle,
           rememberable,
         }),
       );

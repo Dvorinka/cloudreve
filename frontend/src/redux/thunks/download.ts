@@ -12,7 +12,7 @@ import {
   BatchDownloadCompleteAction,
 } from "../../component/Common/Snackbar/snackbar.tsx";
 import SessionManager, { UserSettings } from "../../session";
-import { getFileLinkedUri } from "../../util";
+import { getFileLinkedUri, sizeToString } from "../../util";
 import Boolset from "../../util/boolset.ts";
 import { formatLocalTime } from "../../util/datetime.ts";
 import {
@@ -94,18 +94,32 @@ export function downloadMultipleFiles(files: FileResponse[]): AppThunk {
       options.push(MultipleDownloadOption.Backend);
     }
 
+    const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+
     // A remembered choice (checkbox in the picker or Preferences setting)
     // skips the prompt when the method is still available.
     const remembered = SessionManager.get(UserSettings.ArchiveDownloadMethod) as
       | MultipleDownloadOption
       | undefined;
     let finalOption = options[0];
-    if (remembered !== undefined && options.includes(remembered)) {
+    const rememberedUsable =
+      remembered !== undefined &&
+      options.includes(remembered) &&
+      !(remembered === MultipleDownloadOption.StreamSaver && totalSize > browserArchiveMaxSize);
+    if (rememberedUsable) {
       finalOption = remembered;
     } else if (options.length > 1) {
       try {
+        const fileCount = files.filter((f) => f.type === FileType.file).length;
+        const folderCount = files.filter((f) => f.type === FileType.folder).length;
+        const subtitle =
+          (fileCount > 0 ? `${fileCount} ${i18next.t("fileManager.files")}` : "") +
+          (fileCount > 0 && folderCount > 0 ? ", " : "") +
+          (folderCount > 0 ? `${folderCount} ${i18next.t("fileManager.folders")}` : "") +
+          " · " +
+          sizeToString(totalSize);
         const res = await dispatch(
-          selectOption(getDownloadSelectOption(options), "fileManager.selectArchiveMethod", true),
+          selectOption(getDownloadSelectOption(options, totalSize), "fileManager.selectArchiveMethod", true, subtitle),
         );
         finalOption = res.value as MultipleDownloadOption;
         if (res.remember) {
@@ -637,7 +651,13 @@ export function downloadSingleFile(file: FileResponse, preferredEntity?: string)
   };
 }
 
-const getDownloadSelectOption = (options: MultipleDownloadOption[]): DialogSelectOption[] => {
+// browserArchiveMaxSize mirrors the practical limit of browser-side zip
+// packaging (StreamSaver/Blob backends) — beyond it the picker disables that
+// option (cloudreve/frontend#333).
+const browserArchiveMaxSize = 4 * 1024 * 1024 * 1024;
+
+const getDownloadSelectOption = (options: MultipleDownloadOption[], totalSize?: number): DialogSelectOption[] => {
+  const exceedsBrowserLimit = totalSize !== undefined && totalSize > browserArchiveMaxSize;
   return options.map((option): DialogSelectOption => {
     switch (option) {
       case MultipleDownloadOption.Backend:
@@ -656,7 +676,12 @@ const getDownloadSelectOption = (options: MultipleDownloadOption[]): DialogSelec
         return {
           value: MultipleDownloadOption.StreamSaver,
           name: i18next.t("fileManager.browserBatchDownload"),
-          description: i18next.t("fileManager.browserBatchDownloadDescription"),
+          description: exceedsBrowserLimit
+            ? i18next.t("fileManager.browserBatchDownloadSizeExceededDescription", {
+                size: sizeToString(totalSize),
+              })
+            : i18next.t("fileManager.browserBatchDownloadDescription"),
+          disabled: exceedsBrowserLimit,
         };
     }
   });
