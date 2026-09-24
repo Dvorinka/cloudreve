@@ -74,6 +74,48 @@ func TestAclUpsertAndList(t *testing.T) {
 	require.Error(t, c.Delete(ctx, file.ID, e.ID))
 }
 
+func TestAclHasExplicitGrant(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:"+t.Name()+"?mode=memory&cache=shared")
+	t.Cleanup(func() { require.NoError(t, client.Close()) })
+	ctx := context.Background()
+	user, group, file := aclFixture(t, client)
+	c := NewAclClient(client, conf.SQLiteDB)
+
+	// No entries — no grant.
+	ok, err := c.HasExplicitGrant(ctx, file.ID, user)
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	// everyone/anonymous tiers are link-scope, never identity grants.
+	aclEntry(t, client, file.ID, aclentry.SubjectTypeEveryone, 0, types.AclPermRead)
+	aclEntry(t, client, file.ID, aclentry.SubjectTypeAnonymous, 0, types.AclPermRead)
+	ok, err = c.HasExplicitGrant(ctx, file.ID, user)
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	// Direct user grant.
+	aclEntry(t, client, file.ID, aclentry.SubjectTypeUser, user.ID, types.AclPermRead)
+	ok, err = c.HasExplicitGrant(ctx, file.ID, user)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	// A different user's file: group-subject grant on a fresh file matches
+	// via effective groups.
+	file2 := client.File.Create().SetName("dir2").SetType(int(types.FileTypeFolder)).SetOwner(user).SaveX(ctx)
+	ok, err = c.HasExplicitGrant(ctx, file2.ID, user)
+	require.NoError(t, err)
+	require.False(t, ok)
+	aclEntry(t, client, file2.ID, aclentry.SubjectTypeGroup, group.ID, types.AclPermRead)
+	ok, err = c.HasExplicitGrant(ctx, file2.ID, user)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	// Anonymous never matches.
+	ok, err = c.HasExplicitGrant(ctx, file2.ID, &ent.User{})
+	require.NoError(t, err)
+	require.False(t, ok)
+}
+
 func TestAclEffectivePermissionsAnonymous(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:"+t.Name()+"?mode=memory&cache=shared")
 	t.Cleanup(func() { require.NoError(t, client.Close()) })

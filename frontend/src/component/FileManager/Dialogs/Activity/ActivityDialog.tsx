@@ -25,6 +25,7 @@ const ActivityDialog = () => {
 
   const open = useAppSelector((state) => state.globalState.activityDialogOpen);
   const target = useAppSelector((state) => state.globalState.activityDialogFile);
+  const shareId = useAppSelector((state) => state.globalState.activityDialogShareId);
 
   const [events, setEvents] = useState<ActivityEvent[] | undefined>(undefined);
   const [total, setTotal] = useState(0);
@@ -34,15 +35,15 @@ const ActivityDialog = () => {
   const uri = target?.path;
 
   useEffect(() => {
-    if (!open || !uri) {
+    if (!open || (!uri && !shareId)) {
       return;
     }
     setEvents(undefined);
-    dispatch(getFileActivity(uri, page, pageSize)).then((res) => {
+    dispatch(getFileActivity(uri, page, pageSize, shareId)).then((res) => {
       setEvents(res.events);
       setTotal(res.total);
     });
-  }, [open, uri, page]);
+  }, [open, uri, page, shareId]);
 
   useEffect(() => {
     if (open) {

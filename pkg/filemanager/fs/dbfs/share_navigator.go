@@ -158,9 +158,19 @@ func (n *shareNavigator) Root(ctx context.Context, path *fs.URI) (*File, error) 
 
 	n.owner = share.Edges.User
 
-	// Check password
+	// Check password. Authenticated visitors named by a user/group ACL entry
+	// on the shared file authenticate by identity and skip the password;
+	// anonymous and everyone tiers never bypass it.
 	if share.Password != "" && share.Password != path.Password() {
-		return nil, ErrShareIncorrectPassword
+		bypass := false
+		if n.aclClient != nil && !inventory.IsAnonymousUser(n.user) {
+			if granted, err := n.aclClient.HasExplicitGrant(ctx, share.Edges.File.ID, n.user); err == nil {
+				bypass = granted
+			}
+		}
+		if !bypass {
+			return nil, ErrShareIncorrectPassword
+		}
 	}
 
 	// Share must be assigned before capabilities are derived from its props.

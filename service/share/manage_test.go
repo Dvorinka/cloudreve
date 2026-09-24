@@ -2,10 +2,12 @@ package share
 
 import (
 	"context"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/cloudreve/Cloudreve/v4/application/dependency"
+	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/ent/enttest"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
@@ -109,12 +111,12 @@ func TestNormalizeSlug(t *testing.T) {
 
 	t.Run("invalid values rejected", func(t *testing.T) {
 		for _, in := range []string{
-			"ab",                      // too short
-			"a b",                     // space
-			"UPPER_OK!",               // invalid char
-			"-badstart",               // must start alphanumeric
-			".bad",                    // must start alphanumeric
-			"//s//weird",              // nested prefix leftovers
+			"ab",         // too short
+			"a b",        // space
+			"UPPER_OK!",  // invalid char
+			"-badstart",  // must start alphanumeric
+			".bad",       // must start alphanumeric
+			"//s//weird", // nested prefix leftovers
 			"averyveryveryveryveryverylongslugnamethatkeepsgoingandgoingandgoingx", // >64
 		} {
 			got, err := normalizeSlug(c, dep, str(in), 0)
@@ -141,5 +143,53 @@ func TestNormalizeSlug(t *testing.T) {
 		got, err = normalizeSlug(c, dep, str("taken-name"), holder.ID)
 		require.NoError(t, err)
 		require.Equal(t, "taken-name", *got)
+	})
+}
+
+func TestShareEditDiff(t *testing.T) {
+	newShare := func() *ent.Share {
+		return &ent.Share{
+			Slug:           "docs",
+			PricePoints:    0,
+			ListedPublicly: false,
+			Props: &types.ShareProps{
+				PreviewOnly: true,
+			},
+		}
+	}
+
+	t.Run("create surfaces only non-default fields", func(t *testing.T) {
+		diff := shareEditDiff(nil, newShare())
+		require.Contains(t, diff, "slug")
+		require.Contains(t, diff, "preview_only")
+		require.NotContains(t, diff, "note")
+		require.NotContains(t, diff, "price_points")
+		require.NotContains(t, diff, "password")
+	})
+
+	t.Run("edit reports changes only", func(t *testing.T) {
+		before := newShare()
+		after := newShare()
+		after.Slug = "docs-v2"
+		after.Password = "secret"
+		after.Props.PreviewOnly = false
+		diff := shareEditDiff(before, after)
+		require.Equal(t, "docs", diff["slug"].(map[string]any)["from"])
+		require.Equal(t, "docs-v2", diff["slug"].(map[string]any)["to"])
+		require.Equal(t, "set", diff["password"].(map[string]any)["to"])
+		require.Equal(t, true, diff["preview_only"].(map[string]any)["from"])
+		require.Equal(t, false, diff["preview_only"].(map[string]any)["to"])
+		require.NotContains(t, diff, "allow_upload")
+	})
+
+	t.Run("password transitions never leak the value", func(t *testing.T) {
+		before := newShare()
+		before.Password = "old-secret"
+		after := newShare()
+		after.Password = ""
+		diff := shareEditDiff(before, after)
+		require.Equal(t, "cleared", diff["password"].(map[string]any)["to"])
+		raw := fmt.Sprintf("%v", diff)
+		require.NotContains(t, raw, "old-secret")
 	})
 }

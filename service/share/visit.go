@@ -86,9 +86,16 @@ func (s *ShareInfoService) Get(c *gin.Context) (*explorer.Share, error) {
 	}
 
 	unlocked := true
-	// Share requires password
+	// Share requires password. Visitors named by a user/group ACL entry on
+	// the shared file authenticate by identity — same bypass as the share
+	// navigator — so the page renders unlocked for them.
 	if share.Password != "" && s.Password != share.Password && share.Edges.User.ID != u.ID {
 		unlocked = false
+		if aclClient := dep.AclClient(); aclClient != nil && !inventory.IsAnonymousUser(u) {
+			if granted, err := aclClient.HasExplicitGrant(c, share.Edges.File.ID, u); err == nil && granted {
+				unlocked = true
+			}
+		}
 	}
 
 	base := dep.SettingProvider().SiteURL(c)

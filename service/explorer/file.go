@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cloudreve/Cloudreve/v4/application/constants"
 	"github.com/cloudreve/Cloudreve/v4/application/dependency"
 	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
@@ -575,8 +576,14 @@ func (s *FileURLService) Get(c *gin.Context) (*FileURLResponse, error) {
 	}
 
 	if s.Download {
-		activity.Record(c, settings, dep.ActivityClient(), types.EventEntityDownloaded,
-			activity.Extra(map[string]any{"uris": s.Uris}))
+		opts := []activity.Opt{activity.Extra(map[string]any{"uris": s.Uris})}
+		if share, fileID := resolveShareEventSubjects(c, dep, s.Uris); share != nil {
+			opts = append(opts, activity.Share(share.ID))
+			if fileID > 0 {
+				opts = append(opts, activity.File(fileID))
+			}
+		}
+		activity.Record(c, settings, dep.ActivityClient(), types.EventEntityDownloaded, opts...)
 	}
 
 	//if !s.NoCache && earliestExpire != nil {
@@ -923,4 +930,30 @@ func (s *FulltextSearchService) Search(c *gin.Context) (*FullTextSearchResults, 
 	}
 
 	return BuildFullTextSearchResults(c, user, dep.HashIDEncoder(), results), nil
+}
+
+// resolveShareEventSubjects extracts the share and subject file for audit
+// events on share-scoped URIs. Returns nils for non-share URIs and on any
+// resolution failure — auditing must never break a download.
+func resolveShareEventSubjects(ctx context.Context, dep dependency.Dep, uris []string) (*ent.Share, int) {
+	for _, raw := range uris {
+		uri, err := fs.NewUriFromString(raw)
+		if err != nil || uri.FileSystem() != constants.FileSystemShare {
+			continue
+		}
+		id := uri.ID("")
+		if id == "" {
+			continue
+		}
+		share, err := dep.ShareClient().GetByHashID(context.WithValue(ctx, inventory.LoadShareFile{}, true), id)
+		if err != nil || share == nil {
+			return nil, 0
+		}
+		fileID := 0
+		if share.Edges.File != nil {
+			fileID = share.Edges.File.ID
+		}
+		return share, fileID
+	}
+	return nil, 0
 }

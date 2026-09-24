@@ -3,6 +3,7 @@ package share
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -179,6 +180,15 @@ func (service *ShareCreateService) Upsert(c *gin.Context, existed int) (string, 
 		return "", err
 	}
 
+	// Load the pre-edit row for the audit diff; a missing row is tolerated —
+	// the manager reports the authoritative not-found error. The file edge
+	// is loaded so the event carries its subject file.
+	var before *ent.Share
+	if existed > 0 {
+		before, _ = dep.ShareClient().GetByID(
+			context.WithValue(c, inventory.LoadShareFile{}, true), existed)
+	}
+
 	share, err := m.CreateOrUpdateShare(c, uris, &manager.CreateShareArgs{
 		IsPrivate:       service.IsPrivate,
 		Password:        service.Password,
@@ -206,13 +216,80 @@ func (service *ShareCreateService) Upsert(c *gin.Context, existed int) (string, 
 		eventType = types.EventEditShare
 	}
 	opts := []activity.Opt{activity.Share(share.ID)}
-	if share.Edges.File != nil {
-		opts = append(opts, activity.File(share.Edges.File.ID))
+	subjectFile := share.Edges.File
+	if subjectFile == nil && before != nil {
+		subjectFile = before.Edges.File
 	}
+	if subjectFile == nil {
+		// The manager response does not always carry the file edge; fetch
+		// it for the audit subject on create.
+		if s, err := dep.ShareClient().GetByID(
+			context.WithValue(c, inventory.LoadShareFile{}, true), share.ID); err == nil {
+			subjectFile = s.Edges.File
+		}
+	}
+	if subjectFile != nil {
+		opts = append(opts, activity.File(subjectFile.ID))
+	}
+	opts = append(opts, activity.Extra(shareEditDiff(before, share)))
 	activity.Record(c, dep.SettingProvider(), dep.ActivityClient(), eventType, opts...)
 
 	base := dep.SettingProvider().SiteURL(c)
 	return explorer.BuildShareLink(share, dep.HashIDEncoder(), base, true), nil
+}
+
+// shareEditDiff renders the audit payload for share create/update events.
+// Every field maps to {"from": old, "to": new}; password only reports the
+// protection state, never the value. On create (before == nil) all fields
+// surface as {"to": v}.
+func shareEditDiff(before, after *ent.Share) map[string]any {
+	diff := map[string]any{}
+	put := func(field string, from, to any) {
+		if !reflect.DeepEqual(from, to) {
+			diff[field] = map[string]any{"from": from, "to": to}
+		}
+	}
+	var oldSlug string
+	var oldProps *types.ShareProps
+	var oldPrice int
+	var oldListed bool
+	var oldDownloads *int
+	var oldExpires *time.Time
+	oldPw := ""
+	if before != nil {
+		oldSlug = before.Slug
+		oldProps, oldPrice, oldListed = before.Props, before.PricePoints, before.ListedPublicly
+		oldDownloads, oldExpires = before.RemainDownloads, before.Expires
+		oldPw = before.Password
+	}
+	newPw := after.Password
+	switch {
+	case oldPw == "" && newPw != "":
+		diff["password"] = map[string]any{"from": "none", "to": "set"}
+	case oldPw != "" && newPw == "":
+		diff["password"] = map[string]any{"from": "set", "to": "cleared"}
+	case oldPw != newPw:
+		diff["password"] = map[string]any{"from": "set", "to": "changed"}
+	}
+	put("expires", oldExpires, after.Expires)
+	put("remain_downloads", oldDownloads, after.RemainDownloads)
+	put("slug", oldSlug, after.Slug)
+	put("price_points", oldPrice, after.PricePoints)
+	put("listed_publicly", oldListed, after.ListedPublicly)
+	var op, np types.ShareProps
+	if oldProps != nil {
+		op = *oldProps
+	}
+	if after.Props != nil {
+		np = *after.Props
+	}
+	put("preview_only", op.PreviewOnly, np.PreviewOnly)
+	put("allow_upload", op.AllowUpload, np.AllowUpload)
+	put("allow_edit", op.AllowEdit, np.AllowEdit)
+	put("upload_only", op.UploadOnly, np.UploadOnly)
+	put("share_view", op.ShareView, np.ShareView)
+	put("note", op.Note, np.Note)
+	return diff
 }
 
 func DeleteShare(c *gin.Context, shareId int) error {
@@ -238,6 +315,10 @@ func DeleteShare(c *gin.Context, shareId int) error {
 		return serializer.NewError(serializer.CodeDBError, "Failed to delete share", err)
 	}
 
-	activity.Record(c, dep.SettingProvider(), dep.ActivityClient(), types.EventDeleteShare, activity.Share(share.ID))
+	opts := []activity.Opt{activity.Share(share.ID)}
+	if share.Edges.File != nil {
+		opts = append(opts, activity.File(share.Edges.File.ID))
+	}
+	activity.Record(c, dep.SettingProvider(), dep.ActivityClient(), types.EventDeleteShare, opts...)
 	return nil
 }

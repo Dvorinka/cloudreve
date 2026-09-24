@@ -18,6 +18,8 @@ pub mod uploader;
 pub mod utils;
 
 // Re-export commonly used types
+pub use cloudreve_api::models::acl::{AclEntry, AclSubject, AclUpsertService};
+pub use cloudreve_api::models::activity::{ActivityEvent, FileActivityResponse};
 pub use cloudreve_api::models::explorer::Share;
 pub use cloudreve_api::models::share::ShareCreateService;
 pub use cloudreve_api::normalize_site_url;

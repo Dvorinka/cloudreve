@@ -33,6 +33,12 @@ type (
 		// groups. The everyone/anonymous tiers are not discovery grants and
 		// are excluded. Files whose union lacks the read bit are dropped.
 		SharedFileIDs(ctx context.Context, user *ent.User) (map[int]*boolset.BooleanSet, error)
+		// HasExplicitGrant reports whether any ACL entry on fileID names the
+		// user directly or one of their effective groups. The everyone and
+		// anonymous tiers are link-scope grants, not identity selection, and
+		// never match — callers use this for "selected user" flows like the
+		// share-password bypass.
+		HasExplicitGrant(ctx context.Context, fileID int, user *ent.User) (bool, error)
 	}
 
 	UpsertAclEntryParams struct {
@@ -203,4 +209,26 @@ func (c *aclClient) SharedFileIDs(ctx context.Context, user *ent.User) (map[int]
 		}
 	}
 	return res, nil
+}
+
+func (c *aclClient) HasExplicitGrant(ctx context.Context, fileID int, user *ent.User) (bool, error) {
+	if IsAnonymousUser(user) {
+		return false, nil
+	}
+
+	return c.client.AclEntry.Query().
+		Where(
+			aclentry.FileID(fileID),
+			aclentry.Or(
+				aclentry.And(
+					aclentry.SubjectTypeEQ(aclentry.SubjectTypeUser),
+					aclentry.SubjectIDEQ(user.ID),
+				),
+				aclentry.And(
+					aclentry.SubjectTypeEQ(aclentry.SubjectTypeGroup),
+					aclentry.SubjectIDIn(GroupIDsOf(user)...),
+				),
+			),
+		).
+		Exist(ctx)
 }
