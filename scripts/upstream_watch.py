@@ -31,6 +31,8 @@ REPOS = [
 
 TRACKING_LABEL = "upstream-watch"
 TRACKING_TITLE = "Upstream watch"
+MIRROR_LABEL = "upstream-mirror"
+MIRROR_MARKER = re.compile(r"<!--\s*upstream-mirror:\s*(\S+)#(\d+)\s*-->")
 SELF_REPO = os.environ.get("GITHUB_REPOSITORY", "Dvorinka/cloudreve")
 PINS_FILE = Path(".github/upstream-pins.json")
 PENDING_MARKER = re.compile(r"<!--\s*pending:\s*(\{.*?\})\s*-->", re.S)
@@ -120,17 +122,89 @@ def issue_link(repo: str, n: int, pr: bool) -> str:
     return f"[#{n}](https://github.com/{repo}/{kind}/{n})"
 
 
+def mirror_issues() -> dict[tuple[str, int], dict]:
+    """Existing mirror issues keyed by (upstream_repo, upstream_number).
+
+    Closed mirrors are included so dedup never re-creates a triaged item.
+    """
+    try:
+        gh("label", "create", MIRROR_LABEL, "--repo", SELF_REPO,
+           "--description", "Mirror of a single upstream issue/PR for triage",
+           "--color", "fbca04")
+    except subprocess.CalledProcessError:
+        pass  # label exists
+    issues = gh_json(
+        "issue", "list", "--repo", SELF_REPO, "--label", MIRROR_LABEL,
+        "--state", "all", "--limit", "500", "--json", "number,body,state",
+    )
+    out = {}
+    for i in issues:
+        m = MIRROR_MARKER.search(i.get("body") or "")
+        if m:
+            out[(m.group(1), int(m.group(2)))] = i
+    return out
+
+
+def sync_mirrors(
+    per_repo: dict[str, list[dict]], cited: set[int]
+) -> tuple[int, int]:
+    """Create one mirror per untriaged upstream item; close stale mirrors.
+
+    A mirror auto-closes when its upstream item is no longer open or the
+    upstream number becomes cited in this repo's tree/history.
+    """
+    existing = mirror_issues()
+    open_upstreams = {
+        (repo, i["number"]) for repo, items in per_repo.items() for i in items
+    }
+    created = closed = 0
+    for repo, items in per_repo.items():
+        for i in items:
+            key = (repo, i["number"])
+            if i["number"] in cited or key in existing:
+                continue
+            is_pr = "pull_request" in i
+            kind = "pull" if is_pr else "issues"
+            body = (
+                f"Upstream {'PR' if is_pr else 'issue'}: "
+                f"https://github.com/{repo}/{kind}/{i['number']}\n\n"
+                f"_{i['title']}_\n\n"
+                "Triage: verify applicability to this fork, port if relevant, "
+                "then close with a verdict comment. Auto-closes when the "
+                "upstream item closes or its number is cited in the tree.\n\n"
+                f"<!-- upstream-mirror: {repo}#{i['number']} -->"
+            )
+            gh("issue", "create", "--repo", SELF_REPO,
+               "--title", f"[upstream {repo.split('/')[1]} "
+                          f"{'PR' if is_pr else 'issue'} #{i['number']}] "
+                          f"{i['title'][:100]}",
+               "--label", MIRROR_LABEL, "--body", body)
+            created += 1
+    for key, issue in existing.items():
+        if issue["state"] != "open":
+            continue
+        repo, n = key
+        if key in open_upstreams and n not in cited:
+            continue
+        reason = ("upstream item closed" if key not in open_upstreams
+                  else "number now cited in tree")
+        gh("issue", "comment", str(issue["number"]), "--repo", SELF_REPO,
+           "--body", f"Auto-closed by upstream watch: {reason}.")
+        gh("issue", "close", str(issue["number"]), "--repo", SELF_REPO)
+        closed += 1
+    return created, closed
+
+
 def build_report(
-    cited: set[int], prev_pending: dict[str, list[int]]
+    cited: set[int],
+    prev_pending: dict[str, list[int]],
+    per_repo: dict[str, list[dict]],
 ) -> tuple[str, dict[str, list[int]], list[tuple[str, int, bool]]]:
     out = [
         "_Daily scan of open upstream issues/PRs. Items already cited in this",
         "repo's code or history are marked ✅; the rest are the untriaged set._",
         "",
     ]
-    # First pass: collect everything so the "new since last scan" section can
-    # lead the report.
-    per_repo: dict[str, list[dict]] = {repo: open_items(repo) for repo in REPOS}
     pending: dict[str, list[int]] = {}
     new_items: list[tuple[str, int, bool]] = []
     for repo, items in per_repo.items():
@@ -204,10 +278,15 @@ def tracking_issue() -> tuple[int | None, str]:
 
 def main() -> int:
     number, old_body = tracking_issue()
+    cited = cited_numbers()
+    per_repo = {repo: open_items(repo) for repo in REPOS}
     report, _pending, new_items = build_report(
-        cited_numbers(), previous_pending(old_body)
+        cited, previous_pending(old_body), per_repo
     )
     Path("upstream-report.md").write_text(report)
+
+    created, closed = sync_mirrors(per_repo, cited)
+    print(f"mirrors: {created} created, {closed} auto-closed")
 
     if number is None:
         gh("issue", "create", "--repo", SELF_REPO, "--title", TRACKING_TITLE,
