@@ -83,6 +83,19 @@ $ExePath = Join-Path $InstallDir "cloudreve-desktop.exe"
 
 Write-Host "Install dir: $InstallDir" -ForegroundColor Cyan
 
+# --- Drop a damaged leftover registration -------------------------------------
+# A registration whose Status is not "Ok" (e.g. an update moved the install dir
+# its ExternalLocation pointed at) not only breaks package activation - the
+# exe's embedded <msix> element can block process creation outright, so the app
+# cannot self-heal. Remove it first; a clean re-add below rebinds this dir.
+
+$damaged = Get-AppxPackage -Name $PackageName -ErrorAction SilentlyContinue |
+    Where-Object { $_.Status -ne "Ok" }
+if ($damaged) {
+    Write-Host "Existing package registration is damaged ($($damaged.Status)) - removing it." -ForegroundColor Yellow
+    $damaged | Remove-AppxPackage
+}
+
 # --- Path 1: signed sparse package --------------------------------------------
 
 $MsixPath = Join-Path $InstallDir "Cloudreve-Identity.msix"
@@ -173,6 +186,11 @@ if ($existing -and $existing.Status -eq "Ok") {
         Write-Host "Unsigned loose registration needs Developer Mode:" -ForegroundColor Yellow
         Write-Host "  Settings -> System -> For developers -> Developer Mode = On" -ForegroundColor Yellow
         Write-Host "Then re-run this script." -ForegroundColor Yellow
+        # Last resort: a damaged leftover registration can block the exe from
+        # even starting (embedded <msix> binding). No identity beats a broken
+        # one - the app then launches without the Explorer integration.
+        Get-AppxPackage -Name $PackageName -ErrorAction SilentlyContinue |
+            Where-Object { $_.Status -ne "Ok" } | Remove-AppxPackage
         exit 1
     }
 }
