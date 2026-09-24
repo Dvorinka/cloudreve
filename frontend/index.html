@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <link rel="shortcut icon" href="{pwa_small_icon}" sizes="64x64" />
+    <!-- iOS ignores manifest.json icons; apple-touch-icon is required for
+         home-screen saves (cloudreve/frontend#75) -->
+    <link rel="apple-touch-icon" href="{pwa_medium_icon}" />
     <meta
       name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,shrink-to-fit=no"

@@ -3,6 +3,7 @@ import { FileResponse, FileType, Metadata, NavigatorCapability } from "../../../
 import { GroupPermission } from "../../../api/user.ts";
 import { defaultPath } from "../../../hooks/useNavigation.tsx";
 import { ContextMenuTypes } from "../../../redux/fileManagerSlice.ts";
+import { useAppSelector } from "../../../redux/hooks.ts";
 import { Viewers, ViewersByID } from "../../../redux/siteConfigSlice.ts";
 import { ExpandedViewerSetting } from "../../../redux/thunks/viewer.ts";
 import SessionManager from "../../../session";
@@ -126,6 +127,7 @@ export const getActionOpt = (
   type?: string,
   parent?: FileResponse,
   fmIndex: number = 0,
+  allowedPolicyCount?: number,
 ): DisplayOption => {
   const currentUser = SessionManager.currentLoginOrNull();
   const currentUserAnonymous = SessionManager.currentUser();
@@ -327,14 +329,19 @@ export const getActionOpt = (
     display.hasReadable &&
     canManageVersion(targets[0], display.orCapability);
   // Storage-policy actions apply only to files the user owns; share visitors
-  // cannot re-home entities they do not own.
+  // cannot re-home entities they do not own. When the effective group allows a
+  // single policy there is nothing to switch — hide both items
+  // (cloudreve/cloudreve#3058).
+  const multiplePolicies = allowedPolicyCount === undefined || allowedPolicyCount > 1;
   display.showDirPolicy =
+    multiplePolicies &&
     targets.length == 1 &&
     !!currentUser &&
     targets[0].owned &&
     display.hasFolder &&
     !display.hasTrashFile;
-  display.showRelocate = targets.length == 1 && !!currentUser && targets[0].owned && !display.hasTrashFile;
+  display.showRelocate =
+    multiplePolicies && targets.length == 1 && !!currentUser && targets[0].owned && !display.hasTrashFile;
   display.showManageShares =
     targets.length == 1 &&
     targets[0].shared &&
@@ -376,9 +383,10 @@ export const getActionOpt = (
 };
 
 const useActionDisplayOpt = (targets: FileResponse[], type?: string, parent?: FileResponse, fmIndex: number = 0) => {
+  const policyCount = useAppSelector((state) => state.globalState.policyOptionCache?.length);
   const opt = useMemo(() => {
-    return getActionOpt(targets, Viewers, type, parent, fmIndex);
-  }, [targets, type, parent, fmIndex]);
+    return getActionOpt(targets, Viewers, type, parent, fmIndex, policyCount);
+  }, [targets, type, parent, fmIndex, policyCount]);
 
   return opt;
 };

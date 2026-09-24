@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Checkbox, DialogContent, FormControlLabel, List, ListItemButton, ListItemText } from "@mui/material";
+import { Checkbox, DialogContent, DialogContentText, FormControlLabel, List, ListItemButton, ListItemText } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
 import React, { useCallback } from "react";
 import DraggableDialog from "./DraggableDialog.tsx";
@@ -13,6 +13,7 @@ const SelectOption = () => {
   const open = useAppSelector((state) => state.globalState.selectOptionDialogOpen);
   const title = useAppSelector((state) => state.globalState.selectOptionTitle);
   const promiseId = useAppSelector((state) => state.globalState.selectOptionPromiseId);
+  const subtitle = useAppSelector((state) => state.globalState.selectOptionSubtitle);
   const options = useAppSelector((state) => state.globalState.selectOptionDialogOptions);
   const rememberable = useAppSelector((state) => state.globalState.selectOptionRememberable);
   const rememberChecked = useAppSelector((state) => state.globalState.selectOptionRememberChecked);
@@ -46,9 +47,10 @@ const SelectOption = () => {
       }}
     >
       <DialogContent>
+        {subtitle && <DialogContentText sx={{ mb: 1 }}>{subtitle}</DialogContentText>}
         <List component="nav">
           {options?.map((o) => (
-            <ListItemButton key={o.value} onClick={() => onAccept(o.value)}>
+            <ListItemButton key={o.value} disabled={o.disabled} onClick={() => onAccept(o.value)}>
               <ListItemText
                 primary={o.name}
                 secondary={o.description}

@@ -201,6 +201,16 @@ DB = 0
 
 :::
 
+## 宝塔面板 Docker 一键部署 {#baota-panel}
+
+如果不想手动管理 Docker 命令，可以使用宝塔面板一键部署：
+
+1. 安装宝塔面板 9.2.0 及以上版本，前往 [宝塔面板](https://www.bt.cn/new/download.html?r=dk_cloudreve) 官网，选择正式版的脚本下载安装。
+
+2. 安装后登录宝塔面板，在左侧菜单栏中点击 `Docker`，首次进入会提示安装 `Docker` 服务，点击立即安装，按提示完成安装。
+
+3. 安装完成后在应用商店中搜索 `Cloudreve`，点击安装，配置域名等基本信息即可完成安装。
+
 ## 下一步 {#next-steps}
 
 Cloudreve 默认会监听 5212 端口。你可以在浏览器中访问 `http://localhost:5212` 进入 Cloudreve。请注册一个账户，首个注册的账户会被设置为管理员。

@@ -1,11 +1,13 @@
 import { Box, Stack, useMediaQuery, useTheme } from "@mui/material";
 import { useEffect } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { getAllowedPolicies } from "../../api/api.ts";
 import useNavigation from "../../hooks/useNavigation.tsx";
 import { clearSelected } from "../../redux/fileManagerSlice.ts";
-import { resetDialogs } from "../../redux/globalStateSlice.ts";
-import { useAppDispatch } from "../../redux/hooks.ts";
+import { resetDialogs, setPolicyOptionCache } from "../../redux/globalStateSlice.ts";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
 import { resetFm, selectAll, shortCutDelete } from "../../redux/thunks/filemanager.ts";
+import SessionManager from "../../session/index.ts";
 import ImageViewer from "../Viewers/ImageViewer/ImageViewer.tsx";
 import Explorer from "./Explorer/Explorer.tsx";
 import { FmIndexContext } from "./FmIndexContext.tsx";
@@ -34,9 +36,18 @@ export const FileManager = ({ index = 0, initialPath, skipRender }: FileManagerP
 
   useNavigation(index, initialPath);
 
+  const policyCache = useAppSelector((state) => state.globalState.policyOptionCache);
+
   useEffect(() => {
     if (index == FileManagerIndex.main) {
       dispatch(resetDialogs());
+      // Populate the allowed-policy cache for context-menu gating when the
+      // session was restored from storage rather than a fresh login.
+      if (policyCache === undefined && SessionManager.currentLoginOrNull()) {
+        dispatch(getAllowedPolicies())
+          .then((policies) => dispatch(setPolicyOptionCache(policies)))
+          .catch(() => {});
+      }
       return () => {
         dispatch(resetFm(index));
       };
