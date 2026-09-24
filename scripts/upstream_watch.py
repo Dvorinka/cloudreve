@@ -71,10 +71,14 @@ def cited_numbers() -> set[int]:
 
 
 def open_items(repo: str) -> list[dict]:
-    """Open issues and PRs; /issues returns both, PRs carry .pull_request."""
+    """Open issues and PRs; /issues returns both, PRs carry .pull_request.
+
+    Sorted by updated-desc so the freshest upstream activity surfaces first
+    in the report instead of being buried under long-stale items.
+    """
     return gh_json(
         "api", "--paginate",
-        f"repos/{repo}/issues?state=open&per_page=100&sort=created&direction=asc",
+        f"repos/{repo}/issues?state=open&per_page=100&sort=updated&direction=desc",
     )
 
 
@@ -116,15 +120,39 @@ def issue_link(repo: str, n: int, pr: bool) -> str:
     return f"[#{n}](https://github.com/{repo}/{kind}/{n})"
 
 
-def build_report(cited: set[int]) -> tuple[str, dict[str, list[int]]]:
+def build_report(
+    cited: set[int], prev_pending: dict[str, list[int]]
+) -> tuple[str, dict[str, list[int]], list[tuple[str, int, bool]]]:
     out = [
         "_Daily scan of open upstream issues/PRs. Items already cited in this",
         "repo's code or history are marked ✅; the rest are the untriaged set._",
         "",
     ]
+    # First pass: collect everything so the "new since last scan" section can
+    # lead the report.
+    per_repo: dict[str, list[dict]] = {repo: open_items(repo) for repo in REPOS}
     pending: dict[str, list[int]] = {}
+    new_items: list[tuple[str, int, bool]] = []
+    for repo, items in per_repo.items():
+        untriaged = [i for i in items if i["number"] not in cited]
+        pending[repo] = [i["number"] for i in untriaged]
+        prev = set(prev_pending.get(repo, []))
+        for i in untriaged:
+            if i["number"] not in prev:
+                new_items.append((repo, i["number"], "pull_request" in i))
+
+    if new_items:
+        out.append("## 🆕 New since last scan")
+        for repo, n, is_pr in new_items:
+            title = next(
+                (i["title"] for i in per_repo[repo] if i["number"] == n), ""
+            )[:110].replace("|", "\\|")
+            tag = "PR" if is_pr else "issue"
+            out.append(f"- {repo} {tag} {issue_link(repo, n, is_pr)} — {title}")
+        out.append("")
+
     for repo in REPOS:
-        items = open_items(repo)
+        items = per_repo[repo]
         issues = [i for i in items if "pull_request" not in i]
         prs = [i for i in items if "pull_request" in i]
         out.append(f"### [{repo}](https://github.com/{repo}) — {len(issues)} open issues, {len(prs)} open PRs")
@@ -151,7 +179,12 @@ def build_report(cited: set[int]) -> tuple[str, dict[str, list[int]]]:
     out += backend_drift()
     out.append("")
     out.append(f"<!-- pending: {json.dumps(pending, sort_keys=True)} -->")
-    return "\n".join(out), pending
+    return "\n".join(out), pending, new_items
+
+
+def previous_pending(body: str) -> dict[str, list[int]]:
+    old = PENDING_MARKER.search(body)
+    return json.loads(old.group(1)) if old else {}
 
 
 def tracking_issue() -> tuple[int | None, str]:
@@ -170,10 +203,12 @@ def tracking_issue() -> tuple[int | None, str]:
 
 
 def main() -> int:
-    report, pending = build_report(cited_numbers())
+    number, old_body = tracking_issue()
+    report, _pending, new_items = build_report(
+        cited_numbers(), previous_pending(old_body)
+    )
     Path("upstream-report.md").write_text(report)
 
-    number, old_body = tracking_issue()
     if number is None:
         gh("issue", "create", "--repo", SELF_REPO, "--title", TRACKING_TITLE,
            "--label", TRACKING_LABEL, "--body", report)
@@ -182,17 +217,11 @@ def main() -> int:
 
     gh("issue", "edit", str(number), "--repo", SELF_REPO, "--body", report)
 
-    old = PENDING_MARKER.search(old_body)
-    old_pending: dict[str, list[int]] = json.loads(old.group(1)) if old else {}
-    new_items = [
-        (repo, n) for repo, nums in pending.items()
-        for n in nums if n not in set(old_pending.get(repo, []))
-    ]
     if new_items:
         lines = ["New untriaged upstream items:", ""]
-        for repo, n in new_items:
-            is_pr = any(i["number"] == n and "pull_request" in i for i in open_items(repo))
-            lines.append(f"- {repo} {issue_link(repo, n, is_pr)}")
+        for repo, n, is_pr in new_items:
+            tag = "PR" if is_pr else "issue"
+            lines.append(f"- {repo} {tag} {issue_link(repo, n, is_pr)}")
         gh("issue", "comment", str(number), "--repo", SELF_REPO, "--body", "\n".join(lines))
         print(f"commented {len(new_items)} new items on #{number}")
     else:
