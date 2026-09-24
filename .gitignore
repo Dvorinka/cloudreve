@@ -47,3 +47,4 @@ output/
 pkg/util/test/
 .desloppify/
 scorecard.png
+upstream-report.md
