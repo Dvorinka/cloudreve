@@ -375,6 +375,11 @@ fn add_sparse_package(
             external_dir,
         )))?)
         .context("SetExternalLocationUri failed")?;
+    // The app keeps running during updates (passive NSIS) and at startup; a
+    // running instance would otherwise fail the add with 0x80073D02
+    // (ERROR_PACKAGES_IN_USE), which is how half-updated registrations happen.
+    options.SetForceTargetAppShutdown(true)?;
+    options.SetForceUpdateFromAnyVersion(true)?;
     let result = mgr
         .AddPackageByUriAsync(&package_uri, &options)
         .and_then(|op| op.get())

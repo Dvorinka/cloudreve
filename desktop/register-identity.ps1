@@ -134,7 +134,10 @@ if ((Test-Path $MsixPath) -and (Test-Path $CerPath)) {
             return
         }
         try {
-            Add-AppxPackage -Path $MsixPath -ExternalLocation $InstallDir -ForceUpdateFromAnyVersion -ErrorAction Stop
+            # -ForceTargetApplicationShutdown: a running instance otherwise
+            # fails the add with 0x80073D02 (packages in use) - the exact
+            # failure that left a broken registration after a passive update.
+            Add-AppxPackage -Path $MsixPath -ExternalLocation $InstallDir -ForceUpdateFromAnyVersion -ForceTargetApplicationShutdown -ErrorAction Stop
             Write-Host "`nSigned package registered." -ForegroundColor Green
             Write-Host "Restart Cloudreve Desktop, then restart Explorer" -ForegroundColor Cyan
             Write-Host "(taskkill /f /im explorer.exe; start explorer.exe) - the" -ForegroundColor Cyan
