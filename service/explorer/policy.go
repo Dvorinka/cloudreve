@@ -111,8 +111,9 @@ func decodeAllowedPolicy(c *gin.Context, dep dependency.Dep, groups []*ent.Group
 }
 
 // ownedPolicyFile resolves the target and enforces ownership, returning the
-// fs file for metadata access.
-func ownedPolicyFile(c *gin.Context, dep dependency.Dep, uriRaw string) (*dbfs.File, error) {
+// file model. The model outlives the pooled fs.File wrapper, which the
+// manager's deferred Recycle reclaims.
+func ownedPolicyFile(c *gin.Context, dep dependency.Dep, uriRaw string) (*ent.File, error) {
 	user := inventory.UserFromContext(c)
 	uri, err := fs.NewUriFromString(uriRaw)
 	if err != nil {
@@ -127,24 +128,24 @@ func ownedPolicyFile(c *gin.Context, dep dependency.Dep, uriRaw string) (*dbfs.F
 		return nil, fmt.Errorf("failed to get file: %w", err)
 	}
 	file, ok := f.(*dbfs.File)
-	if !ok {
+	if !ok || file == nil || file.Model == nil {
 		return nil, serializer.NewError(serializer.CodeParamErr, "Unsupported file system", nil)
 	}
-	if file.OwnerID() != user.ID {
+	if file.Model.OwnerID != user.ID {
 		return nil, serializer.NewError(serializer.CodeNoPermissionErr, "Only the owner can manage storage policies", nil)
 	}
-	return file, nil
+	return file.Model, nil
 }
 
 func (s *PreferredPolicyService) Update(c *gin.Context) (*StoragePolicyBrief, error) {
 	dep := dependency.FromContext(c)
 	user := inventory.UserFromContext(c)
 
-	file, err := ownedPolicyFile(c, dep, s.Uri)
+	model, err := ownedPolicyFile(c, dep, s.Uri)
 	if err != nil {
 		return nil, err
 	}
-	if file.Type() != types.FileTypeFolder {
+	if model.Type != int(types.FileTypeFolder) {
 		return nil, serializer.NewError(serializer.CodeParamErr, "Preferred storage policy applies to folders only", nil)
 	}
 
@@ -158,9 +159,9 @@ func (s *PreferredPolicyService) Update(c *gin.Context) (*StoragePolicyBrief, er
 
 	fc := dep.FileClient()
 	if policy == nil {
-		err = fc.RemoveMetadata(c, file.Model, dbfs.MetadataPreferredPolicy)
+		err = fc.RemoveMetadata(c, model, dbfs.MetadataPreferredPolicy)
 	} else {
-		err = fc.UpsertMetadata(c, file.Model, map[string]string{
+		err = fc.UpsertMetadata(c, model, map[string]string{
 			dbfs.MetadataPreferredPolicy: hashid.EncodePolicyID(dep.HashIDEncoder(), policy.ID),
 		}, map[string]bool{dbfs.MetadataPreferredPolicy: true})
 	}
@@ -182,6 +183,11 @@ func (s *FileRelocateService) Create(c *gin.Context) (*FileRelocateResponse, err
 	dep := dependency.FromContext(c)
 	user := inventory.UserFromContext(c)
 
+	if group := inventory.EffectiveGroup(user); group == nil || group.Permissions == nil ||
+		!group.Permissions.Enabled(int(types.GroupPermissionRelocate)) {
+		return nil, serializer.NewError(serializer.CodeGroupNotAllowed, "Storage policy relocation is not enabled for your group", nil)
+	}
+
 	policy, err := decodeAllowedPolicy(c, dep, inventory.GroupsOf(user), s.Policy)
 	if err != nil {
 		return nil, err
@@ -194,7 +200,7 @@ func (s *FileRelocateService) Create(c *gin.Context) (*FileRelocateResponse, err
 		}
 	}
 
-	file, err := ownedPolicyFile(c, dep, s.Uri)
+	model, err := ownedPolicyFile(c, dep, s.Uri)
 	if err != nil {
 		return nil, err
 	}
@@ -202,11 +208,11 @@ func (s *FileRelocateService) Create(c *gin.Context) (*FileRelocateResponse, err
 	// Depth is a countdown in the walk implementation; a large value walks
 	// the whole subtree. Entities already on the destination are skipped by
 	// the task, so they are filtered out of the request entirely.
-	pending := lo.Filter(file.Model.Edges.Entities, func(e *ent.Entity, _ int) bool {
+	pending := lo.Filter(model.Edges.Entities, func(e *ent.Entity, _ int) bool {
 		return e.StoragePolicyEntities != policy.ID
 	})
 	entityIDs := lo.Map(pending, func(e *ent.Entity, _ int) int { return e.ID })
-	if file.Type() == types.FileTypeFolder {
+	if model.Type == int(types.FileTypeFolder) {
 		uri, _ := fs.NewUriFromString(s.Uri)
 		m := manager.NewFileManager(dep, user)
 		defer m.Recycle()
@@ -241,7 +247,7 @@ func (s *FileRelocateService) Create(c *gin.Context) (*FileRelocateResponse, err
 	}
 
 	activity.Record(c, dep.SettingProvider(), dep.ActivityClient(), types.EventRelocate,
-		activity.File(file.Model.ID),
+		activity.File(model.ID),
 		activity.Extra(map[string]any{"policy_id": policy.ID, "entities": len(entityIDs)}))
 	return &FileRelocateResponse{ID: hashid.EncodeTaskID(dep.HashIDEncoder(), t.ID())}, nil
 }

@@ -341,7 +341,12 @@ export const getActionOpt = (
     display.hasFolder &&
     !display.hasTrashFile;
   display.showRelocate =
-    multiplePolicies && targets.length == 1 && !!currentUser && targets[0].owned && !display.hasTrashFile;
+    multiplePolicies &&
+    targets.length == 1 &&
+    !!currentUser &&
+    targets[0].owned &&
+    !display.hasTrashFile &&
+    groupBs.enabled(GroupPermission.relocate);
   display.showManageShares =
     targets.length == 1 &&
     targets[0].shared &&

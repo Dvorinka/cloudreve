@@ -4,6 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAnnouncement, sendUpdateUserSetting } from "../../../api/api.ts";
 import { useAppDispatch } from "../../../redux/hooks.ts";
+import SessionManager from "../../../session/index.ts";
 
 const MarkdownEditor = lazy(() => import("../../Viewers/MarkdownEditor/Editor.tsx"));
 
@@ -26,6 +27,11 @@ const AnnouncementDialog = () => {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
+    // The endpoint requires a session; fetching it anonymously would bounce
+    // share visitors to the sign-in page via the global error handler.
+    if (!SessionManager.currentLoginOrNull()) {
+      return;
+    }
     let mounted = true;
     dispatch(getAnnouncement())
       .then((res) => {

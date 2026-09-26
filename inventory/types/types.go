@@ -392,6 +392,9 @@ const (
 	// GroupPermissionSharePublicList allows members to list their shares in
 	// the public share directory exposed to anonymous visitors.
 	GroupPermissionSharePublicList
+	// GroupPermissionRelocate allows members to queue tasks that relocate
+	// file entities to another storage policy in their allowed set.
+	GroupPermissionRelocate
 )
 
 // AclPermission is a bit position in an ACL entry's permission bitmask.

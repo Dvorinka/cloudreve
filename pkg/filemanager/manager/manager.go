@@ -203,14 +203,15 @@ func NewFileManager(dep dependency.Dep, u *ent.User) FileManager {
 
 func newStatelessFileManager(dep dependency.Dep) FileManager {
 	return &manager{
-		l:         dep.Logger(),
-		settings:  dep.SettingProvider(),
-		kv:        dep.KV(),
-		config:    dep.ConfigProvider(),
-		stateless: true,
-		auth:      dep.GeneralAuth(),
-		dep:       dep,
-		hasher:    dep.HashIDEncoder(),
+		l:            dep.Logger(),
+		settings:     dep.SettingProvider(),
+		kv:           dep.KV(),
+		config:       dep.ConfigProvider(),
+		stateless:    true,
+		auth:         dep.GeneralAuth(),
+		dep:          dep,
+		hasher:       dep.HashIDEncoder(),
+		policyClient: dep.StoragePolicyClient(),
 	}
 }
 
