@@ -112,6 +112,12 @@ func (m *PasskeyMutation) SetRawID(t int) {
 
 // SetUpdatedAt sets the "updated_at" field.
 
+func (m *PaymentOrderMutation) SetRawID(t int) {
+	m.id = &t
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+
 func (m *SettingMutation) SetRawID(t int) {
 	m.id = &t
 }

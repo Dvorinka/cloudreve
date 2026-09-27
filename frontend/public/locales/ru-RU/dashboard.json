@@ -914,7 +914,19 @@
     "defaultShareLinksInProfileDes": "Определяет, какие ссылки отображаются на публичной странице профиля пользователя, если он не выбрал их сам.",
     "profileSharePublicOnly": "Только ссылки без пароля",
     "profileShareAll": "Все ссылки",
-    "profileShareHide": "Скрыть все ссылки"
+    "profileShareHide": "Скрыть все ссылки",
+    "paymentStripe": "Cash Checkout (Stripe)",
+    "paymentStripeEnabled": "Enable card payments",
+    "paymentStripeEnabledDes": "Accept card payments for shop products via Stripe Checkout",
+    "paymentStripePublishableKey": "Publishable key",
+    "paymentStripePublishableKeyDes": "Stripe publishable key (pk_live_… / pk_test_…)",
+    "paymentStripeSecretKey": "Secret key",
+    "paymentStripeSecretKeyDes": "Stripe secret key (sk_live_… / sk_test_…). Never exposed to users.",
+    "paymentStripeWebhookSecret": "Webhook signing secret",
+    "paymentStripeWebhookSecretDes": "Signing secret (whsec_…) for webhook endpoint {{url}}",
+    "paymentStripeCurrency": "Currency",
+    "paymentStripeCurrencyDes": "ISO 4217 currency code for cash prices (e.g. usd, eur)",
+    "secretKeepHint": "Leave empty to keep the current value"
   },
   "giftCodes": {
     "giftCodesSettings": "Подарочные коды",

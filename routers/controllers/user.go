@@ -366,6 +366,26 @@ func UserPurchaseSku(c *gin.Context) {
 	c.JSON(200, serializer.Response{Data: res})
 }
 
+// UserCheckoutSession opens a hosted cash checkout for a product.
+func UserCheckoutSession(c *gin.Context) {
+	service := ParametersFromContext[*user.CheckoutSessionService](c, user.CheckoutSessionParamCtx{})
+	res, err := service.Create(c)
+	if respondErr(c, err) {
+		return
+	}
+	c.JSON(200, serializer.Response{Data: res})
+}
+
+// UserPaymentOrder reports one of the caller's payment orders.
+func UserPaymentOrder(c *gin.Context) {
+	service := ParametersFromContext[*user.PaymentOrderService](c, user.PaymentOrderParamCtx{})
+	res, err := service.Get(c)
+	if respondErr(c, err) {
+		return
+	}
+	c.JSON(200, serializer.Response{Data: res})
+}
+
 // UserInit2FA 初始化二步验证
 func UserInit2FA(c *gin.Context) {
 	secret, err := user.Init2FA(c)

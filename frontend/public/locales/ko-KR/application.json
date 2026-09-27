@@ -1301,12 +1301,7 @@
     "report": "남용 신고",
     "reportTarget": "신고 대상",
     "reportReason": "이유",
-    "reportReasonOptions": [
-      "침해",
-      "유해 콘텐츠",
-      "스팸 정보",
-      "기타"
-    ],
+    "reportReasonOptions": ["침해", "유해 콘텐츠", "스팸 정보", "기타"],
     "reportDescription": "추가 설명",
     "reportAbuseSuccess": "신고가 제출되었습니다",
     "migrateStoragePolicy": "저장 정책 전송",
@@ -1417,7 +1412,10 @@
     "noProducts": "이용 가능한 상품이 없습니다",
     "buyWithPoints": "{{points}} 포인트로 구매",
     "pointsUnavailable": "포인트로 구매할 수 없습니다",
-    "noProductsDescription": "운영자가 멤버십이나 패키지를 추가하면 여기에 표시됩니다."
+    "noProductsDescription": "운영자가 멤버십이나 패키지를 추가하면 여기에 표시됩니다.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "공지",

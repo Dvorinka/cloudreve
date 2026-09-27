@@ -1187,12 +1187,7 @@
     "validDurationDays": "{{num}} يوم",
     "reportTarget": "الذي تريد الإبلاغ عنه",
     "reportReason": "السبب",
-    "reportReasonOptions": [
-      "انتهاك حقوق الطبع والنشر",
-      "محتوى ضار",
-      "غير المرغوب به",
-      "أخرى"
-    ],
+    "reportReasonOptions": ["انتهاك حقوق الطبع والنشر", "محتوى ضار", "غير المرغوب به", "أخرى"],
     "reportDescription": "وصف إضافي",
     "reportAbuseSuccess": "تم رفع التقرير."
   },
@@ -1228,7 +1223,10 @@
     "noProducts": "لا توجد منتجات متاحة",
     "buyWithPoints": "شراء بـ {{points}} نقطة",
     "pointsUnavailable": "غير قابل للشراء بالنقاط",
-    "noProductsDescription": "عندما يضيف المشرف العضويات أو الحزم، ستظهر هنا."
+    "noProductsDescription": "عندما يضيف المشرف العضويات أو الحزم، ستظهر هنا.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "إعلان",

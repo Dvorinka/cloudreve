@@ -89,6 +89,8 @@ const (
 	EdgeGrants = "grants"
 	// EdgeSharePurchases holds the string denoting the share_purchases edge name in mutations.
 	EdgeSharePurchases = "share_purchases"
+	// EdgePaymentOrders holds the string denoting the payment_orders edge name in mutations.
+	EdgePaymentOrders = "payment_orders"
 	// EdgeSSOBindings holds the string denoting the sso_bindings edge name in mutations.
 	EdgeSSOBindings = "sso_bindings"
 	// Table holds the table name of the user in the database.
@@ -191,6 +193,13 @@ const (
 	SharePurchasesInverseTable = "share_purchases"
 	// SharePurchasesColumn is the table column denoting the share_purchases relation/edge.
 	SharePurchasesColumn = "buyer_id"
+	// PaymentOrdersTable is the table that holds the payment_orders relation/edge.
+	PaymentOrdersTable = "payment_orders"
+	// PaymentOrdersInverseTable is the table name for the PaymentOrder entity.
+	// It exists in this package in order to avoid circular dependency with the "paymentorder" package.
+	PaymentOrdersInverseTable = "payment_orders"
+	// PaymentOrdersColumn is the table column denoting the payment_orders relation/edge.
+	PaymentOrdersColumn = "user_id"
 	// SSOBindingsTable is the table that holds the sso_bindings relation/edge.
 	SSOBindingsTable = "sso_bindings"
 	// SSOBindingsInverseTable is the table name for the SsoBinding entity.
@@ -596,6 +605,20 @@ func BySharePurchases(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByPaymentOrdersCount orders the results by payment_orders count.
+func ByPaymentOrdersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPaymentOrdersStep(), opts...)
+	}
+}
+
+// ByPaymentOrders orders the results by payment_orders terms.
+func ByPaymentOrders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPaymentOrdersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // BySSOBindingsCount orders the results by sso_bindings count.
 func BySSOBindingsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -705,6 +728,13 @@ func newSharePurchasesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SharePurchasesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SharePurchasesTable, SharePurchasesColumn),
+	)
+}
+func newPaymentOrdersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PaymentOrdersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PaymentOrdersTable, PaymentOrdersColumn),
 	)
 }
 func newSSOBindingsStep() *sqlgraph.Step {

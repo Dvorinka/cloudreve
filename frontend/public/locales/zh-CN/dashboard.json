@@ -913,7 +913,19 @@
     "defaultShareLinksInProfileDes": "当用户未自行选择时，控制其公开个人主页上显示哪些分享。",
     "profileSharePublicOnly": "仅无密码分享",
     "profileShareAll": "所有分享",
-    "profileShareHide": "隐藏所有分享"
+    "profileShareHide": "隐藏所有分享",
+    "paymentStripe": "现金支付（Stripe）",
+    "paymentStripeEnabled": "启用银行卡支付",
+    "paymentStripeEnabledDes": "通过 Stripe Checkout 为商城商品提供银行卡支付",
+    "paymentStripePublishableKey": "Publishable key",
+    "paymentStripePublishableKeyDes": "Stripe 公钥（pk_live_… / pk_test_…）",
+    "paymentStripeSecretKey": "Secret key",
+    "paymentStripeSecretKeyDes": "Stripe 密钥（sk_live_… / sk_test_…），不会暴露给用户",
+    "paymentStripeWebhookSecret": "Webhook 签名密钥",
+    "paymentStripeWebhookSecretDes": "Webhook 端点 {{url}} 的签名密钥（whsec_…）",
+    "paymentStripeCurrency": "货币",
+    "paymentStripeCurrencyDes": "现金价格使用的 ISO 4217 货币代码（如 usd、eur、cny）",
+    "secretKeepHint": "留空则保持当前值"
   },
   "giftCodes": {
     "giftCodesSettings": "礼品码",

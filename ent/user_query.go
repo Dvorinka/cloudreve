@@ -21,6 +21,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent/groupmembership"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/sharepurchase"
@@ -51,6 +52,7 @@ type UserQuery struct {
 	withRedeemedCodes  *GiftCodeQuery
 	withGrants         *UserGrantQuery
 	withSharePurchases *SharePurchaseQuery
+	withPaymentOrders  *PaymentOrderQuery
 	withSSOBindings    *SsoBindingQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -396,6 +398,28 @@ func (uq *UserQuery) QuerySharePurchases() *SharePurchaseQuery {
 	return query
 }
 
+// QueryPaymentOrders chains the current query on the "payment_orders" edge.
+func (uq *UserQuery) QueryPaymentOrders() *PaymentOrderQuery {
+	query := (&PaymentOrderClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(paymentorder.Table, paymentorder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PaymentOrdersTable, user.PaymentOrdersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QuerySSOBindings chains the current query on the "sso_bindings" edge.
 func (uq *UserQuery) QuerySSOBindings() *SsoBindingQuery {
 	query := (&SsoBindingClient{config: uq.config}).Query()
@@ -624,6 +648,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		withRedeemedCodes:  uq.withRedeemedCodes.Clone(),
 		withGrants:         uq.withGrants.Clone(),
 		withSharePurchases: uq.withSharePurchases.Clone(),
+		withPaymentOrders:  uq.withPaymentOrders.Clone(),
 		withSSOBindings:    uq.withSSOBindings.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
@@ -785,6 +810,17 @@ func (uq *UserQuery) WithSharePurchases(opts ...func(*SharePurchaseQuery)) *User
 	return uq
 }
 
+// WithPaymentOrders tells the query-builder to eager-load the nodes that are connected to
+// the "payment_orders" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPaymentOrders(opts ...func(*PaymentOrderQuery)) *UserQuery {
+	query := (&PaymentOrderClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withPaymentOrders = query
+	return uq
+}
+
 // WithSSOBindings tells the query-builder to eager-load the nodes that are connected to
 // the "sso_bindings" edge. The optional arguments are used to configure the query builder of the edge.
 func (uq *UserQuery) WithSSOBindings(opts ...func(*SsoBindingQuery)) *UserQuery {
@@ -874,7 +910,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [15]bool{
+		loadedTypes = [16]bool{
 			uq.withGroup != nil,
 			uq.withFiles != nil,
 			uq.withDavAccounts != nil,
@@ -889,6 +925,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			uq.withRedeemedCodes != nil,
 			uq.withGrants != nil,
 			uq.withSharePurchases != nil,
+			uq.withPaymentOrders != nil,
 			uq.withSSOBindings != nil,
 		}
 	)
@@ -1004,6 +1041,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadSharePurchases(ctx, query, nodes,
 			func(n *User) { n.Edges.SharePurchases = []*SharePurchase{} },
 			func(n *User, e *SharePurchase) { n.Edges.SharePurchases = append(n.Edges.SharePurchases, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withPaymentOrders; query != nil {
+		if err := uq.loadPaymentOrders(ctx, query, nodes,
+			func(n *User) { n.Edges.PaymentOrders = []*PaymentOrder{} },
+			func(n *User, e *PaymentOrder) { n.Edges.PaymentOrders = append(n.Edges.PaymentOrders, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1432,6 +1476,36 @@ func (uq *UserQuery) loadSharePurchases(ctx context.Context, query *SharePurchas
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "buyer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadPaymentOrders(ctx context.Context, query *PaymentOrderQuery, nodes []*User, init func(*User), assign func(*User, *PaymentOrder)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(paymentorder.FieldUserID)
+	}
+	query.Where(predicate.PaymentOrder(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.PaymentOrdersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

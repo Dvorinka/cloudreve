@@ -1187,12 +1187,7 @@
     "validDurationDays": "{{num}} dni",
     "reportTarget": "Cel zgłoszenia",
     "reportReason": "Powód",
-    "reportReasonOptions": [
-      "Naruszenie praw autorskich",
-      "Szkodliwa treść",
-      "Spam",
-      "Inne"
-    ],
+    "reportReasonOptions": ["Naruszenie praw autorskich", "Szkodliwa treść", "Spam", "Inne"],
     "reportDescription": "Dodatkowy opis",
     "reportAbuseSuccess": "Zgłoszenie przesłane."
   },
@@ -1228,7 +1223,10 @@
     "noProducts": "Brak dostępnych produktów",
     "buyWithPoints": "Kup za {{points}} pkt",
     "pointsUnavailable": "Niedostępne za punkty",
-    "noProductsDescription": "Gdy operator doda członkostwa lub pakiety, pojawią się tutaj."
+    "noProductsDescription": "Gdy operator doda członkostwa lub pakiety, pojawią się tutaj.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "Ogłoszenie",

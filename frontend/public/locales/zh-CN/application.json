@@ -1202,12 +1202,7 @@
     "validDurationDays": "{{num}} 天",
     "reportTarget": "举报对象",
     "reportReason": "原因",
-    "reportReasonOptions": [
-      "侵权",
-      "有害内容",
-      "垃圾信息",
-      "其他"
-    ],
+    "reportReasonOptions": ["侵权", "有害内容", "垃圾信息", "其他"],
     "reportDescription": "补充说明",
     "reportAbuseSuccess": "举报已提交"
   },
@@ -1224,7 +1219,10 @@
     "noProducts": "暂无商品",
     "buyWithPoints": "{{points}} 积分购买",
     "pointsUnavailable": "不支持积分购买",
-    "noProductsDescription": "当站点管理员添加会员或套餐后，商品会显示在这里。"
+    "noProductsDescription": "当站点管理员添加会员或套餐后，商品会显示在这里。",
+    "buyWithCard": "支付 {{price}}",
+    "paymentSuccess": "\"{{name}}\" 已生效",
+    "paymentPending": "支付处理中，商品稍后到账"
   },
   "announcement": {
     "title": "公告",

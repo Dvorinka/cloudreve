@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -12,8 +13,8 @@ import (
 // (amount = target group id). duration is seconds; 0 means the grant
 // never expires. Traffic packs apply permanently and ignore duration.
 // points is the credit price; NULL means the product cannot be bought with
-// points. price is the display cash price in the smallest currency unit —
-// cash payment processors are intentionally out of scope.
+// points. price is the cash price in the smallest currency unit; zero means
+// the product cannot be bought through a cash checkout.
 type Sku struct {
 	ent.Schema
 }
@@ -49,7 +50,9 @@ func (Sku) Fields() []ent.Field {
 
 // Edges of the Sku.
 func (Sku) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("payment_orders", PaymentOrder.Type),
+	}
 }
 
 func (Sku) Mixin() []ent.Mixin {

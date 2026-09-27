@@ -602,6 +602,47 @@ var (
 			},
 		},
 	}
+	// PaymentOrdersColumns holds the columns for the "payment_orders" table.
+	PaymentOrdersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime"}},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime"}},
+		{Name: "provider", Type: field.TypeString, Default: "stripe"},
+		{Name: "session_id", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "amount", Type: field.TypeInt64},
+		{Name: "currency", Type: field.TypeString, Default: "usd"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "paid", "expired"}, Default: "pending"},
+		{Name: "sku_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// PaymentOrdersTable holds the schema information for the "payment_orders" table.
+	PaymentOrdersTable = &schema.Table{
+		Name:       "payment_orders",
+		Columns:    PaymentOrdersColumns,
+		PrimaryKey: []*schema.Column{PaymentOrdersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "payment_orders_skus_payment_orders",
+				Columns:    []*schema.Column{PaymentOrdersColumns[9]},
+				RefColumns: []*schema.Column{SkusColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "payment_orders_users_payment_orders",
+				Columns:    []*schema.Column{PaymentOrdersColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "paymentorder_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{PaymentOrdersColumns[10]},
+			},
+		},
+	}
 	// SettingsColumns holds the columns for the "settings" table.
 	SettingsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -990,6 +1031,7 @@ var (
 		OauthClientsTable,
 		OauthGrantsTable,
 		PasskeysTable,
+		PaymentOrdersTable,
 		SettingsTable,
 		SharesTable,
 		SharePurchasesTable,
@@ -1024,6 +1066,8 @@ func init() {
 	OauthGrantsTable.ForeignKeys[0].RefTable = OauthClientsTable
 	OauthGrantsTable.ForeignKeys[1].RefTable = UsersTable
 	PasskeysTable.ForeignKeys[0].RefTable = UsersTable
+	PaymentOrdersTable.ForeignKeys[0].RefTable = SkusTable
+	PaymentOrdersTable.ForeignKeys[1].RefTable = UsersTable
 	SharesTable.ForeignKeys[0].RefTable = FilesTable
 	SharesTable.ForeignKeys[1].RefTable = UsersTable
 	SharePurchasesTable.ForeignKeys[0].RefTable = SharesTable

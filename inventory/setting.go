@@ -539,6 +539,11 @@ var DefaultSettings = map[string]string{
 	"ban_time":                                   `604800`,
 	"shop_nav":                                   `1`,
 	"share_score_rate":                           `100`,
+	"payment_stripe_enabled":                     `0`,
+	"payment_stripe_secret_key":                  ``,
+	"payment_stripe_webhook_secret":              ``,
+	"payment_stripe_publishable_key":             ``,
+	"payment_stripe_currency":                    `usd`,
 	"maxEditSize":                                `52428800`,
 	"archive_timeout":                            `600`,
 	"upload_session_timeout":                     `86400`,
@@ -757,12 +762,14 @@ var DefaultSettings = map[string]string{
 }
 
 var RedactedSettings = map[string]struct{}{
-	"encrypt_master_key":       {},
-	"secret_key":               {},
-	"oidc_signing_private_key": {},
-	"sso_client_secret":        {},
-	"qq_connect_app_secret":    {},
-	"wechat_connect_app_secret": {},
+	"encrypt_master_key":            {},
+	"secret_key":                    {},
+	"oidc_signing_private_key":      {},
+	"sso_client_secret":             {},
+	"qq_connect_app_secret":         {},
+	"wechat_connect_app_secret":     {},
+	"payment_stripe_secret_key":     {},
+	"payment_stripe_webhook_secret": {},
 }
 
 func init() {

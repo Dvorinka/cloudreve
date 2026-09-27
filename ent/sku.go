@@ -47,8 +47,29 @@ type Sku struct {
 	// Enabled holds the value of the "enabled" field.
 	Enabled bool `json:"enabled,omitempty"`
 	// Weight holds the value of the "weight" field.
-	Weight       int `json:"weight,omitempty"`
+	Weight int `json:"weight,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the SkuQuery when eager-loading is set.
+	Edges        SkuEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// SkuEdges holds the relations/edges for other nodes in the graph.
+type SkuEdges struct {
+	// PaymentOrders holds the value of the payment_orders edge.
+	PaymentOrders []*PaymentOrder `json:"payment_orders,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// PaymentOrdersOrErr returns the PaymentOrders value or an error if the edge
+// was not loaded in eager-loading.
+func (e SkuEdges) PaymentOrdersOrErr() ([]*PaymentOrder, error) {
+	if e.loadedTypes[0] {
+		return e.PaymentOrders, nil
+	}
+	return nil, &NotLoadedError{edge: "payment_orders"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -196,6 +217,11 @@ func (s *Sku) Value(name string) (ent.Value, error) {
 	return s.selectValues.Get(name)
 }
 
+// QueryPaymentOrders queries the "payment_orders" edge of the Sku entity.
+func (s *Sku) QueryPaymentOrders() *PaymentOrderQuery {
+	return NewSkuClient(s.config).QueryPaymentOrders(s)
+}
+
 // Update returns a builder for updating this Sku.
 // Note that you need to call Sku.Unwrap() before calling this method if this Sku
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -269,6 +295,12 @@ func (s *Sku) String() string {
 	builder.WriteString(fmt.Sprintf("%v", s.Weight))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// SetPaymentOrders manually set the edge as loaded state.
+func (e *Sku) SetPaymentOrders(v []*PaymentOrder) {
+	e.Edges.PaymentOrders = v
+	e.Edges.loadedTypes[0] = true
 }
 
 // Skus is a parsable slice of Sku.

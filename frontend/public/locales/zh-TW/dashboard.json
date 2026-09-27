@@ -913,7 +913,19 @@
     "defaultShareLinksInProfileDes": "當使用者未自行選擇時，控制其公開個人主頁上顯示哪些分享。",
     "profileSharePublicOnly": "僅無密碼分享",
     "profileShareAll": "所有分享",
-    "profileShareHide": "隱藏所有分享"
+    "profileShareHide": "隱藏所有分享",
+    "paymentStripe": "現金支付（Stripe）",
+    "paymentStripeEnabled": "啟用銀行卡支付",
+    "paymentStripeEnabledDes": "透過 Stripe Checkout 為商城商品提供銀行卡支付",
+    "paymentStripePublishableKey": "Publishable key",
+    "paymentStripePublishableKeyDes": "Stripe 公鑰（pk_live_… / pk_test_…）",
+    "paymentStripeSecretKey": "Secret key",
+    "paymentStripeSecretKeyDes": "Stripe 密鑰（sk_live_… / sk_test_…），不會暴露給使用者",
+    "paymentStripeWebhookSecret": "Webhook 簽名密鑰",
+    "paymentStripeWebhookSecretDes": "Webhook 端點 {{url}} 的簽名密鑰（whsec_…）",
+    "paymentStripeCurrency": "貨幣",
+    "paymentStripeCurrencyDes": "現金價格使用的 ISO 4217 貨幣代碼（如 usd、eur、twd）",
+    "secretKeepHint": "留空則保持目前值"
   },
   "giftCodes": {
     "giftCodesSettings": "禮品碼",

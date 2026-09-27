@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 )
 
@@ -732,6 +733,29 @@ func WeightLT(v int) predicate.Sku {
 // WeightLTE applies the LTE predicate on the "weight" field.
 func WeightLTE(v int) predicate.Sku {
 	return predicate.Sku(sql.FieldLTE(FieldWeight, v))
+}
+
+// HasPaymentOrders applies the HasEdge predicate on the "payment_orders" edge.
+func HasPaymentOrders() predicate.Sku {
+	return predicate.Sku(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PaymentOrdersTable, PaymentOrdersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPaymentOrdersWith applies the HasEdge predicate on the "payment_orders" edge with a given conditions (other predicates).
+func HasPaymentOrdersWith(preds ...predicate.PaymentOrder) predicate.Sku {
+	return predicate.Sku(func(s *sql.Selector) {
+		step := newPaymentOrdersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

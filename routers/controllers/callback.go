@@ -9,9 +9,20 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
 	"github.com/cloudreve/Cloudreve/v4/pkg/util"
 	"github.com/cloudreve/Cloudreve/v4/service/callback"
+	usersvc "github.com/cloudreve/Cloudreve/v4/service/user"
 	"github.com/gin-gonic/gin"
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 )
+
+// StripeWebhook ingests Stripe webhook events and fulfills matching payment
+// orders. Signature verification happens inside the service.
+func StripeWebhook(c *gin.Context) {
+	res, err := (&usersvc.StripeWebhookService{}).Create(c)
+	if respondErr(c, err) {
+		return
+	}
+	c.JSON(200, serializer.Response{Data: res})
+}
 
 // RemoteCallback process callback request to complete upload
 func ProcessCallback(failedStatusCode int, generalResp bool) gin.HandlerFunc {

@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 	"github.com/cloudreve/Cloudreve/v4/ent/sku"
 )
@@ -17,10 +19,11 @@ import (
 // SkuQuery is the builder for querying Sku entities.
 type SkuQuery struct {
 	config
-	ctx        *QueryContext
-	order      []sku.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Sku
+	ctx               *QueryContext
+	order             []sku.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Sku
+	withPaymentOrders *PaymentOrderQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +58,28 @@ func (sq *SkuQuery) Unique(unique bool) *SkuQuery {
 func (sq *SkuQuery) Order(o ...sku.OrderOption) *SkuQuery {
 	sq.order = append(sq.order, o...)
 	return sq
+}
+
+// QueryPaymentOrders chains the current query on the "payment_orders" edge.
+func (sq *SkuQuery) QueryPaymentOrders() *PaymentOrderQuery {
+	query := (&PaymentOrderClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sku.Table, sku.FieldID, selector),
+			sqlgraph.To(paymentorder.Table, paymentorder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sku.PaymentOrdersTable, sku.PaymentOrdersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Sku entity from the query.
@@ -244,15 +269,27 @@ func (sq *SkuQuery) Clone() *SkuQuery {
 		return nil
 	}
 	return &SkuQuery{
-		config:     sq.config,
-		ctx:        sq.ctx.Clone(),
-		order:      append([]sku.OrderOption{}, sq.order...),
-		inters:     append([]Interceptor{}, sq.inters...),
-		predicates: append([]predicate.Sku{}, sq.predicates...),
+		config:            sq.config,
+		ctx:               sq.ctx.Clone(),
+		order:             append([]sku.OrderOption{}, sq.order...),
+		inters:            append([]Interceptor{}, sq.inters...),
+		predicates:        append([]predicate.Sku{}, sq.predicates...),
+		withPaymentOrders: sq.withPaymentOrders.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
 	}
+}
+
+// WithPaymentOrders tells the query-builder to eager-load the nodes that are connected to
+// the "payment_orders" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *SkuQuery) WithPaymentOrders(opts ...func(*PaymentOrderQuery)) *SkuQuery {
+	query := (&PaymentOrderClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withPaymentOrders = query
+	return sq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,8 +368,11 @@ func (sq *SkuQuery) prepareQuery(ctx context.Context) error {
 
 func (sq *SkuQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sku, error) {
 	var (
-		nodes = []*Sku{}
-		_spec = sq.querySpec()
+		nodes       = []*Sku{}
+		_spec       = sq.querySpec()
+		loadedTypes = [1]bool{
+			sq.withPaymentOrders != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Sku).scanValues(nil, columns)
@@ -340,6 +380,7 @@ func (sq *SkuQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sku, err
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Sku{config: sq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +392,45 @@ func (sq *SkuQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sku, err
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := sq.withPaymentOrders; query != nil {
+		if err := sq.loadPaymentOrders(ctx, query, nodes,
+			func(n *Sku) { n.Edges.PaymentOrders = []*PaymentOrder{} },
+			func(n *Sku, e *PaymentOrder) { n.Edges.PaymentOrders = append(n.Edges.PaymentOrders, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (sq *SkuQuery) loadPaymentOrders(ctx context.Context, query *PaymentOrderQuery, nodes []*Sku, init func(*Sku), assign func(*Sku, *PaymentOrder)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Sku)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(paymentorder.FieldSkuID)
+	}
+	query.Where(predicate.PaymentOrder(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(sku.PaymentOrdersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.SkuID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "sku_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (sq *SkuQuery) sqlCount(ctx context.Context) (int, error) {

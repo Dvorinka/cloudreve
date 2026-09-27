@@ -1188,12 +1188,7 @@
     "validDurationDays": "{{num}} 日",
     "reportTarget": "報告対象",
     "reportReason": "理由",
-    "reportReasonOptions": [
-      "著作権侵害",
-      "有害なコンテンツ",
-      "スパム",
-      "その他"
-    ],
+    "reportReasonOptions": ["著作権侵害", "有害なコンテンツ", "スパム", "その他"],
     "reportDescription": "詳細説明",
     "reportAbuseSuccess": "報告を受け付けました"
   },
@@ -1229,7 +1224,10 @@
     "noProducts": "商品はありません",
     "buyWithPoints": "{{points}} ポイントで購入",
     "pointsUnavailable": "ポイントで購入できません",
-    "noProductsDescription": "運営者がメンバーシップやパックを追加すると、ここに表示されます。"
+    "noProductsDescription": "運営者がメンバーシップやパックを追加すると、ここに表示されます。",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "お知らせ",

@@ -1186,12 +1186,7 @@
     "validDurationDays": "{{num}} 天",
     "reportTarget": "舉報對象",
     "reportReason": "原因",
-    "reportReasonOptions": [
-      "侵權",
-      "有害內容",
-      "垃圾訊息",
-      "其他"
-    ],
+    "reportReasonOptions": ["侵權", "有害內容", "垃圾訊息", "其他"],
     "reportDescription": "補充說明",
     "reportAbuseSuccess": "舉報已提交"
   },
@@ -1227,7 +1222,10 @@
     "noProducts": "暫無商品",
     "buyWithPoints": "{{points}} 積分購買",
     "pointsUnavailable": "不支援積分購買",
-    "noProductsDescription": "當站點管理員新增會員或套餐後，商品會顯示在這裡。"
+    "noProductsDescription": "當站點管理員新增會員或套餐後，商品會顯示在這裡。",
+    "buyWithCard": "支付 {{price}}",
+    "paymentSuccess": "\"{{name}}\" 已生效",
+    "paymentPending": "付款處理中，商品稍後到帳"
   },
   "announcement": {
     "title": "公告",

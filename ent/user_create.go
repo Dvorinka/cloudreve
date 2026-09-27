@@ -21,6 +21,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent/groupmembership"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/sharepurchase"
 	"github.com/cloudreve/Cloudreve/v4/ent/ssobinding"
@@ -512,6 +513,21 @@ func (uc *UserCreate) AddSharePurchases(s ...*SharePurchase) *UserCreate {
 	return uc.AddSharePurchaseIDs(ids...)
 }
 
+// AddPaymentOrderIDs adds the "payment_orders" edge to the PaymentOrder entity by IDs.
+func (uc *UserCreate) AddPaymentOrderIDs(ids ...int) *UserCreate {
+	uc.mutation.AddPaymentOrderIDs(ids...)
+	return uc
+}
+
+// AddPaymentOrders adds the "payment_orders" edges to the PaymentOrder entity.
+func (uc *UserCreate) AddPaymentOrders(p ...*PaymentOrder) *UserCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddPaymentOrderIDs(ids...)
+}
+
 // AddSSOBindingIDs adds the "sso_bindings" edge to the SsoBinding entity by IDs.
 func (uc *UserCreate) AddSSOBindingIDs(ids ...int) *UserCreate {
 	uc.mutation.AddSSOBindingIDs(ids...)
@@ -1000,6 +1016,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(sharepurchase.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.PaymentOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

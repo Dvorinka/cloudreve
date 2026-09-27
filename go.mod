@@ -52,6 +52,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.11.1
+	github.com/stripe/stripe-go/v83 v83.0.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.54
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90
 	github.com/upyun/go-sdk v2.1.0+incompatible

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 	"github.com/cloudreve/Cloudreve/v4/ent/sku"
 )
@@ -283,9 +284,45 @@ func (su *SkuUpdate) AddWeight(i int) *SkuUpdate {
 	return su
 }
 
+// AddPaymentOrderIDs adds the "payment_orders" edge to the PaymentOrder entity by IDs.
+func (su *SkuUpdate) AddPaymentOrderIDs(ids ...int) *SkuUpdate {
+	su.mutation.AddPaymentOrderIDs(ids...)
+	return su
+}
+
+// AddPaymentOrders adds the "payment_orders" edges to the PaymentOrder entity.
+func (su *SkuUpdate) AddPaymentOrders(p ...*PaymentOrder) *SkuUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return su.AddPaymentOrderIDs(ids...)
+}
+
 // Mutation returns the SkuMutation object of the builder.
 func (su *SkuUpdate) Mutation() *SkuMutation {
 	return su.mutation
+}
+
+// ClearPaymentOrders clears all "payment_orders" edges to the PaymentOrder entity.
+func (su *SkuUpdate) ClearPaymentOrders() *SkuUpdate {
+	su.mutation.ClearPaymentOrders()
+	return su
+}
+
+// RemovePaymentOrderIDs removes the "payment_orders" edge to PaymentOrder entities by IDs.
+func (su *SkuUpdate) RemovePaymentOrderIDs(ids ...int) *SkuUpdate {
+	su.mutation.RemovePaymentOrderIDs(ids...)
+	return su
+}
+
+// RemovePaymentOrders removes "payment_orders" edges to PaymentOrder entities.
+func (su *SkuUpdate) RemovePaymentOrders(p ...*PaymentOrder) *SkuUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return su.RemovePaymentOrderIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -432,6 +469,51 @@ func (su *SkuUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.AddedWeight(); ok {
 		_spec.AddField(sku.FieldWeight, field.TypeInt, value)
+	}
+	if su.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedPaymentOrdersIDs(); len(nodes) > 0 && !su.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.PaymentOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -708,9 +790,45 @@ func (suo *SkuUpdateOne) AddWeight(i int) *SkuUpdateOne {
 	return suo
 }
 
+// AddPaymentOrderIDs adds the "payment_orders" edge to the PaymentOrder entity by IDs.
+func (suo *SkuUpdateOne) AddPaymentOrderIDs(ids ...int) *SkuUpdateOne {
+	suo.mutation.AddPaymentOrderIDs(ids...)
+	return suo
+}
+
+// AddPaymentOrders adds the "payment_orders" edges to the PaymentOrder entity.
+func (suo *SkuUpdateOne) AddPaymentOrders(p ...*PaymentOrder) *SkuUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return suo.AddPaymentOrderIDs(ids...)
+}
+
 // Mutation returns the SkuMutation object of the builder.
 func (suo *SkuUpdateOne) Mutation() *SkuMutation {
 	return suo.mutation
+}
+
+// ClearPaymentOrders clears all "payment_orders" edges to the PaymentOrder entity.
+func (suo *SkuUpdateOne) ClearPaymentOrders() *SkuUpdateOne {
+	suo.mutation.ClearPaymentOrders()
+	return suo
+}
+
+// RemovePaymentOrderIDs removes the "payment_orders" edge to PaymentOrder entities by IDs.
+func (suo *SkuUpdateOne) RemovePaymentOrderIDs(ids ...int) *SkuUpdateOne {
+	suo.mutation.RemovePaymentOrderIDs(ids...)
+	return suo
+}
+
+// RemovePaymentOrders removes "payment_orders" edges to PaymentOrder entities.
+func (suo *SkuUpdateOne) RemovePaymentOrders(p ...*PaymentOrder) *SkuUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return suo.RemovePaymentOrderIDs(ids...)
 }
 
 // Where appends a list predicates to the SkuUpdate builder.
@@ -887,6 +1005,51 @@ func (suo *SkuUpdateOne) sqlSave(ctx context.Context) (_node *Sku, err error) {
 	}
 	if value, ok := suo.mutation.AddedWeight(); ok {
 		_spec.AddField(sku.FieldWeight, field.TypeInt, value)
+	}
+	if suo.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedPaymentOrdersIDs(); len(nodes) > 0 && !suo.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.PaymentOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Sku{config: suo.config}
 	_spec.Assign = _node.assignValues

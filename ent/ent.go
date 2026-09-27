@@ -30,6 +30,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthclient"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/setting"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/sharepurchase"
@@ -117,6 +118,7 @@ func checkColumn(table, column string) error {
 			oauthclient.Table:     oauthclient.ValidColumn,
 			oauthgrant.Table:      oauthgrant.ValidColumn,
 			passkey.Table:         passkey.ValidColumn,
+			paymentorder.Table:    paymentorder.ValidColumn,
 			setting.Table:         setting.ValidColumn,
 			share.Table:           share.ValidColumn,
 			sharepurchase.Table:   sharepurchase.ValidColumn,
