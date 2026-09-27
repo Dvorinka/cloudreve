@@ -737,9 +737,7 @@ fn show_drive_window_internal(app: &AppHandle, title: &str, url_path: &str) {
     #[cfg(windows)]
     let effects = WindowEffectsConfig {
         effects: vec![WindowEffect::Mica, WindowEffect::Acrylic],
-        state: None,
-        radius: None,
-        color: None,
+        ..Default::default()
     };
 
     let builder = WebviewWindowBuilder::new(app, "add-drive", WebviewUrl::App(url_path.into()))
@@ -817,9 +815,7 @@ pub fn show_settings_window_impl(app: &AppHandle) {
     #[cfg(windows)]
     let effects = WindowEffectsConfig {
         effects: vec![WindowEffect::Mica, WindowEffect::Acrylic],
-        state: None,
-        radius: None,
-        color: None,
+        ..Default::default()
     };
 
     let builder = WebviewWindowBuilder::new(
@@ -904,9 +900,7 @@ pub fn show_share_window_impl(
     #[cfg(windows)]
     let effects = WindowEffectsConfig {
         effects: vec![WindowEffect::Mica, WindowEffect::Acrylic],
-        state: None,
-        radius: None,
-        color: None,
+        ..Default::default()
     };
 
     let builder = WebviewWindowBuilder::new(app, "share", WebviewUrl::App(url_path.into()))
@@ -1784,9 +1778,7 @@ pub fn show_update_window_impl(app: &AppHandle, auto_download: bool) {
     #[cfg(windows)]
     let effects = WindowEffectsConfig {
         effects: vec![WindowEffect::Mica, WindowEffect::Acrylic],
-        state: None,
-        radius: None,
-        color: None,
+        ..Default::default()
     };
 
     let builder = WebviewWindowBuilder::new(app, "update", WebviewUrl::App(url_path.into()))
