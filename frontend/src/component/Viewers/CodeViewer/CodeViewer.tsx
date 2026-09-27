@@ -1,4 +1,3 @@
-import { LoadingButton } from "@mui/lab";
 import { Box, Button, ButtonGroup, IconButton, ListItemIcon, ListItemText, Menu, useTheme } from "@mui/material";
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -260,9 +259,9 @@ const CodeViewer = () => {
         <Box sx={{ display: "flex", gap: 1 }}>
           {supportUpdate && (
             <ButtonGroup disabled={loading || !loaded || saved} disableElevation variant="contained">
-              <LoadingButton loading={loading} variant={"contained"} onClick={() => onSave(false)}>
+              <Button loading={loading} variant={"contained"} onClick={() => onSave(false)}>
                 <span>{t("fileManager.save")}</span>
-              </LoadingButton>
+              </Button>
               <Button size="small" onClick={openMore}>
                 <CaretDown sx={{ fontSize: "12px!important" }} />
               </Button>

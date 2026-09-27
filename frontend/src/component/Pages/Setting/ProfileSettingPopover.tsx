@@ -9,7 +9,7 @@ import {
   PopoverProps,
   SvgIconProps,
 } from "@mui/material";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ShareLinksInProfileLevel } from "../../../api/user.ts";
 import Eye from "../../Icons/Eye.tsx";
@@ -88,8 +88,8 @@ const ProfileSettingPopover = ({ currentValue, onValueChange, readOnly, ...rest 
     >
       <List dense sx={{ maxWidth: 360 }} disablePadding>
         {profileSettingOptions.map((option, index) => (
-          <>
-            <ListItem disablePadding key={option.value}>
+          <Fragment key={option.value}>
+            <ListItem disablePadding>
               <ListItemButton
                 selected={currentValue === option.value}
                 disabled={readOnly}
@@ -122,7 +122,7 @@ const ProfileSettingPopover = ({ currentValue, onValueChange, readOnly, ...rest 
               </ListItemButton>
             </ListItem>
             {index < profileSettingOptions.length - 1 && <Divider />}
-          </>
+          </Fragment>
         ))}
         <Divider />
       </List>

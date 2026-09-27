@@ -1,7 +1,6 @@
-import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import React from "react";
 import DismissCircleFilled from "../Icons/DismissCircleFilled.tsx";
 
@@ -28,7 +27,7 @@ const NoMatch = () => {
       >
         {t("common:pageNotFound")}
       </Typography>
-      <LoadingButton
+      <Button
         sx={{
           mt: 7,
         }}
@@ -38,7 +37,7 @@ const NoMatch = () => {
         color="primary"
       >
         <span>{t("application:navbar.backToHomepage")}</span>
-      </LoadingButton>
+      </Button>
     </Box>
   );
 };

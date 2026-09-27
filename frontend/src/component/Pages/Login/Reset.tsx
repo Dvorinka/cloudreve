@@ -1,5 +1,4 @@
-import { LoadingButton } from "@mui/lab";
-import { Box, FormControl, Link, Typography } from "@mui/material";
+import { Box, FormControl, Link, Typography, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -79,7 +78,7 @@ const Reset = () => {
                   name: "password",
                   type: "password",
                   id: "password",
-                  required: "true",
+                  required: true,
                   minLength: 6,
                 }}
                 onChange={(e) => setPassword(e.target.value)}
@@ -97,7 +96,7 @@ const Reset = () => {
                   name: "password",
                   type: "password",
                   id: "password",
-                  required: "true",
+                  required: true,
                   minLength: 6,
                 }}
                 onChange={(e) => setPasswordRepeat(e.target.value)}
@@ -106,21 +105,14 @@ const Reset = () => {
                 autoComplete={"false"}
               />
             </FormControl>
-            <LoadingButton
-              sx={{ mt: 2 }}
-              onClick={submit}
-              fullWidth
-              variant="contained"
-              color="primary"
-              loading={loading}
-            >
+            <Button sx={{ mt: 2 }} onClick={submit} fullWidth variant="contained" color="primary" loading={loading}>
               <span>{t("login.resetPassword")}</span>
-            </LoadingButton>
+            </Button>
             <Box sx={{ mt: 2, typography: "body2", textAlign: "center" }}>
               <Trans
                 ns={"application"}
                 i18nKey={"login.haveAccountSignInNow"}
-                components={[<Link underline="hover" component={RouterLink} to="/session" />]}
+                components={[<Link key={0} underline="hover" component={RouterLink} to="/session" />]}
               />
             </Box>
           </Box>

@@ -38,7 +38,7 @@ const GraphEndpointSelection = ({ value, onChange, ...rest }: GraphEndpointSelec
       {...rest}
     >
       {graphEndpoints.map((endpoint) => (
-        <SquareMenuItem value={endpoint.endpoint}>
+        <SquareMenuItem key={endpoint.endpoint} value={endpoint.endpoint}>
           <Box
             sx={{
               display: "flex",

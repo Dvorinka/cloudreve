@@ -16,7 +16,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: "en-US",
-    debug: true,
+    debug: import.meta.env.DEV,
     ns: ["common", "application", "dashboard"],
     load: "currentOnly",
     defaultNS: "application",

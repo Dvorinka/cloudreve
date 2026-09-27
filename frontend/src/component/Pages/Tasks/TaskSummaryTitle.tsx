@@ -52,7 +52,7 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
             height: "100%",
           }}
         >
-          <Typography variant={"inherit"} sx={{}}>
+          <Typography variant={"inherit"} component={"div"} sx={{}}>
             {isInDashboard && t("dashboard:task.remoteDownload")}
             {summary?.props.download?.name ?? t("download.unknownTaskName")}
             {selectedCount > 1 && <StyledChip color={"primary"} size="small" label={selectedCount} />}
@@ -67,6 +67,8 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
             <span key={0}>
               {summary?.props.src_multiple?.slice(0, 3).map((src) => (
                 <StyledFileBadge
+                  key={src}
+                  component="span"
                   variant={"outlined"}
                   simplifiedFile={{
                     type: FileType.file,
@@ -76,6 +78,8 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
               ))}
             </span>,
             <StyledFileBadge
+              key={1}
+              component="span"
               variant={"outlined"}
               simplifiedFile={{
                 type: FileType.file,
@@ -101,6 +105,8 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
           }}
           components={[
             <StyledFileBadge
+              key={0}
+              component="span"
               variant={"outlined"}
               simplifiedFile={{
                 type: FileType.folder,
@@ -112,7 +118,7 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
       );
     case TaskType.full_text_rebuild:
       return (
-        <Typography variant={"inherit"}>
+        <Typography variant={"inherit"} component={"div"}>
           {t("setting.rebuildFTSIndex", {
             total: summary?.props.total ?? "-",
           })}
@@ -124,6 +130,8 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
           i18nKey="setting.extractFileTo"
           components={[
             <StyledFileBadge
+              key={0}
+              component="span"
               variant={"outlined"}
               simplifiedFile={{
                 type: FileType.file,
@@ -131,6 +139,8 @@ const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryT
               }}
             />,
             <StyledFileBadge
+              key={1}
+              component="span"
               variant={"outlined"}
               simplifiedFile={{
                 type: FileType.folder,

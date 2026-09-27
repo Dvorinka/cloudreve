@@ -95,3 +95,65 @@ func TestRepairLegacyUserGroupColumn(t *testing.T) {
 		require.Equal(t, map[int]int{1: 1, 2: 2, 3: 2}, got)
 	})
 }
+
+// TestApplyPatchesGating covers the patch gating regression where
+// latestAppliedVersion was clamped to the required version before patch
+// selection, so an upgrade from an older mark skipped every patch whose
+// EndVersion was below the release being installed.
+func TestApplyPatchesGating(t *testing.T) {
+	ctx := context.Background()
+	l := logging.NewConsoleLogger(logging.LevelError)
+
+	orig := patches
+	defer func() { patches = orig }()
+
+	ran := map[string]bool{}
+	recorder := func(name string) PatchFunc {
+		return func(_ logging.Logger, _ *ent.Client, _ context.Context) error {
+			ran[name] = true
+			return nil
+		}
+	}
+	patches = []Patch{
+		{Name: "before_mark", EndVersion: "4.18.0", Func: recorder("before_mark")},
+		{Name: "between", EndVersion: "4.20.0", Func: recorder("between")},
+		{Name: "after_required", EndVersion: "4.22.0", Func: recorder("after_required")},
+	}
+
+	newClient := func(t *testing.T) *ent.Client {
+		client, err := ent.Open("sqlite3", "file:"+filepath.Join(t.TempDir(), "m.db"))
+		require.NoError(t, err)
+		require.NoError(t, client.Schema.Create(ctx))
+		return client
+	}
+
+	t.Run("upgrade from older mark runs intermediate patches", func(t *testing.T) {
+		client := newClient(t)
+		defer client.Close()
+		require.NoError(t, client.Setting.Create().
+			SetName(DBVersionPrefix+"4.19.0").SetValue("installed").Exec(ctx))
+
+		for k := range ran {
+			delete(ran, k)
+		}
+		require.NoError(t, applyPatches(l, client, ctx, "4.21.0"))
+
+		require.False(t, ran["before_mark"], "EndVersion <= recorded mark must be skipped")
+		require.True(t, ran["between"], "patch with EndVersion > mark but < required must run")
+		require.True(t, ran["after_required"], "patch with EndVersion > required must run")
+	})
+
+	t.Run("fresh install skips patches at or below required", func(t *testing.T) {
+		client := newClient(t)
+		defer client.Close()
+
+		for k := range ran {
+			delete(ran, k)
+		}
+		require.NoError(t, applyPatches(l, client, ctx, "4.21.0"))
+
+		require.False(t, ran["before_mark"])
+		require.False(t, ran["between"])
+		require.True(t, ran["after_required"])
+	})
+}

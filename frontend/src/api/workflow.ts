@@ -147,6 +147,7 @@ export enum TaskType {
   full_text_delete = "full_text_delete",
   full_text_rebuild = "full_text_rebuild",
   blob_audit = "blob_audit",
+  relocate = "relocate",
 }
 
 export enum TaskStatus {

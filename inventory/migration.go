@@ -14,6 +14,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent/node"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthclient"
 	"github.com/cloudreve/Cloudreve/v4/ent/setting"
+	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/storagepolicy"
 	"github.com/cloudreve/Cloudreve/v4/inventory/debug"
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
@@ -820,10 +821,7 @@ var patches = []Patch{
 		// groups were seeded, so upgraded installs had the toggles off even
 		// though every admin could grant them manually. Grant them to the
 		// built-in admin group once; untouched if its is_admin bit was
-		// cleared.
-		// EndVersion must exceed the current requiredDbVersion: latestApplied
-		// is clamped to requiredDbVersion first, so EndVersion <= 4.21.0 would
-		// never run.
+		// cleared. EndVersion marks the release introducing this patch.
 		Name:       "grant_admin_group_feature_permissions",
 		EndVersion: "4.22.0",
 		Func: func(l logging.Logger, client *ent.Client, ctx context.Context) error {
@@ -844,6 +842,22 @@ var patches = []Patch{
 			}, adminGroup.Permissions)
 			if _, err := client.Group.UpdateOne(adminGroup).SetPermissions(adminGroup.Permissions).Save(ctx); err != nil {
 				return fmt.Errorf("failed to update admin group permissions: %w", err)
+			}
+			return nil
+		},
+	},
+	{
+		// Older share upserts stored password='' for public shares, but the
+		// public-directory listing filters on PasswordIsNil() — those rows
+		// stayed invisible until re-saved. Normalize empty to NULL once.
+		Name:       "share_public_password_null",
+		EndVersion: "4.22.0",
+		Func: func(l logging.Logger, client *ent.Client, ctx context.Context) error {
+			if _, err := client.Share.Update().
+				Where(share.PasswordEQ("")).
+				ClearPassword().
+				Save(ctx); err != nil {
+				return fmt.Errorf("failed to normalize empty share passwords: %w", err)
 			}
 			return nil
 		},
@@ -894,7 +908,10 @@ func applyPatches(l logging.Logger, client *ent.Client, ctx context.Context, req
 		return fmt.Errorf("failed to parse required version %s: %w", requiredDbVersion, err)
 	}
 
-	if latestAppliedVersion == nil || requiredVersion.Compare(latestAppliedVersion) > 0 {
+	if latestAppliedVersion == nil {
+		// Fresh install: no version marks yet. Treat as the required
+		// version so older patches are skipped — the schema is created
+		// at the latest revision anyway.
 		latestAppliedVersion = requiredVersion
 	}
 

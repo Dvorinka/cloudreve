@@ -142,6 +142,7 @@ export const Code = {
   DomainNotLicensed: 40087,
   AnonymouseAccessDenied: 40088,
   VaultLocked: 40093,
+  EntityNotExist: 40077,
   CodeLoginRequired: 401,
   PermissionDenied: 403,
   NodeFound: 404,
@@ -264,11 +265,18 @@ export function send<T = any>(
         }
 
         if (e instanceof Error) {
-          enqueueSnackbar({
-            message: opts.errorSnackbarMsg(e),
-            variant: "error",
-            action,
-          });
+          // Module-level enqueueSnackbar is only bound after SnackbarProvider
+          // mounts; requests failing during early boot would otherwise throw
+          // a TypeError here and mask the real error.
+          if (typeof enqueueSnackbar === "function") {
+            enqueueSnackbar({
+              message: opts.errorSnackbarMsg(e),
+              variant: "error",
+              action,
+            });
+          } else {
+            console.error(opts.errorSnackbarMsg(e), e);
+          }
         }
       }
 

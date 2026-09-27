@@ -57,8 +57,8 @@ const ResponsiveTabs = <T,>({ tabs, value, onChange }: ResponsiveTabsProps<T>) =
       <StyledTabs ref={tabsRef} value={value} onChange={onChange}>
         {tabs
           .filter((tab) => (isMobile || hideTabs ? tab.value == value : true))
-          .map((tab) => (
-            <StyledTab label={tab.label} value={tab.value} icon={tab.icon} />
+          .map((tab, index) => (
+            <StyledTab key={index} label={tab.label} value={tab.value} icon={tab.icon} />
           ))}
         {(isMobile || hideTabs) && tabs.length > 1 && (
           <>

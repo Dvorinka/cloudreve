@@ -182,6 +182,7 @@ const ManageShares = () => {
                   {fileExtended?.extended_info?.shares &&
                     fileExtended?.extended_info?.shares.map((e) => (
                       <TableRow
+                        key={e.id}
                         sx={{
                           "&:last-child td, &:last-child th": { border: 0 },
                           cursor: "pointer",

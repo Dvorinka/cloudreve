@@ -1,5 +1,4 @@
-import { LoadingButton } from "@mui/lab";
-import { Box, Divider, FormControl, Link, Typography } from "@mui/material";
+import { Box, Divider, FormControl, Link, Typography, Button } from "@mui/material";
 import i18next from "i18next";
 import { useSnackbar } from "notistack";
 import { useEffect, useRef, useState } from "react";
@@ -165,7 +164,7 @@ const SignUp = () => {
                           id: "email",
                           type: "email",
                           name: "email",
-                          required: "true",
+                          required: true,
                         }}
                         onChange={(e) => setEmail(e.target.value)}
                         icon={<MailOutlined />}
@@ -181,7 +180,7 @@ const SignUp = () => {
                           name: "password",
                           type: "password",
                           id: "password",
-                          required: "true",
+                          required: true,
                           minLength: 6,
                           maxLength: 128,
                         }}
@@ -199,7 +198,7 @@ const SignUp = () => {
                           name: "repeatPassword",
                           type: "password",
                           id: "repeatPassword",
-                          required: "true",
+                          required: true,
                           minLength: 6,
                           maxLength: 128,
                         }}
@@ -218,7 +217,7 @@ const SignUp = () => {
                             name: "invite_code",
                             type: "text",
                             id: "invite_code",
-                            required: "true",
+                            required: true,
                           }}
                           onChange={(e) => setInviteCode(e.target.value)}
                           icon={<TicketDiagonal />}
@@ -236,7 +235,7 @@ const SignUp = () => {
                         />
                       </FormControl>
                     )}
-                    <LoadingButton
+                    <Button
                       sx={{ mt: 2 }}
                       onClick={submit}
                       fullWidth
@@ -245,12 +244,12 @@ const SignUp = () => {
                       loading={loading}
                     >
                       <span>{t("login.signUp")}</span>
-                    </LoadingButton>
+                    </Button>
                     <Box sx={{ mt: 2, typography: "body2", textAlign: "center" }}>
                       <Trans
                         ns={"application"}
                         i18nKey={"login.haveAccountSignInNow"}
-                        components={[<Link underline="hover" component={RouterLink} to="/session" />]}
+                        components={[<Link key={0} underline="hover" component={RouterLink} to="/session" />]}
                       />
                     </Box>
                     {showFooter && (

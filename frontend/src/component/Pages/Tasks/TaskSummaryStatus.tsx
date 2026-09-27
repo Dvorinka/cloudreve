@@ -34,15 +34,15 @@ export interface TaskSummaryStatusProps {
 interface TaskStatusContentProps {
   color: string;
   icon: React.ReactNode;
-  title: string;
+  label: string;
   [key: string]: any;
 }
-const TaskStatusContent = forwardRef(({ icon, title, color, ...props }: TaskStatusContentProps, ref) => {
+const TaskStatusContent = forwardRef(({ icon, label, color, ...props }: TaskStatusContentProps, ref) => {
   return (
     <Box ref={ref} {...props}>
-      <Typography variant={"body2"} sx={{ color, display: "flex", mx: 0.5 }} noWrap>
+      <Typography variant={"body2"} component={"div"} sx={{ color, display: "flex", mx: 0.5 }} noWrap>
         <Box sx={{ mr: 0.5, pt: "6px" }}>{icon}</Box>
-        <Box sx={{ mt: "6px" }}>{title}</Box>
+        <Box sx={{ mt: "6px" }}>{label}</Box>
       </Typography>
     </Box>
   );
@@ -57,7 +57,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
     case TaskStatus.completed:
       return (
         <TaskStatusContent
-          title={t("setting.finished")}
+          label={t("setting.finished")}
           icon={<CheckCircleFilled fontSize={"small"} />}
           color={theme.palette.success.main}
         />
@@ -66,7 +66,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
       return (
         <Tooltip title={error}>
           <TaskStatusContent
-            title={t("setting.failed")}
+            label={t("setting.failed")}
             icon={<DismissCircleFilled fontSize={"small"} />}
             color={theme.palette.error.main}
           />
@@ -92,7 +92,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
                   downloadStatus.downloaded,
                 )} / ${sizeToString(downloadStatus.total)}`}
               <TaskStatusContent
-                title={
+                label={
                   downloadStatus.total <= 0
                     ? t("download.unknownSize")
                     : `${((downloadStatus.downloaded * 100) / downloadStatus.total).toFixed(2)}%`
@@ -105,7 +105,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
         } else if (summary?.phase == "seeding") {
           return (
             <TaskStatusContent
-              title={t("setting.seeding")}
+              label={t("setting.seeding")}
               icon={<ArrowSyncCircleFilledSpin fontSize={"small"} />}
               color={theme.palette.primary.main}
             />
@@ -113,7 +113,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
         } else if (summary?.phase == "transfer") {
           return (
             <TaskStatusContent
-              title={
+              label={
                 transferPercent != undefined
                   ? `${t("download.transferring")} ${transferPercent.toFixed(0)}%`
                   : t("download.transferring")
@@ -125,7 +125,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
         } else {
           return (
             <TaskStatusContent
-              title={t("setting.processing")}
+              label={t("setting.processing")}
               icon={<ArrowSyncCircleFilledSpin fontSize={"small"} />}
               color={theme.palette.primary.main}
             />
@@ -134,7 +134,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
       }
       return (
         <TaskStatusContent
-          title={t("setting.processing")}
+          label={t("setting.processing")}
           icon={<ArrowSyncCircleFilledSpin fontSize={"small"} />}
           color={theme.palette.primary.main}
         />
@@ -142,7 +142,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
     case TaskStatus.queued:
       return (
         <TaskStatusContent
-          title={t("application:setting.queueing")}
+          label={t("application:setting.queueing")}
           icon={<CircleHintFilled fontSize={"small"} />}
           color={theme.palette.action.active}
         />
@@ -150,7 +150,7 @@ const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferP
     case TaskStatus.canceled:
       return (
         <TaskStatusContent
-          title={t("setting.canceled")}
+          label={t("setting.canceled")}
           icon={<DismissCircleFilled fontSize={"small"} />}
           color={theme.palette.action.active}
         />

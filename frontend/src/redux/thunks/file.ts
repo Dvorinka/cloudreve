@@ -28,7 +28,7 @@ import {
   NewFileTemplate,
   Viewer,
 } from "../../api/explorer.ts";
-import { AppError, Response } from "../../api/request.ts";
+import { AppError, Code, Response } from "../../api/request.ts";
 import { DefaultCloseAction, ViewDstAction } from "../../component/Common/Snackbar/snackbar.tsx";
 import { canShowInfo, getActionOpt } from "../../component/FileManager/ContextMenu/useActionDisplayOpt.ts";
 import { DeleteOption } from "../../component/FileManager/Dialogs/DeleteConfirmation.tsx";
@@ -76,7 +76,14 @@ import {
 } from "../globalStateSlice.ts";
 import { ConfigLoadState, Viewers } from "../siteConfigSlice.ts";
 import { AppThunk } from "../store.ts";
-import { confirmOperation, deleteConfirmation, renameForm, requestCreateNew, selectOption, selectPath } from "./dialog.ts";
+import {
+  confirmOperation,
+  deleteConfirmation,
+  renameForm,
+  requestCreateNew,
+  selectOption,
+  selectPath,
+} from "./dialog.ts";
 import { downloadSingleFile } from "./download.ts";
 import { navigateToPath, refreshFileList, updateUserCapacity } from "./filemanager.ts";
 import { queueLoadShareInfo } from "./share.ts";
@@ -130,7 +137,9 @@ export function loadFileThumb(index: number, file: FileResponse): AppThunk<Promi
           ],
         }),
       );
-      console.warn("Failed to load thumb", e);
+      if (!(e instanceof AppError && e.code === Code.EntityNotExist)) {
+        console.warn("Failed to load thumb", e);
+      }
       return null;
     }
   };

@@ -1,5 +1,15 @@
-import { LoadingButton } from "@mui/lab";
-import { Box, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Skeleton, useTheme } from "@mui/material";
+import {
+  Box,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Skeleton,
+  useTheme,
+  Button,
+} from "@mui/material";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAnnouncement, sendUpdateUserSetting } from "../../../api/api.ts";
@@ -80,9 +90,9 @@ const AnnouncementDialog = () => {
           control={<Checkbox checked={dontShow} onChange={(e) => setDontShow(e.target.checked)} />}
           label={t("application:announcement.dontShowAgain")}
         />
-        <LoadingButton loading={closing} variant="contained" onClick={close}>
+        <Button loading={closing} variant="contained" onClick={close}>
           {t("common:ok")}
-        </LoadingButton>
+        </Button>
       </DialogActions>
     </Dialog>
   );

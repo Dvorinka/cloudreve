@@ -117,14 +117,10 @@ const ShareList = () => {
       <Container maxWidth="lg">
         <PageHeader
           secondaryAction={
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, whiteSpace: "nowrap" }}>
               {selecting && (
                 <>
-                  <Button
-                    size="small"
-                    variant="text"
-                    onClick={() => setSelectedIds(new Set(shares.map((s) => s.id)))}
-                  >
+                  <Button size="small" variant="text" onClick={() => setSelectedIds(new Set(shares.map((s) => s.id)))}>
                     {t("application:fileManager.selectAll")}
                   </Button>
                   <Button

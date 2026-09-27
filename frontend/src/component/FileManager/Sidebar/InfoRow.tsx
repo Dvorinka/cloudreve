@@ -12,7 +12,7 @@ const InfoRow = ({ title, content }: InfoRowProps) => {
       <Typography variant={"body2"} color="textPrimary" fontWeight={500}>
         {title}
       </Typography>
-      <Typography variant={"body2"} color={"text.secondary"}>
+      <Typography variant={"body2"} color={"text.secondary"} component={"div"}>
         {content}
       </Typography>
     </Box>

@@ -66,7 +66,12 @@ const DialogAccordion = (props: DialogAccordionProps) => {
     <Box>
       <Accordion expanded={expanded} onChange={handleChange}>
         <AccordionSummary aria-controls="panel1d-content" id="panel1d-header">
-          <SummaryButton expanded={expanded} fullWidth startIcon={<CaretDownIcon expanded={expanded} />}>
+          <SummaryButton
+            component="span"
+            expanded={expanded}
+            fullWidth
+            startIcon={<CaretDownIcon expanded={expanded} />}
+          >
             {props.title}
           </SummaryButton>
         </AccordionSummary>

@@ -11,15 +11,7 @@ export interface SettingFormProps {
   noContainer?: boolean;
 }
 
-const SettingForm = ({
-  title,
-  children,
-  lgWidth = 8,
-  secondary,
-  spacing,
-  noContainer,
-  anchorId,
-}: SettingFormProps) => {
+const SettingForm = ({ title, children, lgWidth = 8, secondary, spacing, noContainer, anchorId }: SettingFormProps) => {
   useEffect(() => {
     if (anchorId && window.location.hash === `#${anchorId}`) {
       const anchor = document.getElementById(`anchor-${anchorId}`);
@@ -47,6 +39,7 @@ const SettingForm = ({
             fontWeight={600}
             sx={{ mb: 0.5, display: "flex", alignItems: "center" }}
             variant={"body2"}
+            component={"div"}
             id={anchorId ? `anchor-${anchorId}` : undefined}
           >
             {title}

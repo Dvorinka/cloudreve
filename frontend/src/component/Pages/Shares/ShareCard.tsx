@@ -268,7 +268,12 @@ const ShareCard = ({ share, onShareDeleted, onLoad, loading, selecting, selected
               )}
               <Box>
                 <Tooltip title={share?.name ?? ""}>
-                  <NoWrapTypography variant={"body2"} color={"text.secondary"}>
+                  <Typography
+                    variant={"body2"}
+                    color={"text.secondary"}
+                    component={"div"}
+                    sx={{ textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}
+                  >
                     {!share?.created_at ? (
                       <Skeleton variant={"text"} width={"50%"} />
                     ) : (
@@ -305,7 +310,7 @@ const ShareCard = ({ share, onShareDeleted, onLoad, loading, selecting, selected
                         </Box>
                       </Box>
                     )}
-                  </NoWrapTypography>
+                  </Typography>
                 </Tooltip>
               </Box>
             </NoWrapBox>

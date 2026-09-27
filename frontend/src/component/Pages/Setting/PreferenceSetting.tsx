@@ -1,4 +1,3 @@
-import { LoadingButton } from "@mui/lab";
 import {
   Box,
   Checkbox,
@@ -14,6 +13,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Button,
 } from "@mui/material";
 import i18next from "i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -91,9 +91,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
   const [archiveMethod, setArchiveMethod] = useState<number | "">(
     SessionManager.get(UserSettings.ArchiveDownloadMethod) ?? "",
   );
-  const [trashRetentionDays, setTrashRetentionDays] = useState(
-    Math.round((setting.trash_retention ?? 0) / 86400),
-  );
+  const [trashRetentionDays, setTrashRetentionDays] = useState(Math.round((setting.trash_retention ?? 0) / 86400));
 
   // Same availability rules as the download picker.
   const archiveMethodOptions = useMemo(() => {
@@ -274,7 +272,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
         <FormControl fullWidth>
           <DenseSelect value={i18next.language} onChange={(e) => dispatch(selectLanguage(e.target.value as string))}>
             {languages.map((l) => (
-              <SquareMenuItem value={l.code}>
+              <SquareMenuItem key={l.code} value={l.code}>
                 <ListItemText
                   slotProps={{
                     primary: { variant: "body2" },
@@ -292,7 +290,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
         <FormControl fullWidth>
           <DenseSelect value={timeZoneValue} onChange={(e) => selectTimeZone(e.target.value as string)}>
             {Intl.supportedValuesOf("timeZone").map((v) => (
-              <SquareMenuItem value={v}>
+              <SquareMenuItem key={v} value={v}>
                 <ListItemText
                   slotProps={{
                     primary: { variant: "body2" },
@@ -313,8 +311,9 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
         <SelectorBox sx={{ gap: 1 }}>
           {Object.keys(themeOptions)
             .filter((color) => !themeOptions[color]?.hidden)
-            .map((color, index) => (
+            .map((color) => (
               <ColorCircle
+                key={color}
                 size={30}
                 color={color}
                 onClick={() => applyTheme(color)}
@@ -398,9 +397,9 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
               </Stack>
             </Collapse>
             <Collapse in={showSaveButton} unmountOnExit>
-              <LoadingButton variant={"contained"} loading={loading} onClick={saveVersionRetention}>
+              <Button variant={"contained"} loading={loading} onClick={saveVersionRetention}>
                 <span>{t("fileManager.save")}</span>
-              </LoadingButton>
+              </Button>
             </Collapse>
           </Stack>
         </OutlinedSettingBox>
@@ -482,9 +481,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
       </SettingForm>
       <SettingForm title={t("setting.preferredViewers")} lgWidth={12}>
         <Box>
-          {preferredViewerEntries.length == 0 && (
-            <FormHelperText>{t("setting.preferredViewersEmpty")}</FormHelperText>
-          )}
+          {preferredViewerEntries.length == 0 && <FormHelperText>{t("setting.preferredViewersEmpty")}</FormHelperText>}
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
             {preferredViewerEntries.map(([ext, viewerId]) => (
               <Chip

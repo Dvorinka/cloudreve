@@ -1,4 +1,3 @@
-import { LoadingButton } from "@mui/lab";
 import {
   Box,
   CircularProgress,
@@ -10,6 +9,7 @@ import {
   Stack,
   Typography,
   useTheme,
+  Button,
 } from "@mui/material";
 import { Suspense, useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -75,9 +75,9 @@ const HeadlessFooterPreview = ({ footer, bottom }: { footer?: string; bottom?: s
                   <FormControl variant="standard" margin="normal" fullWidth>
                     <OutlineIconTextField label={t("login.email")} variant={"outlined"} icon={<MailOutlined />} />
                   </FormControl>
-                  <LoadingButton sx={{ mt: 2 }} fullWidth variant="contained" color="primary">
+                  <Button sx={{ mt: 2 }} fullWidth variant="contained" color="primary">
                     <span>{t("login.continue")}</span>
-                  </LoadingButton>
+                  </Button>
                   {bottom && (
                     <Box sx={{ width: "100%" }}>
                       <div dangerouslySetInnerHTML={{ __html: bottom }} />

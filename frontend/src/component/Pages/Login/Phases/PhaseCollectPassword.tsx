@@ -49,7 +49,7 @@ const PhaseCollectPassword = ({
                 name: "password",
                 type: "password",
                 id: "password",
-                required: "true",
+                required: true,
                 maxLength: 128,
                 minLength: 4,
               }}

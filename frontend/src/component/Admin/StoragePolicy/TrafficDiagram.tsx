@@ -231,7 +231,13 @@ export const TrafficDiagram = ({
         }}
       >
         {nodes.map((node) => (
-          <NodeIcon variant={variant} type={node} storageNodeTitle={storageNodeTitle} proxyNodeTitle={proxyNodeTitle} />
+          <NodeIcon
+            key={node}
+            variant={variant}
+            type={node}
+            storageNodeTitle={storageNodeTitle}
+            proxyNodeTitle={proxyNodeTitle}
+          />
         ))}
       </Box>
     </BorderedCard>

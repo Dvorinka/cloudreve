@@ -1,5 +1,4 @@
-import { LoadingButton } from "@mui/lab";
-import { Box, Grow, styled } from "@mui/material";
+import { Box, Grow, styled, Button } from "@mui/material";
 import * as React from "react";
 import { createContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -50,15 +49,9 @@ export const SavingFloat = ({ in: inProp, submitting, revert, submit, disabled }
       <Box sx={{ height: 70 }} />
       <Grow in={inProp}>
         <SavingFloatContainer>
-          <LoadingButton
-            loading={submitting}
-            onClick={submit}
-            variant={"contained"}
-            startIcon={<Save />}
-            disabled={disabled}
-          >
+          <Button loading={submitting} onClick={submit} variant={"contained"} startIcon={<Save />} disabled={disabled}>
             <span>{t("settings.save")}</span>
-          </LoadingButton>
+          </Button>
           <SecondaryButton
             disabled={submitting}
             onClick={revert}

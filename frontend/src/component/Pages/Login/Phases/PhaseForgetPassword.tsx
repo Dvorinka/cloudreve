@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Control } from "../Signin/SignIn.tsx";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
 import { Box, Button, FormControl, Link } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 import { sendSmsCode, sendSmsReset } from "../../../../api/api.ts";
@@ -78,7 +77,7 @@ const PhaseForgetPassword = ({
           <OutlineIconTextField
             label={t("login.phoneNumber")}
             variant="outlined"
-            inputProps={{ type: "tel", name: "phone", required: "true" }}
+            inputProps={{ type: "tel", name: "phone", required: true }}
             onChange={(e) => setPhone(e.target.value)}
             icon={<PhoneLaptopOutlined />}
             value={phone}
@@ -95,7 +94,7 @@ const PhaseForgetPassword = ({
           <OutlineIconTextField
             label={t("login.smsCode")}
             variant="outlined"
-            inputProps={{ type: "text", required: "true" }}
+            inputProps={{ type: "text", required: true }}
             onChange={(e) => setCode(e.target.value)}
             icon={<Password />}
             value={code}
@@ -114,14 +113,14 @@ const PhaseForgetPassword = ({
           <OutlineIconTextField
             label={t("login.newPassword")}
             variant="outlined"
-            inputProps={{ type: "password", required: "true" }}
+            inputProps={{ type: "password", required: true }}
             onChange={(e) => setPassword(e.target.value)}
             icon={<LockClosedOutlined />}
             value={password}
             autoComplete="new-password"
           />
         </FormControl>
-        <LoadingButton
+        <Button
           sx={{ mt: 2 }}
           fullWidth
           variant="contained"
@@ -131,7 +130,7 @@ const PhaseForgetPassword = ({
           onClick={onSmsReset}
         >
           <span>{t("login.resetPassword")}</span>
-        </LoadingButton>
+        </Button>
         {control?.back}
       </>
     );

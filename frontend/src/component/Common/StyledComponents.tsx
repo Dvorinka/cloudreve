@@ -1,4 +1,3 @@
-import { LoadingButton } from "@mui/lab";
 import {
   alpha,
   Autocomplete,
@@ -75,87 +74,85 @@ export const DenseFilledTextField = styled(FilledTextField)(({ theme }) => ({
 
 export const NoLabelFilledTextField = styled(FilledTextField, {
   shouldForwardProp: (prop) => prop !== "fullSize",
-})<{ fullSize?: boolean; multiline?: boolean }>(
-  ({ theme, fullSize, multiline }) => ({
-    "& .MuiInputBase-root": {
-      transition: theme.transitions.create(["box-shadow", "border-radius", "background-color"], {
-        duration: theme.transitions.duration.short,
-        easing: theme.transitions.easing.easeInOut,
-      }),
+})<{ fullSize?: boolean; multiline?: boolean }>(({ theme, fullSize, multiline }) => ({
+  "& .MuiInputBase-root": {
+    transition: theme.transitions.create(["box-shadow", "border-radius", "background-color"], {
+      duration: theme.transitions.duration.short,
+      easing: theme.transitions.easing.easeInOut,
+    }),
+    ...(fullSize
+      ? {}
+      : {
+          backgroundColor: "initial",
+          borderRadius: 0,
+        }),
+    paddingTop: 0,
+    paddingBottom: 0,
+    "&.Mui-focused": {
+      ...(fullSize
+        ? {}
+        : {
+            boxShadow: `inset 0 0 0 1px ${theme.palette.primary.light}`,
+            borderRadius: theme.spacing(0.5),
+          }),
+    },
+    "&.Mui-focused, &:hover": {
       ...(fullSize
         ? {}
         : {
             backgroundColor: "initial",
-            borderRadius: 0,
           }),
-      paddingTop: 0,
-      paddingBottom: 0,
-      "&.Mui-focused": {
-        ...(fullSize
-          ? {}
-          : {
-              boxShadow: `inset 0 0 0 1px ${theme.palette.primary.light}`,
-              borderRadius: theme.spacing(0.5),
-            }),
-      },
-      "&.Mui-focused, &:hover": {
-        ...(fullSize
-          ? {}
-          : {
-              backgroundColor: "initial",
-            }),
-      },
-      "&.Mui-disabled": {
-        ...(fullSize
-          ? {}
-          : {
-              backgroundColor: "initial",
-            }),
-        borderBottomStyle: "none",
-        "&::before": {
-          borderBottomStyle: "none !important",
-        },
-      },
     },
-    "& .MuiInputBase-root.MuiFilledInput-root": {
+    "&.Mui-disabled": {
       ...(fullSize
         ? {}
         : {
-            padding: "0!important",
-            paddingLeft: 0,
-            paddingRight: 0,
+            backgroundColor: "initial",
           }),
-    },
-    "& .MuiFilledInput-input": {
-      ...(fullSize
-        ? {
-            paddingTop: theme.spacing(1),
-            paddingBottom: theme.spacing(1),
-          }
-        : {
-            padding: "0!important",
-          }),
-      ...(!multiline && !fullSize
-        ? {
-            height: "23px",
-          }
-        : {}),
-
-      fontSize: theme.typography.body2.fontSize,
-      "&.Mui-disabled": {
-        ...(fullSize
-          ? {}
-          : {
-              backgroundColor: "initial",
-            }),
-        borderBottomStyle: "none",
-        "&::before": {
-          borderBottomStyle: "none !important",
-        },
+      borderBottomStyle: "none",
+      "&::before": {
+        borderBottomStyle: "none !important",
       },
     },
-  }),
-);
+  },
+  "& .MuiInputBase-root.MuiFilledInput-root": {
+    ...(fullSize
+      ? {}
+      : {
+          padding: "0!important",
+          paddingLeft: 0,
+          paddingRight: 0,
+        }),
+  },
+  "& .MuiFilledInput-input": {
+    ...(fullSize
+      ? {
+          paddingTop: theme.spacing(1),
+          paddingBottom: theme.spacing(1),
+        }
+      : {
+          padding: "0!important",
+        }),
+    ...(!multiline && !fullSize
+      ? {
+          height: "23px",
+        }
+      : {}),
+
+    fontSize: theme.typography.body2.fontSize,
+    "&.Mui-disabled": {
+      ...(fullSize
+        ? {}
+        : {
+            backgroundColor: "initial",
+          }),
+      borderBottomStyle: "none",
+      "&::before": {
+        borderBottomStyle: "none !important",
+      },
+    },
+  },
+}));
 
 export const DenseAutocomplete = styled(Autocomplete)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
@@ -192,7 +189,7 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-export const SecondaryLoadingButton = styled(LoadingButton)(({ theme }) => ({
+export const SecondaryLoadingButton = styled(Button)(({ theme }) => ({
   color: theme.palette.text.secondary,
   backgroundColor: theme.palette.action.hover,
   "&:hover": {

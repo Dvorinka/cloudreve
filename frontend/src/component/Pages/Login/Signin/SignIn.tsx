@@ -1,5 +1,4 @@
 import { ArrowBackIos } from "@mui/icons-material";
-import { LoadingButton } from "@mui/lab";
 import { Box, Button, Link, Typography } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -456,9 +455,9 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
     }
     phaseSetting.control = {
       submit: (
-        <LoadingButton sx={{ mt: 2 }} type="submit" fullWidth variant="contained" color="primary" loading={loading}>
+        <Button sx={{ mt: 2 }} type="submit" fullWidth variant="contained" color="primary" loading={loading}>
           <span>{phaseSetting.nextButtonText}</span>
-        </LoadingButton>
+        </Button>
       ),
       back: (
         <>
