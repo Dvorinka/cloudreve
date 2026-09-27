@@ -33,10 +33,7 @@ const SiteInformation = () => {
                   required
                   inputProps={{ maxLength: 255 }}
                 />
-                <LocalizedFields
-                  value={values.siteName_i18n}
-                  onChange={(v) => setSettings({ siteName_i18n: v })}
-                />
+                <LocalizedFields value={values.siteName_i18n} onChange={(v) => setSettings({ siteName_i18n: v })} />
                 <NoMarginHelperText>{t("settings.mainTitleDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
@@ -74,6 +71,32 @@ const SiteInformation = () => {
                   placeholder={"Line 1=https://cdn1.example.com\nLine 2=https://cdn2.example.com"}
                 />
                 <NoMarginHelperText>{t("settings.downloadCdnRoutesDes")}</NoMarginHelperText>
+              </FormControl>
+            </SettingForm>
+            <SettingForm title={t("settings.previewCdnRoutes")} lgWidth={5}>
+              <FormControl fullWidth>
+                <DenseFilledTextField
+                  fullWidth
+                  onChange={(e) => setSettings({ preview_cdn_routes: e.target.value })}
+                  value={values.preview_cdn_routes}
+                  multiline
+                  rows={3}
+                  placeholder={"Line 1=https://cdn1.example.com\nLine 2=https://cdn2.example.com"}
+                />
+                <NoMarginHelperText>{t("settings.previewCdnRoutesDes")}</NoMarginHelperText>
+              </FormControl>
+            </SettingForm>
+            <SettingForm title={t("settings.mediaCdnRoutes")} lgWidth={5}>
+              <FormControl fullWidth>
+                <DenseFilledTextField
+                  fullWidth
+                  onChange={(e) => setSettings({ media_cdn_routes: e.target.value })}
+                  value={values.media_cdn_routes}
+                  multiline
+                  rows={3}
+                  placeholder={"Media 1=https://media1.example.com\nMedia 2=https://media2.example.com"}
+                />
+                <NoMarginHelperText>{t("settings.mediaCdnRoutesDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
             <SettingForm lgWidth={5}>

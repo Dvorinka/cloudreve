@@ -81,6 +81,9 @@ export interface GroupSetting {
   allowed_nodes?: number[];
   allow_select_node?: boolean;
   weighted_policies?: boolean;
+  preview_cdn_routes?: string[];
+  media_cdn_routes?: string[];
+  download_cdn_routes?: string[];
 }
 
 export interface AdminListGroupResponse {

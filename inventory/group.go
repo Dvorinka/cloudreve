@@ -313,6 +313,9 @@ func cloneGroupSetting(src *types.GroupSetting) *types.GroupSetting {
 	cpy.LoginIPWhitelist = append([]string(nil), src.LoginIPWhitelist...)
 	cpy.DefaultPinned = append([]int(nil), src.DefaultPinned...)
 	cpy.AllowedNodes = append([]int(nil), src.AllowedNodes...)
+	cpy.PreviewCDNRoutes = append([]string(nil), src.PreviewCDNRoutes...)
+	cpy.MediaCDNRoutes = append([]string(nil), src.MediaCDNRoutes...)
+	cpy.DownloadCDNRoutes = append([]string(nil), src.DownloadCDNRoutes...)
 	if src.RemoteDownloadOptions != nil {
 		cpy.RemoteDownloadOptions = lo.Assign(map[string]interface{}{}, src.RemoteDownloadOptions)
 	}
@@ -375,4 +378,7 @@ func mergeGroupSettings(dst, src *types.GroupSetting) {
 	}
 	dst.DefaultPinned = lo.Union(dst.DefaultPinned, src.DefaultPinned)
 	dst.AllowedNodes = lo.Union(dst.AllowedNodes, src.AllowedNodes)
+	dst.PreviewCDNRoutes = lo.Union(dst.PreviewCDNRoutes, src.PreviewCDNRoutes)
+	dst.MediaCDNRoutes = lo.Union(dst.MediaCDNRoutes, src.MediaCDNRoutes)
+	dst.DownloadCDNRoutes = lo.Union(dst.DownloadCDNRoutes, src.DownloadCDNRoutes)
 }

@@ -612,12 +612,17 @@ func (f *entitySource) Url(ctx context.Context, opts ...EntitySourceOption) (*En
 	// 4. The entity is encrypted and internal proxy not disabled by option
 	handlerCapability := f.handler.Capabilities()
 	if f.ShouldInternalProxy() {
-		// Download URLs may be distributed across the site URL and
-		// configured CDN routes (#173); preview/thumb URLs stay on the
-		// resolved site URL to avoid cross-origin viewer breakage.
-		siteUrl := f.settings.SiteURL(ctx)
-		if f.o.IsDownload {
+		// Internal-proxy URLs carry this site's origin and can be re-homed
+		// onto a CDN mirror per purpose: downloads, streaming media, and
+		// other previews/thumbnails each draw from their own route pool.
+		var siteUrl *url.URL
+		switch {
+		case f.o.IsDownload:
 			siteUrl = f.settings.DownloadURLBase(ctx)
+		case !f.o.IsThumb && IsStreamMedia(displayName):
+			siteUrl = f.settings.MediaURLBase(ctx)
+		default:
+			siteUrl = f.settings.PreviewURLBase(ctx)
 		}
 		base := routes.MasterFileContentUrl(
 			siteUrl,
@@ -1126,4 +1131,26 @@ func (r lrs) Read(p []byte) (int, error) {
 
 func (r lrs) Close() error {
 	return r.c.Close()
+}
+
+// streamMediaExts are file extensions served through the streaming-media
+// CDN lane when `media_cdn_routes` is configured. Covers the audio and
+// video containers handled by the built-in players.
+var streamMediaExts = map[string]bool{
+	// Video
+	"mp4": true, "m4v": true, "mkv": true, "webm": true, "mov": true,
+	"avi": true, "wmv": true, "mpg": true, "mpeg": true, "m2v": true,
+	"ts": true, "mts": true, "m2ts": true, "flv": true, "f4v": true,
+	"rm": true, "rmvb": true, "3gp": true, "3g2": true, "asf": true,
+	"vob": true, "ogv": true, "m3u8": true, "mpd": true,
+	// Audio
+	"mp3": true, "m4a": true, "aac": true, "flac": true, "wav": true,
+	"ogg": true, "oga": true, "opus": true, "wma": true, "aiff": true,
+	"aif": true, "ape": true, "alac": true,
+}
+
+// IsStreamMedia reports whether a file name classifies into the
+// streaming-media URL lane for CDN routing purposes.
+func IsStreamMedia(name string) bool {
+	return streamMediaExts[util.Ext(name)]
 }

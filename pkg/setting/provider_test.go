@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cloudreve/Cloudreve/v4/ent"
+	"github.com/cloudreve/Cloudreve/v4/inventory"
+	"github.com/cloudreve/Cloudreve/v4/inventory/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,6 +85,91 @@ func TestDownloadURLBase(t *testing.T) {
 	})
 	for i := 0; i < 50; i++ {
 		require.Equal(t, "https://a.example.com", p.DownloadURLBase(ctx).String())
+	}
+}
+
+func userCtx(settings *types.GroupSetting) context.Context {
+	u := &ent.User{}
+	u.Edges.Group = &ent.Group{ID: 1, Settings: settings}
+	return context.WithValue(context.Background(), inventory.UserCtx{}, u)
+}
+
+func TestCDNRoutesGroupExtend(t *testing.T) {
+	p := NewProvider(stubAdapter{
+		"preview_cdn_routes":  "site-pv=https://pv1.example.com",
+		"media_cdn_routes":    "site-md=https://md1.example.com",
+		"download_cdn_routes": "site-dl=https://dl1.example.com",
+	})
+
+	// No user in context: site-level pool only.
+	ctx := context.Background()
+	require.Equal(t, []CDNRoute{{Name: "site-pv", URL: "https://pv1.example.com"}},
+		p.PreviewCDNRoutes(ctx))
+	require.Equal(t, []CDNRoute{{Name: "site-md", URL: "https://md1.example.com"}},
+		p.MediaCDNRoutes(ctx))
+	require.Equal(t, []CDNRoute{{Name: "site-dl", URL: "https://dl1.example.com"}},
+		p.DownloadCDNRoutes(ctx))
+
+	// Group routes extend the site pool; identical lines collapse.
+	gctx := userCtx(&types.GroupSetting{
+		PreviewCDNRoutes:  []string{"grp-pv=https://pv2.example.com", "site-pv=https://pv1.example.com"},
+		MediaCDNRoutes:    []string{"grp-md=https://md2.example.com"},
+		DownloadCDNRoutes: []string{"grp-dl=https://dl2.example.com"},
+	})
+	require.Equal(t, []CDNRoute{
+		{Name: "site-pv", URL: "https://pv1.example.com"},
+		{Name: "grp-pv", URL: "https://pv2.example.com"},
+	}, p.PreviewCDNRoutes(gctx))
+	require.Equal(t, []CDNRoute{
+		{Name: "site-md", URL: "https://md1.example.com"},
+		{Name: "grp-md", URL: "https://md2.example.com"},
+	}, p.MediaCDNRoutes(gctx))
+	require.Equal(t, []CDNRoute{
+		{Name: "site-dl", URL: "https://dl1.example.com"},
+		{Name: "grp-dl", URL: "https://dl2.example.com"},
+	}, p.DownloadCDNRoutes(gctx))
+}
+
+func TestPreviewMediaURLBase(t *testing.T) {
+	ctx := context.Background()
+
+	// No routes: site URL.
+	p := NewProvider(stubAdapter{"siteURL": "https://a.example.com"})
+	require.Equal(t, "https://a.example.com", p.PreviewURLBase(ctx).String())
+	require.Equal(t, "https://a.example.com", p.MediaURLBase(ctx).String())
+
+	// Preview pool only: previews draw from it, media falls back to it.
+	p = NewProvider(stubAdapter{
+		"siteURL":            "https://a.example.com",
+		"preview_cdn_routes": "pv=https://pv1.example.com",
+	})
+	for i := 0; i < 50; i++ {
+		require.Equal(t, "https://pv1.example.com", p.PreviewURLBase(ctx).String())
+		require.Equal(t, "https://pv1.example.com", p.MediaURLBase(ctx).String())
+	}
+
+	// Media pool wins over the preview pool for media URLs.
+	p = NewProvider(stubAdapter{
+		"siteURL":            "https://a.example.com",
+		"preview_cdn_routes": "pv=https://pv1.example.com",
+		"media_cdn_routes":   "md=https://md1.example.com",
+	})
+	for i := 0; i < 50; i++ {
+		require.Equal(t, "https://md1.example.com", p.MediaURLBase(ctx).String())
+	}
+
+	// UseFirstSiteUrl pins both resolvers.
+	pinned := context.WithValue(ctx, UseFirstSiteUrlCtxKey{}, true)
+	require.Equal(t, "https://a.example.com", p.PreviewURLBase(pinned).String())
+	require.Equal(t, "https://a.example.com", p.MediaURLBase(pinned).String())
+
+	// Group-level routes feed the resolvers too.
+	gctx := userCtx(&types.GroupSetting{
+		PreviewCDNRoutes: []string{"grp-pv=https://grp-pv.example.com"},
+	})
+	p = NewProvider(stubAdapter{"siteURL": "https://a.example.com"})
+	for i := 0; i < 50; i++ {
+		require.Equal(t, "https://grp-pv.example.com", p.PreviewURLBase(gctx).String())
 	}
 }
 

@@ -591,6 +591,8 @@ var DefaultSettings = map[string]string{
 	"upload_dedup_scope":                         "owner",
 	"download_cdn_routes":                        "",
 	"download_cdn_shuffle":                       "0",
+	"preview_cdn_routes":                         "",
+	"media_cdn_routes":                           "",
 	"email_filter_mode":                          "0",
 	"email_filter_list":                          "",
 	"email_disable_subaddress":                   "0",

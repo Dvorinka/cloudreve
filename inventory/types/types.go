@@ -83,6 +83,17 @@ type (
 		// wins. Policies without a MaxTotalSize cap are excluded from the
 		// weighing; if none qualify the group default applies as before.
 		WeightedPolicies bool `json:"weighted_policies,omitempty"`
+		// PreviewCDNRoutes are CDN mirror endpoints for inline preview and
+		// thumbnail URLs, one `name=url` entry per line, assigned at group
+		// level. They extend the site-level `preview_cdn_routes` pool;
+		// multi-group users get the union of all memberships' routes.
+		PreviewCDNRoutes []string `json:"preview_cdn_routes,omitempty"`
+		// MediaCDNRoutes are CDN mirror endpoints for streaming audio/video
+		// content URLs, same `name=url` per-line format, group-level.
+		MediaCDNRoutes []string `json:"media_cdn_routes,omitempty"`
+		// DownloadCDNRoutes are CDN mirror endpoints for download URLs,
+		// same `name=url` per-line format, group-level.
+		DownloadCDNRoutes []string `json:"download_cdn_routes,omitempty"`
 	}
 
 	// PolicySetting 非公有的存储策略属性
