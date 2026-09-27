@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/gob"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -31,6 +32,11 @@ type OIDCIDTokenClaims struct {
 
 type JWKSet struct {
 	Keys []JWK `json:"keys"`
+}
+
+// JWKSet is cached in KV (Redis gob-encodes values), so it must be registered.
+func init() {
+	gob.Register(JWKSet{})
 }
 
 type JWK struct {

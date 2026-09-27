@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rsa"
 	"encoding/base64"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"math/big"
@@ -24,6 +25,12 @@ type OIDCDiscovery struct {
 	TokenEndpoint         string `json:"token_endpoint"`
 	UserinfoEndpoint      string `json:"userinfo_endpoint"`
 	JWKSURI               string `json:"jwks_uri"`
+}
+
+// OIDCDiscovery is cached in KV (Redis gob-encodes values), so it must be
+// registered.
+func init() {
+	gob.Register(OIDCDiscovery{})
 }
 
 // OIDCTokenResponse is the token endpoint payload.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -48,6 +49,12 @@ type ssoState struct {
 	// LinkUserID is non-zero for account-link flows (QQ Connect): the
 	// resolved external identity binds to this user instead of signing in.
 	LinkUserID int
+}
+
+// Registered for gob so ssoState survives the Redis KV store; the in-memory
+// store keeps the concrete value and never encodes.
+func init() {
+	gob.Register(ssoState{})
 }
 
 // SSOLoginService starts an inbound OIDC flow by redirecting the browser to
