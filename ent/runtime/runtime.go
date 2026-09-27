@@ -721,12 +721,16 @@ func init() {
 	userDescDlTraffic := userFields[10].Descriptor()
 	// user.DefaultDlTraffic holds the default value on creation for the dl_traffic field.
 	user.DefaultDlTraffic = userDescDlTraffic.Default.(int64)
+	// userDescStreamTraffic is the schema descriptor for stream_traffic field.
+	userDescStreamTraffic := userFields[11].Descriptor()
+	// user.DefaultStreamTraffic holds the default value on creation for the stream_traffic field.
+	user.DefaultStreamTraffic = userDescStreamTraffic.Default.(int64)
 	// userDescVaultFolder is the schema descriptor for vault_folder field.
-	userDescVaultFolder := userFields[13].Descriptor()
+	userDescVaultFolder := userFields[14].Descriptor()
 	// user.DefaultVaultFolder holds the default value on creation for the vault_folder field.
 	user.DefaultVaultFolder = userDescVaultFolder.Default.(int)
 	// userDescSettings is the schema descriptor for settings field.
-	userDescSettings := userFields[16].Descriptor()
+	userDescSettings := userFields[17].Descriptor()
 	// user.DefaultSettings holds the default value on creation for the settings field.
 	user.DefaultSettings = userDescSettings.Default.(*types.UserSetting)
 	usergrantMixin := schema.UserGrant{}.Mixin()

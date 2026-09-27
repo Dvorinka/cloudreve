@@ -25461,6 +25461,8 @@ type UserMutation struct {
 	addcredits                    *int64
 	dl_traffic                    *int64
 	adddl_traffic                 *int64
+	stream_traffic                *int64
+	addstream_traffic             *int64
 	two_factor_secret             *string
 	vault_password                *string
 	vault_folder                  *int
@@ -26257,6 +26259,62 @@ func (m *UserMutation) AddedDlTraffic() (r int64, exists bool) {
 func (m *UserMutation) ResetDlTraffic() {
 	m.dl_traffic = nil
 	m.adddl_traffic = nil
+}
+
+// SetStreamTraffic sets the "stream_traffic" field.
+func (m *UserMutation) SetStreamTraffic(i int64) {
+	m.stream_traffic = &i
+	m.addstream_traffic = nil
+}
+
+// StreamTraffic returns the value of the "stream_traffic" field in the mutation.
+func (m *UserMutation) StreamTraffic() (r int64, exists bool) {
+	v := m.stream_traffic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStreamTraffic returns the old "stream_traffic" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldStreamTraffic(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStreamTraffic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStreamTraffic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStreamTraffic: %w", err)
+	}
+	return oldValue.StreamTraffic, nil
+}
+
+// AddStreamTraffic adds i to the "stream_traffic" field.
+func (m *UserMutation) AddStreamTraffic(i int64) {
+	if m.addstream_traffic != nil {
+		*m.addstream_traffic += i
+	} else {
+		m.addstream_traffic = &i
+	}
+}
+
+// AddedStreamTraffic returns the value that was added to the "stream_traffic" field in this mutation.
+func (m *UserMutation) AddedStreamTraffic() (r int64, exists bool) {
+	v := m.addstream_traffic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStreamTraffic resets all changes to the "stream_traffic" field.
+func (m *UserMutation) ResetStreamTraffic() {
+	m.stream_traffic = nil
+	m.addstream_traffic = nil
 }
 
 // SetTwoFactorSecret sets the "two_factor_secret" field.
@@ -27456,7 +27514,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 22)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -27498,6 +27556,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.dl_traffic != nil {
 		fields = append(fields, user.FieldDlTraffic)
+	}
+	if m.stream_traffic != nil {
+		fields = append(fields, user.FieldStreamTraffic)
 	}
 	if m.two_factor_secret != nil {
 		fields = append(fields, user.FieldTwoFactorSecret)
@@ -27556,6 +27617,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Credits()
 	case user.FieldDlTraffic:
 		return m.DlTraffic()
+	case user.FieldStreamTraffic:
+		return m.StreamTraffic()
 	case user.FieldTwoFactorSecret:
 		return m.TwoFactorSecret()
 	case user.FieldVaultPassword:
@@ -27607,6 +27670,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCredits(ctx)
 	case user.FieldDlTraffic:
 		return m.OldDlTraffic(ctx)
+	case user.FieldStreamTraffic:
+		return m.OldStreamTraffic(ctx)
 	case user.FieldTwoFactorSecret:
 		return m.OldTwoFactorSecret(ctx)
 	case user.FieldVaultPassword:
@@ -27728,6 +27793,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDlTraffic(v)
 		return nil
+	case user.FieldStreamTraffic:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStreamTraffic(v)
+		return nil
 	case user.FieldTwoFactorSecret:
 		v, ok := value.(string)
 		if !ok {
@@ -27794,6 +27866,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.adddl_traffic != nil {
 		fields = append(fields, user.FieldDlTraffic)
 	}
+	if m.addstream_traffic != nil {
+		fields = append(fields, user.FieldStreamTraffic)
+	}
 	if m.addvault_folder != nil {
 		fields = append(fields, user.FieldVaultFolder)
 	}
@@ -27811,6 +27886,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCredits()
 	case user.FieldDlTraffic:
 		return m.AddedDlTraffic()
+	case user.FieldStreamTraffic:
+		return m.AddedStreamTraffic()
 	case user.FieldVaultFolder:
 		return m.AddedVaultFolder()
 	}
@@ -27842,6 +27919,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddDlTraffic(v)
+		return nil
+	case user.FieldStreamTraffic:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStreamTraffic(v)
 		return nil
 	case user.FieldVaultFolder:
 		v, ok := value.(int)
@@ -27993,6 +28077,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldDlTraffic:
 		m.ResetDlTraffic()
+		return nil
+	case user.FieldStreamTraffic:
+		m.ResetStreamTraffic()
 		return nil
 	case user.FieldTwoFactorSecret:
 		m.ResetTwoFactorSecret()

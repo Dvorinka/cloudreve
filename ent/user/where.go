@@ -120,6 +120,11 @@ func DlTraffic(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDlTraffic, v))
 }
 
+// StreamTraffic applies equality check predicate on the "stream_traffic" field. It's identical to StreamTrafficEQ.
+func StreamTraffic(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldStreamTraffic, v))
+}
+
 // TwoFactorSecret applies equality check predicate on the "two_factor_secret" field. It's identical to TwoFactorSecretEQ.
 func TwoFactorSecret(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTwoFactorSecret, v))
@@ -868,6 +873,46 @@ func DlTrafficLT(v int64) predicate.User {
 // DlTrafficLTE applies the LTE predicate on the "dl_traffic" field.
 func DlTrafficLTE(v int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldDlTraffic, v))
+}
+
+// StreamTrafficEQ applies the EQ predicate on the "stream_traffic" field.
+func StreamTrafficEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldStreamTraffic, v))
+}
+
+// StreamTrafficNEQ applies the NEQ predicate on the "stream_traffic" field.
+func StreamTrafficNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldStreamTraffic, v))
+}
+
+// StreamTrafficIn applies the In predicate on the "stream_traffic" field.
+func StreamTrafficIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldStreamTraffic, vs...))
+}
+
+// StreamTrafficNotIn applies the NotIn predicate on the "stream_traffic" field.
+func StreamTrafficNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldStreamTraffic, vs...))
+}
+
+// StreamTrafficGT applies the GT predicate on the "stream_traffic" field.
+func StreamTrafficGT(v int64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldStreamTraffic, v))
+}
+
+// StreamTrafficGTE applies the GTE predicate on the "stream_traffic" field.
+func StreamTrafficGTE(v int64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldStreamTraffic, v))
+}
+
+// StreamTrafficLT applies the LT predicate on the "stream_traffic" field.
+func StreamTrafficLT(v int64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldStreamTraffic, v))
+}
+
+// StreamTrafficLTE applies the LTE predicate on the "stream_traffic" field.
+func StreamTrafficLTE(v int64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldStreamTraffic, v))
 }
 
 // TwoFactorSecretEQ applies the EQ predicate on the "two_factor_secret" field.

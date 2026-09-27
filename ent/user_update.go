@@ -276,6 +276,27 @@ func (uu *UserUpdate) AddDlTraffic(i int64) *UserUpdate {
 	return uu
 }
 
+// SetStreamTraffic sets the "stream_traffic" field.
+func (uu *UserUpdate) SetStreamTraffic(i int64) *UserUpdate {
+	uu.mutation.ResetStreamTraffic()
+	uu.mutation.SetStreamTraffic(i)
+	return uu
+}
+
+// SetNillableStreamTraffic sets the "stream_traffic" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableStreamTraffic(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetStreamTraffic(*i)
+	}
+	return uu
+}
+
+// AddStreamTraffic adds i to the "stream_traffic" field.
+func (uu *UserUpdate) AddStreamTraffic(i int64) *UserUpdate {
+	uu.mutation.AddStreamTraffic(i)
+	return uu
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (uu *UserUpdate) SetTwoFactorSecret(s string) *UserUpdate {
 	uu.mutation.SetTwoFactorSecret(s)
@@ -1080,6 +1101,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.AddedDlTraffic(); ok {
 		_spec.AddField(user.FieldDlTraffic, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.StreamTraffic(); ok {
+		_spec.SetField(user.FieldStreamTraffic, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedStreamTraffic(); ok {
+		_spec.AddField(user.FieldStreamTraffic, field.TypeInt64, value)
 	}
 	if value, ok := uu.mutation.TwoFactorSecret(); ok {
 		_spec.SetField(user.FieldTwoFactorSecret, field.TypeString, value)
@@ -2035,6 +2062,27 @@ func (uuo *UserUpdateOne) AddDlTraffic(i int64) *UserUpdateOne {
 	return uuo
 }
 
+// SetStreamTraffic sets the "stream_traffic" field.
+func (uuo *UserUpdateOne) SetStreamTraffic(i int64) *UserUpdateOne {
+	uuo.mutation.ResetStreamTraffic()
+	uuo.mutation.SetStreamTraffic(i)
+	return uuo
+}
+
+// SetNillableStreamTraffic sets the "stream_traffic" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableStreamTraffic(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetStreamTraffic(*i)
+	}
+	return uuo
+}
+
+// AddStreamTraffic adds i to the "stream_traffic" field.
+func (uuo *UserUpdateOne) AddStreamTraffic(i int64) *UserUpdateOne {
+	uuo.mutation.AddStreamTraffic(i)
+	return uuo
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (uuo *UserUpdateOne) SetTwoFactorSecret(s string) *UserUpdateOne {
 	uuo.mutation.SetTwoFactorSecret(s)
@@ -2869,6 +2917,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.AddedDlTraffic(); ok {
 		_spec.AddField(user.FieldDlTraffic, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.StreamTraffic(); ok {
+		_spec.SetField(user.FieldStreamTraffic, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedStreamTraffic(); ok {
+		_spec.AddField(user.FieldStreamTraffic, field.TypeInt64, value)
 	}
 	if value, ok := uuo.mutation.TwoFactorSecret(); ok {
 		_spec.SetField(user.FieldTwoFactorSecret, field.TypeString, value)

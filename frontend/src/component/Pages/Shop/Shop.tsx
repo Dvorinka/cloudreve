@@ -58,11 +58,14 @@ const Shop = () => {
         tab === ShopPageTab.Membership
           ? s.type === "group"
           : tab === ShopPageTab.Traffic
-            ? s.type === "traffic"
+            ? s.type === "traffic" || s.type === "stream_traffic"
             : s.type === "storage",
       ),
     [skus, tab],
   );
+
+  const trafficPoolLabel = (s: ShopSku) =>
+    s.type === "stream_traffic" ? t("shop.streamTrafficPack") : t("shop.downloadTrafficPack");
 
   const onPurchase = (s: ShopSku) => {
     setBuying(s.id);
@@ -118,6 +121,9 @@ const Shop = () => {
                       <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
                         {s.name}
                       </Typography>
+                      {(s.type === "traffic" || s.type === "stream_traffic") && (
+                        <Chip size="small" variant="outlined" label={trafficPoolLabel(s)} />
+                      )}
                       {s.label && <Chip size="small" color="primary" label={s.label} />}
                     </Stack>
                     <Typography variant="body2" color="text.secondary">
@@ -140,9 +146,7 @@ const Shop = () => {
                       disabled={s.points == null || buying === s.id || (info != null && info.credits < s.points)}
                       onClick={() => onPurchase(s)}
                     >
-                      {s.points != null
-                        ? t("shop.buyWithPoints", { points: s.points })
-                        : t("shop.pointsUnavailable")}
+                      {s.points != null ? t("shop.buyWithPoints", { points: s.points }) : t("shop.pointsUnavailable")}
                     </Button>
                   </Stack>
                 </Paper>

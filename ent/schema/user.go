@@ -55,6 +55,13 @@ func (User) Fields() []ent.Field {
 		// direct-link download.
 		field.Int64("dl_traffic").
 			Default(-1),
+		// stream_traffic is the remaining streaming/preview allowance in
+		// bytes, consumed when visitors (not the owner) preview or stream
+		// the user's files through shares or non-download direct links.
+		// -1 means unlimited (the default); >=0 is decremented by the
+		// entity size on each issued stream URL.
+		field.Int64("stream_traffic").
+			Default(-1),
 		field.String("two_factor_secret").
 			Sensitive().
 			Optional(),

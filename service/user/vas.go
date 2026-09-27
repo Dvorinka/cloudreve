@@ -61,12 +61,15 @@ type (
 	}
 
 	CreditResponse struct {
-		Credits      int64            `json:"credits"`
-		StorageBonus int64            `json:"storage_bonus"`
-		// DlTraffic is the remaining direct-link allowance in bytes;
-		// -1 means unlimited.
-		DlTraffic int64            `json:"dl_traffic"`
-		Grants    []*ent.UserGrant `json:"grants"`
+		Credits      int64 `json:"credits"`
+		StorageBonus int64 `json:"storage_bonus"`
+		// DlTraffic is the remaining direct-link download allowance in
+		// bytes; -1 means unlimited.
+		DlTraffic int64 `json:"dl_traffic"`
+		// StreamTraffic is the remaining streaming/preview allowance in
+		// bytes; -1 means unlimited.
+		StreamTraffic int64            `json:"stream_traffic"`
+		Grants        []*ent.UserGrant `json:"grants"`
 	}
 
 	CreditTxnListResponse struct {
@@ -96,10 +99,11 @@ func (service *CreditService) Get(c *gin.Context) (*CreditResponse, error) {
 	}
 
 	return &CreditResponse{
-		Credits:      u.Credits,
-		StorageBonus: bonus,
-		DlTraffic:    u.DlTraffic,
-		Grants:       grants,
+		Credits:       u.Credits,
+		StorageBonus:  bonus,
+		DlTraffic:     u.DlTraffic,
+		StreamTraffic: u.StreamTraffic,
+		Grants:        grants,
 	}, nil
 }
 

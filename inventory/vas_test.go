@@ -303,6 +303,61 @@ func TestRedeemTrafficGiftCode(t *testing.T) {
 	require.Equal(t, int64(-1), client.User.GetX(ctx, u2.ID).DlTraffic)
 }
 
+func TestPurchaseStreamTrafficSku(t *testing.T) {
+	ctx := context.Background()
+	client, c := newVasClient(t)
+	group, u := vasFixture(t, client)
+	require.NoError(t, c.CreditAdjust(ctx, u.ID, 500, credittxn.TypeAdjust, "", "seed"))
+
+	// Start the user with a finite allowance — unlimited users stay unlimited.
+	require.NoError(t, client.User.UpdateOne(u).SetStreamTraffic(100).Exec(ctx))
+
+	points := int64(200)
+	streamSku, err := c.UpsertSku(ctx, &ent.Sku{
+		Name: "1GB stream traffic", Type: sku.TypeStreamTraffic, Amount: 1024,
+		Points: &points, Enabled: true,
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, c.PurchaseSku(ctx, u.ID, streamSku))
+	u = client.User.GetX(ctx, u.ID)
+	require.Equal(t, int64(300), u.Credits)
+	require.Equal(t, int64(1124), u.StreamTraffic)
+	// The download pool is untouched by a stream pack.
+	require.Equal(t, int64(-1), u.DlTraffic)
+
+	// Unlimited users remain unlimited after purchase.
+	u2 := client.User.Create().SetEmail("u2@example.com").SetNick("u2").SetGroup(group).SaveX(ctx)
+	require.NoError(t, c.CreditAdjust(ctx, u2.ID, 500, credittxn.TypeAdjust, "", "seed"))
+	require.NoError(t, c.PurchaseSku(ctx, u2.ID, streamSku))
+	require.Equal(t, int64(-1), client.User.GetX(ctx, u2.ID).StreamTraffic)
+}
+
+func TestRedeemStreamTrafficGiftCode(t *testing.T) {
+	ctx := context.Background()
+	client, c := newVasClient(t)
+	group, u := vasFixture(t, client)
+	require.NoError(t, client.User.UpdateOne(u).SetStreamTraffic(10).Exec(ctx))
+
+	codes, err := c.CreateGiftCodes(ctx, &CreateGiftCodeParams{
+		Type: giftcode.TypeStreamTraffic, Amount: 2048, Qty: 2,
+	})
+	require.NoError(t, err)
+
+	_, err = c.RedeemGiftCode(ctx, u.ID, codes[0].Code)
+	require.NoError(t, err)
+	fresh := client.User.GetX(ctx, u.ID)
+	require.Equal(t, int64(2058), fresh.StreamTraffic)
+	// The download pool is untouched by a stream code.
+	require.Equal(t, int64(-1), fresh.DlTraffic)
+
+	// Unlimited redeemer keeps unlimited balance.
+	u2 := client.User.Create().SetEmail("u2@example.com").SetNick("u2").SetGroup(group).SaveX(ctx)
+	_, err = c.RedeemGiftCode(ctx, u2.ID, codes[1].Code)
+	require.NoError(t, err)
+	require.Equal(t, int64(-1), client.User.GetX(ctx, u2.ID).StreamTraffic)
+}
+
 func paidShareFixture(t *testing.T, client *ent.Client, price int) (*ent.User, *ent.User, *ent.Share) {
 	return paidShareFixtureN(t, client, price, 0)
 }

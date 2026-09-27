@@ -218,6 +218,20 @@ func (uc *UserCreate) SetNillableDlTraffic(i *int64) *UserCreate {
 	return uc
 }
 
+// SetStreamTraffic sets the "stream_traffic" field.
+func (uc *UserCreate) SetStreamTraffic(i int64) *UserCreate {
+	uc.mutation.SetStreamTraffic(i)
+	return uc
+}
+
+// SetNillableStreamTraffic sets the "stream_traffic" field if the given value is not nil.
+func (uc *UserCreate) SetNillableStreamTraffic(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetStreamTraffic(*i)
+	}
+	return uc
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (uc *UserCreate) SetTwoFactorSecret(s string) *UserCreate {
 	uc.mutation.SetTwoFactorSecret(s)
@@ -580,6 +594,10 @@ func (uc *UserCreate) defaults() error {
 		v := user.DefaultDlTraffic
 		uc.mutation.SetDlTraffic(v)
 	}
+	if _, ok := uc.mutation.StreamTraffic(); !ok {
+		v := user.DefaultStreamTraffic
+		uc.mutation.SetStreamTraffic(v)
+	}
 	if _, ok := uc.mutation.VaultFolder(); !ok {
 		v := user.DefaultVaultFolder
 		uc.mutation.SetVaultFolder(v)
@@ -636,6 +654,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.DlTraffic(); !ok {
 		return &ValidationError{Name: "dl_traffic", err: errors.New(`ent: missing required field "User.dl_traffic"`)}
+	}
+	if _, ok := uc.mutation.StreamTraffic(); !ok {
+		return &ValidationError{Name: "stream_traffic", err: errors.New(`ent: missing required field "User.stream_traffic"`)}
 	}
 	if _, ok := uc.mutation.GroupUsers(); !ok {
 		return &ValidationError{Name: "group_users", err: errors.New(`ent: missing required field "User.group_users"`)}
@@ -732,6 +753,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.DlTraffic(); ok {
 		_spec.SetField(user.FieldDlTraffic, field.TypeInt64, value)
 		_node.DlTraffic = value
+	}
+	if value, ok := uc.mutation.StreamTraffic(); ok {
+		_spec.SetField(user.FieldStreamTraffic, field.TypeInt64, value)
+		_node.StreamTraffic = value
 	}
 	if value, ok := uc.mutation.TwoFactorSecret(); ok {
 		_spec.SetField(user.FieldTwoFactorSecret, field.TypeString, value)
@@ -1260,6 +1285,24 @@ func (u *UserUpsert) AddDlTraffic(v int64) *UserUpsert {
 	return u
 }
 
+// SetStreamTraffic sets the "stream_traffic" field.
+func (u *UserUpsert) SetStreamTraffic(v int64) *UserUpsert {
+	u.Set(user.FieldStreamTraffic, v)
+	return u
+}
+
+// UpdateStreamTraffic sets the "stream_traffic" field to the value that was provided on create.
+func (u *UserUpsert) UpdateStreamTraffic() *UserUpsert {
+	u.SetExcluded(user.FieldStreamTraffic)
+	return u
+}
+
+// AddStreamTraffic adds v to the "stream_traffic" field.
+func (u *UserUpsert) AddStreamTraffic(v int64) *UserUpsert {
+	u.Add(user.FieldStreamTraffic, v)
+	return u
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (u *UserUpsert) SetTwoFactorSecret(v string) *UserUpsert {
 	u.Set(user.FieldTwoFactorSecret, v)
@@ -1673,6 +1716,27 @@ func (u *UserUpsertOne) AddDlTraffic(v int64) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateDlTraffic() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateDlTraffic()
+	})
+}
+
+// SetStreamTraffic sets the "stream_traffic" field.
+func (u *UserUpsertOne) SetStreamTraffic(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetStreamTraffic(v)
+	})
+}
+
+// AddStreamTraffic adds v to the "stream_traffic" field.
+func (u *UserUpsertOne) AddStreamTraffic(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddStreamTraffic(v)
+	})
+}
+
+// UpdateStreamTraffic sets the "stream_traffic" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateStreamTraffic() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateStreamTraffic()
 	})
 }
 
@@ -2281,6 +2345,27 @@ func (u *UserUpsertBulk) AddDlTraffic(v int64) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateDlTraffic() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateDlTraffic()
+	})
+}
+
+// SetStreamTraffic sets the "stream_traffic" field.
+func (u *UserUpsertBulk) SetStreamTraffic(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetStreamTraffic(v)
+	})
+}
+
+// AddStreamTraffic adds v to the "stream_traffic" field.
+func (u *UserUpsertBulk) AddStreamTraffic(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddStreamTraffic(v)
+	})
+}
+
+// UpdateStreamTraffic sets the "stream_traffic" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateStreamTraffic() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateStreamTraffic()
 	})
 }
 

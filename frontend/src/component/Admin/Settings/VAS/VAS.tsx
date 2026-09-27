@@ -98,6 +98,20 @@ const VAS = () => {
 
         <SettingSection>
           <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
+            {t("settings.streamTrafficProductSettings")}
+          </Typography>
+          <SettingSectionContent>
+            <SettingForm lgWidth={12}>
+              <FormControl fullWidth>
+                <SkuTable type="stream_traffic" />
+                <NoMarginHelperText>{t("settings.streamTrafficProductsDes")}</NoMarginHelperText>
+              </FormControl>
+            </SettingForm>
+          </SettingSectionContent>
+        </SettingSection>
+
+        <SettingSection>
+          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
             {t("giftCodes.giftCodesSettings")}
           </Typography>
           <SettingSectionContent>
