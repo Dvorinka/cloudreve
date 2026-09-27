@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cloudreve/Cloudreve/v4/ent"
@@ -17,6 +18,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/manager/entitysource"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
+	"github.com/cloudreve/Cloudreve/v4/pkg/setting"
 	"github.com/gofrs/uuid"
 )
 
@@ -166,7 +168,7 @@ func (m *manager) GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.Dir
 
 	// Try to read from cache.
 	cacheKey := entityUrlCacheKey(primaryEntity.ID(), int64(dl.Speed), dl.Name, o.IsDownload,
-		m.settings.SiteURL(ctx).String())
+		m.settings.SiteURL(ctx).String()+"|"+m.cdnPoolKey(ctx, dl.Name, o.IsDownload))
 	if cached, ok := m.kv.Get(cacheKey); ok {
 		cachedItem := cached.(EntityUrlCache)
 		res = cachedItem.Url
@@ -276,7 +278,7 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 
 		// Try to read from cache.
 		cacheKey := entityUrlCacheKey(target.ID(), o.DownloadSpeed, getEntityDisplayName(file, target), o.IsDownload,
-			m.settings.SiteURL(ctx).String())
+			m.settings.SiteURL(ctx).String()+"|"+m.cdnPoolKey(ctx, getEntityDisplayName(file, target), o.IsDownload))
 		if cached, ok := m.kv.Get(cacheKey); ok && !o.NoCache {
 			cachedItem := cached.(EntityUrlCache)
 			// Find the earliest expiry time
@@ -426,4 +428,31 @@ func entityUrlCacheKey(id int, speed int64, displayName string, download bool, s
 	hashRes := hex.EncodeToString(hash.Sum(nil))
 
 	return fmt.Sprintf("%s_%s", EntityUrlCacheKeyPrefix, hashRes)
+}
+
+// cdnPoolKey fingerprints the effective CDN route pool a generated entity
+// URL draws from, so cached URLs are not shared between requesters with
+// different group-level route assignments. The lanes mirror the
+// entitysource purpose split; media falls back to the preview pool when
+// no media routes exist, matching MediaURLBase.
+func (m *manager) cdnPoolKey(ctx context.Context, displayName string, isDownload bool) string {
+	var routes []setting.CDNRoute
+	switch {
+	case isDownload:
+		routes = m.settings.DownloadCDNRoutes(ctx)
+	case entitysource.IsStreamMedia(displayName):
+		if routes = m.settings.MediaCDNRoutes(ctx); len(routes) == 0 {
+			routes = m.settings.PreviewCDNRoutes(ctx)
+		}
+	default:
+		routes = m.settings.PreviewCDNRoutes(ctx)
+	}
+	if len(routes) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(routes))
+	for _, r := range routes {
+		parts = append(parts, r.URL)
+	}
+	return strings.Join(parts, ",")
 }

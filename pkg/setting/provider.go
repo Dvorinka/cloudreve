@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudreve/Cloudreve/v4/inventory"
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
 	"github.com/cloudreve/Cloudreve/v4/pkg/auth/requestinfo"
 	"github.com/cloudreve/Cloudreve/v4/pkg/boolset"
@@ -275,7 +276,16 @@ type (
 		ShareDefaults(ctx context.Context) *ShareDefaults
 		// DownloadCDNRoutes returns the configured alternative download
 		// endpoints users can pick from (e.g. CDN mirrors of the site).
+		// Group-level routes assigned to the request user extend the
+		// site-level pool.
 		DownloadCDNRoutes(ctx context.Context) []CDNRoute
+		// PreviewCDNRoutes returns the effective CDN endpoints for inline
+		// preview and thumbnail URLs: the site-level `preview_cdn_routes`
+		// pool extended by the request user's group-level routes.
+		PreviewCDNRoutes(ctx context.Context) []CDNRoute
+		// MediaCDNRoutes returns the effective CDN endpoints for streaming
+		// audio/video URLs: `media_cdn_routes` plus group-level routes.
+		MediaCDNRoutes(ctx context.Context) []CDNRoute
 		// DownloadCDNShuffle returns true if generated download URLs should be
 		// distributed randomly across the site URL and all CDN routes.
 		DownloadCDNShuffle(ctx context.Context) bool
@@ -285,6 +295,16 @@ type (
 		// primary site URL plus all routes; otherwise it falls back to
 		// SiteURL. A context pinned by UseFirstSiteUrl always returns SiteURL.
 		DownloadURLBase(ctx context.Context) *url.URL
+		// PreviewURLBase returns the base URL for inline preview and
+		// thumbnail URLs: a random pick from the effective preview CDN
+		// pool, or SiteURL when no route is configured. A context pinned
+		// by UseFirstSiteUrl always returns SiteURL.
+		PreviewURLBase(ctx context.Context) *url.URL
+		// MediaURLBase returns the base URL for streaming audio/video
+		// content URLs: a random pick from the effective media CDN pool,
+		// falling back to the preview pool, then SiteURL. A context pinned
+		// by UseFirstSiteUrl always returns SiteURL.
+		MediaURLBase(ctx context.Context) *url.URL
 		// AuditLogEnabled returns true if the given audit event type is
 		// recorded. An empty/unset list records everything.
 		AuditLogEnabled(ctx context.Context, eventType int) bool
@@ -1095,9 +1115,38 @@ type CDNRoute struct {
 }
 
 func (s *settingProvider) DownloadCDNRoutes(ctx context.Context) []CDNRoute {
-	raw := s.getString(ctx, "download_cdn_routes", "")
-	routes := make([]CDNRoute, 0)
-	for _, line := range strings.Split(raw, "\n") {
+	return s.effectiveCDNRoutes(ctx, "download_cdn_routes",
+		func(g *types.GroupSetting) []string { return g.DownloadCDNRoutes })
+}
+
+func (s *settingProvider) PreviewCDNRoutes(ctx context.Context) []CDNRoute {
+	return s.effectiveCDNRoutes(ctx, "preview_cdn_routes",
+		func(g *types.GroupSetting) []string { return g.PreviewCDNRoutes })
+}
+
+func (s *settingProvider) MediaCDNRoutes(ctx context.Context) []CDNRoute {
+	return s.effectiveCDNRoutes(ctx, "media_cdn_routes",
+		func(g *types.GroupSetting) []string { return g.MediaCDNRoutes })
+}
+
+// effectiveCDNRoutes resolves the CDN route pool for a purpose: the
+// site-level setting plus the route lines assigned to the request
+// user's effective group. Duplicate `name=url` entries collapse.
+func (s *settingProvider) effectiveCDNRoutes(ctx context.Context, siteKey string,
+	groupPick func(*types.GroupSetting) []string) []CDNRoute {
+	lines := strings.Split(s.getString(ctx, siteKey, ""), "\n")
+	if u := inventory.UserFromContext(ctx); u != nil {
+		if g := inventory.EffectiveGroup(u); g != nil && g.Settings != nil {
+			lines = append(lines, groupPick(g.Settings)...)
+		}
+	}
+	return parseCDNRoutes(lines)
+}
+
+func parseCDNRoutes(lines []string) []CDNRoute {
+	routes := make([]CDNRoute, 0, len(lines))
+	seen := map[string]bool{}
+	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -1112,7 +1161,13 @@ func (s *settingProvider) DownloadCDNRoutes(ctx context.Context) []CDNRoute {
 			(parsed.Scheme != "http" && parsed.Scheme != "https") {
 			continue
 		}
-		routes = append(routes, CDNRoute{Name: strings.TrimSpace(name), URL: u})
+		name = strings.TrimSpace(name)
+		key := name + "\x00" + u
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		routes = append(routes, CDNRoute{Name: name, URL: u})
 	}
 	return routes
 }
@@ -1141,6 +1196,37 @@ func (s *settingProvider) DownloadURLBase(ctx context.Context) *url.URL {
 		}
 	}
 	return pool[rand.IntN(len(pool))]
+}
+
+func (s *settingProvider) PreviewURLBase(ctx context.Context) *url.URL {
+	if _, pinned := ctx.Value(UseFirstSiteUrlCtxKey{}).(bool); pinned {
+		return s.SiteURL(ctx)
+	}
+	return s.routeBaseOrSite(ctx, s.PreviewCDNRoutes(ctx))
+}
+
+func (s *settingProvider) MediaURLBase(ctx context.Context) *url.URL {
+	if _, pinned := ctx.Value(UseFirstSiteUrlCtxKey{}).(bool); pinned {
+		return s.SiteURL(ctx)
+	}
+	if routes := s.MediaCDNRoutes(ctx); len(routes) > 0 {
+		return s.routeBaseOrSite(ctx, routes)
+	}
+	// Media is a preview lane subtype: an operator with only a preview
+	// pool configured still gets CDN offload for streams.
+	return s.routeBaseOrSite(ctx, s.PreviewCDNRoutes(ctx))
+}
+
+// routeBaseOrSite picks one route uniformly at random, or the resolved
+// site URL when the pool is empty or a route fails to parse.
+func (s *settingProvider) routeBaseOrSite(ctx context.Context, routes []CDNRoute) *url.URL {
+	if len(routes) == 0 {
+		return s.SiteURL(ctx)
+	}
+	if u, err := url.Parse(routes[rand.IntN(len(routes))].URL); err == nil && u.Scheme != "" && u.Host != "" {
+		return u
+	}
+	return s.SiteURL(ctx)
 }
 
 func (s *settingProvider) ShareDefaults(ctx context.Context) *ShareDefaults {

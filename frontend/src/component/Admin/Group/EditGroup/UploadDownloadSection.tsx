@@ -69,6 +69,19 @@ const UploadDownloadSection = () => {
     [setGroup],
   );
 
+  const onCdnRoutesChange = useCallback(
+    (field: "preview_cdn_routes" | "media_cdn_routes" | "download_cdn_routes", raw: string) => {
+      setGroup((p: GroupEnt) => ({
+        ...p,
+        settings: {
+          ...p.settings,
+          [field]: raw === "" ? undefined : raw.split("\n"),
+        },
+      }));
+    },
+    [setGroup],
+  );
+
   const onReuseDirectLinkChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setGroup((p: GroupEnt) => ({
@@ -164,11 +177,7 @@ const UploadDownloadSection = () => {
                     <FormControl fullWidth>
                       <FormControlLabel
                         control={<Switch checked={false} />}
-                        label={
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            {t("group.folderDirectLink")}
-                          </Box>
-                        }
+                        label={<Box sx={{ display: "flex", alignItems: "center" }}>{t("group.folderDirectLink")}</Box>}
                       />
                       <NoMarginHelperText>{t("group.folderDirectLinkDes")}</NoMarginHelperText>
                     </FormControl>
@@ -187,6 +196,45 @@ const UploadDownloadSection = () => {
               onChange={onDownloadSpeedLimitChange}
             />
             <NoMarginHelperText>{t("group.downloadSpeedLimitDes")}</NoMarginHelperText>
+          </FormControl>
+        </SettingForm>
+        <SettingForm lgWidth={5} title={t("group.previewCdnRoutes")}>
+          <FormControl fullWidth>
+            <DenseFilledTextField
+              fullWidth
+              multiline
+              rows={2}
+              value={(values?.settings?.preview_cdn_routes ?? []).join("\n")}
+              onChange={(e) => onCdnRoutesChange("preview_cdn_routes", e.target.value)}
+              placeholder={"Line 1=https://cdn1.example.com"}
+            />
+            <NoMarginHelperText>{t("group.cdnRoutesDes")}</NoMarginHelperText>
+          </FormControl>
+        </SettingForm>
+        <SettingForm lgWidth={5} title={t("group.mediaCdnRoutes")}>
+          <FormControl fullWidth>
+            <DenseFilledTextField
+              fullWidth
+              multiline
+              rows={2}
+              value={(values?.settings?.media_cdn_routes ?? []).join("\n")}
+              onChange={(e) => onCdnRoutesChange("media_cdn_routes", e.target.value)}
+              placeholder={"Media 1=https://media1.example.com"}
+            />
+            <NoMarginHelperText>{t("group.cdnRoutesDes")}</NoMarginHelperText>
+          </FormControl>
+        </SettingForm>
+        <SettingForm lgWidth={5} title={t("group.downloadCdnRoutes")}>
+          <FormControl fullWidth>
+            <DenseFilledTextField
+              fullWidth
+              multiline
+              rows={2}
+              value={(values?.settings?.download_cdn_routes ?? []).join("\n")}
+              onChange={(e) => onCdnRoutesChange("download_cdn_routes", e.target.value)}
+              placeholder={"Line 1=https://cdn1.example.com"}
+            />
+            <NoMarginHelperText>{t("group.cdnRoutesDes")}</NoMarginHelperText>
           </FormControl>
         </SettingForm>
       </SettingSectionContent>

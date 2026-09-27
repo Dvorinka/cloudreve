@@ -168,6 +168,8 @@ const Settings = () => {
                     "siteURL",
                     "download_cdn_routes",
                     "download_cdn_shuffle",
+                    "preview_cdn_routes",
+                    "media_cdn_routes",
                     "siteScript",
                     "announcement",
                     "announcement_i18n",
