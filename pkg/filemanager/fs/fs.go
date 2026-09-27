@@ -348,6 +348,12 @@ type (
 		Node            StatelessUploadManager
 		StatelessUserID int
 		NoCache         bool
+		// TrafficMeter asks URL issuance to embed a signed traffic-metering
+		// claim for billed owners so the serving endpoint can charge actual
+		// transferred bytes. TrafficMeterExempt is the user id exempt from
+		// metering (the requester); -1 meters every owner.
+		TrafficMeter       bool
+		TrafficMeterExempt int
 	}
 
 	// Option 发送请求的额外设置
@@ -541,6 +547,18 @@ func WithNoCache(b bool) Option {
 func WithUrlExpire(t *time.Time) Option {
 	return OptionFunc(func(o *FsOption) {
 		o.Expire = t
+	})
+}
+
+// WithTrafficMeter enables serve-time traffic metering on issued entity
+// URLs: billed owners get a signed metering claim embedded in self-served
+// URLs and the serving endpoint debits the owner's pool by bytes actually
+// transferred. exempt is the requester's user id (owner's own traffic is
+// never billed); pass -1 to meter every owner, e.g. direct links.
+func WithTrafficMeter(exempt int) Option {
+	return OptionFunc(func(o *FsOption) {
+		o.TrafficMeter = true
+		o.TrafficMeterExempt = exempt
 	})
 }
 

@@ -775,6 +775,23 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 					controllers.FromUri[explorer.EntityDownloadService](explorer.EntityDownloadParameterCtx{}),
 					controllers.ServeEntity,
 				)
+				// Metered variant: the claim is a signed billing segment
+				// (<ownerHash>.<pool>) behind a literal "m" separator — the
+				// signature covers the path, so it cannot be forged or
+				// stripped without invalidating the URL.
+				content.GET(":id/:speed/m/:meter/:name",
+					middleware.SignRequired(dep.GeneralAuth()),
+					middleware.HashID(hashid.EntityID),
+					middleware.Sandbox(),
+					controllers.FromUri[explorer.EntityDownloadService](explorer.EntityDownloadParameterCtx{}),
+					controllers.ServeEntity,
+				)
+				content.HEAD(":id/:speed/m/:meter/:name",
+					middleware.SignRequired(dep.GeneralAuth()),
+					middleware.HashID(hashid.EntityID),
+					controllers.FromUri[explorer.EntityDownloadService](explorer.EntityDownloadParameterCtx{}),
+					controllers.ServeEntity,
+				)
 			}
 			// get thumb
 			file.GET("thumb",
