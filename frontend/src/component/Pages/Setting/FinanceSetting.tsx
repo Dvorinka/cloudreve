@@ -83,6 +83,14 @@ const FinanceSetting = () => {
                 {info.dl_traffic < 0 ? t("setting.dlTrafficUnlimited") : sizeToString(info.dl_traffic)}
               </Typography>
             </Paper>
+            <Paper variant="outlined" sx={{ p: 2, minWidth: 200 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                {t("setting.streamTraffic")}
+              </Typography>
+              <Typography variant="h4">
+                {info.stream_traffic < 0 ? t("setting.dlTrafficUnlimited") : sizeToString(info.stream_traffic)}
+              </Typography>
+            </Paper>
           </Stack>
 
           {info.grants.length > 0 && (

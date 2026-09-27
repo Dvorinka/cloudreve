@@ -46,11 +46,7 @@ const ManualCreditAdjust = () => {
       <SettingForm title={t("vas.adjustNote")} lgWidth={4}>
         <DenseFilledTextField fullWidth value={des} onChange={(e) => setDes(e.target.value)} />
       </SettingForm>
-      <SecondaryButton
-        variant="contained"
-        onClick={onSubmit}
-        disabled={submitting || !email.trim() || delta === 0}
-      >
+      <SecondaryButton variant="contained" onClick={onSubmit} disabled={submitting || !email.trim() || delta === 0}>
         {t("vas.adjustSubmit")}
       </SecondaryButton>
     </Stack>

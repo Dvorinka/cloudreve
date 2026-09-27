@@ -238,6 +238,8 @@ func (c *vasClient) RedeemGiftCode(ctx context.Context, userID int, code string)
 		err = txVc.applyGroupCode(ctx, userID, gc)
 	case giftcode.TypeTraffic:
 		err = txVc.client.User.Update().Where(user.ID(userID), user.DlTrafficGTE(0)).AddDlTraffic(gc.Amount).Exec(ctx)
+	case giftcode.TypeStreamTraffic:
+		err = txVc.client.User.Update().Where(user.ID(userID), user.StreamTrafficGTE(0)).AddStreamTraffic(gc.Amount).Exec(ctx)
 	}
 	if err != nil {
 		_ = Rollback(tx)
@@ -452,6 +454,9 @@ func (c *vasClient) PurchaseSku(ctx context.Context, userID int, s *ent.Sku) err
 		// Traffic packs are permanent additions to dl_traffic; duration
 		// does not apply. Unlimited balances stay unlimited.
 		err = txVc.client.User.Update().Where(user.ID(userID), user.DlTrafficGTE(0)).AddDlTraffic(s.Amount).Exec(ctx)
+	case sku.TypeStreamTraffic:
+		// Same permanence rules for the streaming/preview pool.
+		err = txVc.client.User.Update().Where(user.ID(userID), user.StreamTrafficGTE(0)).AddStreamTraffic(s.Amount).Exec(ctx)
 	}
 	if err != nil {
 		return Rollback(tx)

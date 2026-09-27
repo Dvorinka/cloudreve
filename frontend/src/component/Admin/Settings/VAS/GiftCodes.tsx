@@ -21,12 +21,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch } from "../../../../redux/hooks.ts";
-import {
-  adminCreateGiftCode,
-  adminDeleteGiftCode,
-  adminListGiftCodes,
-  getGroupList,
-} from "../../../../api/api.ts";
+import { adminCreateGiftCode, adminDeleteGiftCode, adminListGiftCodes, getGroupList } from "../../../../api/api.ts";
 import { GiftCode, GiftCodeListResponse, GroupEnt } from "../../../../api/dashboard.ts";
 import { sizeToString } from "../../../../util/index.ts";
 import {
@@ -68,7 +63,7 @@ const GiftCodes = () => {
   const [pagination, setPagination] = useState<PaginationParams>({ page: 1, perPage: 10 });
 
   // Generate form state
-  const [genType, setGenType] = useState<"points" | "storage" | "group" | "traffic">("points");
+  const [genType, setGenType] = useState<"points" | "storage" | "group" | "traffic" | "stream_traffic">("points");
   const [genAmount, setGenAmount] = useState(100);
   const [genGroup, setGenGroup] = useState(0);
   const [genDuration, setGenDuration] = useState(0);
@@ -86,9 +81,9 @@ const GiftCodes = () => {
 
   useEffect(() => {
     if (dialogOpen && groups.length === 0) {
-      dispatch(
-        getGroupList({ page: 1, page_size: 200, order_by: "id", order_direction: "asc" }),
-      ).then((res) => setGroups(res.groups));
+      dispatch(getGroupList({ page: 1, page_size: 200, order_by: "id", order_direction: "asc" })).then((res) =>
+        setGroups(res.groups),
+      );
     }
   }, [dialogOpen]);
 
@@ -127,6 +122,7 @@ const GiftCodes = () => {
         return `${gc.amount}`;
       case "storage":
       case "traffic":
+      case "stream_traffic":
         return sizeToString(gc.amount);
       case "group":
         return `#${gc.amount}`;
@@ -159,7 +155,14 @@ const GiftCodes = () => {
               {result?.codes.map((gc) => (
                 <TableRow key={gc.id}>
                   <NoWrapCell>{gc.id}</NoWrapCell>
-                  <NoWrapCell>{t(`giftCodes.giftCodeType${gc.type.charAt(0).toUpperCase() + gc.type.slice(1)}`)}</NoWrapCell>
+                  <NoWrapCell>
+                    {t(
+                      `giftCodes.giftCodeType${gc.type
+                        .split("_")
+                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join("")}`,
+                    )}
+                  </NoWrapCell>
                   <NoWrapCell>{amountLabel(gc)}</NoWrapCell>
                   <NoWrapCell sx={{ fontFamily: "monospace" }}>{gc.code}</NoWrapCell>
                   <NoWrapCell>
@@ -215,12 +218,15 @@ const GiftCodes = () => {
                   <MenuItem value="storage">{t("giftCodes.giftCodeTypeStorage")}</MenuItem>
                   <MenuItem value="group">{t("giftCodes.giftCodeTypeGroup")}</MenuItem>
                   <MenuItem value="traffic">{t("giftCodes.giftCodeTypeTraffic")}</MenuItem>
+                  <MenuItem value="stream_traffic">{t("giftCodes.giftCodeTypeStreamTraffic")}</MenuItem>
                 </Select>
               </FormControl>
             </SettingForm>
 
             {genType !== "group" ? (
-              <SettingForm title={genType === "points" ? t("giftCodes.giftCodePointsAmount") : t("giftCodes.giftCodeAmount")}>
+              <SettingForm
+                title={genType === "points" ? t("giftCodes.giftCodePointsAmount") : t("giftCodes.giftCodeAmount")}
+              >
                 <DenseFilledTextField
                   fullWidth
                   type="number"
@@ -230,7 +236,7 @@ const GiftCodes = () => {
                 <NoMarginHelperText>
                   {genType === "points"
                     ? t("giftCodes.giftCodePointsAmountHelp")
-                    : genType === "traffic"
+                    : genType === "traffic" || genType === "stream_traffic"
                       ? t("vas.trafficSizeDes")
                       : t("vas.packSizeDes")}
                 </NoMarginHelperText>

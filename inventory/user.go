@@ -99,6 +99,13 @@ type (
 		// AddDirectTraffic credits size bytes to user uid's dl_traffic
 		// allowance. Unlimited users (-1) are unaffected.
 		AddDirectTraffic(ctx context.Context, uid int, size int64) error
+		// ConsumeStreamTraffic atomically subtracts size bytes from user
+		// uid's stream_traffic allowance. Unlimited users (-1) always
+		// pass; a limited balance that cannot cover size reports false.
+		ConsumeStreamTraffic(ctx context.Context, uid int, size int64) (bool, error)
+		// AddStreamTraffic credits size bytes to user uid's
+		// stream_traffic allowance. Unlimited users (-1) are unaffected.
+		AddStreamTraffic(ctx context.Context, uid int, size int64) error
 		// UpdateAvatar updates user avatar.
 		UpdateAvatar(ctx context.Context, u *ent.User, avatar string) (*ent.User, error)
 		// UpdateNickname updates user nickname.
@@ -465,6 +472,39 @@ func (c *userClient) AddDirectTraffic(ctx context.Context, uid int, size int64) 
 	return c.client.User.Update().
 		Where(user.ID(uid), user.DlTrafficGTE(0)).
 		AddDlTraffic(size).
+		Exec(ctx)
+}
+
+// ConsumeStreamTraffic implements UserClient.ConsumeStreamTraffic.
+func (c *userClient) ConsumeStreamTraffic(ctx context.Context, uid int, size int64) (bool, error) {
+	if size <= 0 {
+		return true, nil
+	}
+	u, err := c.client.User.Query().Where(user.ID(uid)).Select(user.FieldStreamTraffic).First(ctx)
+	if err != nil {
+		return false, err
+	}
+	if u.StreamTraffic < 0 {
+		return true, nil
+	}
+	n, err := c.client.User.Update().
+		Where(user.ID(uid), user.StreamTrafficGTE(size)).
+		AddStreamTraffic(-size).
+		Save(ctx)
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// AddStreamTraffic implements UserClient.AddStreamTraffic.
+func (c *userClient) AddStreamTraffic(ctx context.Context, uid int, size int64) error {
+	if size <= 0 {
+		return nil
+	}
+	return c.client.User.Update().
+		Where(user.ID(uid), user.StreamTrafficGTE(0)).
+		AddStreamTraffic(size).
 		Exec(ctx)
 }
 

@@ -104,9 +104,10 @@ type Type string
 
 // Type values.
 const (
-	TypeStorage Type = "storage"
-	TypeGroup   Type = "group"
-	TypeTraffic Type = "traffic"
+	TypeStorage       Type = "storage"
+	TypeGroup         Type = "group"
+	TypeTraffic       Type = "traffic"
+	TypeStreamTraffic Type = "stream_traffic"
 )
 
 func (_type Type) String() string {
@@ -116,7 +117,7 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeStorage, TypeGroup, TypeTraffic:
+	case TypeStorage, TypeGroup, TypeTraffic, TypeStreamTraffic:
 		return nil
 	default:
 		return fmt.Errorf("sku: invalid enum value for type field: %q", _type)

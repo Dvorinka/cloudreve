@@ -42,7 +42,7 @@ import { NoMarginHelperText } from "../Settings.tsx";
 const DAY_SECONDS = 86400;
 
 export interface SkuTableProps {
-  type: "storage" | "group" | "traffic";
+  type: "storage" | "group" | "traffic" | "stream_traffic";
 }
 
 interface SkuForm {
@@ -79,6 +79,7 @@ const nonEmpty = (m: { [lang: string]: string }) => (Object.keys(m).length > 0 ?
 
 const SkuTable = ({ type }: SkuTableProps) => {
   const { t } = useTranslation("dashboard");
+  const isTraffic = type === "traffic" || type === "stream_traffic";
   const dispatch = useAppDispatch();
   const [skus, setSkus] = useState<Sku[] | undefined>(undefined);
   const [groups, setGroups] = useState<GroupEnt[]>([]);
@@ -96,10 +97,7 @@ const SkuTable = ({ type }: SkuTableProps) => {
     );
   }, [load]);
 
-  const groupName = useCallback(
-    (id: number) => groups.find((g) => g.id === id)?.name ?? `#${id}`,
-    [groups],
-  );
+  const groupName = useCallback((id: number) => groups.find((g) => g.id === id)?.name ?? `#${id}`, [groups]);
 
   const openEdit = (s?: Sku) => {
     if (!s) {
@@ -134,7 +132,7 @@ const SkuTable = ({ type }: SkuTableProps) => {
         type,
         amount: form.amount,
         // Traffic packs are permanent; duration is not applicable.
-        duration: type === "traffic" ? 0 : Math.max(0, form.durationDays) * DAY_SECONDS,
+        duration: isTraffic ? 0 : Math.max(0, form.durationDays) * DAY_SECONDS,
         price: Math.max(0, form.price),
         points: form.allowPoints ? Math.max(1, form.points) : undefined,
         label: form.label || undefined,
@@ -164,9 +162,11 @@ const SkuTable = ({ type }: SkuTableProps) => {
         <SecondaryButton variant="contained" startIcon={<Add />} onClick={() => openEdit()}>
           {type === "group"
             ? t("vas.addMembership")
-            : type === "traffic"
-              ? t("vas.addTrafficPack")
-              : t("vas.addStoragePack")}
+            : type === "stream_traffic"
+              ? t("vas.addStreamTrafficPack")
+              : isTraffic
+                ? t("vas.addTrafficPack")
+                : t("vas.addStoragePack")}
         </SecondaryButton>
       </Box>
 
@@ -234,9 +234,11 @@ const SkuTable = ({ type }: SkuTableProps) => {
         <DialogTitle>
           {type === "group"
             ? t("vas.editMembership")
-            : type === "traffic"
-              ? t("vas.editTrafficPack")
-              : t("vas.editStoragePack")}
+            : type === "stream_traffic"
+              ? t("vas.editStreamTrafficPack")
+              : isTraffic
+                ? t("vas.editTrafficPack")
+                : t("vas.editStoragePack")}
         </DialogTitle>
         <DialogContent>
           {form && (
@@ -273,31 +275,29 @@ const SkuTable = ({ type }: SkuTableProps) => {
                   <NoMarginHelperText>{t("vas.groupDes")}</NoMarginHelperText>
                 </SettingForm>
               ) : (
-                <SettingForm title={type === "traffic" ? t("vas.trafficSize") : t("vas.size")}>
+                <SettingForm title={isTraffic ? t("vas.trafficSize") : t("vas.size")}>
                   <DenseFilledTextField
                     fullWidth
                     type="number"
                     value={form.amount}
                     onChange={(e) => setForm({ ...form, amount: parseInt(e.target.value) || 0 })}
                   />
-                  <NoMarginHelperText>
-                    {type === "traffic" ? t("vas.trafficSizeDes") : t("vas.packSizeDes")}
-                  </NoMarginHelperText>
+                  <NoMarginHelperText>{isTraffic ? t("vas.trafficSizeDes") : t("vas.packSizeDes")}</NoMarginHelperText>
                 </SettingForm>
               )}
 
-              {type !== "traffic" && (
-              <SettingForm title={t("vas.durationDay")}>
-                <DenseFilledTextField
-                  fullWidth
-                  type="number"
-                  value={form.durationDays}
-                  onChange={(e) => setForm({ ...form, durationDays: parseInt(e.target.value) || 0 })}
-                />
-                <NoMarginHelperText>
-                  {type === "storage" ? t("vas.durationDayDes") : t("vas.durationGroupDes")}
-                </NoMarginHelperText>
-              </SettingForm>
+              {!isTraffic && (
+                <SettingForm title={t("vas.durationDay")}>
+                  <DenseFilledTextField
+                    fullWidth
+                    type="number"
+                    value={form.durationDays}
+                    onChange={(e) => setForm({ ...form, durationDays: parseInt(e.target.value) || 0 })}
+                  />
+                  <NoMarginHelperText>
+                    {type === "storage" ? t("vas.durationDayDes") : t("vas.durationGroupDes")}
+                  </NoMarginHelperText>
+                </SettingForm>
               )}
 
               <SettingForm title={t("vas.priceYuan")}>

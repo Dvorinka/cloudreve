@@ -57,6 +57,10 @@ type (
 	EntityUrl struct {
 		Url                        string `json:"url"`
 		BrowserDownloadDisplayName string `json:"stream_saver_display_name,omitempty"`
+		// Size and OwnerID identify the billed resource for link-traffic
+		// metering; internal only, never serialized into responses.
+		Size    int64 `json:"-"`
+		OwnerID int   `json:"-"`
 	}
 )
 
@@ -288,6 +292,8 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 			res[i] = EntityUrl{
 				Url:                        cachedItem.Url,
 				BrowserDownloadDisplayName: cachedItem.BrowserDownloadDisplayName,
+				Size:                       file.Size(),
+				OwnerID:                    file.OwnerID(),
 			}
 			continue
 		}
@@ -321,7 +327,9 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 		}
 
 		res[i] = EntityUrl{
-			Url: downloadUrl.Url,
+			Url:     downloadUrl.Url,
+			Size:    file.Size(),
+			OwnerID: file.OwnerID(),
 		}
 		if d.Capabilities().BrowserRelayedDownload {
 			res[i].BrowserDownloadDisplayName = getEntityDisplayName(file, target)

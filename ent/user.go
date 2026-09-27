@@ -48,6 +48,8 @@ type User struct {
 	Credits int64 `json:"credits,omitempty"`
 	// DlTraffic holds the value of the "dl_traffic" field.
 	DlTraffic int64 `json:"dl_traffic,omitempty"`
+	// StreamTraffic holds the value of the "stream_traffic" field.
+	StreamTraffic int64 `json:"stream_traffic,omitempty"`
 	// TwoFactorSecret holds the value of the "two_factor_secret" field.
 	TwoFactorSecret string `json:"-"`
 	// VaultPassword holds the value of the "vault_password" field.
@@ -251,7 +253,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldTwoFactorBackupCodes, user.FieldSettings:
 			values[i] = new([]byte)
-		case user.FieldID, user.FieldStorage, user.FieldCredits, user.FieldDlTraffic, user.FieldVaultFolder, user.FieldGroupUsers:
+		case user.FieldID, user.FieldStorage, user.FieldCredits, user.FieldDlTraffic, user.FieldStreamTraffic, user.FieldVaultFolder, user.FieldGroupUsers:
 			values[i] = new(sql.NullInt64)
 		case user.FieldEmail, user.FieldPhone, user.FieldNick, user.FieldPassword, user.FieldStatus, user.FieldBanReason, user.FieldTwoFactorSecret, user.FieldVaultPassword, user.FieldAvatar:
 			values[i] = new(sql.NullString)
@@ -365,6 +367,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field dl_traffic", values[i])
 			} else if value.Valid {
 				u.DlTraffic = value.Int64
+			}
+		case user.FieldStreamTraffic:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field stream_traffic", values[i])
+			} else if value.Valid {
+				u.StreamTraffic = value.Int64
 			}
 		case user.FieldTwoFactorSecret:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -571,6 +579,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("dl_traffic=")
 	builder.WriteString(fmt.Sprintf("%v", u.DlTraffic))
+	builder.WriteString(", ")
+	builder.WriteString("stream_traffic=")
+	builder.WriteString(fmt.Sprintf("%v", u.StreamTraffic))
 	builder.WriteString(", ")
 	builder.WriteString("two_factor_secret=<sensitive>")
 	builder.WriteString(", ")

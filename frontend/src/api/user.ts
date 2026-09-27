@@ -132,10 +132,7 @@ export const DelegatedAdminPermissions = [
 // isAnyAdmin reports whether the permission set grants full or delegated admin
 // access to at least one section.
 export const isAnyAdmin = (permission: Boolset): boolean => {
-  return (
-    permission.enabled(GroupPermission.is_admin) ||
-    DelegatedAdminPermissions.some((p) => permission.enabled(p))
-  );
+  return permission.enabled(GroupPermission.is_admin) || DelegatedAdminPermissions.some((p) => permission.enabled(p));
 };
 
 export interface UserSettings {
@@ -338,8 +335,10 @@ export interface UserGrant {
 export interface CreditInfo {
   credits: number;
   storage_bonus: number;
-  // Remaining direct-link allowance in bytes; -1 means unlimited.
+  // Remaining direct-link download allowance in bytes; -1 means unlimited.
   dl_traffic: number;
+  // Remaining streaming/preview allowance in bytes; -1 means unlimited.
+  stream_traffic: number;
   grants: UserGrant[];
 }
 
@@ -360,7 +359,7 @@ export interface CreditTxnList {
 export interface ShopSku {
   id: string;
   name: string;
-  type: "storage" | "group" | "traffic";
+  type: "storage" | "group" | "traffic" | "stream_traffic";
   amount: number;
   group?: string;
   group_id?: string;

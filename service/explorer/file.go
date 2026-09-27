@@ -575,6 +575,15 @@ func (s *FileURLService) Get(c *gin.Context) (*FileURLResponse, error) {
 		return nil, fmt.Errorf("failed to get entity url: %w", err)
 	}
 
+	// Link-traffic metering: entity URLs issued for share-scoped URIs bill
+	// the file owner's per-purpose pool — download or stream/preview —
+	// once per issued URL by file size, matching direct-link semantics.
+	// The owner is never billed for their own browsing; thumbnails are
+	// unmetered derivatives and do not pass through here.
+	if err := chargeShareLinkTraffic(ctx, dep, user, uris, res, s.Download); err != nil {
+		return nil, err
+	}
+
 	if s.Download {
 		opts := []activity.Opt{activity.Extra(map[string]any{"uris": s.Uris})}
 		if share, fileID := resolveShareEventSubjects(c, dep, s.Uris); share != nil {
@@ -815,12 +824,21 @@ func RedirectDirectLink(c *gin.Context, name string, download bool) error {
 		return serializer.NewError(serializer.CodeNotFound, "direct link not found", err)
 	}
 
-	// Direct-link traffic allowance: the owner's dl_traffic balance is
-	// charged the file's size once, at redirect time, since the actual
-	// bytes are served by a signed entity URL after this point.
+	// Link-traffic allowance: the owner's per-purpose pool is charged the
+	// file's size once, at redirect time, since the actual bytes are
+	// served by a signed entity URL after this point. Explicit downloads
+	// draw on dl_traffic; inline/stream views draw on stream_traffic.
 	owner := dl.Edges.File.Edges.Owner
 	if owner != nil {
-		ok, err := dep.UserClient().ConsumeDirectTraffic(c, owner.ID, dl.Edges.File.Size)
+		var (
+			ok  bool
+			err error
+		)
+		if download {
+			ok, err = dep.UserClient().ConsumeDirectTraffic(c, owner.ID, dl.Edges.File.Size)
+		} else {
+			ok, err = dep.UserClient().ConsumeStreamTraffic(c, owner.ID, dl.Edges.File.Size)
+		}
 		if err != nil {
 			return serializer.NewError(serializer.CodeDBError, "Failed to check direct link traffic", err)
 		}
@@ -930,6 +948,45 @@ func (s *FulltextSearchService) Search(c *gin.Context) (*FullTextSearchResults, 
 	}
 
 	return BuildFullTextSearchResults(c, user, dep.HashIDEncoder(), results), nil
+}
+
+// chargeShareLinkTraffic bills link traffic for share-scoped URIs to the
+// file owner's dl_traffic (downloads) or stream_traffic (previews and
+// media streams) pool. urls[i] pairs with uris[i]; entries that failed to
+// produce a URL are skipped. Requester and owner may be identical — the
+// owner's own browsing is never billed. Non-share URIs are ignored so
+// browsing one's own files never consumes the pools.
+func chargeShareLinkTraffic(ctx context.Context, dep dependency.Dep, requester *ent.User, uris []*fs.URI, urls []manager.EntityUrl, download bool) error {
+	billed := make(map[int]int64)
+	for i, uri := range uris {
+		if uri.FileSystem() != constants.FileSystemShare || i >= len(urls) || urls[i].Url == "" {
+			continue
+		}
+		ownerID := urls[i].OwnerID
+		if ownerID == 0 || (requester != nil && ownerID == requester.ID) {
+			continue
+		}
+		billed[ownerID] += urls[i].Size
+	}
+
+	for ownerID, size := range billed {
+		var (
+			ok  bool
+			err error
+		)
+		if download {
+			ok, err = dep.UserClient().ConsumeDirectTraffic(ctx, ownerID, size)
+		} else {
+			ok, err = dep.UserClient().ConsumeStreamTraffic(ctx, ownerID, size)
+		}
+		if err != nil {
+			return serializer.NewError(serializer.CodeDBError, "Failed to check link traffic", err)
+		}
+		if !ok {
+			return serializer.NewError(serializer.CodeInsufficientTraffic, "Share link traffic exhausted", nil)
+		}
+	}
+	return nil
 }
 
 // resolveShareEventSubjects extracts the share and subject file for audit

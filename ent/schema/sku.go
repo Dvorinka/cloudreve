@@ -6,11 +6,12 @@ import (
 )
 
 // Sku holds the schema definition for purchasable products: a storage
-// capacity pack (amount = bytes), a direct-link traffic pack (amount =
-// bytes added to dl_traffic), or a membership upgrade (amount = target
-// group id). duration is seconds; 0 means the grant never expires. Traffic
-// packs apply permanently and ignore duration. points
-// is the credit price; NULL means the product cannot be bought with
+// capacity pack (amount = bytes), a direct-link download traffic pack
+// (amount = bytes added to dl_traffic), a streaming/preview traffic pack
+// (amount = bytes added to stream_traffic), or a membership upgrade
+// (amount = target group id). duration is seconds; 0 means the grant
+// never expires. Traffic packs apply permanently and ignore duration.
+// points is the credit price; NULL means the product cannot be bought with
 // points. price is the display cash price in the smallest currency unit —
 // cash payment processors are intentionally out of scope.
 type Sku struct {
@@ -22,7 +23,7 @@ func (Sku) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name"),
 		field.Enum("type").
-			Values("storage", "group", "traffic"),
+			Values("storage", "group", "traffic", "stream_traffic"),
 		field.Int64("amount"),
 		field.Int64("duration").
 			Optional(),
