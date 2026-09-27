@@ -85,11 +85,18 @@ type EntitySourceOptions struct {
 	Ctx                context.Context
 	IsThumb            bool
 	DisableCryptor     bool
+	// MeterClaim is a signed traffic-metering claim embedded into
+	// self-served content URLs; empty disables metering.
+	MeterClaim string
 }
 
 type EntityUrl struct {
 	Url      string
 	ExpireAt *time.Time
+	// Metered marks self-served URLs carrying a metering claim — the
+	// serving endpoint debits the owner's pool per transferred byte, so
+	// issuers must not also charge at issue time.
+	Metered bool
 }
 
 type EntitySourceOptionFunc func(any)
@@ -142,6 +149,14 @@ func WithContext(ctx context.Context) EntitySourceOption {
 func WithThumb(isThumb bool) EntitySourceOption {
 	return EntitySourceOptionFunc(func(option any) {
 		option.(*EntitySourceOptions).IsThumb = isThumb
+	})
+}
+
+// WithMeterClaim embeds a traffic-metering claim into generated
+// self-served URLs; ignored for externally-hosted source URLs.
+func WithMeterClaim(claim string) EntitySourceOption {
+	return EntitySourceOptionFunc(func(option any) {
+		option.(*EntitySourceOptions).MeterClaim = claim
 	})
 }
 
@@ -631,6 +646,7 @@ func (f *entitySource) Url(ctx context.Context, opts ...EntitySourceOption) (*En
 			f.o.IsDownload,
 			f.o.IsThumb,
 			f.o.SpeedLimit,
+			f.o.MeterClaim,
 		)
 
 		srcUrl, err = auth.SignURI(ctx, f.generalAuth, base.String(), expire)
@@ -675,6 +691,9 @@ func (f *entitySource) Url(ctx context.Context, opts ...EntitySourceOption) (*En
 	return &EntityUrl{
 		Url:      srcUrl.String(),
 		ExpireAt: expire,
+		// The claim only rides self-served (internal-proxy) URLs; external
+		// source URLs cannot carry it, so they stay issue-time billed.
+		Metered: f.o.MeterClaim != "" && f.ShouldInternalProxy(),
 	}, nil
 }
 

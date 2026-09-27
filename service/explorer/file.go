@@ -550,10 +550,16 @@ func (s *FileURLService) Get(c *gin.Context) (*FileURLResponse, error) {
 
 	// Request entity URL
 	expire := time.Now().Add(settings.EntityUrlValidDuration(c))
+	requesterID := 0
+	if user != nil {
+		requesterID = user.ID
+	}
 	urlReq := lo.Map(uris, func(uri *fs.URI, _ int) manager.GetEntityUrlArgs {
 		return manager.GetEntityUrlArgs{
 			URI:               uri,
 			PreferredEntityID: s.Entity,
+			// Share-scoped URIs bill the file owner's pool at serve time.
+			Meter: uri.FileSystem() == constants.FileSystemShare,
 		}
 	})
 
@@ -570,14 +576,15 @@ func (s *FileURLService) Get(c *gin.Context) (*FileURLResponse, error) {
 		fs.WithIsDownload(s.Download),
 		fs.WithNoCache(s.NoCache),
 		fs.WithUrlExpire(&expire),
+		fs.WithTrafficMeter(requesterID),
 	)
 	if err != nil && !s.SkipError {
 		return nil, fmt.Errorf("failed to get entity url: %w", err)
 	}
 
-	// Link-traffic metering: entity URLs issued for share-scoped URIs bill
-	// the file owner's per-purpose pool — download or stream/preview —
-	// once per issued URL by file size, matching direct-link semantics.
+	// Link-traffic metering: self-served URLs carry a signed claim and are
+	// billed by bytes actually transferred. Externally-hosted URLs cannot
+	// carry the claim, so they keep issue-time charging by file size.
 	// The owner is never billed for their own browsing; thumbnails are
 	// unmetered derivatives and do not pass through here.
 	if err := chargeShareLinkTraffic(ctx, dep, user, uris, res, s.Download); err != nil {
@@ -824,12 +831,28 @@ func RedirectDirectLink(c *gin.Context, name string, download bool) error {
 		return serializer.NewError(serializer.CodeNotFound, "direct link not found", err)
 	}
 
-	// Link-traffic allowance: the owner's per-purpose pool is charged the
-	// file's size once, at redirect time, since the actual bytes are
-	// served by a signed entity URL after this point. Explicit downloads
-	// draw on dl_traffic; inline/stream views draw on stream_traffic.
+	m := manager.NewFileManager(dep, dl.Edges.File.Edges.Owner)
+	defer m.Recycle()
+
+	// Request entity URL. TrafficMeter(-1) makes every owner billable —
+	// direct links always meter the owner regardless of who requests.
+	expire := time.Now().Add(settings.EntityUrlValidDuration(c))
+	res, earliestExpire, err := m.GetUrlForRedirectedDirectLink(c, dl,
+		fs.WithUrlExpire(&expire),
+		fs.WithIsDownload(download),
+		fs.WithTrafficMeter(-1),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Link-traffic allowance: when the issued URL is self-served it carries
+	// a metering claim and the serving endpoint debits actual transferred
+	// bytes. Externally-hosted URLs cannot carry the claim, so they keep
+	// the issue-time charge by file size — downloads draw on dl_traffic,
+	// inline/stream views on stream_traffic.
 	owner := dl.Edges.File.Edges.Owner
-	if owner != nil {
+	if owner != nil && !res.Metered {
 		var (
 			ok  bool
 			err error
@@ -845,22 +868,19 @@ func RedirectDirectLink(c *gin.Context, name string, download bool) error {
 		if !ok {
 			return serializer.NewError(serializer.CodeInsufficientTraffic, "Direct link traffic exhausted", nil)
 		}
+	} else if owner != nil {
+		// Metered path: fail fast when the pool is already empty instead of
+		// issuing a URL that aborts mid-stream.
+		pool := owner.DlTraffic
+		if !download {
+			pool = owner.StreamTraffic
+		}
+		if pool == 0 {
+			return serializer.NewError(serializer.CodeInsufficientTraffic, "Direct link traffic exhausted", nil)
+		}
 	}
 
-	m := manager.NewFileManager(dep, dl.Edges.File.Edges.Owner)
-	defer m.Recycle()
-
-	// Request entity URL
-	expire := time.Now().Add(settings.EntityUrlValidDuration(c))
-	res, earliestExpire, err := m.GetUrlForRedirectedDirectLink(c, dl,
-		fs.WithUrlExpire(&expire),
-		fs.WithIsDownload(download),
-	)
-	if err != nil {
-		return err
-	}
-
-	c.Redirect(http.StatusFound, res)
+	c.Redirect(http.StatusFound, res.Url)
 	c.Header("Cache-Control", fmt.Sprintf("public, max-age=%d", int(earliestExpire.Sub(time.Now()).Seconds())))
 	return nil
 }
@@ -958,6 +978,10 @@ func (s *FulltextSearchService) Search(c *gin.Context) (*FullTextSearchResults, 
 // browsing one's own files never consumes the pools.
 func chargeShareLinkTraffic(ctx context.Context, dep dependency.Dep, requester *ent.User, uris []*fs.URI, urls []manager.EntityUrl, download bool) error {
 	billed := make(map[int]int64)
+	// Metered owners still get a zero-balance gate at issue time so an
+	// exhausted pool fails fast with a clean error instead of producing a
+	// URL that truncates mid-stream.
+	meteredOwners := make(map[int]bool)
 	for i, uri := range uris {
 		if uri.FileSystem() != constants.FileSystemShare || i >= len(urls) || urls[i].Url == "" {
 			continue
@@ -966,7 +990,25 @@ func chargeShareLinkTraffic(ctx context.Context, dep dependency.Dep, requester *
 		if ownerID == 0 || (requester != nil && ownerID == requester.ID) {
 			continue
 		}
+		if urls[i].Metered {
+			meteredOwners[ownerID] = true
+			continue
+		}
 		billed[ownerID] += urls[i].Size
+	}
+
+	for ownerID := range meteredOwners {
+		owner, err := dep.UserClient().GetByID(ctx, ownerID)
+		if err != nil {
+			return serializer.NewError(serializer.CodeDBError, "Failed to check link traffic", err)
+		}
+		pool := owner.DlTraffic
+		if !download {
+			pool = owner.StreamTraffic
+		}
+		if pool == 0 {
+			return serializer.NewError(serializer.CodeInsufficientTraffic, "Share link traffic exhausted", nil)
+		}
 	}
 
 	for ownerID, size := range billed {

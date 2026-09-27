@@ -41,6 +41,7 @@ type (
 		Url                        string
 		BrowserDownloadDisplayName string
 		ExpireAt                   *time.Time
+		Metered                    bool
 	}
 )
 

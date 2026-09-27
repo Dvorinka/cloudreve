@@ -113,6 +113,10 @@ type (
 	GetEntityUrlArgs struct {
 		URI               *fs.URI
 		PreferredEntityID string
+		// Meter marks the URI as billed (e.g. share-scoped); combined with
+		// fs.WithTrafficMeter the issued URL carries a serve-time metering
+		// claim when the owner is chargeable.
+		Meter bool
 	}
 
 	// CreateShareArgs args to create share link

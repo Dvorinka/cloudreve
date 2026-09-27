@@ -21,6 +21,9 @@ type (
 		Name       string `uri:"name" binding:"required"`
 		SpeedLimit int64  `uri:"speed"`
 		Src        string `uri:"src"`
+		// Meter carries the signed traffic-metering claim when the route is
+		// the metered 5-segment variant; empty on unmetered URLs.
+		Meter string `uri:"meter"`
 	}
 )
 
@@ -43,9 +46,22 @@ func (s *EntityDownloadService) Serve(c *gin.Context) error {
 	maxAge := settings.PublicResourceMaxAge(c)
 	c.Header("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAge))
 
+	writer := c.Writer
+	var metered *meteringWriter
+	// The meter segment rides inside the signed path — a forged, stripped,
+	// or pool-swapped claim fails signature verification before reaching
+	// here. Malformed values parse as unmetered and can never bill.
+	if ownerHash, download, ok := routes.ParseMeterSegment(s.Meter); ok {
+		if ownerID, err := dep.HashIDEncoder().Decode(ownerHash, hashid.UserID); err == nil {
+			metered = newMeteringWriter(c, writer, dep.UserClient(), ownerID, !download)
+			writer = metered
+			defer metered.Finish()
+		}
+	}
+
 	isDownload := c.Query(routes.IsDownloadQuery) != ""
 	isThumb := c.Query(routes.IsThumbQuery) != ""
-	entitySource.Serve(c.Writer, c.Request,
+	entitySource.Serve(writer, c.Request,
 		entitysource.WithSpeedLimit(s.SpeedLimit),
 		entitysource.WithDownload(isDownload),
 		entitysource.WithDisplayName(s.Name),

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/cloudreve/Cloudreve/v4/application/constants"
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/fs"
@@ -160,10 +161,51 @@ func SlaveUploadUrl(base *url.URL, sessionID string) *url.URL {
 	return base
 }
 
-func MasterFileContentUrl(base *url.URL, entityId, name string, download, thumb bool, speed int64) *url.URL {
+// MeterPoolDownload / MeterPoolStream mark which owner traffic pool a
+// metered serve debits.
+const (
+	MeterPoolDownload = "d"
+	MeterPoolStream   = "s"
+)
+
+// MeterSegment encodes a traffic-metering claim for the content path. The
+// claim rides inside the signed path segment so it cannot be forged or
+// stripped without invalidating the URL signature.
+func MeterSegment(ownerHash string, download bool) string {
+	pool := MeterPoolStream
+	if download {
+		pool = MeterPoolDownload
+	}
+	return fmt.Sprintf("%s.%s", ownerHash, pool)
+}
+
+// ParseMeterSegment decodes a metering claim segment. ok is false for
+// malformed values — callers must treat them as unmetered, never as errors.
+func ParseMeterSegment(segment string) (ownerHash string, download bool, ok bool) {
+	i := strings.LastIndex(segment, ".")
+	if i <= 0 || i == len(segment)-1 {
+		return "", false, false
+	}
+	switch segment[i+1:] {
+	case MeterPoolDownload:
+		return segment[:i], true, true
+	case MeterPoolStream:
+		return segment[:i], false, true
+	}
+	return "", false, false
+}
+
+func MasterFileContentUrl(base *url.URL, entityId, name string, download, thumb bool, speed int64, meter string) *url.URL {
 	name = url.PathEscape(name)
 
-	route, _ := url.Parse(constants.APIPrefix + fmt.Sprintf("/file/content/%s/%d/%s", entityId, speed, name))
+	var route *url.URL
+	if meter != "" {
+		// The literal "m" separator keeps gin's wildcard tree unambiguous
+		// (":meter" cannot share a position with the unmetered ":name").
+		route, _ = url.Parse(constants.APIPrefix + fmt.Sprintf("/file/content/%s/%d/m/%s/%s", entityId, speed, meter, name))
+	} else {
+		route, _ = url.Parse(constants.APIPrefix + fmt.Sprintf("/file/content/%s/%d/%s", entityId, speed, name))
+	}
 	if base != nil {
 		route = base.ResolveReference(route)
 	}

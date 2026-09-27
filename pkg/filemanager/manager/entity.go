@@ -27,7 +27,7 @@ type (
 		// GetEntityUrls gets download urls of given entities, return URLs and the earliest expiry time
 		GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, opts ...fs.Option) ([]EntityUrl, *time.Time, error)
 		// GetUrlForRedirectedDirectLink gets redirected direct download link of given direct link
-		GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.DirectLink, opts ...fs.Option) (string, *time.Time, error)
+		GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.DirectLink, opts ...fs.Option) (*EntityUrl, *time.Time, error)
 		// GetDirectLink gets permanent direct download link of given files
 		GetDirectLink(ctx context.Context, urls ...*fs.URI) ([]DirectLink, error)
 		// GetEntitySource gets source of given entity
@@ -61,6 +61,11 @@ type (
 		// metering; internal only, never serialized into responses.
 		Size    int64 `json:"-"`
 		OwnerID int   `json:"-"`
+		// Metered marks URLs carrying a serve-time metering claim; the
+		// serving endpoint charges transferred bytes, so callers must not
+		// bill these at issue. Unmetered (externally-hosted) URLs keep
+		// issue-time charging.
+		Metered bool `json:"-"`
 	}
 )
 
@@ -150,7 +155,7 @@ func (m *manager) GetDirectLink(ctx context.Context, urls ...*fs.URI) ([]DirectL
 	return res, ae.Aggregate()
 }
 
-func (m *manager) GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.DirectLink, opts ...fs.Option) (string, *time.Time, error) {
+func (m *manager) GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.DirectLink, opts ...fs.Option) (*EntityUrl, *time.Time, error) {
 	o := newOption()
 	for _, opt := range opts {
 		opt.Apply(o)
@@ -158,30 +163,39 @@ func (m *manager) GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.Dir
 
 	file, err := m.fs.GetFileFromDirectLink(ctx, dl)
 	if err != nil {
-		return "", nil, err
+		return nil, nil, err
 	}
 
 	// Find primary entity
 	primaryEntity := file.PrimaryEntity()
 
+	// Serve-time metering: direct links bill the owner; the claim rides
+	// inside the signed content URL when metering is requested.
+	meterClaim := ""
+	if o.TrafficMeter && file.OwnerID() != 0 && file.OwnerID() != o.TrafficMeterExempt {
+		meterClaim = routes.MeterSegment(hashid.EncodeUserID(m.hasher, file.OwnerID()), o.IsDownload)
+	}
+
 	// Generate url
 	var (
-		res    string
-		expire *time.Time
+		res     *EntityUrl
+		expire  *time.Time
+		metered bool
 	)
 
 	// Try to read from cache.
 	cacheKey := entityUrlCacheKey(primaryEntity.ID(), int64(dl.Speed), dl.Name, o.IsDownload,
-		m.settings.SiteURL(ctx).String()+"|"+m.cdnPoolKey(ctx, dl.Name, o.IsDownload))
+		m.settings.SiteURL(ctx).String()+"|"+m.cdnPoolKey(ctx, dl.Name, o.IsDownload)+"|"+meterClaim)
 	if cached, ok := m.kv.Get(cacheKey); ok {
 		cachedItem := cached.(EntityUrlCache)
-		res = cachedItem.Url
+		res = &EntityUrl{Url: cachedItem.Url}
 		expire = cachedItem.ExpireAt
+		metered = cachedItem.Metered
 	} else {
 		// Cache miss, Generate new url
 		policy, d, err := m.getEntityPolicyDriver(ctx, primaryEntity, nil)
 		if err != nil {
-			return "", nil, err
+			return nil, nil, err
 		}
 
 		source := entitysource.NewEntitySource(primaryEntity, d, policy, m.auth, m.settings, m.hasher, m.dep.RequestClient(),
@@ -191,9 +205,10 @@ func (m *manager) GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.Dir
 			entitysource.WithDownload(o.IsDownload),
 			entitysource.WithSpeedLimit(int64(dl.Speed)),
 			entitysource.WithDisplayName(dl.Name),
+			entitysource.WithMeterClaim(meterClaim),
 		)
 		if err != nil {
-			return "", nil, err
+			return nil, nil, err
 		}
 
 		// Save into kv
@@ -202,13 +217,18 @@ func (m *manager) GetUrlForRedirectedDirectLink(ctx context.Context, dl *ent.Dir
 			m.kv.Set(cacheKey, EntityUrlCache{
 				Url:      downloadUrl.Url,
 				ExpireAt: downloadUrl.ExpireAt,
+				Metered:  downloadUrl.Metered,
 			}, cacheValidDuration)
 		}
 
-		res = downloadUrl.Url
+		res = &EntityUrl{Url: downloadUrl.Url}
 		expire = downloadUrl.ExpireAt
+		metered = downloadUrl.Metered
 	}
 
+	res.Size = file.Size()
+	res.OwnerID = file.OwnerID()
+	res.Metered = metered
 	return res, expire, nil
 }
 
@@ -280,9 +300,20 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 			continue
 		}
 
+		// Serve-time metering: billed URIs (e.g. share-scoped ones) embed a
+		// signed claim naming the owner's pool. Only applies when metering
+		// was requested and the owner is not the exempt requester.
+		meterClaim := ""
+		if arg.Meter && o.TrafficMeter {
+			ownerID := file.OwnerID()
+			if ownerID != 0 && ownerID != o.TrafficMeterExempt {
+				meterClaim = routes.MeterSegment(hashid.EncodeUserID(m.hasher, ownerID), o.IsDownload)
+			}
+		}
+
 		// Try to read from cache.
 		cacheKey := entityUrlCacheKey(target.ID(), o.DownloadSpeed, getEntityDisplayName(file, target), o.IsDownload,
-			m.settings.SiteURL(ctx).String()+"|"+m.cdnPoolKey(ctx, getEntityDisplayName(file, target), o.IsDownload))
+			m.settings.SiteURL(ctx).String()+"|"+m.cdnPoolKey(ctx, getEntityDisplayName(file, target), o.IsDownload)+"|"+meterClaim)
 		if cached, ok := m.kv.Get(cacheKey); ok && !o.NoCache {
 			cachedItem := cached.(EntityUrlCache)
 			// Find the earliest expiry time
@@ -294,6 +325,7 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 				BrowserDownloadDisplayName: cachedItem.BrowserDownloadDisplayName,
 				Size:                       file.Size(),
 				OwnerID:                    file.OwnerID(),
+				Metered:                    cachedItem.Metered,
 			}
 			continue
 		}
@@ -306,6 +338,7 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 			entitysource.WithDownload(o.IsDownload),
 			entitysource.WithSpeedLimit(o.DownloadSpeed),
 			entitysource.WithDisplayName(getEntityDisplayName(file, target)),
+			entitysource.WithMeterClaim(meterClaim),
 		)
 		if err != nil {
 			ae.Add(arg.URI.String(), err)
@@ -323,6 +356,7 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 			m.kv.Set(cacheKey, EntityUrlCache{
 				Url:      downloadUrl.Url,
 				ExpireAt: downloadUrl.ExpireAt,
+				Metered:  downloadUrl.Metered,
 			}, cacheValidDuration)
 		}
 
@@ -330,6 +364,7 @@ func (m *manager) GetEntityUrls(ctx context.Context, args []GetEntityUrlArgs, op
 			Url:     downloadUrl.Url,
 			Size:    file.Size(),
 			OwnerID: file.OwnerID(),
+			Metered: downloadUrl.Metered,
 		}
 		if d.Capabilities().BrowserRelayedDownload {
 			res[i].BrowserDownloadDisplayName = getEntityDisplayName(file, target)
