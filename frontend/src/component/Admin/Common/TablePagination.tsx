@@ -40,7 +40,7 @@ export const TablePagination = ({
 
   useEffect(() => {
     if ((page - 1) * rowsPerPage >= totalItems) {
-      onChange({} as React.ChangeEvent<unknown>, Math.ceil(totalItems / rowsPerPage));
+      onChange({} as React.ChangeEvent<unknown>, Math.max(1, Math.ceil(totalItems / rowsPerPage)));
     }
   }, [rowsPerPage, totalItems]);
 

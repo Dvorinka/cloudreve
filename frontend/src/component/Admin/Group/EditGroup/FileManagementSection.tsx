@@ -163,6 +163,16 @@ const FileManagementSection = () => {
     [setGroup],
   );
 
+  const onMigratePolicyChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setGroup((p: GroupEnt) => ({
+        ...p,
+        permissions: new Boolset(p.permissions).set(GroupPermission.relocate, e.target.checked).toString(),
+      }));
+    },
+    [setGroup],
+  );
+
   const onMaxWalkedFilesChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setGroup((p: GroupEnt) => ({
@@ -235,12 +245,13 @@ const FileManagementSection = () => {
             <SettingForm lgWidth={5}>
               <FormControl fullWidth>
                 <FormControlLabel
-                  control={<Switch checked={false} />}
-                  label={
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      {t("group.migratePolicy")}
-                    </Box>
+                  control={
+                    <Switch
+                      checked={permission.enabled(GroupPermission.relocate)}
+                      onChange={onMigratePolicyChange}
+                    />
                   }
+                  label={t("group.migratePolicy")}
                 />
                 <NoMarginHelperText>{t("group.migratePolicyDes")}</NoMarginHelperText>
               </FormControl>

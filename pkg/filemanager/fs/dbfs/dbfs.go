@@ -916,9 +916,6 @@ func (f *DBFS) initFs(ctx context.Context, uid int) error {
 // Invalid or expired shares are skipped without failing initialization.
 func (f *DBFS) seedDefaultShares(ctx context.Context, uid int, root *ent.File) {
 	shareIDs := f.settingClient.DefaultShares(ctx)
-	if len(shareIDs) == 0 {
-		return
-	}
 
 	shareCtx := context.WithValue(ctx, inventory.LoadShareFile{}, true)
 	shareCtx = context.WithValue(shareCtx, inventory.LoadShareUser{}, true)
@@ -936,6 +933,9 @@ func (f *DBFS) seedDefaultShares(ctx context.Context, uid int, root *ent.File) {
 		if group := inventory.EffectiveGroup(owner); group != nil && group.Settings != nil && len(group.Settings.DefaultPinned) > 0 {
 			shareIDs = lo.Union(shareIDs, group.Settings.DefaultPinned)
 		}
+	}
+	if len(shareIDs) == 0 {
+		return
 	}
 
 	for _, sid := range shareIDs {

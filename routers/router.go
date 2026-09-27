@@ -1022,6 +1022,7 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 			share.POST("purchase/:id",
 				middleware.LoginRequired(),
 				middleware.ShareHashID(),
+				controllers.FromUri[sharesvc.SharePurchaseService](sharesvc.SharePurchaseParamCtx{}),
 				controllers.PurchaseShare,
 			)
 			// List my shares

@@ -141,6 +141,10 @@ func (client *SMTPPool) Close() {
 
 // Init 初始化发送队列
 func (client *SMTPPool) Init() {
+	if client.config == nil || client.config.Host == "" {
+		client.l.Info("SMTP host is not configured, email queue will not start.")
+		return
+	}
 	go func() {
 		client.l.Info("Initializing and starting SMTP email pool...")
 		defer func() {

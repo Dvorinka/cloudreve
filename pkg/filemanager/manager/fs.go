@@ -6,6 +6,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
 	"github.com/cloudreve/Cloudreve/v4/pkg/cluster"
+	"github.com/cloudreve/Cloudreve/v4/pkg/conf"
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/driver"
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/driver/cos"
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/driver/ks3"
@@ -29,7 +30,11 @@ func (m *manager) LocalDriver(policy *ent.StoragePolicy) driver.Handler {
 }
 
 func (m *manager) CastStoragePolicyOnSlave(ctx context.Context, policy *ent.StoragePolicy) *ent.StoragePolicy {
-	if !m.stateless {
+	// Stateless also covers master-side background tasks (userless managers);
+	// the local->remote rewrite only applies when this node is truly a slave,
+	// otherwise master-side tasks would route local storage through the slave
+	// API with an empty master URL.
+	if !m.stateless || m.config.System().Mode != conf.SlaveMode {
 		return policy
 	}
 

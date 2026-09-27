@@ -53,7 +53,7 @@ func (s *AbuseListService) List(c *gin.Context) (*AbuseListResponse, error) {
 	res, err := dep.AbuseReportClient().List(c, &inventory.ListAbuseReportArgs{
 		PaginationArgs: &inventory.PaginationArgs{
 			UseCursorPagination: false,
-			Page:                s.Page,
+			Page:                s.Page - 1,
 			PageSize:            s.PageSize,
 		},
 		Status: s.Status,

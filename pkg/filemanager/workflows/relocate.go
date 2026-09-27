@@ -43,7 +43,7 @@ type (
 		SrcPolicyID int `json:"src_policy_id,omitempty"`
 		// SrcUserID relocates every entity created by this user instead of an
 		// explicit list.
-		SrcUserID int `json:"src_user_id,omitempty"`
+		SrcUserID   int `json:"src_user_id,omitempty"`
 		DstPolicyID int `json:"dst_policy_id"`
 		// Cursor is the ID of the last successfully processed entity.
 		Cursor int `json:"cursor,omitempty"`
@@ -308,7 +308,9 @@ func (m *RelocateTask) relocateEntity(ctx context.Context, dep dependency.Dep, f
 		return nil
 	}
 
-	es, err := fm.GetEntitySource(ctx, e.ID)
+	// The task runs on a stateless manager (no per-user fs), so the entity is
+	// supplied directly instead of being resolved through fs.GetEntity.
+	es, err := fm.GetEntitySource(ctx, e.ID, fs.WithEntity(fs.NewEntity(e)))
 	if err != nil {
 		return fmt.Errorf("failed to open entity source: %w", err)
 	}

@@ -312,10 +312,15 @@ func migrateAdminGroup(l logging.Logger, client *ent.Client, ctx context.Context
 		types.GroupPermissionArchiveDownload:     true,
 		types.GroupPermissionArchiveTask:         true,
 		types.GroupPermissionShareDownload:       true,
+		types.GroupPermissionShareFree:           true,
 		types.GroupPermissionRemoteDownload:      true,
 		types.GroupPermissionRedirectedSource:    true,
 		types.GroupPermissionAdvanceDelete:       true,
+		types.GroupPermissionSetExplicitUser:     true,
 		types.GroupPermissionIgnoreFileOwnership: true,
+		types.GroupPermissionShareSell:           true,
+		types.GroupPermissionSharePublicList:     true,
+		types.GroupPermissionRelocate:            true,
 		// TODO: review default permission
 	}, permissions)
 	if _, err := client.Group.Create().
@@ -807,6 +812,39 @@ var patches = []Patch{
 				return fmt.Errorf("failed to update secret_key setting: %w", err)
 			}
 
+			return nil
+		},
+	},
+	{
+		// Newer feature permission bits did not exist when existing admin
+		// groups were seeded, so upgraded installs had the toggles off even
+		// though every admin could grant them manually. Grant them to the
+		// built-in admin group once; untouched if its is_admin bit was
+		// cleared.
+		// EndVersion must exceed the current requiredDbVersion: latestApplied
+		// is clamped to requiredDbVersion first, so EndVersion <= 4.21.0 would
+		// never run.
+		Name:       "grant_admin_group_feature_permissions",
+		EndVersion: "4.22.0",
+		Func: func(l logging.Logger, client *ent.Client, ctx context.Context) error {
+			adminGroup, err := client.Group.Query().Where(group.ID(1)).First(ctx)
+			if err != nil {
+				return nil
+			}
+			if adminGroup.Permissions == nil ||
+				!adminGroup.Permissions.Enabled(int(types.GroupPermissionIsAdmin)) {
+				return nil
+			}
+			boolset.Sets(map[types.GroupPermission]bool{
+				types.GroupPermissionShareFree:       true,
+				types.GroupPermissionSetExplicitUser: true,
+				types.GroupPermissionShareSell:       true,
+				types.GroupPermissionSharePublicList: true,
+				types.GroupPermissionRelocate:        true,
+			}, adminGroup.Permissions)
+			if _, err := client.Group.UpdateOne(adminGroup).SetPermissions(adminGroup.Permissions).Save(ctx); err != nil {
+				return fmt.Errorf("failed to update admin group permissions: %w", err)
+			}
 			return nil
 		},
 	},
