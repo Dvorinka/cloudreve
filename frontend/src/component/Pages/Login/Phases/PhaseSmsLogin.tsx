@@ -71,7 +71,7 @@ const PhaseSmsLogin = ({
         <OutlineIconTextField
           label={t("login.phoneNumber")}
           variant="outlined"
-          inputProps={{ id: "phone", type: "tel", name: "phone", required: "true" }}
+          inputProps={{ id: "phone", type: "tel", name: "phone", required: true }}
           onChange={(e) => onPhoneChange(e.target.value)}
           icon={<PhoneLaptopOutlined />}
           autoComplete="tel"
@@ -88,7 +88,7 @@ const PhaseSmsLogin = ({
         <OutlineIconTextField
           label={t("login.smsCode")}
           variant="outlined"
-          inputProps={{ id: "sms-code", type: "text", name: "sms-code", required: "true" }}
+          inputProps={{ id: "sms-code", type: "text", name: "sms-code", required: true }}
           onChange={(e) => onCodeChange(e.target.value)}
           icon={<Password />}
           value={code}

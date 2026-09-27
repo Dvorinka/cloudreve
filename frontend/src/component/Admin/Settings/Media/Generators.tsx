@@ -1,6 +1,13 @@
 import { ExpandMoreRounded } from "@mui/icons-material";
-import { LoadingButton } from "@mui/lab";
-import { AccordionDetails, Box, FormControl, FormControlLabel, InputAdornment, Typography } from "@mui/material";
+import {
+  AccordionDetails,
+  Box,
+  FormControl,
+  FormControlLabel,
+  InputAdornment,
+  Typography,
+  Button,
+} from "@mui/material";
 import { useSnackbar } from "notistack";
 import * as React from "react";
 import { useState } from "react";
@@ -208,13 +215,13 @@ const Generators = ({ values, setSetting }: GeneratorsProps) => {
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <LoadingButton
+                            <Button
                               onClick={() => doTest(g.name, values[g.executableSetting ?? ""])}
                               loading={testing}
                               color="primary"
                             >
                               <span>{t("settings.executableTest")}</span>
-                            </LoadingButton>
+                            </Button>
                           </InputAdornment>
                         ),
                       }}

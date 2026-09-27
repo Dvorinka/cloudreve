@@ -1,5 +1,4 @@
 import { Icon } from "@iconify/react";
-import { LoadingButton } from "@mui/lab";
 import {
   Avatar,
   Box,
@@ -13,6 +12,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Button,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
@@ -154,7 +154,7 @@ const OAuthGrantItem = ({ grant, onRevoked }: { grant: OAuthGrant; onRevoked: (c
               <Trans
                 i18nKey={"setting.oauthGrantLastUsed"}
                 ns={"application"}
-                components={[<TimeBadge datetime={grant.last_used_at} variant={"inherit"} />]}
+                components={[<TimeBadge key={0} datetime={grant.last_used_at} variant={"inherit"} />]}
               />
             ) : (
               t("setting.neverUsed")
@@ -163,15 +163,9 @@ const OAuthGrantItem = ({ grant, onRevoked }: { grant: OAuthGrant; onRevoked: (c
         }
       />
       <ListItemSecondaryAction>
-        <LoadingButton
-          loading={loading}
-          variant={"outlined"}
-          onClick={onRevoke}
-          startIcon={<Dismiss />}
-          color={"error"}
-        >
+        <Button loading={loading} variant={"outlined"} onClick={onRevoke} startIcon={<Dismiss />} color={"error"}>
           <span>{t("setting.revokeOAuthGrant")}</span>
-        </LoadingButton>
+        </Button>
       </ListItemSecondaryAction>
     </StyledOAuthGrantListItem>
   );
@@ -240,15 +234,9 @@ const LinkedAccountItem = ({
         }
       />
       <ListItemSecondaryAction>
-        <LoadingButton
-          loading={loading}
-          variant={"outlined"}
-          onClick={onUnbind}
-          startIcon={<Dismiss />}
-          color={"error"}
-        >
+        <Button loading={loading} variant={"outlined"} onClick={onUnbind} startIcon={<Dismiss />} color={"error"}>
           <span>{t("setting.unlinkAccount")}</span>
-        </LoadingButton>
+        </Button>
       </ListItemSecondaryAction>
     </StyledOAuthGrantListItem>
   );
@@ -308,7 +296,7 @@ const VaultSetting = ({ setting, setSetting }: ProfileSettingProps) => {
   return (
     <SettingForm
       title={
-        <Box>
+        <Box component="span">
           {t("vault.title")}
           {setting.vault_enabled && (
             <SquareChip
@@ -349,7 +337,7 @@ const VaultSetting = ({ setting, setSetting }: ProfileSettingProps) => {
             inputProps={{ type: "password", minLength: 6, maxLength: 128 }}
           />
           <Box>
-            <LoadingButton
+            <Button
               variant={"contained"}
               onClick={onSetup}
               loading={loading}
@@ -357,7 +345,7 @@ const VaultSetting = ({ setting, setSetting }: ProfileSettingProps) => {
               startIcon={<ShieldLock />}
             >
               <span>{t("vault.enable")}</span>
-            </LoadingButton>
+            </Button>
           </Box>
         </Stack>
       )}
@@ -392,7 +380,7 @@ const VaultSetting = ({ setting, setSetting }: ProfileSettingProps) => {
                 inputProps={{ type: "password" }}
               />
               <Box>
-                <LoadingButton
+                <Button
                   variant={"contained"}
                   color={"error"}
                   onClick={onDisable}
@@ -400,7 +388,7 @@ const VaultSetting = ({ setting, setSetting }: ProfileSettingProps) => {
                   disabled={disablePassword == ""}
                 >
                   <span>{t("vault.confirmDisable")}</span>
-                </LoadingButton>
+                </Button>
               </Box>
             </Stack>
           </Collapse>
@@ -469,15 +457,9 @@ const PhoneBinding = ({ setting, setSetting }: ProfileSettingProps) => {
           </ListItemAvatar>
           <StyledListItemText primary={setting.phone} />
           <ListItemSecondaryAction>
-            <LoadingButton
-              loading={loading}
-              variant={"outlined"}
-              onClick={onUnbind}
-              startIcon={<Dismiss />}
-              color={"error"}
-            >
+            <Button loading={loading} variant={"outlined"} onClick={onUnbind} startIcon={<Dismiss />} color={"error"}>
               <span>{t("setting.unbindPhone")}</span>
-            </LoadingButton>
+            </Button>
           </ListItemSecondaryAction>
         </StyledOAuthGrantListItem>
       ) : (
@@ -508,7 +490,7 @@ const PhoneBinding = ({ setting, setSetting }: ProfileSettingProps) => {
             </SecondaryButton>
           </Stack>
           <Box>
-            <LoadingButton
+            <Button
               variant={"contained"}
               onClick={onBind}
               loading={loading}
@@ -516,7 +498,7 @@ const PhoneBinding = ({ setting, setSetting }: ProfileSettingProps) => {
               startIcon={<PhoneLaptopOutlined />}
             >
               <span>{t("setting.bindPhone")}</span>
-            </LoadingButton>
+            </Button>
           </Box>
         </Stack>
       )}
@@ -675,9 +657,9 @@ const SecuritySetting = ({ setting, setSetting }: ProfileSettingProps) => {
                 }}
               />
               <Box>
-                <LoadingButton variant={"contained"} onClick={submitResetPassword} loading={resetLoading}>
+                <Button variant={"contained"} onClick={submitResetPassword} loading={resetLoading}>
                   <span>{t("fileManager.save")}</span>
-                </LoadingButton>
+                </Button>
               </Box>
             </Stack>
           </form>
@@ -685,7 +667,7 @@ const SecuritySetting = ({ setting, setSetting }: ProfileSettingProps) => {
       </SettingForm>
       <SettingForm
         title={
-          <Box>
+          <Box component="span">
             {t("setting.2fa")}
             {setting.two_fa_enabled && (
               <SquareChip
@@ -738,7 +720,9 @@ const SecuritySetting = ({ setting, setSetting }: ProfileSettingProps) => {
           </List>
         </SettingForm>
       )}
-      {(qqConnectEnabled || wechatConnectEnabled || (setting.linked_accounts && setting.linked_accounts.length > 0)) && (
+      {(qqConnectEnabled ||
+        wechatConnectEnabled ||
+        (setting.linked_accounts && setting.linked_accounts.length > 0)) && (
         <SettingForm title={t("setting.linkedAccounts")} lgWidth={5}>
           <List disablePadding>
             {setting.linked_accounts?.map((account) => (

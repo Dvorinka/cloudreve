@@ -1,5 +1,15 @@
-import { LoadingButton } from "@mui/lab";
-import { Button, Collapse, FormHelperText, Grid2, ListItemText, Stack, Typography, useMediaQuery, useTheme, styled } from "@mui/material";
+import {
+  Button,
+  Collapse,
+  FormHelperText,
+  Grid2,
+  ListItemText,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+  styled,
+} from "@mui/material";
 import { bindPopover, bindTrigger, usePopupState } from "material-ui-popup-state/hooks";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -98,10 +108,10 @@ const ProfileSetting = ({ setting, setSetting }: ProfileSettingProps) => {
         direction={isMobile ? "column" : "row-reverse"}
         sx={{ width: "100%" }}
       >
-        <Grid2 spacing={3} sx={{ flexGrow: 1, width: "100%" }} size={{ md: 6, xs: 12 }}>
+        <Grid2 sx={{ flexGrow: 1, width: "100%" }} size={{ md: 6, xs: 12 }}>
           {user && <AvatarSetting user={user?.user} />}
         </Grid2>
-        <Grid2 spacing={3} sx={{ flexGrow: 1, width: "100%" }} size={{ md: 6, xs: 12 }}>
+        <Grid2 sx={{ flexGrow: 1, width: "100%" }} size={{ md: 6, xs: 12 }}>
           <Stack spacing={3}>
             <SettingForm title={t("login.email")} noContainer lgWidth={12}>
               <Stack direction="row" spacing={1}>
@@ -122,9 +132,9 @@ const ProfileSetting = ({ setting, setSetting }: ProfileSettingProps) => {
                 inputRef={nickRef}
               />
               <Collapse in={nick != user?.user.nickname}>
-                <LoadingButton variant={"contained"} onClick={onClick} loading={nickLoading} sx={{ mt: 1 }}>
+                <Button variant={"contained"} onClick={onClick} loading={nickLoading} sx={{ mt: 1 }}>
                   <span>{t("fileManager.save")}</span>
-                </LoadingButton>
+                </Button>
               </Collapse>
             </SettingForm>
             <Grid2 spacing={isMobile ? 3 : 4} container sx={{ width: "100%" }}>
@@ -199,7 +209,11 @@ const ProfileSetting = ({ setting, setSetting }: ProfileSettingProps) => {
           </Stack>
         </Grid2>
       </Grid2>
-      <ChangeEmailDialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)} currentEmail={user?.user.email} />
+      <ChangeEmailDialog
+        open={emailDialogOpen}
+        onClose={() => setEmailDialogOpen(false)}
+        currentEmail={user?.user.email}
+      />
     </Stack>
   );
 };

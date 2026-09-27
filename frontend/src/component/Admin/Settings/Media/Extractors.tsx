@@ -1,5 +1,4 @@
 import { ExpandMoreRounded } from "@mui/icons-material";
-import { LoadingButton } from "@mui/lab";
 import {
   AccordionDetails,
   Box,
@@ -8,6 +7,7 @@ import {
   InputAdornment,
   Switch,
   Typography,
+  Button,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import * as React from "react";
@@ -163,13 +163,13 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <LoadingButton
+                            <Button
                               onClick={() => doTest(e.name, values[e.executableSetting ?? ""])}
                               loading={testing}
                               color="primary"
                             >
                               <span>{t("settings.executableTest")}</span>
-                            </LoadingButton>
+                            </Button>
                           </InputAdornment>
                         ),
                       }}

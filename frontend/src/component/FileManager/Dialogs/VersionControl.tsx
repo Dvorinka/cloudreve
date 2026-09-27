@@ -242,6 +242,7 @@ const VersionControl = () => {
                   {versionEntities &&
                     versionEntities.map((e) => (
                       <TableRow
+                        key={e.id}
                         selected={e.id === fileExtended?.primary_entity}
                         sx={{
                           boxShadow: (theme) =>

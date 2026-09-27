@@ -27,7 +27,7 @@ const FullSearchOption = ({ options, keyword }: FullSearchOptionProps) => {
   return (
     <List sx={{ width: "100%", px: 1 }} dense>
       {options.map((option) => (
-        <ListItem disablePadding dense>
+        <ListItem key={option} disablePadding dense>
           <ListItemButton onClick={onClick(option)} sx={{ py: 0 }}>
             <ListItemAvatar sx={{ minWidth: 48 }}>
               <SearchOutlined
@@ -48,7 +48,7 @@ const FullSearchOption = ({ options, keyword }: FullSearchOptionProps) => {
                   values={{
                     keywords: keyword,
                   }}
-                  components={[<Box component={"span"} sx={{ fontWeight: 600 }} />]}
+                  components={[<Box key={0} component={"span"} sx={{ fontWeight: 600 }} />]}
                 />
               }
               slotProps={{

@@ -185,6 +185,7 @@ const TaskCard = ({ loading, showProgress, onLoad, onRetried, task }: TaskCardPr
     <Accordion expanded={expanded} onChange={handleChange} TransitionProps={{ unmountOnExit: true }}>
       <AccordionSummary aria-controls="panel1d-content">
         <SummaryButton
+          component="span"
           disabled={loading}
           size={"large"}
           expanded={expanded}
@@ -226,6 +227,7 @@ const TaskCard = ({ loading, showProgress, onLoad, onRetried, task }: TaskCardPr
           >
             <Typography
               variant={"inherit"}
+              component={"div"}
               sx={{
                 flexGrow: 1,
                 wordBreak: "break-all",
@@ -240,7 +242,12 @@ const TaskCard = ({ loading, showProgress, onLoad, onRetried, task }: TaskCardPr
               )}
             </Typography>
 
-            <Typography color={"text.secondary"} variant={"inherit"} sx={{ display: "flex", alignItems: "center" }}>
+            <Typography
+              color={"text.secondary"}
+              variant={"inherit"}
+              component={"div"}
+              sx={{ display: "flex", alignItems: "center" }}
+            >
               {loading || !task ? (
                 <Skeleton variant={"text"} width={50} />
               ) : (
@@ -257,7 +264,9 @@ const TaskCard = ({ loading, showProgress, onLoad, onRetried, task }: TaskCardPr
           </Box>
         </SummaryButton>
       </AccordionSummary>
-      <AccordionDetails>{task && <TaskDetail task={task} downloading={showProgress} onRetried={onRetried} />}</AccordionDetails>
+      <AccordionDetails>
+        {task && <TaskDetail task={task} downloading={showProgress} onRetried={onRetried} />}
+      </AccordionDetails>
     </Accordion>
   );
 };

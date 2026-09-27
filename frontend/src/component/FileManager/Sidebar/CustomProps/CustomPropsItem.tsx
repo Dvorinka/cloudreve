@@ -23,7 +23,7 @@ import MoreVertical from "../../../Icons/MoreVertical.tsx";
 import Search from "../../../Icons/Search.tsx";
 import { SquareMenuItem } from "../../ContextMenu/ContextMenu.tsx";
 import { FileManagerIndex } from "../../FileManager.tsx";
-import { StyledButtonBase } from "../MediaMetaCard.tsx";
+import { StyledButtonBase } from "../StyledButtonBase.tsx";
 import BooleanPropsItem from "./BooleanPropsContent.tsx";
 import { CustomPropsItem } from "./CustomProps.tsx";
 import LinkPropsContent from "./LinkPropsContent.tsx";
@@ -32,7 +32,6 @@ import NumberPropsContent from "./NumberPropsContent.tsx";
 import RatingPropsItem from "./RatingPropsItem.tsx";
 import SelectPropsContent from "./SelectPropsContent.tsx";
 import TextPropsContent from "./TextPropsContent.tsx";
-import UserPropsContent from "./UserPropsContent.tsx";
 
 export interface CustomPropsCardProps {
   prop: CustomPropsItem;

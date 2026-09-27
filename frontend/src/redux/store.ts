@@ -11,6 +11,14 @@ export const store = configureStore({
     globalState: globalStateSliceReducer,
     fileManager: fileManagerSliceReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        // setFmError carries the raw AppError/Error so the reducer can
+        // derive the stored Response; other payloads stay checked.
+        ignoredActions: ["fileManagerSlice/setFmError"],
+      },
+    }),
   devTools: process.env.NODE_ENV !== "production",
 });
 

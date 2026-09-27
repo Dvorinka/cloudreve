@@ -149,7 +149,7 @@ const Profile = () => {
         <Grid container spacing={1}>
           {user &&
             user.share_links_in_profile !== ShareLinksInProfileLevel.hide_share &&
-            shares.map((share) => <ShareCard share={share} onShareDeleted={onShareDeleted} />)}
+            shares.map((share) => <ShareCard key={share.id} share={share} onShareDeleted={onShareDeleted} />)}
           {nextPageToken != undefined &&
             user &&
             user?.share_links_in_profile !== ShareLinksInProfileLevel.hide_share && (

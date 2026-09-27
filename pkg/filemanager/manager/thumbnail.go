@@ -56,7 +56,7 @@ func (m *manager) Thumbnail(ctx context.Context, uri *fs.URI) (entitysource.Enti
 	latest := file.PrimaryEntity()
 	// If primary entity not exist, or it's empty
 	if latest == nil || latest.ID() == 0 {
-		return nil, fmt.Errorf("failed to get latest version")
+		return nil, fs.ErrEntityNotExist
 	}
 
 	// 2. Thumb entity not exist, try native policy generator

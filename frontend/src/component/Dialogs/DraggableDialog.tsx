@@ -14,7 +14,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 
-import { LoadingButton } from "@mui/lab";
 import { useCallback } from "react";
 import Draggable from "react-draggable";
 import { useTranslation } from "react-i18next";
@@ -101,7 +100,7 @@ const DraggableDialog = (props: DraggableDialogProps) => {
               </Button>
             )}
             {!props.hideOk && (
-              <LoadingButton
+              <Button
                 disabled={props.disabled}
                 loading={props.loading}
                 variant={"contained"}
@@ -109,7 +108,7 @@ const DraggableDialog = (props: DraggableDialogProps) => {
                 color="primary"
               >
                 <span>{props.okText ?? t("common:ok")}</span>
-              </LoadingButton>
+              </Button>
             )}
           </Stack>
         </StyledDialogActions>

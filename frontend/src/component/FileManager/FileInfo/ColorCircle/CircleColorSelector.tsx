@@ -122,6 +122,7 @@ const CircleColorSelector = (props: CircleColorSelectorProps) => {
     <SelectorBox>
       {props.colors.map((color) => (
         <ColorCircle
+          key={color}
           noMb={props.showColorValueInCustomization}
           isCustomization={color === customizeMagicColor && !props.showColorValueInCustomization}
           color={!props.showColorValueInCustomization ? color : props.selectedColor}

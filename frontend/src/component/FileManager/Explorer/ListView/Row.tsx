@@ -1,8 +1,7 @@
-import { alpha, Box, Skeleton, styled } from "@mui/material";
+import { alpha, Box, Skeleton, styled, Typography } from "@mui/material";
 import { memo, useCallback, useEffect } from "react";
 import { useAppDispatch } from "../../../../redux/hooks.ts";
 import { navigateReconcile } from "../../../../redux/thunks/filemanager.ts";
-import { NoWrapTypography } from "../../../Common/StyledComponents.tsx";
 import useActionDisplayOpt from "../../ContextMenu/useActionDisplayOpt.ts";
 import { FileBlockProps } from "../Explorer.tsx";
 import { useFileBlockState } from "../GridView/GridFile.tsx";
@@ -10,11 +9,7 @@ import Cell from "./Cell.tsx";
 
 const RowContainer = styled(Box, {
   shouldForwardProp: (prop) =>
-    prop !== "selected" &&
-    prop !== "transparent" &&
-    prop !== "isDropOver" &&
-    prop !== "disabled" &&
-    prop !== "taller",
+    prop !== "selected" && prop !== "transparent" && prop !== "isDropOver" && prop !== "disabled" && prop !== "taller",
 })<{
   selected: boolean;
   transparent?: boolean;
@@ -116,11 +111,15 @@ const Row = memo((props: FileBlockProps) => {
     >
       {columns?.map((column, index) => (
         <Column w={column.width ?? column.defaults.width} key={index}>
-          <NoWrapTypography
+          <Typography
             sx={{
               width: "100%",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
             }}
             variant={"body2"}
+            component={"div"}
           >
             {!file.placeholder && (
               <Cell
@@ -139,7 +138,7 @@ const Row = memo((props: FileBlockProps) => {
             )}
 
             {file.placeholder && <Skeleton variant={"text"} width={0.5 * (column.width ?? column.defaults.width)} />}
-          </NoWrapTypography>
+          </Typography>
         </Column>
       ))}
     </RowContainer>

@@ -315,7 +315,7 @@ const AppContent = () => {
     "&::-webkit-scrollbar-thumb:hover": {
       backgroundColor: theme.palette.primary.main + "!important",
     },
-    "& :hover::-webkit-scrollbar-thumb,:hover>:first-child::-webkit-scrollbar-thumb": {
+    "& :hover::-webkit-scrollbar-thumb,:hover>:first-of-type::-webkit-scrollbar-thumb": {
       backgroundColor: theme.palette.mode == "light" ? grey[400] : grey[600],
     },
     "&::-webkit-scrollbar ": {

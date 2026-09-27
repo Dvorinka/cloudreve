@@ -44,6 +44,23 @@ export default defineConfig({
       },
     },
     {
+      // The backend's FrontendFileHandler substitutes these placeholders at
+      // serve time; in dev nobody does, so {siteScript} etc. leak into the
+      // DOM as literal text. Substitute static equivalents — serve only, the
+      // production build must keep the raw placeholders.
+      name: "dev-site-placeholders",
+      apply: "serve",
+      transformIndexHtml(html) {
+        return html
+          .replaceAll("{siteName}", "Cloudreve")
+          .replaceAll("{siteDes}", "Cloudreve dev server")
+          .replaceAll("{siteScript}", "")
+          .replaceAll("{pwa_small_icon}", "/static/img/favicon.ico")
+          .replaceAll("{pwa_medium_icon}", "/static/img/logo192.png")
+          .replaceAll("var(--defaultThemeColor)", "#1976d2");
+      },
+    },
+    {
       name: "generate-version",
       async writeBundle(outputOptions) {
         const version = {
@@ -60,6 +77,11 @@ export default defineConfig({
   ],
   define: {
     __ASSETS_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
+  resolve: {
+    // mui-one-time-password-input nests its own @emotion/react; without
+    // dedupe two Emotion instances load and React warns on every render.
+    dedupe: ["@emotion/react", "@emotion/styled", "@emotion/cache"],
   },
   build: {
     outDir: "build", // keep same as v3 with minimal changes

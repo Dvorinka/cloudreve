@@ -93,7 +93,7 @@ const GraphicCaptcha = ({ values, setSettings }: GraphicCaptchaProps) => {
           field: "captcha_IsShowSineLine",
         },
       ].map((v) => (
-        <SettingForm lgWidth={5}>
+        <SettingForm key={v.field} lgWidth={5}>
           <FormControl fullWidth>
             <FormControlLabel
               control={

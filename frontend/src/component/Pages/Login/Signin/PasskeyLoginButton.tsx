@@ -1,5 +1,4 @@
-import { LoadingButton } from "@mui/lab";
-import { ButtonProps } from "@mui/material";
+import { ButtonProps, Button } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -109,7 +108,7 @@ export default function PasskeyLoginButton({ autoComplete, onLoginSuccess, ...re
   };
 
   return (
-    <LoadingButton
+    <Button
       onClick={startLogin(false)}
       loading={loading}
       variant={"outlined"}
@@ -118,6 +117,6 @@ export default function PasskeyLoginButton({ autoComplete, onLoginSuccess, ...re
       {...rest}
     >
       {t("login.useFIDO2")}
-    </LoadingButton>
+    </Button>
   );
 }

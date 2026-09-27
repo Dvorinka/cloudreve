@@ -710,7 +710,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
       {albumContent && <MediaMetaCard icon={MusicNote1} contents={[albumContent]} />}
       {durationContent && <MediaMetaCard icon={ClockFilled} contents={[durationContent]} />}
       {streamFormatContent && <MediaMetaCard icon={InfoFilled} contents={streamFormatContent} />}
-      {singleStreamContents && singleStreamContents.map((content) => <MediaMetaCard contents={[content]} />)}
+      {singleStreamContents && singleStreamContents.map((content, i) => <MediaMetaCard key={i} contents={[content]} />)}
     </>
   );
 };

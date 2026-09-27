@@ -365,14 +365,6 @@ const BasicInfo = ({ target }: BasicInfoProps) => {
           )}
         </>
       )}
-      <InfoRow
-        title={t("application:fileManager.createdAt")}
-        content={<TimeBadge variant={"body2"} datetime={target.created_at} />}
-      />
-      <InfoRow
-        title={t("application:fileManager.modifiedAt")}
-        content={<TimeBadge variant={"body2"} datetime={target.updated_at} />}
-      />
       {target.type == FileType.folder && viewSyncEnabled && target.owned && !restoreParent && !isSymbolicLink && (
         <InfoRow
           title={t("application:fileManager.viewSetting")}

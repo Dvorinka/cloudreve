@@ -156,8 +156,13 @@ func (c *shareClient) Upsert(ctx context.Context, params *CreateShareParams) (*e
 
 		// Password follows the same full-upsert contract as the other
 		// fields: the service resolves "" for public shares and a value for
-		// private ones, so always writing it covers set/change/clear.
-		createQuery.SetPassword(params.Password)
+		// private ones. Empty must clear to NULL — the public-directory
+		// listing and visit path treat NULL (not "") as "no password".
+		if params.Password != "" {
+			createQuery.SetPassword(params.Password)
+		} else {
+			createQuery.ClearPassword()
+		}
 		createQuery.SetPricePoints(params.PricePoints)
 		createQuery.SetListedPublicly(params.ListedPublicly)
 		if params.Slug != nil {

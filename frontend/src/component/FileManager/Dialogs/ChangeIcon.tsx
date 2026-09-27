@@ -4,7 +4,6 @@ import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
 import { closeChangeIconDialog } from "../../../redux/globalStateSlice.ts";
-import { LoadingButton } from "@mui/lab";
 import { loadSiteConfig } from "../../../redux/thunks/site.ts";
 import AutoHeight from "../../Common/AutoHeight.tsx";
 import { ConfigLoadState } from "../../../redux/siteConfigSlice.ts";
@@ -129,9 +128,9 @@ const ChangeIcon = () => {
         maxWidth: "sm",
       }}
       secondaryAction={
-        <LoadingButton onClick={onAccept()} loading={loading} color="primary">
+        <Button onClick={onAccept()} loading={loading} color="primary">
           <span>{t("application:modals.resetToDefault")}</span>
-        </LoadingButton>
+        </Button>
       }
     >
       <DialogContent>
@@ -158,7 +157,9 @@ const ChangeIcon = () => {
                   <CustomTabPanel value={tabValue} index={index} key={key}>
                     <SelectorBox>
                       {emojiSetting[key].map((emoji) => (
-                        <EmojiButton key={emoji} onClick={onAccept(emoji)}>{emoji}</EmojiButton>
+                        <EmojiButton key={emoji} onClick={onAccept(emoji)}>
+                          {emoji}
+                        </EmojiButton>
                       ))}
                     </SelectorBox>
                   </CustomTabPanel>

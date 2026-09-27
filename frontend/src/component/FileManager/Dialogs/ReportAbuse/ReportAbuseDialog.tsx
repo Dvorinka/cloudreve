@@ -1,4 +1,3 @@
-import { LoadingButton } from "@mui/lab";
 import {
   DialogActions,
   DialogContent,
@@ -7,6 +6,7 @@ import {
   ListItemText,
   TextField,
   Typography,
+  Button,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
 import { useEffect, useRef, useState } from "react";
@@ -116,9 +116,9 @@ const ReportAbuseDialog = () => {
         {captchaEnabled && <Captcha onStateChange={(s) => (captchaState.current = s)} generation={captchaGen} />}
       </DialogContent>
       <DialogActions>
-        <LoadingButton loading={loading} variant="contained" onClick={onSubmit}>
+        <Button loading={loading} variant="contained" onClick={onSubmit}>
           {t("common:ok")}
-        </LoadingButton>
+        </Button>
       </DialogActions>
     </DraggableDialog>
   );

@@ -66,7 +66,7 @@ const NodeSelectionInput = ({ value, onChange, ...rest }: NodeSelectionInputProp
       {...rest}
     >
       {nodes.map((g) => (
-        <SquareMenuItem value={g.id}>
+        <SquareMenuItem key={g.id} value={g.id}>
           <Box
             sx={{
               display: "flex",

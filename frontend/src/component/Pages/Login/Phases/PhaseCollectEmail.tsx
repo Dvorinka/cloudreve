@@ -81,7 +81,7 @@ const PhaseCollectEmail = ({ email, setEmail, control, onOAuthPasskeyLogin, onSm
             id: "email",
             type: "email",
             name: "email",
-            required: "true",
+            required: true,
           }}
           onChange={(e) => setEmail(e.target.value)}
           icon={<MailOutlined />}
@@ -97,7 +97,7 @@ const PhaseCollectEmail = ({ email, setEmail, control, onOAuthPasskeyLogin, onSm
           <Trans
             ns={"application"}
             i18nKey={"login.noAccountSignupNow"}
-            components={[<Link underline="hover" component={RouterLink} to="/session/signup" />]}
+            components={[<Link key={0} underline="hover" component={RouterLink} to="/session/signup" />]}
           />
         </Box>
       )}

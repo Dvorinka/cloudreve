@@ -1,4 +1,15 @@
-import { Box, Fade, Grow, IconButton, InputBase, PopoverProps, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Box,
+  Fade,
+  Grow,
+  IconButton,
+  InputBase,
+  PopoverProps,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { sizeToString } from "../../../../util";
 import CrUri, { SearchParam } from "../../../../util/uri.ts";
@@ -581,7 +592,9 @@ const Cell = memo((props: CellProps) => {
       return <MediaElementsCell element={takenAt(file)} />;
     case ColumType.image_size:
       return (
-        <Box sx={{ display: "flex" }}>{getImageSize(file)?.map((size) => <MediaElementsCell element={size} />)}</Box>
+        <Box sx={{ display: "flex" }}>
+          {getImageSize(file)?.map((size, i) => <MediaElementsCell key={i} element={size} />)}
+        </Box>
       );
     case ColumType.title:
       return <MediaElementsCell element={getMediaTitle(file)} />;

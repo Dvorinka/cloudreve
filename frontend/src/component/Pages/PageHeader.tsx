@@ -17,8 +17,12 @@ const PageHeader = ({ title, secondaryAction, onRefresh, loading, skipChangingDo
   const { t } = useTranslation();
   return (
     <Box sx={{ mb: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Typography variant={"h4"} fontWeight={600}>
+      <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: 1 }}>
+        <Typography
+          variant={"h4"}
+          fontWeight={600}
+          sx={{ flexShrink: 0, maxWidth: "100%", textOverflow: "ellipsis", overflow: "hidden" }}
+        >
           {title}
         </Typography>
         {!skipChangingDocumentTitle && <PageTitle title={title} />}
@@ -29,8 +33,7 @@ const PageHeader = ({ title, secondaryAction, onRefresh, loading, skipChangingDo
             </IconButton>
           </Tooltip>
         )}
-        <Box sx={{ flexGrow: 1 }} />
-        {secondaryAction && secondaryAction}
+        {secondaryAction && <Box sx={{ ml: "auto" }}>{secondaryAction}</Box>}
       </Box>
     </Box>
   );

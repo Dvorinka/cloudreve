@@ -50,18 +50,7 @@ export const AnonymousUser: User = {
 };
 
 const UserAvatar = memo(
-  ({
-    user,
-    key,
-    overwriteTextSize,
-    onUserLoaded,
-    uid,
-    sx,
-    square,
-    cacheKey,
-    enablePopover,
-    ...rest
-  }: UserAvatarProps) => {
+  ({ user, overwriteTextSize, onUserLoaded, uid, sx, square, cacheKey, enablePopover, ...rest }: UserAvatarProps) => {
     const [loadedUser, setLoadedUser] = useState<User | undefined>(undefined);
     const dispatch = useAppDispatch();
     const popupState = usePopupState({
@@ -102,7 +91,9 @@ const UserAvatar = memo(
     );
 
     const avatarUrl = useMemo(() => {
-      if (loadedUser) {
+      // Backend 404s the endpoint when no avatar is set; skip the request and
+      // let Avatar fall back to initials.
+      if (loadedUser && loadedUser.avatar) {
         return ApiPrefix + `/user/avatar/${loadedUser.id}${cacheKey ? `?nocache=1&key=${cacheKey ?? 0}` : ""}`;
       }
       return undefined;
