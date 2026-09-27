@@ -4,9 +4,9 @@ import { useSnackbar } from "notistack";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import { getCredit, getShopSkus, purchaseSku } from "../../../api/api.ts";
+import { checkoutSku, getCredit, getPaymentOrder, getShopSkus, purchaseSku } from "../../../api/api.ts";
 import { CreditInfo, ShopSku } from "../../../api/user.ts";
-import { useAppDispatch } from "../../../redux/hooks.ts";
+import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { sizeToString } from "../../../util/index.ts";
 import { formatDuration } from "../../../util/datetime.ts";
 import FacebookCircularProgress from "../../Common/CircularProgress.tsx";
@@ -32,6 +32,8 @@ const Shop = () => {
   const [skus, setSkus] = useState<ShopSku[] | undefined>(undefined);
   const [info, setInfo] = useState<CreditInfo | undefined>(undefined);
   const [buying, setBuying] = useState<string | undefined>(undefined);
+  const paymentEnabled = useAppSelector((state) => state.siteConfig.basic.config.payment_enabled === true);
+  const paymentCurrency = useAppSelector((state) => state.siteConfig.basic.config.payment_currency ?? "usd");
 
   const loadInfo = () => {
     dispatch(getCredit()).then((res) => setInfo(res));
@@ -40,6 +42,40 @@ const Shop = () => {
   useEffect(() => {
     dispatch(getShopSkus()).then((res) => setSkus(res));
     loadInfo();
+  }, []);
+
+  // Returning from a hosted checkout carries ?checkout=<order>. Poll the
+  // order until it settles, then refresh balances.
+  useEffect(() => {
+    const orderId = searchParams.get("checkout");
+    if (!orderId) {
+      return;
+    }
+    let cancelled = false;
+    let attempts = 0;
+    const poll = () => {
+      dispatch(getPaymentOrder(orderId))
+        .then((order) => {
+          if (cancelled) {
+            return;
+          }
+          if (order.status === "paid") {
+            enqueueSnackbar(t("shop.paymentSuccess", { name: order.sku_name }), { variant: "success" });
+            loadInfo();
+            return;
+          }
+          if (order.status === "pending" && attempts++ < 20) {
+            setTimeout(poll, 1500);
+            return;
+          }
+          enqueueSnackbar(t("shop.paymentPending"), { variant: "info" });
+        })
+        .catch(() => undefined);
+    };
+    poll();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const tabs = useMemo(
@@ -66,6 +102,18 @@ const Shop = () => {
 
   const trafficPoolLabel = (s: ShopSku) =>
     s.type === "stream_traffic" ? t("shop.streamTrafficPack") : t("shop.downloadTrafficPack");
+
+  const formatPrice = (s: ShopSku) =>
+    new Intl.NumberFormat(undefined, { style: "currency", currency: paymentCurrency }).format(s.price / 100);
+
+  const onCheckout = (s: ShopSku) => {
+    setBuying(s.id);
+    dispatch(checkoutSku(s.id))
+      .then((res) => {
+        window.location.href = res.url;
+      })
+      .finally(() => setBuying(undefined));
+  };
 
   const onPurchase = (s: ShopSku) => {
     setBuying(s.id);
@@ -148,6 +196,11 @@ const Shop = () => {
                     >
                       {s.points != null ? t("shop.buyWithPoints", { points: s.points }) : t("shop.pointsUnavailable")}
                     </Button>
+                    {paymentEnabled && s.price > 0 && (
+                      <Button variant="outlined" disabled={buying === s.id} onClick={() => onCheckout(s)}>
+                        {t("shop.buyWithCard", { price: formatPrice(s) })}
+                      </Button>
+                    )}
                   </Stack>
                 </Paper>
               </Grid2>

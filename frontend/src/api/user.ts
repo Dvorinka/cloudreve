@@ -369,3 +369,19 @@ export interface ShopSku {
   label?: string;
   des?: string;
 }
+
+export interface CheckoutSession {
+  order_id: string;
+  url: string;
+}
+
+export interface PaymentOrder {
+  id: string;
+  sku_id: string;
+  sku_name: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "paid" | "expired";
+  created_at: number;
+}

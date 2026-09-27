@@ -100,10 +100,11 @@ import { CaptchaResponse, SiteConfig } from "./site.ts";
 import {
   AppRegistration,
   Capacity,
-  FinishPasskeyLoginService,
-  FinishPasskeyRegistrationService,
+  CheckoutSession,
   CreditInfo,
   CreditTxnList,
+  FinishPasskeyLoginService,
+  FinishPasskeyRegistrationService,
   GrantResponse,
   GrantService,
   LoginResponse,
@@ -111,6 +112,7 @@ import {
   PasskeyCredentialOption,
   PasswordLoginRequest,
   PatchUserSetting,
+  PaymentOrder,
   PrepareLoginResponse,
   PreparePasskeyLoginResponse,
   RefreshTokenRequest,
@@ -1854,17 +1856,13 @@ export function sendReset(uid: string, req: ResetPasswordService): ThunkResponse
 
 export function getServerUpdateInfo(): ThunkResponse<UpdateInfo> {
   return async (dispatch, _getState) => {
-    return await dispatch(
-      send(`/admin/tool/update`, { method: "GET" }, { ...defaultOpts }),
-    );
+    return await dispatch(send(`/admin/tool/update`, { method: "GET" }, { ...defaultOpts }));
   };
 }
 
 export function applyServerUpdate(): ThunkResponse<UpdateInfo> {
   return async (dispatch, _getState) => {
-    return await dispatch(
-      send(`/admin/tool/update`, { method: "POST" }, { ...defaultOpts }),
-    );
+    return await dispatch(send(`/admin/tool/update`, { method: "POST" }, { ...defaultOpts }));
   };
 }
 
@@ -3081,6 +3079,34 @@ export function purchaseSku(sku: string): ThunkResponse<CreditInfo> {
       send(
         "/user/shop/purchase",
         { method: "POST", data: { sku } },
+        {
+          ...defaultOpts,
+        },
+      ),
+    );
+  };
+}
+
+export function checkoutSku(sku: string): ThunkResponse<CheckoutSession> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/user/shop/checkout",
+        { method: "POST", data: { sku } },
+        {
+          ...defaultOpts,
+        },
+      ),
+    );
+  };
+}
+
+export function getPaymentOrder(id: string): ThunkResponse<PaymentOrder> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        `/user/shop/order/${id}`,
+        { method: "GET" },
         {
           ...defaultOpts,
         },

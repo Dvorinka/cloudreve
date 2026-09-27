@@ -60,6 +60,9 @@ type OAuthGrant func(*sql.Selector)
 // Passkey is the predicate function for passkey builders.
 type Passkey func(*sql.Selector)
 
+// PaymentOrder is the predicate function for paymentorder builders.
+type PaymentOrder func(*sql.Selector)
+
 // Setting is the predicate function for setting builders.
 type Setting func(*sql.Selector)
 

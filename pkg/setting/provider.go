@@ -317,9 +317,22 @@ type (
 		// ShareScoreRate returns the fraction (0..1) of a paid share's
 		// points price the owner receives as income.
 		ShareScoreRate(ctx context.Context) float64
+		// Payment returns the cash-checkout (Stripe) configuration.
+		Payment(ctx context.Context) *PaymentSettings
 	}
 	UseFirstSiteUrlCtxKey = struct{}
 )
+
+// PaymentSettings carries the Stripe cash-checkout configuration. Enabled
+// requires a secret key; the webhook secret is required before webhook
+// fulfillment is accepted.
+type PaymentSettings struct {
+	Enabled        bool
+	SecretKey      string
+	WebhookSecret  string
+	PublishableKey string
+	Currency       string
+}
 
 // NewProvider creates a new setting provider.
 func NewProvider(root SettingStoreAdapter) Provider {
@@ -988,6 +1001,17 @@ func (s *settingProvider) ShopNavEnabled(ctx context.Context) bool {
 
 func (s *settingProvider) ShareScoreRate(ctx context.Context) float64 {
 	return s.getFloat64(ctx, "share_score_rate", 100) / 100
+}
+
+// Payment implements Provider.Payment.
+func (s *settingProvider) Payment(ctx context.Context) *PaymentSettings {
+	return &PaymentSettings{
+		Enabled:        s.getBoolean(ctx, "payment_stripe_enabled", false),
+		SecretKey:      s.getString(ctx, "payment_stripe_secret_key", ""),
+		WebhookSecret:  s.getString(ctx, "payment_stripe_webhook_secret", ""),
+		PublishableKey: s.getString(ctx, "payment_stripe_publishable_key", ""),
+		Currency:       s.getString(ctx, "payment_stripe_currency", "usd"),
+	}
 }
 
 func (s *settingProvider) AuthnEnabled(ctx context.Context) bool {

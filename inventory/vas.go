@@ -80,6 +80,21 @@ type (
 		// SharePurchaseByTicket resolves a resume ticket to its purchase row,
 		// scoped to the given share so tickets cannot cross shares.
 		SharePurchaseByTicket(ctx context.Context, shareID int, ticket string) (*ent.SharePurchase, error)
+		// CreatePaymentOrder records a pending cash checkout for a SKU.
+		CreatePaymentOrder(ctx context.Context, userID, skuID int, provider string, amount int64, currency string) (*ent.PaymentOrder, error)
+		// BindPaymentSession stores the provider checkout session id on an
+		// order. No-op if the order already carries a session.
+		BindPaymentSession(ctx context.Context, orderID int, sessionID string) error
+		// PaymentOrder returns one order by id.
+		PaymentOrder(ctx context.Context, id int) (*ent.PaymentOrder, error)
+		// PaymentOrderBySession resolves an order by provider session id.
+		PaymentOrderBySession(ctx context.Context, sessionID string) (*ent.PaymentOrder, error)
+		// ListPaymentOrders pages a user's orders newest-first.
+		ListPaymentOrders(ctx context.Context, userID, page, pageSize int) ([]*ent.PaymentOrder, int, error)
+		// FulfillPaymentOrder flips a pending order to paid and applies the
+		// SKU's grant in the same transaction. Returns false when the order
+		// was already settled — callers treat that as a successful no-op.
+		FulfillPaymentOrder(ctx context.Context, orderID int) (bool, error)
 	}
 
 	CreateGiftCodeParams struct {
@@ -445,24 +460,29 @@ func (c *vasClient) PurchaseSku(ctx context.Context, userID int, s *ent.Sku) err
 		return err
 	}
 
-	switch s.Type {
-	case sku.TypeStorage:
-		err = txVc.createGrant(ctx, userID, usergrant.TypeStorage, s.Amount, s.Duration, 0)
-	case sku.TypeGroup:
-		err = txVc.applyGroupGrant(ctx, userID, int(s.Amount), s.Duration)
-	case sku.TypeTraffic:
-		// Traffic packs are permanent additions to dl_traffic; duration
-		// does not apply. Unlimited balances stay unlimited.
-		err = txVc.client.User.Update().Where(user.ID(userID), user.DlTrafficGTE(0)).AddDlTraffic(s.Amount).Exec(ctx)
-	case sku.TypeStreamTraffic:
-		// Same permanence rules for the streaming/preview pool.
-		err = txVc.client.User.Update().Where(user.ID(userID), user.StreamTrafficGTE(0)).AddStreamTraffic(s.Amount).Exec(ctx)
-	}
-	if err != nil {
+	if err := txVc.applySkuGrant(ctx, userID, s); err != nil {
 		return Rollback(tx)
 	}
 
 	return Commit(tx)
+}
+
+// applySkuGrant applies a product's grant without collecting payment —
+// shared by the points-purchase and cash-order fulfillment paths. Traffic
+// packs are permanent additions and unlimited (-1) balances stay
+// unlimited; duration only applies to storage and group grants.
+func (c *vasClient) applySkuGrant(ctx context.Context, userID int, s *ent.Sku) error {
+	switch s.Type {
+	case sku.TypeStorage:
+		return c.createGrant(ctx, userID, usergrant.TypeStorage, s.Amount, s.Duration, 0)
+	case sku.TypeGroup:
+		return c.applyGroupGrant(ctx, userID, int(s.Amount), s.Duration)
+	case sku.TypeTraffic:
+		return c.client.User.Update().Where(user.ID(userID), user.DlTrafficGTE(0)).AddDlTraffic(s.Amount).Exec(ctx)
+	case sku.TypeStreamTraffic:
+		return c.client.User.Update().Where(user.ID(userID), user.StreamTrafficGTE(0)).AddStreamTraffic(s.Amount).Exec(ctx)
+	}
+	return nil
 }
 
 func (c *vasClient) PurchaseShare(ctx context.Context, s *ent.Share, buyerID int, scoreRate float64) (*ent.SharePurchase, error) {

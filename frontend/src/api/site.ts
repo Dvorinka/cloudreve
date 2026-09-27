@@ -58,6 +58,8 @@ export interface SiteConfig {
   app_promotion?: boolean;
   desktop_app_promotion?: boolean;
   shop_nav?: boolean;
+  payment_enabled?: boolean;
+  payment_currency?: string;
   thumbnail_width?: number;
   thumbnail_height?: number;
   custom_props?: CustomProps[];

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/sku"
 )
 
@@ -190,6 +191,21 @@ func (sc *SkuCreate) SetNillableWeight(i *int) *SkuCreate {
 		sc.SetWeight(*i)
 	}
 	return sc
+}
+
+// AddPaymentOrderIDs adds the "payment_orders" edge to the PaymentOrder entity by IDs.
+func (sc *SkuCreate) AddPaymentOrderIDs(ids ...int) *SkuCreate {
+	sc.mutation.AddPaymentOrderIDs(ids...)
+	return sc
+}
+
+// AddPaymentOrders adds the "payment_orders" edges to the PaymentOrder entity.
+func (sc *SkuCreate) AddPaymentOrders(p ...*PaymentOrder) *SkuCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return sc.AddPaymentOrderIDs(ids...)
 }
 
 // Mutation returns the SkuMutation object of the builder.
@@ -375,6 +391,22 @@ func (sc *SkuCreate) createSpec() (*Sku, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Weight(); ok {
 		_spec.SetField(sku.FieldWeight, field.TypeInt, value)
 		_node.Weight = value
+	}
+	if nodes := sc.mutation.PaymentOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   sku.PaymentOrdersTable,
+			Columns: []string{sku.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

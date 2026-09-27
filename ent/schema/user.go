@@ -109,6 +109,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("redeemed_codes", GiftCode.Type),
 		edge.To("grants", UserGrant.Type),
 		edge.To("share_purchases", SharePurchase.Type),
+		edge.To("payment_orders", PaymentOrder.Type),
 		edge.To("sso_bindings", SsoBinding.Type),
 	}
 }

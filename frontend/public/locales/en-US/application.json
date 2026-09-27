@@ -1202,12 +1202,7 @@
     "validDurationDays": "{{num}} days",
     "reportTarget": "Report target",
     "reportReason": "Reason",
-    "reportReasonOptions": [
-      "Copyright infringement",
-      "Harmful content",
-      "Spam",
-      "Other"
-    ],
+    "reportReasonOptions": ["Copyright infringement", "Harmful content", "Spam", "Other"],
     "reportDescription": "Additional description",
     "reportAbuseSuccess": "Report submitted."
   },
@@ -1224,7 +1219,10 @@
     "noProducts": "No products available",
     "buyWithPoints": "Buy for {{points}} pts",
     "pointsUnavailable": "Not purchasable with points",
-    "noProductsDescription": "When the site operator adds memberships or packs, they will show up here."
+    "noProductsDescription": "When the site operator adds memberships or packs, they will show up here.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "Announcement",

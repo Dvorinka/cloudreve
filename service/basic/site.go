@@ -110,6 +110,11 @@ type SiteConfig struct {
 	// omitempty: the default is visible, so an explicit false must serialize.
 	ShopNav bool `json:"shop_nav"`
 
+	// PaymentEnabled exposes whether cash checkout (Stripe) is configured.
+	// PaymentCurrency is the charge currency used for SKU cash prices.
+	PaymentEnabled  bool   `json:"payment_enabled,omitempty"`
+	PaymentCurrency string `json:"payment_currency,omitempty"`
+
 	//EmailActive          bool      `json:"emailActive"`
 	//QQLogin              bool      `json:"QQLogin"`
 	//ScoreEnabled         bool      `json:"score_enabled"`
@@ -262,6 +267,7 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 	customNavItems := settings.CustomNavItems(c)
 	customHTML := settings.CustomHTML(c)
 	shareDefaults := settings.ShareDefaults(c)
+	paymentCfg := settings.Payment(c)
 	taskNodes, allowSelect := taskNodesForUser(c, dep, u)
 	return &SiteConfig{
 		InstanceID:                 siteBasic.ID,
@@ -287,6 +293,8 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 		DownloadCDNRoutes:          settings.DownloadCDNRoutes(c),
 		DownloadCDNShuffle:         settings.DownloadCDNShuffle(c),
 		AbuseCaptcha:               settings.AbuseCaptchaEnabled(c),
+		PaymentEnabled:             paymentCfg.Enabled && paymentCfg.SecretKey != "",
+		PaymentCurrency:            paymentCfg.Currency,
 		UploadDedup:                settings.DBFS(c).DedupScope != "off",
 		TaskNodes:                  taskNodes,
 		AllowSelectNode:            allowSelect,

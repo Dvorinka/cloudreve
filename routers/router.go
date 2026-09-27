@@ -567,6 +567,11 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 		// 回调接口
 		callback := v4.Group("callback")
 		{
+			// Stripe payment webhook — signature-verified in the service
+			callback.POST(
+				"stripe",
+				controllers.StripeWebhook,
+			)
 			// 远程策略上传回调
 			callback.POST(
 				"remote/:sessionID/:key",
@@ -1707,6 +1712,19 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 						middleware.RequiredScopes(types.ScopeUserInfoWrite),
 						controllers.FromJSON[usersvc.PurchaseSkuService](usersvc.PurchaseSkuParamCtx{}),
 						controllers.UserPurchaseSku,
+					)
+					// 现金购买商品（托管收银台）
+					shop.POST("checkout",
+						middleware.RequiredScopes(types.ScopeUserInfoWrite),
+						middleware.RateLimitByIP("checkout", 20, time.Hour),
+						controllers.FromJSON[usersvc.CheckoutSessionService](usersvc.CheckoutSessionParamCtx{}),
+						controllers.UserCheckoutSession,
+					)
+					// 支付订单状态（触发兜底结算）
+					shop.GET("order/:id",
+						middleware.RequiredScopes(types.ScopeUserInfoRead),
+						controllers.FromUri[usersvc.PaymentOrderService](usersvc.PaymentOrderParamCtx{}),
+						controllers.UserPaymentOrder,
 					)
 				}
 			}

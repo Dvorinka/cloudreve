@@ -100,11 +100,13 @@ type UserEdges struct {
 	Grants []*UserGrant `json:"grants,omitempty"`
 	// SharePurchases holds the value of the share_purchases edge.
 	SharePurchases []*SharePurchase `json:"share_purchases,omitempty"`
+	// PaymentOrders holds the value of the payment_orders edge.
+	PaymentOrders []*PaymentOrder `json:"payment_orders,omitempty"`
 	// SSOBindings holds the value of the sso_bindings edge.
 	SSOBindings []*SsoBinding `json:"sso_bindings,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [15]bool
+	loadedTypes [16]bool
 }
 
 // GroupOrErr returns the Group value or an error if the edge
@@ -237,10 +239,19 @@ func (e UserEdges) SharePurchasesOrErr() ([]*SharePurchase, error) {
 	return nil, &NotLoadedError{edge: "share_purchases"}
 }
 
+// PaymentOrdersOrErr returns the PaymentOrders value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PaymentOrdersOrErr() ([]*PaymentOrder, error) {
+	if e.loadedTypes[14] {
+		return e.PaymentOrders, nil
+	}
+	return nil, &NotLoadedError{edge: "payment_orders"}
+}
+
 // SSOBindingsOrErr returns the SSOBindings value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) SSOBindingsOrErr() ([]*SsoBinding, error) {
-	if e.loadedTypes[14] {
+	if e.loadedTypes[15] {
 		return e.SSOBindings, nil
 	}
 	return nil, &NotLoadedError{edge: "sso_bindings"}
@@ -503,6 +514,11 @@ func (u *User) QuerySharePurchases() *SharePurchaseQuery {
 	return NewUserClient(u.config).QuerySharePurchases(u)
 }
 
+// QueryPaymentOrders queries the "payment_orders" edge of the User entity.
+func (u *User) QueryPaymentOrders() *PaymentOrderQuery {
+	return NewUserClient(u.config).QueryPaymentOrders(u)
+}
+
 // QuerySSOBindings queries the "sso_bindings" edge of the User entity.
 func (u *User) QuerySSOBindings() *SsoBindingQuery {
 	return NewUserClient(u.config).QuerySSOBindings(u)
@@ -688,10 +704,16 @@ func (e *User) SetSharePurchases(v []*SharePurchase) {
 	e.Edges.loadedTypes[13] = true
 }
 
+// SetPaymentOrders manually set the edge as loaded state.
+func (e *User) SetPaymentOrders(v []*PaymentOrder) {
+	e.Edges.PaymentOrders = v
+	e.Edges.loadedTypes[14] = true
+}
+
 // SetSSOBindings manually set the edge as loaded state.
 func (e *User) SetSSOBindings(v []*SsoBinding) {
 	e.Edges.SSOBindings = v
-	e.Edges.loadedTypes[14] = true
+	e.Edges.loadedTypes[15] = true
 }
 
 // Users is a parsable slice of User.

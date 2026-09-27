@@ -56,6 +56,76 @@ const VAS = () => {
 
         <SettingSection>
           <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
+            {t("settings.paymentStripe")}
+          </Typography>
+          <SettingSectionContent>
+            <SettingForm lgWidth={5}>
+              <FormControl fullWidth>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isTrueVal(values.payment_stripe_enabled ?? "0")}
+                      onChange={(e) => setSettings({ payment_stripe_enabled: e.target.checked ? "1" : "0" })}
+                    />
+                  }
+                  label={t("settings.paymentStripeEnabled")}
+                />
+                <NoMarginHelperText>{t("settings.paymentStripeEnabledDes")}</NoMarginHelperText>
+              </FormControl>
+            </SettingForm>
+            {isTrueVal(values.payment_stripe_enabled ?? "0") && (
+              <>
+                <SettingForm title={t("settings.paymentStripePublishableKey")} lgWidth={5}>
+                  <FormControl fullWidth>
+                    <DenseFilledTextField
+                      value={values.payment_stripe_publishable_key ?? ""}
+                      onChange={(e) => setSettings({ payment_stripe_publishable_key: e.target.value })}
+                    />
+                    <NoMarginHelperText>{t("settings.paymentStripePublishableKeyDes")}</NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+                <SettingForm title={t("settings.paymentStripeSecretKey")} lgWidth={5}>
+                  <FormControl fullWidth>
+                    <DenseFilledTextField
+                      type="password"
+                      value={values.payment_stripe_secret_key ?? ""}
+                      placeholder={t("settings.secretKeepHint")}
+                      onChange={(e) => setSettings({ payment_stripe_secret_key: e.target.value })}
+                    />
+                    <NoMarginHelperText>{t("settings.paymentStripeSecretKeyDes")}</NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+                <SettingForm title={t("settings.paymentStripeWebhookSecret")} lgWidth={5}>
+                  <FormControl fullWidth>
+                    <DenseFilledTextField
+                      type="password"
+                      value={values.payment_stripe_webhook_secret ?? ""}
+                      placeholder={t("settings.secretKeepHint")}
+                      onChange={(e) => setSettings({ payment_stripe_webhook_secret: e.target.value })}
+                    />
+                    <NoMarginHelperText>
+                      {t("settings.paymentStripeWebhookSecretDes", {
+                        url: `${window.location.origin}/api/v4/callback/stripe`,
+                      })}
+                    </NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+                <SettingForm title={t("settings.paymentStripeCurrency")} lgWidth={5}>
+                  <FormControl fullWidth>
+                    <DenseFilledTextField
+                      value={values.payment_stripe_currency ?? "usd"}
+                      onChange={(e) => setSettings({ payment_stripe_currency: e.target.value.trim().toLowerCase() })}
+                    />
+                    <NoMarginHelperText>{t("settings.paymentStripeCurrencyDes")}</NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+              </>
+            )}
+          </SettingSectionContent>
+        </SettingSection>
+
+        <SettingSection>
+          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
             {t("settings.storageProductSettings")}
           </Typography>
           <SettingSectionContent>

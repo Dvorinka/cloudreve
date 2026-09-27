@@ -1298,12 +1298,7 @@
     "report": "Missbrauch melden",
     "reportTarget": "Meldeobjekt",
     "reportReason": "Grund",
-    "reportReasonOptions": [
-      "Urheberrechtsverletzung",
-      "Schädlicher Inhalt",
-      "Spam",
-      "Andere"
-    ],
+    "reportReasonOptions": ["Urheberrechtsverletzung", "Schädlicher Inhalt", "Spam", "Andere"],
     "reportDescription": "Zusätzliche Beschreibung",
     "reportAbuseSuccess": "Meldung eingereicht",
     "migrateStoragePolicy": "Speicherrichtlinie übertragen",
@@ -1414,7 +1409,10 @@
     "noProducts": "Keine Produkte verfügbar",
     "buyWithPoints": "Für {{points}} Punkte kaufen",
     "pointsUnavailable": "Nicht mit Punkten käuflich",
-    "noProductsDescription": "Sobald der Betreiber Mitgliedschaften oder Pakete hinzufügt, erscheinen sie hier."
+    "noProductsDescription": "Sobald der Betreiber Mitgliedschaften oder Pakete hinzufügt, erscheinen sie hier.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "Ankündigung",

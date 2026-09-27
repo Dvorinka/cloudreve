@@ -33,6 +33,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthclient"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/setting"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/sharepurchase"
@@ -87,6 +88,8 @@ type Client struct {
 	OAuthGrant *OAuthGrantClient
 	// Passkey is the client for interacting with the Passkey builders.
 	Passkey *PasskeyClient
+	// PaymentOrder is the client for interacting with the PaymentOrder builders.
+	PaymentOrder *PaymentOrderClient
 	// Setting is the client for interacting with the Setting builders.
 	Setting *SettingClient
 	// Share is the client for interacting with the Share builders.
@@ -134,6 +137,7 @@ func (c *Client) init() {
 	c.OAuthClient = NewOAuthClientClient(c.config)
 	c.OAuthGrant = NewOAuthGrantClient(c.config)
 	c.Passkey = NewPasskeyClient(c.config)
+	c.PaymentOrder = NewPaymentOrderClient(c.config)
 	c.Setting = NewSettingClient(c.config)
 	c.Share = NewShareClient(c.config)
 	c.SharePurchase = NewSharePurchaseClient(c.config)
@@ -253,6 +257,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OAuthClient:     NewOAuthClientClient(cfg),
 		OAuthGrant:      NewOAuthGrantClient(cfg),
 		Passkey:         NewPasskeyClient(cfg),
+		PaymentOrder:    NewPaymentOrderClient(cfg),
 		Setting:         NewSettingClient(cfg),
 		Share:           NewShareClient(cfg),
 		SharePurchase:   NewSharePurchaseClient(cfg),
@@ -299,6 +304,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OAuthClient:     NewOAuthClientClient(cfg),
 		OAuthGrant:      NewOAuthGrantClient(cfg),
 		Passkey:         NewPasskeyClient(cfg),
+		PaymentOrder:    NewPaymentOrderClient(cfg),
 		Setting:         NewSettingClient(cfg),
 		Share:           NewShareClient(cfg),
 		SharePurchase:   NewSharePurchaseClient(cfg),
@@ -340,8 +346,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.AbuseReport, c.AclEntry, c.ActivityEvent, c.CreditTxn, c.DavAccount,
 		c.DirectLink, c.Entity, c.File, c.FsEvent, c.GiftCode, c.Group,
 		c.GroupMembership, c.InvitationCode, c.Metadata, c.Node, c.OAuthClient,
-		c.OAuthGrant, c.Passkey, c.Setting, c.Share, c.SharePurchase, c.Sku,
-		c.SsoBinding, c.StoragePolicy, c.Task, c.User, c.UserGrant,
+		c.OAuthGrant, c.Passkey, c.PaymentOrder, c.Setting, c.Share, c.SharePurchase,
+		c.Sku, c.SsoBinding, c.StoragePolicy, c.Task, c.User, c.UserGrant,
 	} {
 		n.Use(hooks...)
 	}
@@ -354,8 +360,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.AbuseReport, c.AclEntry, c.ActivityEvent, c.CreditTxn, c.DavAccount,
 		c.DirectLink, c.Entity, c.File, c.FsEvent, c.GiftCode, c.Group,
 		c.GroupMembership, c.InvitationCode, c.Metadata, c.Node, c.OAuthClient,
-		c.OAuthGrant, c.Passkey, c.Setting, c.Share, c.SharePurchase, c.Sku,
-		c.SsoBinding, c.StoragePolicy, c.Task, c.User, c.UserGrant,
+		c.OAuthGrant, c.Passkey, c.PaymentOrder, c.Setting, c.Share, c.SharePurchase,
+		c.Sku, c.SsoBinding, c.StoragePolicy, c.Task, c.User, c.UserGrant,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -400,6 +406,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.OAuthGrant.mutate(ctx, m)
 	case *PasskeyMutation:
 		return c.Passkey.mutate(ctx, m)
+	case *PaymentOrderMutation:
+		return c.PaymentOrder.mutate(ctx, m)
 	case *SettingMutation:
 		return c.Setting.mutate(ctx, m)
 	case *ShareMutation:
@@ -3348,6 +3356,173 @@ func (c *PasskeyClient) mutate(ctx context.Context, m *PasskeyMutation) (Value, 
 	}
 }
 
+// PaymentOrderClient is a client for the PaymentOrder schema.
+type PaymentOrderClient struct {
+	config
+}
+
+// NewPaymentOrderClient returns a client for the PaymentOrder from the given config.
+func NewPaymentOrderClient(c config) *PaymentOrderClient {
+	return &PaymentOrderClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `paymentorder.Hooks(f(g(h())))`.
+func (c *PaymentOrderClient) Use(hooks ...Hook) {
+	c.hooks.PaymentOrder = append(c.hooks.PaymentOrder, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `paymentorder.Intercept(f(g(h())))`.
+func (c *PaymentOrderClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PaymentOrder = append(c.inters.PaymentOrder, interceptors...)
+}
+
+// Create returns a builder for creating a PaymentOrder entity.
+func (c *PaymentOrderClient) Create() *PaymentOrderCreate {
+	mutation := newPaymentOrderMutation(c.config, OpCreate)
+	return &PaymentOrderCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PaymentOrder entities.
+func (c *PaymentOrderClient) CreateBulk(builders ...*PaymentOrderCreate) *PaymentOrderCreateBulk {
+	return &PaymentOrderCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PaymentOrderClient) MapCreateBulk(slice any, setFunc func(*PaymentOrderCreate, int)) *PaymentOrderCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PaymentOrderCreateBulk{err: fmt.Errorf("calling to PaymentOrderClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PaymentOrderCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PaymentOrderCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PaymentOrder.
+func (c *PaymentOrderClient) Update() *PaymentOrderUpdate {
+	mutation := newPaymentOrderMutation(c.config, OpUpdate)
+	return &PaymentOrderUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PaymentOrderClient) UpdateOne(po *PaymentOrder) *PaymentOrderUpdateOne {
+	mutation := newPaymentOrderMutation(c.config, OpUpdateOne, withPaymentOrder(po))
+	return &PaymentOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PaymentOrderClient) UpdateOneID(id int) *PaymentOrderUpdateOne {
+	mutation := newPaymentOrderMutation(c.config, OpUpdateOne, withPaymentOrderID(id))
+	return &PaymentOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PaymentOrder.
+func (c *PaymentOrderClient) Delete() *PaymentOrderDelete {
+	mutation := newPaymentOrderMutation(c.config, OpDelete)
+	return &PaymentOrderDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PaymentOrderClient) DeleteOne(po *PaymentOrder) *PaymentOrderDeleteOne {
+	return c.DeleteOneID(po.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PaymentOrderClient) DeleteOneID(id int) *PaymentOrderDeleteOne {
+	builder := c.Delete().Where(paymentorder.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PaymentOrderDeleteOne{builder}
+}
+
+// Query returns a query builder for PaymentOrder.
+func (c *PaymentOrderClient) Query() *PaymentOrderQuery {
+	return &PaymentOrderQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePaymentOrder},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PaymentOrder entity by its id.
+func (c *PaymentOrderClient) Get(ctx context.Context, id int) (*PaymentOrder, error) {
+	return c.Query().Where(paymentorder.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PaymentOrderClient) GetX(ctx context.Context, id int) *PaymentOrder {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a PaymentOrder.
+func (c *PaymentOrderClient) QueryUser(po *PaymentOrder) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(paymentorder.Table, paymentorder.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, paymentorder.UserTable, paymentorder.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySku queries the sku edge of a PaymentOrder.
+func (c *PaymentOrderClient) QuerySku(po *PaymentOrder) *SkuQuery {
+	query := (&SkuClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(paymentorder.Table, paymentorder.FieldID, id),
+			sqlgraph.To(sku.Table, sku.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, paymentorder.SkuTable, paymentorder.SkuColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PaymentOrderClient) Hooks() []Hook {
+	hooks := c.hooks.PaymentOrder
+	return append(hooks[:len(hooks):len(hooks)], paymentorder.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *PaymentOrderClient) Interceptors() []Interceptor {
+	inters := c.inters.PaymentOrder
+	return append(inters[:len(inters):len(inters)], paymentorder.Interceptors[:]...)
+}
+
+func (c *PaymentOrderClient) mutate(ctx context.Context, m *PaymentOrderMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PaymentOrderCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PaymentOrderUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PaymentOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PaymentOrderDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PaymentOrder mutation op: %q", m.Op())
+	}
+}
+
 // SettingClient is a client for the Setting schema.
 type SettingClient struct {
 	config
@@ -3955,6 +4130,22 @@ func (c *SkuClient) GetX(ctx context.Context, id int) *Sku {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryPaymentOrders queries the payment_orders edge of a Sku.
+func (c *SkuClient) QueryPaymentOrders(s *Sku) *PaymentOrderQuery {
+	query := (&PaymentOrderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sku.Table, sku.FieldID, id),
+			sqlgraph.To(paymentorder.Table, paymentorder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sku.PaymentOrdersTable, sku.PaymentOrdersColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -4833,6 +5024,22 @@ func (c *UserClient) QuerySharePurchases(u *User) *SharePurchaseQuery {
 	return query
 }
 
+// QueryPaymentOrders queries the payment_orders edge of a User.
+func (c *UserClient) QueryPaymentOrders(u *User) *PaymentOrderQuery {
+	query := (&PaymentOrderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(paymentorder.Table, paymentorder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PaymentOrdersTable, user.PaymentOrdersColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QuerySSOBindings queries the sso_bindings edge of a User.
 func (c *UserClient) QuerySSOBindings(u *User) *SsoBindingQuery {
 	query := (&SsoBindingClient{config: c.config}).Query()
@@ -5032,14 +5239,15 @@ type (
 	hooks struct {
 		AbuseReport, AclEntry, ActivityEvent, CreditTxn, DavAccount, DirectLink, Entity,
 		File, FsEvent, GiftCode, Group, GroupMembership, InvitationCode, Metadata,
-		Node, OAuthClient, OAuthGrant, Passkey, Setting, Share, SharePurchase, Sku,
-		SsoBinding, StoragePolicy, Task, User, UserGrant []ent.Hook
+		Node, OAuthClient, OAuthGrant, Passkey, PaymentOrder, Setting, Share,
+		SharePurchase, Sku, SsoBinding, StoragePolicy, Task, User, UserGrant []ent.Hook
 	}
 	inters struct {
 		AbuseReport, AclEntry, ActivityEvent, CreditTxn, DavAccount, DirectLink, Entity,
 		File, FsEvent, GiftCode, Group, GroupMembership, InvitationCode, Metadata,
-		Node, OAuthClient, OAuthGrant, Passkey, Setting, Share, SharePurchase, Sku,
-		SsoBinding, StoragePolicy, Task, User, UserGrant []ent.Interceptor
+		Node, OAuthClient, OAuthGrant, Passkey, PaymentOrder, Setting, Share,
+		SharePurchase, Sku, SsoBinding, StoragePolicy, Task, User,
+		UserGrant []ent.Interceptor
 	}
 )
 

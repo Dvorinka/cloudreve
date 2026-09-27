@@ -22,6 +22,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent/groupmembership"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/paymentorder"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/sharepurchase"
@@ -634,6 +635,21 @@ func (uu *UserUpdate) AddSharePurchases(s ...*SharePurchase) *UserUpdate {
 	return uu.AddSharePurchaseIDs(ids...)
 }
 
+// AddPaymentOrderIDs adds the "payment_orders" edge to the PaymentOrder entity by IDs.
+func (uu *UserUpdate) AddPaymentOrderIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddPaymentOrderIDs(ids...)
+	return uu
+}
+
+// AddPaymentOrders adds the "payment_orders" edges to the PaymentOrder entity.
+func (uu *UserUpdate) AddPaymentOrders(p ...*PaymentOrder) *UserUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPaymentOrderIDs(ids...)
+}
+
 // AddSSOBindingIDs adds the "sso_bindings" edge to the SsoBinding entity by IDs.
 func (uu *UserUpdate) AddSSOBindingIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddSSOBindingIDs(ids...)
@@ -931,6 +947,27 @@ func (uu *UserUpdate) RemoveSharePurchases(s ...*SharePurchase) *UserUpdate {
 		ids[i] = s[i].ID
 	}
 	return uu.RemoveSharePurchaseIDs(ids...)
+}
+
+// ClearPaymentOrders clears all "payment_orders" edges to the PaymentOrder entity.
+func (uu *UserUpdate) ClearPaymentOrders() *UserUpdate {
+	uu.mutation.ClearPaymentOrders()
+	return uu
+}
+
+// RemovePaymentOrderIDs removes the "payment_orders" edge to PaymentOrder entities by IDs.
+func (uu *UserUpdate) RemovePaymentOrderIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemovePaymentOrderIDs(ids...)
+	return uu
+}
+
+// RemovePaymentOrders removes "payment_orders" edges to PaymentOrder entities.
+func (uu *UserUpdate) RemovePaymentOrders(p ...*PaymentOrder) *UserUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePaymentOrderIDs(ids...)
 }
 
 // ClearSSOBindings clears all "sso_bindings" edges to the SsoBinding entity.
@@ -1766,6 +1803,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPaymentOrdersIDs(); len(nodes) > 0 && !uu.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PaymentOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if uu.mutation.SSOBindingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -2420,6 +2502,21 @@ func (uuo *UserUpdateOne) AddSharePurchases(s ...*SharePurchase) *UserUpdateOne 
 	return uuo.AddSharePurchaseIDs(ids...)
 }
 
+// AddPaymentOrderIDs adds the "payment_orders" edge to the PaymentOrder entity by IDs.
+func (uuo *UserUpdateOne) AddPaymentOrderIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddPaymentOrderIDs(ids...)
+	return uuo
+}
+
+// AddPaymentOrders adds the "payment_orders" edges to the PaymentOrder entity.
+func (uuo *UserUpdateOne) AddPaymentOrders(p ...*PaymentOrder) *UserUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPaymentOrderIDs(ids...)
+}
+
 // AddSSOBindingIDs adds the "sso_bindings" edge to the SsoBinding entity by IDs.
 func (uuo *UserUpdateOne) AddSSOBindingIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddSSOBindingIDs(ids...)
@@ -2717,6 +2814,27 @@ func (uuo *UserUpdateOne) RemoveSharePurchases(s ...*SharePurchase) *UserUpdateO
 		ids[i] = s[i].ID
 	}
 	return uuo.RemoveSharePurchaseIDs(ids...)
+}
+
+// ClearPaymentOrders clears all "payment_orders" edges to the PaymentOrder entity.
+func (uuo *UserUpdateOne) ClearPaymentOrders() *UserUpdateOne {
+	uuo.mutation.ClearPaymentOrders()
+	return uuo
+}
+
+// RemovePaymentOrderIDs removes the "payment_orders" edge to PaymentOrder entities by IDs.
+func (uuo *UserUpdateOne) RemovePaymentOrderIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemovePaymentOrderIDs(ids...)
+	return uuo
+}
+
+// RemovePaymentOrders removes "payment_orders" edges to PaymentOrder entities.
+func (uuo *UserUpdateOne) RemovePaymentOrders(p ...*PaymentOrder) *UserUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePaymentOrderIDs(ids...)
 }
 
 // ClearSSOBindings clears all "sso_bindings" edges to the SsoBinding entity.
@@ -3575,6 +3693,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(sharepurchase.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPaymentOrdersIDs(); len(nodes) > 0 && !uuo.mutation.PaymentOrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PaymentOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentOrdersTable,
+			Columns: []string{user.PaymentOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

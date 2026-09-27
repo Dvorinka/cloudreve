@@ -1303,12 +1303,7 @@
     "report": "Сообщить о злоупотреблении",
     "reportTarget": "Объект жалобы",
     "reportReason": "Причина",
-    "reportReasonOptions": [
-      "Нарушение авторских прав",
-      "Вредоносный контент",
-      "Спам",
-      "Другое"
-    ],
+    "reportReasonOptions": ["Нарушение авторских прав", "Вредоносный контент", "Спам", "Другое"],
     "reportDescription": "Дополнительное описание",
     "reportAbuseSuccess": "Жалоба подана",
     "migrateStoragePolicy": "Перенести политику хранения",
@@ -1419,7 +1414,10 @@
     "noProducts": "Нет доступных товаров",
     "buyWithPoints": "Купить за {{points}} баллов",
     "pointsUnavailable": "Недоступно для покупки за баллы",
-    "noProductsDescription": "Когда администратор добавит подписки или пакеты, они появятся здесь."
+    "noProductsDescription": "Когда администратор добавит подписки или пакеты, они появятся здесь.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "Объявление",

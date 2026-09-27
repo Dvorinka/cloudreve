@@ -1298,12 +1298,7 @@
     "report": "Reportar abuso",
     "reportTarget": "Objeto del reporte",
     "reportReason": "Razón",
-    "reportReasonOptions": [
-      "Infracción de derechos de autor",
-      "Contenido dañino",
-      "Información basura",
-      "Otro"
-    ],
+    "reportReasonOptions": ["Infracción de derechos de autor", "Contenido dañino", "Información basura", "Otro"],
     "reportDescription": "Descripción adicional",
     "reportAbuseSuccess": "Reporte enviado",
     "migrateStoragePolicy": "Transferir política de almacenamiento",
@@ -1414,7 +1409,10 @@
     "noProducts": "No hay productos disponibles",
     "buyWithPoints": "Comprar por {{points}} pts",
     "pointsUnavailable": "No se puede comprar con puntos",
-    "noProductsDescription": "Cuando el operador añada membresías o paquetes, aparecerán aquí."
+    "noProductsDescription": "Cuando el operador añada membresías o paquetes, aparecerán aquí.",
+    "buyWithCard": "Pay {{price}}",
+    "paymentSuccess": "\"{{name}}\" activated",
+    "paymentPending": "Payment is being processed; your purchase will appear shortly"
   },
   "announcement": {
     "title": "Anuncio",

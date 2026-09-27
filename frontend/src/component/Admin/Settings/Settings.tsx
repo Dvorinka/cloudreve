@@ -310,7 +310,17 @@ const Settings = () => {
                 </SettingsWrapper>
               )}
               {tab === SettingsPageTab.VAS && (
-                <SettingsWrapper settings={["share_score_rate", "shop_nav"]}>
+                <SettingsWrapper
+                  settings={[
+                    "share_score_rate",
+                    "shop_nav",
+                    "payment_stripe_enabled",
+                    "payment_stripe_publishable_key",
+                    "payment_stripe_secret_key",
+                    "payment_stripe_webhook_secret",
+                    "payment_stripe_currency",
+                  ]}
+                >
                   <VAS />
                 </SettingsWrapper>
               )}
