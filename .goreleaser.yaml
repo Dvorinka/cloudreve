@@ -73,7 +73,7 @@ changelog:
       - "^test:"
 
 release:
-  draft: true
+  draft: false
   prerelease: auto
   target_commitish: "{{ .Commit }}"
   name_template: "{{.Version}}"
