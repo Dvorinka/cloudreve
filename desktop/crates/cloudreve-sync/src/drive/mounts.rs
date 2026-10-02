@@ -1138,6 +1138,7 @@ mod tests {
             user_id: "user".to_string(),
             sync_mode: DriveSyncMode::Full,
             sync_root_id: None,
+            package_identity_registered: false,
             ignore_patterns: vec![],
             extra: HashMap::new(),
         };
@@ -1195,6 +1196,7 @@ mod tests {
             user_id: "u".to_string(),
             sync_mode: mode,
             sync_root_id: None,
+            package_identity_registered: false,
             ignore_patterns: vec![],
             extra: HashMap::new(),
         }

@@ -168,6 +168,7 @@ pub async fn add_drive(
         user_id: config.user_id,
         sync_mode,
         sync_root_id: None,
+        package_identity_registered: false,
         ignore_patterns: Vec::new(),
         extra: Default::default(),
     };
