@@ -25,6 +25,11 @@ pub struct DriveManager {
     pub(super) command_rx: Arc<Mutex<Option<mpsc::UnboundedReceiver<ManagerCommand>>>>,
     pub(super) processor_handle: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
     pub(super) event_broadcaster: Arc<EventBroadcaster>,
+    /// Serializes config persistence against drive insertion. Mounts send
+    /// `PersistConfig` from their startup task, which can run before
+    /// `add_drive` has inserted them into `drives`; without this guard the
+    /// persist would serialize a partial map and clobber drives.json.
+    persist_lock: Mutex<()>,
 }
 
 impl DriveManager {
@@ -48,6 +53,7 @@ impl DriveManager {
             command_rx: Arc::new(Mutex::new(Some(command_rx))),
             processor_handle: Arc::new(Mutex::new(None)),
             event_broadcaster: event_broadcaster,
+            persist_lock: Mutex::new(()),
         })
     }
 
@@ -102,6 +108,14 @@ impl DriveManager {
 
         tracing::info!(target: "drive", count = count, "Loaded drive(s) from config");
 
+        // Mounts mutate their config during startup (credential refresh,
+        // package-identity repair) and request persistence asynchronously;
+        // write the final state once every drive is inserted so none of
+        // those updates are lost to a mid-load persist.
+        if let Err(e) = self.persist().await {
+            tracing::warn!(target: "drive", error = %e, "Failed to persist config after load");
+        }
+
         // Remove inventory (including lingering conflicts) for drives that are no
         // longer present in the configuration. This prevents stale metadata from
         // accumulating when a drive is deleted externally or the config is reset.
@@ -152,6 +166,7 @@ impl DriveManager {
     /// Persist drive configurations to disk
     pub async fn persist(&self) -> Result<()> {
         let config_file = self.get_config_file();
+        let _persist_guard = self.persist_lock.lock().await;
         let write_guard = self.drives.write().await;
 
         tracing::debug!(target: "drive", path = %config_file.display(), count = write_guard.len(), "Persisting drive configurations");
@@ -212,7 +227,11 @@ impl DriveManager {
         }
 
         // Create and start the mount before acquiring the write lock
-        // to avoid holding the lock during potentially long-running operations
+        // to avoid holding the lock during potentially long-running operations.
+        // Hold the persist guard from here so a PersistConfig fired by the
+        // mount's startup task can't serialize the drives map before this
+        // mount has been inserted.
+        let _persist_guard = self.persist_lock.lock().await;
         let mut mount = Mount::new(
             config.clone(),
             self.inventory.clone(),

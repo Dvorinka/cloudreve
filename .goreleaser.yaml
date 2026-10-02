@@ -6,7 +6,7 @@ before:
   hooks:
     - go mod tidy
     - chmod +x ./.build/build-assets.sh
-    - ./.build/build-assets.sh {{.Tag}}
+    - ./.build/build-assets.sh {{.Version}}
 
 builds:
   - env:
@@ -16,7 +16,7 @@ builds:
 
     ldflags:
       - -s -w
-      - -X 'github.com/cloudreve/Cloudreve/v4/application/constants.BackendVersion={{.Tag}}' -X 'github.com/cloudreve/Cloudreve/v4/application/constants.LastCommit={{.ShortCommit}}'
+      - -X 'github.com/cloudreve/Cloudreve/v4/application/constants.BackendVersion={{.Version}}' -X 'github.com/cloudreve/Cloudreve/v4/application/constants.LastCommit={{.ShortCommit}}'
 
     goos:
       - linux

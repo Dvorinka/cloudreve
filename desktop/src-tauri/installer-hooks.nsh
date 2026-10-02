@@ -29,6 +29,13 @@
   ; and installs the sparse package - all without the exe. The native
   ; --install-identity call stays as backstop. Both are best-effort; the app
   ; also retries at startup.
+  ;
+  ; Elevation note: when this hook runs elevated (all-users install or an
+  ; updater launched the installer as admin), a per-user package add either
+  ; fails with 0x80070005 or produces a registration whose sync roots never
+  ; receive the Explorer verb binding. Both paths below therefore trust the
+  ; cert (machine store, needs elevation) but defer the package add to the
+  ; app's next unelevated launch when elevated.
   nsExec::ExecToStack 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\register-identity.ps1" -InstallDir "$INSTDIR"'
   Pop $0
   Pop $1

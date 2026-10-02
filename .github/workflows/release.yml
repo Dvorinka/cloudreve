@@ -2,7 +2,7 @@ name: Release
 
 # One `v*` tag produces ONE GitHub release containing every platform:
 #   - server binaries + archives + checksums (GoReleaser) + GHCR docker images
-#   - desktop bundles: Linux .deb/.AppImage, Windows NSIS, macOS .dmg/.app.tar.gz
+#   - desktop bundles: Linux .deb/.AppImage, Windows NSIS .exe, macOS .dmg/.app.tar.gz
 #   - Android release APK + AAB (signed with ANDROID_KEYSTORE_* secrets when set)
 # The desktop-* / android-v* tags still exist for platform-only releases.
 on:
@@ -72,6 +72,40 @@ jobs:
         working-directory: desktop/ui
         run: yarn install --frozen-lockfile
 
+      # Build + sign the sparse identity package that gives the NSIS-installed
+      # app package identity (Explorer context menu, packaged COM) without
+      # Developer Mode. The msix lands in package/ next to the committed
+      # cloudreve-identity.cer and the NSIS hook (installer-hooks.nsh) files
+      # them into $INSTDIR when present. Same step as desktop-release.yml.
+      - name: Build signed sparse identity package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          SPARSE_SIGNING_PFX_BASE64: ${{ secrets.SPARSE_SIGNING_PFX_BASE64 }}
+          SPARSE_SIGNING_PFX_PASSWORD: ${{ secrets.SPARSE_SIGNING_PFX_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ver = (Select-String -Path desktop/src-tauri/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          if ($ver.Split('.').Count -eq 3) { $ver = "$ver.0" }
+
+          $stage = New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\sparse-pkg"
+          $manifest = Get-Content desktop/package/AppxManifest.sparse.xml -Raw
+          $manifest = $manifest -replace '__VERSION__', $ver -replace '__ARCH__', 'x64'
+          [IO.File]::WriteAllText("$stage\AppxManifest.xml", $manifest, (New-Object System.Text.UTF8Encoding $true))
+          Copy-Item desktop/package/Images "$stage\Images" -Recurse
+
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+          & $makeappx.FullName pack /o /d $stage /nv /p "$env:RUNNER_TEMP\Cloudreve-Identity.msix"
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
+
+          $pfx = "$env:RUNNER_TEMP\sparse-sign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SPARSE_SIGNING_PFX_BASE64))
+          & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:SPARSE_SIGNING_PFX_PASSWORD "$env:RUNNER_TEMP\Cloudreve-Identity.msix"
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+
+          Copy-Item "$env:RUNNER_TEMP\Cloudreve-Identity.msix" desktop/package/Cloudreve-Identity.msix -Force
+
       - name: Install tauri-cli
         run: cargo install tauri-cli --version "^2" --locked
 
@@ -95,8 +129,8 @@ jobs:
           done
           gh release view "$TAG" >/dev/null
           FILES=$(find desktop/target/release/bundle -type f \
-            \( -name '*.deb' -o -name '*.AppImage' -o -name '*.AppImage.tar.gz' \
-               -o -name '*.msi' -o -name '*.exe' -o -name '*.dmg' \
+            \( -name '*.deb' -o -name '*.AppImage' \
+               -o -name '*.exe' -o -name '*.dmg' \
                -o -name '*.app.tar.gz' -o -name '*.sig' \))
           [ -n "$FILES" ]
           echo "$FILES" | while read -r f; do

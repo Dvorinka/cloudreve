@@ -48,8 +48,9 @@ const PACKAGE_APP_ID: &str = "Cloudreve.Sync";
 #[cfg(windows)]
 const NO_RELAUNCH_ARG: &str = "--no-packaged-relaunch";
 
-/// Handle `--install-identity` / `--install-identity-cert` before the GUI
-/// starts. Returns the process exit code when an identity flag was present.
+/// Handle `--install-identity` / `--install-identity-cert` /
+/// `--relaunch-delayed` before the GUI starts. Returns the process exit code
+/// when an identity flag was present.
 #[cfg(windows)]
 pub fn run_identity_cli() -> Option<i32> {
     let args: Vec<String> = std::env::args().collect();
@@ -70,6 +71,22 @@ pub fn run_identity_cli() -> Option<i32> {
                 1
             }
         });
+    }
+    // Detached helper spawned by ensure_package_identity right after a fresh
+    // registration: wait for the parent (which holds the single-instance
+    // lock) to exit, then activate the packaged instance. If activation
+    // fails, fall back to a plain launch so the user is never left without
+    // a running app.
+    if args.iter().any(|a| a == "--relaunch-delayed") {
+        std::thread::sleep(std::time::Duration::from_secs(3));
+        if let Err(e) = activate_package_self() {
+            eprintln!("delayed packaged relaunch failed: {e:#}");
+            if let Ok(exe) = std::env::current_exe() {
+                let _ = std::process::Command::new(exe).arg(NO_RELAUNCH_ARG).spawn();
+            }
+            return Some(1);
+        }
+        return Some(0);
     }
     None
 }
@@ -202,27 +219,54 @@ fn activate_package_self() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Register the package when the app runs without package identity.
+/// Register the package when the app runs without package identity, then
+/// relaunch packaged so the registration takes effect in the same session.
 /// Best-effort, silent: never elevates, never fails startup. Install-time
-/// registration (with UAC for the cert) is done by `--install-identity`.
+/// cert trust (with UAC) is done by `--install-identity`.
 #[cfg(windows)]
 pub fn ensure_package_identity() {
-    if let Err(e) = try_ensure_package_identity() {
-        tracing::warn!(target: "main", "Package registration failed: {e:#}. \
-            Explorer context menu items require package identity; re-run the \
-            installer, or run cloudreve-desktop.exe --install-identity");
+    // A package-activated child carries NO_RELAUNCH_ARG; if it somehow still
+    // lacks identity, registering again and relaunching would loop forever.
+    if std::env::args().any(|a| a == NO_RELAUNCH_ARG) {
+        return;
+    }
+    match try_ensure_package_identity() {
+        Ok(true) => relaunch_packaged_soon(),
+        Ok(false) => {}
+        Err(e) => {
+            tracing::warn!(target: "main", "Package registration failed: {e:#}. \
+                Explorer context menu items require package identity; re-run the \
+                installer, or run cloudreve-desktop.exe --install-identity");
+        }
     }
 }
 
+/// Exit this unpackaged process and let a detached helper activate the
+/// packaged instance once the single-instance lock clears. A sync root
+/// registered by an unpackaged process gets no Explorer verb binding, so
+/// staying here would leave the context menu dead until the next restart.
 #[cfg(windows)]
-fn try_ensure_package_identity() -> anyhow::Result<()> {
+fn relaunch_packaged_soon() -> ! {
+    if let Ok(exe) = std::env::current_exe() {
+        let _ = std::process::Command::new(exe)
+            .arg("--relaunch-delayed")
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn();
+    }
+    std::process::exit(0);
+}
+
+#[cfg(windows)]
+fn try_ensure_package_identity() -> anyhow::Result<bool> {
     use anyhow::{bail, Context};
     use windows::ApplicationModel::Package;
 
     // Already running with identity (MSIX install, sparse package, or
     // dev-install.ps1).
     if Package::Current().is_ok() {
-        return Ok(());
+        return Ok(false);
     }
 
     let install_dir = std::env::current_exe()
@@ -248,19 +292,28 @@ fn try_ensure_package_identity() -> anyhow::Result<()> {
         }
         add_sparse_package(&msix_path, &install_dir)?;
         tracing::info!(target: "main",
-            "Signed identity package installed; restart for package identity.");
-        return Ok(());
+            "Signed identity package installed; relaunching with package identity.");
+        return Ok(true);
     }
 
     if !manifest_path.exists() {
         bail!("neither {SPARSE_MSIX} nor AppxManifest.xml shipped with this install");
     }
     render_manifest(&manifest_path)?;
-    register_loose_manifest(&manifest_path)
+    register_loose_manifest(&manifest_path)?;
+    Ok(true)
 }
 
 /// Full headless install for `--install-identity` / the NSIS hook: trust the
 /// signing cert (elevating once if needed), then install the sparse package.
+///
+/// The package add must run in the user's normal (non-elevated) context: a
+/// per-user deployment performed elevated either fails with 0x80070005 or
+/// produces a registration whose sync roots never receive the Explorer
+/// verb binding. When elevated (e.g. inside the NSIS post-install hook of an
+/// all-users install) this does the machine-scope cert trust only and leaves
+/// package registration to the app's next launch via
+/// `ensure_package_identity`, which registers and relaunches packaged.
 #[cfg(windows)]
 fn headless_install() -> anyhow::Result<()> {
     use anyhow::Context;
@@ -278,6 +331,11 @@ fn headless_install() -> anyhow::Result<()> {
         let cer = install_dir.join(IDENTITY_CERT);
         if cer.exists() && !cert_is_trusted(&cer)? {
             ensure_cert_trusted(&install_dir)?;
+        }
+        if is_elevated() {
+            // Cert is machine-trusted now; the per-user package add is
+            // deferred to the first unelevated app launch.
+            return Ok(());
         }
         // A leftover registration can be damaged (its ExternalLocation points
         // at a deleted/moved install dir after an update). Re-adding over a
