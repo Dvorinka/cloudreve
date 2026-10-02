@@ -35,6 +35,8 @@ use tokio::task::JoinHandle;
 #[cfg(windows)]
 use url::Url;
 #[cfg(windows)]
+use windows::ApplicationModel;
+#[cfg(windows)]
 use windows::Storage::Provider::StorageProviderSyncRootManager;
 
 #[cfg(windows)]
@@ -77,6 +79,13 @@ pub struct DriveConfig {
 
     // Windows CFAPI
     pub sync_root_id: Option<SyncRootId>,
+
+    /// Whether the sync root registration was made while running with
+    /// package identity. Explorer context-menu verbs only bind to
+    /// package-registered roots, so a root registered before the app gained
+    /// identity gets re-registered under the package once.
+    #[serde(default)]
+    pub package_identity_registered: bool,
 
     /// List of gitignore-style patterns for files/directories to ignore during sync
     #[serde(default)]
@@ -552,10 +561,29 @@ impl Mount {
             drop(write_guard);
             let config = self.config.read().await;
 
-            let sync_root_id = config.sync_root_id.as_ref().unwrap();
+            let sync_root_id = config.sync_root_id.clone().unwrap();
+
+            // Explorer's cloudFiles context-menu verbs (Share link, View
+            // online, ...) only bind to sync roots registered under our
+            // package identity. A root registered before the app gained
+            // identity - an unpackaged install or an exe-side update - has
+            // no package association and never gets the menu, so re-register
+            // it under the package once and remember that in the config.
+            let packaged = ApplicationModel::Package::Current().is_ok();
+            let mut registered = sync_root_id.is_registered()?;
+            let mut just_registered = false;
+            if registered && packaged && !config.package_identity_registered {
+                tracing::info!(target: "drive::mounts", id = %self.id,
+                    "Re-registering sync root under package identity");
+                match sync_root_id.unregister() {
+                    Ok(()) => registered = false,
+                    Err(e) => tracing::warn!(target: "drive::mounts", id = %self.id,
+                        error = %e, "Failed to drop pre-package sync root registration"),
+                }
+            }
 
             // Register sync root if not registered
-            if !sync_root_id.is_registered()? {
+            if !registered {
                 tracing::info!(target: "drive::mounts", id = %self.id, "Registering sync root");
                 let mut sync_root_info = SyncRootInfo::default();
                 sync_root_info.set_display_name(config.name.clone());
@@ -579,6 +607,7 @@ impl Mount {
                 sync_root_id
                     .register(sync_root_info)
                     .context("failed to register sync root")?;
+                just_registered = true;
             }
 
             // Add to search indexer for state management
@@ -599,6 +628,16 @@ impl Mount {
                 .context("failed to connect to sync root")?;
 
             self.connection = Some(connection);
+
+            if packaged && just_registered {
+                drop(config);
+                self.config.write().await.package_identity_registered = true;
+                if let Err(e) = self.manager_command_tx.send(ManagerCommand::PersistConfig) {
+                    tracing::error!(target: "drive::mounts", id = %self.id, error = %e,
+                        "Failed to send PersistConfig command");
+                }
+            }
+
             self.start_fs_watcher().await?;
             Ok(())
         }
