@@ -23,8 +23,9 @@
        requires Developer Mode, and identity only applies when the app is
        launched through the package (Start menu entry / activation).
 
-    Restart Cloudreve Desktop after registering - package identity is assigned
-    at process launch. Explorer may also need a restart to pick up the verb.
+    Package identity is assigned at process launch, so the app relaunches
+    itself packaged automatically (ensure_package_identity). Explorer may
+    still need a restart to pick up the verb on older builds.
 
 .PARAMETER InstallDir
     Directory containing cloudreve-desktop.exe. Auto-detected if omitted.
@@ -128,9 +129,11 @@ if ((Test-Path $MsixPath) -and (Test-Path $CerPath)) {
 
     if ($trusted) {
         if ($elevated) {
-            # Per-user package deployment fails with 0x80070005 when elevated;
-            # finish the install as the normal user.
-            Write-Host "Certificate trusted. Re-run this script WITHOUT admin to finish package install." -ForegroundColor Yellow
+            # Per-user package deployment from an elevated context fails with
+            # 0x80070005 or produces a registration whose sync roots never get
+            # the Explorer verb binding. The app finishes the install itself on
+            # next launch via ensure_package_identity - no manual step needed.
+            Write-Host "Certificate trusted. Package registration completes automatically on next app start." -ForegroundColor Yellow
             return
         }
         try {
