@@ -542,6 +542,20 @@ func ListStoragePolicies(c *gin.Context) {
 	})
 }
 
+// UserStoragePolicies lists the caller's allowed storage policies with full
+// upload-relevant fields; consumed by the desktop/mobile clients.
+func UserStoragePolicies(c *gin.Context) {
+	service := ParametersFromContext[*explorer.UserPoliciesService](c, explorer.UserPoliciesParamCtx{})
+	resp, err := service.Get(c)
+	if respondErr(c, err) {
+		return
+	}
+
+	c.JSON(200, serializer.Response{
+		Data: resp,
+	})
+}
+
 // UpdatePreferredPolicy sets the preferred storage policy for a directory.
 func UpdatePreferredPolicy(c *gin.Context) {
 	service := ParametersFromContext[*explorer.PreferredPolicyService](c, explorer.PreferredPolicyParamCtx{})

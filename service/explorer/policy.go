@@ -31,6 +31,12 @@ type (
 	AllowedPolicyService  struct{}
 	AllowedPolicyParamCtx struct{}
 
+	// UserPoliciesService lists the caller's allowed storage policies with the
+	// full upload-relevant fields (max_size, suffix rules, chunk concurrency).
+	// Consumed by the desktop/mobile clients via /user/setting/policies.
+	UserPoliciesService  struct{}
+	UserPoliciesParamCtx struct{}
+
 	// PreferredPolicyService sets or clears a directory's preferred storage
 	// policy. New uploads inside the directory use it.
 	PreferredPolicyService struct {
@@ -88,6 +94,27 @@ func (s *AllowedPolicyService) Get(c *gin.Context) ([]*StoragePolicyBrief, error
 	}
 	_, briefs, err := allowedGroupPolicies(c, inventory.GroupsOf(user), dependency.FromContext(c))
 	return briefs, err
+}
+
+func (s *UserPoliciesService) Get(c *gin.Context) ([]*StoragePolicy, error) {
+	user := inventory.UserFromContext(c)
+	groups := inventory.GroupsOf(user)
+	if len(groups) == 0 {
+		return nil, serializer.NewError(serializer.CodeNoPermissionErr, "Group not loaded", nil)
+	}
+	dep := dependency.FromContext(c)
+	allowed, err := dep.StoragePolicyClient().ListByGroups(c, groups)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to list storage policies", err)
+	}
+	if len(allowed) == 0 {
+		return nil, serializer.NewError(serializer.CodeNoPermissionErr, "No storage policy is available for your group", nil)
+	}
+
+	hasher := dep.HashIDEncoder()
+	return lo.Map(allowed, func(p *ent.StoragePolicy, _ int) *StoragePolicy {
+		return BuildStoragePolicy(p, hasher)
+	}), nil
 }
 
 // decodeAllowedPolicy validates a hashid-encoded policy id against the

@@ -1616,6 +1616,11 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 						controllers.FromQuery[usersvc.AnnouncementService](usersvc.AnnouncementParamCtx{}),
 						controllers.UserAnnouncement,
 					)
+					// 当前用户可用的存储策略（桌面/移动客户端）
+					setting.GET("policies",
+						controllers.FromQuery[explorer.UserPoliciesService](explorer.UserPoliciesParamCtx{}),
+						controllers.UserStoragePolicies,
+					)
 					// 从文件上传头像
 					setting.PUT("avatar", middleware.RequiredScopes(types.ScopeUserInfoWrite), controllers.UploadAvatar)
 					// 更改用户设定
