@@ -38,7 +38,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["app", "dmg", "appimage", "deb", "nsis"],
     "resources": {
       "../package/AppxManifest.xml": "AppxManifest.xml",
       "../package/AppxManifest.sparse.xml": "AppxManifest.sparse.xml",

@@ -77,8 +77,9 @@ jobs:
 
       # tauri-action runs `tauri build` (which triggers beforeBuildCommand ->
       # the UI build), produces the platform bundles and attaches them to the
-      # GitHub release for the pushed tag:
-      #   Windows -> .msi + .exe (NSIS), macOS -> .dmg + .app.tar.gz,
+      # GitHub release for the pushed tag. Bundle targets are pinned in
+      # tauri.conf.json:
+      #   Windows -> .exe (NSIS), macOS -> .dmg + .app.tar.gz,
       #   Linux -> .deb + .AppImage
       - uses: tauri-apps/tauri-action@v0
         env:

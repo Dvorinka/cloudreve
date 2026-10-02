@@ -2,7 +2,7 @@ name: Release
 
 # One `v*` tag produces ONE GitHub release containing every platform:
 #   - server binaries + archives + checksums (GoReleaser) + GHCR docker images
-#   - desktop bundles: Linux .deb/.AppImage, Windows NSIS, macOS .dmg/.app.tar.gz
+#   - desktop bundles: Linux .deb/.AppImage, Windows NSIS .exe, macOS .dmg/.app.tar.gz
 #   - Android release APK + AAB (signed with ANDROID_KEYSTORE_* secrets when set)
 # The desktop-* / android-v* tags still exist for platform-only releases.
 on:
@@ -95,8 +95,8 @@ jobs:
           done
           gh release view "$TAG" >/dev/null
           FILES=$(find desktop/target/release/bundle -type f \
-            \( -name '*.deb' -o -name '*.AppImage' -o -name '*.AppImage.tar.gz' \
-               -o -name '*.msi' -o -name '*.exe' -o -name '*.dmg' \
+            \( -name '*.deb' -o -name '*.AppImage' \
+               -o -name '*.exe' -o -name '*.dmg' \
                -o -name '*.app.tar.gz' -o -name '*.sig' \))
           [ -n "$FILES" ]
           echo "$FILES" | while read -r f; do
