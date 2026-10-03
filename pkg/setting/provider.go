@@ -66,6 +66,10 @@ type (
 		DefaultGroup(ctx context.Context) int
 		// SMTP returns the SMTP settings.
 		SMTP(ctx context.Context) *SMTP
+		// MailDriver returns the configured outbound mail driver.
+		MailDriver(ctx context.Context) MailDriver
+		// HTTPMail returns the generic HTTP mail driver settings.
+		HTTPMail(ctx context.Context) *HTTPMail
 		// SiteURL returns the basic URL.
 		SiteURL(ctx context.Context) *url.URL
 		// SecretKey returns the secret key for general signature.
@@ -932,6 +936,22 @@ func (s *settingProvider) SMTP(ctx context.Context) *SMTP {
 		Port:            s.getInt(ctx, "smtpPort", 25),
 		Keepalive:       s.getInt(ctx, "mail_keepalive", 30),
 		AuthType:        s.getString(ctx, "smtp_auth", "autodiscover"),
+	}
+}
+
+func (s *settingProvider) MailDriver(ctx context.Context) MailDriver {
+	if s.getString(ctx, "mail_driver", string(MailDriverSMTP)) == string(MailDriverHTTP) {
+		return MailDriverHTTP
+	}
+	return MailDriverSMTP
+}
+
+func (s *settingProvider) HTTPMail(ctx context.Context) *HTTPMail {
+	return &HTTPMail{
+		Endpoint:     s.getString(ctx, "mail_http_endpoint", ""),
+		Method:       s.getString(ctx, "mail_http_method", "POST"),
+		Headers:      s.getString(ctx, "mail_http_headers", ""),
+		BodyTemplate: s.getString(ctx, "mail_http_body_tpl", ""),
 	}
 }
 

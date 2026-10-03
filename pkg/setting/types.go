@@ -68,6 +68,27 @@ type SMTP struct {
 	AuthType        string
 }
 
+// MailDriver selects the outbound email delivery mechanism.
+type MailDriver string
+
+const (
+	// MailDriverSMTP delivers mail over SMTP/SMTPS (default).
+	MailDriverSMTP = MailDriver("smtp")
+	// MailDriverHTTP delivers mail through an admin-configured HTTP API
+	// endpoint - for hosts whose outbound SMTP ports are blocked.
+	MailDriverHTTP = MailDriver("http")
+)
+
+// HTTPMail holds the generic HTTP mail driver config. Endpoint and
+// BodyTemplate accept {to}, {subject}, {body}, {from}, {from_name} and
+// {reply_to} placeholders; values are inserted as JSON string content.
+type HTTPMail struct {
+	Endpoint     string
+	Method       string
+	Headers      string
+	BodyTemplate string
+}
+
 type TokenAuth struct {
 	AccessTokenTTL  time.Duration
 	RefreshTokenTTL time.Duration

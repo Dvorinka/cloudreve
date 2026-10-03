@@ -568,7 +568,11 @@ func (d *dependency) EmailClient(ctx context.Context) email.Driver {
 		if d.emailClient != nil {
 			d.emailClient.Close()
 		}
-		d.emailClient = email.NewSMTPPool(d.SettingProvider(), d.Logger())
+		if d.SettingProvider().MailDriver(ctx) == setting.MailDriverHTTP {
+			d.emailClient = email.NewHTTPPool(d.SettingProvider(), d.RequestClient(), d.Logger())
+		} else {
+			d.emailClient = email.NewSMTPPool(d.SettingProvider(), d.Logger())
+		}
 	}
 
 	return d.emailClient
