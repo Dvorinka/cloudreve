@@ -379,15 +379,9 @@ func (handler *Driver) Token(ctx context.Context, uploadSession *fs.UploadSessio
 	urls := make([]string, chunks.Num())
 	for chunks.Next() {
 		err := chunks.Process(func(c *chunk.ChunkGroup, chunk io.Reader) error {
-			signedReq, _ := handler.svc.UploadPartRequest(&s3.UploadPartInput{
-				Bucket:        &handler.policy.BucketName,
-				Key:           &uploadSession.Props.SavePath,
-				PartNumber:    aws.Int64(int64(c.Index() + 1)),
-				ContentLength: aws.Int64(c.Length()),
-				UploadId:      res.UploadId,
-			})
-
-			signedURL, err := signedReq.Presign(time.Until(uploadSession.Props.ExpireAt))
+			signedURL, err := handler.uploadPartURL(
+				uploadSession.Props.SavePath, *res.UploadId, int64(c.Index()+1),
+				time.Until(uploadSession.Props.ExpireAt))
 			if err != nil {
 				return err
 			}
@@ -420,6 +414,20 @@ func (handler *Driver) Token(ctx context.Context, uploadSession *fs.UploadSessio
 		SessionID:   uploadSession.Props.UploadSessionID,
 		ChunkSize:   handler.chunkSize,
 	}, nil
+}
+
+// uploadPartURL presigns a part-upload URL. ContentLength must not be set on the
+// input: it puts "content-length" into X-Amz-SignedHeaders, and Ceph RGW (as
+// well as proxies that alter or drop Content-Length) then rejects the browser's
+// PUT with 403 AccessDenied (upstream cloudreve/cloudreve#3606).
+func (handler *Driver) uploadPartURL(key, uploadID string, partNumber int64, ttl time.Duration) (string, error) {
+	signedReq, _ := handler.svc.UploadPartRequest(&s3.UploadPartInput{
+		Bucket:     &handler.policy.BucketName,
+		Key:        &key,
+		PartNumber: aws.Int64(partNumber),
+		UploadId:   &uploadID,
+	})
+	return signedReq.Presign(ttl)
 }
 
 // Meta 获取文件信息
