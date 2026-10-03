@@ -337,6 +337,11 @@ const Settings = () => {
                     "smtpEncryption",
                     "smtp_auth",
                     "fromName",
+                    "mail_driver",
+                    "mail_http_endpoint",
+                    "mail_http_method",
+                    "mail_http_headers",
+                    "mail_http_body_tpl",
                     "mail_activation_template",
                     "mail_reset_template",
                   ]}

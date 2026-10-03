@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
 
@@ -136,6 +137,10 @@ type (
 )
 
 func (s *TestSMTPService) Test(c *gin.Context) error {
+	if s.Settings["mail_driver"] == string(setting.MailDriverHTTP) {
+		return s.testHTTP(c)
+	}
+
 	port, err := strconv.Atoi(s.Settings["smtpPort"])
 	if err != nil {
 		return serializer.NewError(serializer.CodeParamErr, "Invalid SMTP port", err)
@@ -174,6 +179,44 @@ func (s *TestSMTPService) Test(c *gin.Context) error {
 			return nil // Don't treat this as a delivery failure since mail was sent
 		}
 
+		return serializer.NewError(serializer.CodeInternalSetting, "Failed to send test email: "+err.Error(), err)
+	}
+
+	return nil
+}
+
+// testHTTP renders the HTTP mail templates with the unsaved form values and
+// dispatches one test message - same path the HTTPPool worker takes.
+func (s *TestSMTPService) testHTTP(c *gin.Context) error {
+	dep := dependency.FromContext(c)
+	req := email.RenderHTTPMail(
+		&setting.HTTPMail{
+			Endpoint:     s.Settings["mail_http_endpoint"],
+			Method:       s.Settings["mail_http_method"],
+			Headers:      s.Settings["mail_http_headers"],
+			BodyTemplate: s.Settings["mail_http_body_tpl"],
+		},
+		&setting.SMTP{
+			FromName: s.Settings["fromName"],
+			From:     s.Settings["fromAdress"],
+			ReplyTo:  s.Settings["replyTo"],
+		},
+		s.To,
+		"Cloudreve mail test",
+		"This is a test email from Cloudreve.",
+	)
+	if req.Endpoint == "" {
+		return serializer.NewError(serializer.CodeParamErr, "Mail API endpoint is not configured", nil)
+	}
+
+	_, err := dep.RequestClient(request2.WithContext(c), request2.WithLogger(dep.Logger())).
+		Request(req.Method, req.Endpoint, strings.NewReader(req.Body),
+			request2.WithHeader(req.Header),
+			request2.WithContentLength(int64(len(req.Body))),
+		).
+		CheckHTTPResponse(http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent).
+		GetResponse()
+	if err != nil {
 		return serializer.NewError(serializer.CodeInternalSetting, "Failed to send test email: "+err.Error(), err)
 	}
 
