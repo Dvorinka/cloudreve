@@ -5,8 +5,48 @@ on:
     branches: [master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Gate: figure out which areas changed so a frontend-only PR doesn't
+  # compile the Rust workspace on three OSes (and vice versa). Jobs
+  # skipped via `if:` report Success, so required checks still pass.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.f.outputs.backend }}
+      frontend: ${{ steps.f.outputs.frontend }}
+      desktop: ${{ steps.f.outputs.desktop }}
+      android: ${{ steps.f.outputs.android }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            backend:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - 'application/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+            desktop:
+              - 'desktop/**'
+              - '.github/workflows/ci.yml'
+            android:
+              - 'android/**'
+              - '.github/workflows/ci.yml'
+
   backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +61,8 @@ jobs:
       - run: go test ./...
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,6 +82,8 @@ jobs:
   # Phase D: the full workspace is cross-platform (Windows CFAPI +
   # Linux/macOS full-sync), so every OS checks and tests all crates.
   desktop:
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -59,6 +103,8 @@ jobs:
       - run: cargo test --workspace
 
   android:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

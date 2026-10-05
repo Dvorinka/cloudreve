@@ -13,6 +13,12 @@ permissions:
   contents: write
   packages: write
 
+# Never cancel an in-flight release — a canceled run can leave the
+# GitHub release half-populated. Re-tags queue instead.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   server:
     runs-on: ubuntu-latest
@@ -107,7 +113,9 @@ jobs:
           Copy-Item "$env:RUNNER_TEMP\Cloudreve-Identity.msix" desktop/package/Cloudreve-Identity.msix -Force
 
       - name: Install tauri-cli
-        run: cargo install tauri-cli --version "^2" --locked
+        uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
 
       - name: Build desktop bundles
         working-directory: desktop
