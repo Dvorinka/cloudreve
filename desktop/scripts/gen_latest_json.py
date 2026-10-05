@@ -12,6 +12,7 @@ has its own semver, independent of the repo's server release tags.
 import json
 import os
 import sys
+from datetime import datetime, timezone
 
 # Updater artifacts are the NSIS setup exe (Windows), the raw AppImage
 # (Linux) and the .app.tar.gz bundle (macOS). tauri names the macOS bundle
@@ -65,7 +66,9 @@ def main() -> int:
     manifest = {
         "version": version,
         "notes": f"Cloudreve Desktop {version}",
-        "pub_date": "",
+        "pub_date": datetime.now(timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z"),
         "platforms": platforms,
     }
     with open(out_path, "w") as f:
