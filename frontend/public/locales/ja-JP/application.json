@@ -712,7 +712,16 @@
     "dontAskAgain": "今後は確認しない",
     "customLink": "カスタムリンク",
     "customLinkName": "リンク名",
-    "customLinkDes": "共有リンクにカスタム名を付けます（例: /s/my-files）。空欄の場合は生成されたリンクを使用。3〜64文字：英数字、'-'、'_'、'.'、'~'。"
+    "customLinkDes": "共有リンクにカスタム名を付けます（例: /s/my-files）。空欄の場合は生成されたリンクを使用。3〜64文字：英数字、'-'、'_'、'.'、'~'。",
+    "createShareLinkNamed": "「{{name}}」を共有",
+    "accessSection": "リンクのアクセス",
+    "anyoneWithLink": "リンクを持つすべてのユーザー",
+    "accessRoleViewer": "表示とダウンロード",
+    "accessRoleUploader": "表示とアップロード",
+    "accessRoleEditor": "表示、アップロード、編集",
+    "accessRoleViewerDes": "訪問者はファイルを表示およびダウンロードできます。",
+    "additionalOptions": "追加オプション",
+    "never": "なし"
   },
   "uploader": {
     "fileCopyName": "コピー_",

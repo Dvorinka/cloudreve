@@ -764,7 +764,16 @@
     "dontAskAgain": "Não perguntar novamente",
     "customLink": "Link personalizado",
     "customLinkName": "Nome do link",
-    "customLinkDes": "Escolha um nome personalizado para o link, ex.: /s/my-files. Deixe vazio para usar o gerado. 3-64 caracteres: letras, dígitos, '-', '_', '.' ou '~'."
+    "customLinkDes": "Escolha um nome personalizado para o link, ex.: /s/my-files. Deixe vazio para usar o gerado. 3-64 caracteres: letras, dígitos, '-', '_', '.' ou '~'.",
+    "createShareLinkNamed": "Compartilhar \"{{name}}\"",
+    "accessSection": "Acesso ao link",
+    "anyoneWithLink": "Qualquer pessoa com o link",
+    "accessRoleViewer": "Ver e baixar",
+    "accessRoleUploader": "Ver e enviar",
+    "accessRoleEditor": "Ver, enviar e editar",
+    "accessRoleViewerDes": "Visitantes podem ver e baixar arquivos.",
+    "additionalOptions": "Opções adicionais",
+    "never": "Nunca"
   },
   "uploader": {
     "fileCopyName": "Cópia de ",

@@ -711,7 +711,16 @@
     "dontAskAgain": "Nie pytaj ponownie",
     "customLink": "Własny link",
     "customLinkName": "Nazwa linku",
-    "customLinkDes": "Wybierz własną nazwę linku, np. /s/my-files. Pozostaw puste, aby użyć wygenerowanego. 3-64 znaki: litery, cyfry, '-', '_', '.', '~'."
+    "customLinkDes": "Wybierz własną nazwę linku, np. /s/my-files. Pozostaw puste, aby użyć wygenerowanego. 3-64 znaki: litery, cyfry, '-', '_', '.', '~'.",
+    "createShareLinkNamed": "Udostępnij „{{name}}”",
+    "accessSection": "Dostęp do linku",
+    "anyoneWithLink": "Każdy, kto ma link",
+    "accessRoleViewer": "Przeglądaj i pobieraj",
+    "accessRoleUploader": "Przeglądaj i przesyłaj",
+    "accessRoleEditor": "Przeglądaj, przesyłaj i edytuj",
+    "accessRoleViewerDes": "Odwiedzający mogą przeglądać i pobierać pliki.",
+    "additionalOptions": "Opcje dodatkowe",
+    "never": "Nigdy"
   },
   "uploader": {
     "fileCopyName": "Kopia ",

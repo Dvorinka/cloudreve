@@ -761,7 +761,16 @@
     "dontAskAgain": "Nicht erneut fragen",
     "customLink": "Benutzerdefinierter Link",
     "customLinkName": "Linkname",
-    "customLinkDes": "Eigenen Namen für den Freigabelink wählen, z.B. /s/my-files. Leer lassen für den generierten Link. 3-64 Zeichen: Buchstaben, Ziffern, '-', '_', '.' oder '~'."
+    "customLinkDes": "Eigenen Namen für den Freigabelink wählen, z.B. /s/my-files. Leer lassen für den generierten Link. 3-64 Zeichen: Buchstaben, Ziffern, '-', '_', '.' oder '~'.",
+    "createShareLinkNamed": "\"{{name}}\" teilen",
+    "accessSection": "Link-Zugriff",
+    "anyoneWithLink": "Jeder mit dem Link",
+    "accessRoleViewer": "Ansehen und herunterladen",
+    "accessRoleUploader": "Ansehen und hochladen",
+    "accessRoleEditor": "Ansehen, hochladen und bearbeiten",
+    "accessRoleViewerDes": "Besucher können Dateien ansehen und herunterladen.",
+    "additionalOptions": "Weitere Optionen",
+    "never": "Nie"
   },
   "uploader": {
     "fileCopyName": "Kopie_",

@@ -712,7 +712,16 @@
     "dontAskAgain": "不再詢問",
     "customLink": "自訂連結",
     "customLinkName": "連結名稱",
-    "customLinkDes": "為分享連結自訂名稱，例如 /s/my-files。留空則使用產生的連結。3-64 個字元：字母、數字、'-'、'_'、'.'、'~'。"
+    "customLinkDes": "為分享連結自訂名稱，例如 /s/my-files。留空則使用產生的連結。3-64 個字元：字母、數字、'-'、'_'、'.'、'~'。",
+    "createShareLinkNamed": "分享「{{name}}」",
+    "accessSection": "連結存取",
+    "anyoneWithLink": "任何擁有連結的人",
+    "accessRoleViewer": "檢視並下載",
+    "accessRoleUploader": "檢視並上傳",
+    "accessRoleEditor": "檢視、上傳和編輯",
+    "accessRoleViewerDes": "訪客可以檢視和下載檔案。",
+    "additionalOptions": "其他選項",
+    "never": "從不"
   },
   "uploader": {
     "fileCopyName": "副本_",

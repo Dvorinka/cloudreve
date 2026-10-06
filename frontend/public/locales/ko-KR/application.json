@@ -764,7 +764,16 @@
     "dontAskAgain": "다시 묻지 않기",
     "customLink": "사용자 지정 링크",
     "customLinkName": "링크 이름",
-    "customLinkDes": "공유 링크의 이름을 직접 지정합니다(예: /s/my-files). 비워 두면 생성된 링크를 사용합니다. 3-64자: 문자, 숫자, '-', '_', '.', '~'."
+    "customLinkDes": "공유 링크의 이름을 직접 지정합니다(예: /s/my-files). 비워 두면 생성된 링크를 사용합니다. 3-64자: 문자, 숫자, '-', '_', '.', '~'.",
+    "createShareLinkNamed": "\"{{name}}\" 공유",
+    "accessSection": "링크 액세스",
+    "anyoneWithLink": "링크가 있는 모든 사용자",
+    "accessRoleViewer": "보기 및 다운로드",
+    "accessRoleUploader": "보기 및 업로드",
+    "accessRoleEditor": "보기, 업로드 및 편집",
+    "accessRoleViewerDes": "방문자가 파일을 보고 다운로드할 수 있습니다.",
+    "additionalOptions": "추가 옵션",
+    "never": "없음"
   },
   "uploader": {
     "fileCopyName": "사본_",
