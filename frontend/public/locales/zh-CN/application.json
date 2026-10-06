@@ -709,7 +709,16 @@
     "dontAskAgain": "不再询问",
     "customLink": "自定义链接",
     "customLinkName": "链接名称",
-    "customLinkDes": "为分享链接自定义名称，例如 /s/my-files。留空则使用生成的链接。3-64 个字符：字母、数字、'-'、'_'、'.'、'~'。"
+    "customLinkDes": "为分享链接自定义名称，例如 /s/my-files。留空则使用生成的链接。3-64 个字符：字母、数字、'-'、'_'、'.'、'~'。",
+    "createShareLinkNamed": "分享“{{name}}”",
+    "accessSection": "链接访问",
+    "anyoneWithLink": "任何拥有链接的人",
+    "accessRoleViewer": "查看并下载",
+    "accessRoleUploader": "查看并上传",
+    "accessRoleEditor": "查看、上传和编辑",
+    "accessRoleViewerDes": "访问者可以查看和下载文件。",
+    "additionalOptions": "其他选项",
+    "never": "从不"
   },
   "uploader": {
     "fileCopyName": "副本_",

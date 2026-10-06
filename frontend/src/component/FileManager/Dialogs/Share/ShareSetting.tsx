@@ -3,12 +3,15 @@ import {
   Checkbox,
   Collapse,
   createFilterOptions,
+  Divider,
   FormControl,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemSecondaryAction,
   ListItemText,
+  MenuItem,
+  Select,
   Stack,
   styled,
   TextField,
@@ -23,17 +26,15 @@ import { FileResponse, FileType } from "../../../../api/explorer.ts";
 import { Code } from "../../../Common/Code.tsx";
 import { FilledTextField, SmallFormControlLabel } from "../../../Common/StyledComponents.tsx";
 import BookInformation from "../../../Icons/BookInformation.tsx";
+import ChevronRight from "../../../Icons/ChevronRight.tsx";
 import ClockArrowDownload from "../../../Icons/ClockArrowDownload.tsx";
 import CoinStack from "../../../Icons/CoinStack.tsx";
-import Edit from "../../../Icons/Edit.tsx";
 import Eye from "../../../Icons/Eye.tsx";
-import EyeOff from "../../../Icons/EyeOff.tsx";
-import FolderAdd from "../../../Icons/FolderAdd.tsx";
 import Globe from "../../../Icons/Globe.tsx";
 import RenameOutlined from "../../../Icons/RenameOutlined.tsx";
+import SettingsOutlined from "../../../Icons/SettingsOutlined.tsx";
 import TableSettingsOutlined from "../../../Icons/TableSettings.tsx";
 import Timer from "../../../Icons/Timer.tsx";
-import Upload from "../../../Icons/Upload.tsx";
 
 const Accordion = styled(MuiAccordion)(() => ({
   border: "0px solid rgba(0, 0, 0, .125)",
@@ -79,6 +80,11 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 }));
 
 const StyledListItemButton = styled(ListItemButton)(() => ({}));
+
+const SectionLabel = styled(Typography)(({ theme }) => ({
+  padding: theme.spacing(1, 2, 0.5),
+  color: theme.palette.text.secondary,
+}));
 
 export interface ShareSetting {
   is_private?: boolean;
@@ -135,6 +141,10 @@ export const downloadOptions: valueOption[] = [
   { value: 100, label: "100" },
 ];
 
+const neverOption: valueOption = { value: 0, label: "modals.never" };
+
+type AccessRole = "view" | "preview" | "upload" | "edit" | "dropbox";
+
 const isNumeric = (num: any) =>
   (typeof num === "number" || (typeof num === "string" && num.trim() !== "")) && !isNaN(num as number);
 
@@ -144,369 +154,193 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
   const { t } = useTranslation();
 
   const [expanded, setExpanded] = useState<string | undefined>(undefined);
+  const [advancedToggled, setAdvancedToggled] = useState<boolean | undefined>(undefined);
+
+  const isFolder = file?.type == FileType.folder;
+  const isFile = file?.type == FileType.file;
 
   const handleExpand = (panel: string) => (_event: any, isExpanded: boolean) => {
     setExpanded(isExpanded ? panel : undefined);
   };
 
-  const handleCheck = (
-    prop:
-      | "is_private"
-      | "share_view"
-      | "show_readme"
-      | "preview_only"
-      | "expires"
-      | "downloads"
-      | "listed_publicly"
-      | "use_custom_link",
-  ) => () => {
-    if (!setting[prop]) {
-      handleExpand(prop)(null, true);
-    }
+  const handleCheck =
+    (
+      prop:
+        | "is_private"
+        | "share_view"
+        | "show_readme"
+        | "listed_publicly"
+        | "use_custom_link",
+    ) =>
+    () => {
+      if (!setting[prop]) {
+        handleExpand(prop)(null, true);
+      }
 
+      onSettingChange({
+        ...setting,
+        [prop]: !setting[prop],
+        // Unchecking the custom-link box drops the entered slug so the
+        // update clears it server-side.
+        ...(prop === "use_custom_link" && setting[prop] ? { slug: "" } : {}),
+      });
+    };
+
+  // Access role folds the mutually exclusive permission flags into one
+  // Drive-style dropdown. Priority mirrors flag precedence. Folder-only
+  // flags restored from storage on a non-folder target display as "view"
+  // (the flag itself is preserved, as before).
+  const rawRole: AccessRole = setting.upload_only
+    ? "dropbox"
+    : setting.allow_edit
+      ? "edit"
+      : setting.allow_upload
+        ? "upload"
+        : setting.preview_only
+          ? "preview"
+          : "view";
+  const role: AccessRole = !isFolder && rawRole !== "view" && rawRole !== "preview" ? "view" : rawRole;
+
+  const setRole = (value: AccessRole) => {
     onSettingChange({
       ...setting,
-      [prop]: !setting[prop],
-      // Unchecking the custom-link box drops the entered slug so the
-      // update clears it server-side.
-      ...(prop === "use_custom_link" && setting[prop] ? { slug: "" } : {}),
+      preview_only: value === "preview" || undefined,
+      allow_upload: value === "upload" || value === "edit" || undefined,
+      allow_edit: value === "edit" || undefined,
+      upload_only: value === "dropbox" || undefined,
     });
   };
 
+  const roleDes: Record<AccessRole, string> = {
+    view: t("application:modals.accessRoleViewerDes"),
+    preview: t("application:modals.previewOnlyDes"),
+    upload: t("application:modals.allowUploadDes"),
+    edit: t("application:modals.allowEditDes"),
+    dropbox: t("application:modals.uploadOnlyDes"),
+  };
+
+  const advancedSummary = [
+    setting.use_custom_link ? t("application:modals.customLink") : undefined,
+    setting.note ? t("application:modals.shareNote") : undefined,
+    setting.price_points ? t("application:modals.paidShare") : undefined,
+    setting.listed_publicly ? t("application:modals.publicListing") : undefined,
+    setting.downloads ? t("application:modals.expireAfterDownload") : undefined,
+    setting.share_view ? t("application:modals.shareView") : undefined,
+    setting.show_readme ? t("application:modals.showReadme") : undefined,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  // Auto-open the additional section when a loaded/restored setting already
+  // carries one of its options; an explicit user toggle wins.
+  const advancedOpen = advancedToggled ?? !!advancedSummary;
+
   return (
-    <List
-      sx={{
-        padding: 0,
-      }}
-    >
-      <Accordion expanded={expanded === "is_private"} onChange={handleExpand("is_private")}>
-        <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <Eye />
-            </ListItemIcon>
-            <ListItemText primary={t("application:modals.privateShare")} />
-            <ListItemSecondaryAction>
-              <Checkbox disabled={editing} checked={!!setting.is_private} onChange={handleCheck("is_private")} />
-            </ListItemSecondaryAction>
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <Typography variant="body2">{t("application:modals.privateShareDes")}</Typography>
-          {setting.is_private && (
-            <Stack sx={{ mt: 1, width: "100%" }}>
-              {!editing && (
-                <SmallFormControlLabel
-                  control={
-                    <Checkbox
-                      size="small"
-                      checked={setting.use_custom_password}
-                      onChange={() => {
-                        onSettingChange({ ...setting, use_custom_password: !setting.use_custom_password });
-                      }}
-                    />
-                  }
-                  label={t("application:modals.useCustomPassword")}
-                />
-              )}
-              <Collapse in={setting.use_custom_password}>
-                <FormControl variant="standard" fullWidth sx={{ mt: 1 }}>
-                  <FilledTextField
-                    label={t("application:modals.sharePassword")}
-                    disabled={editing}
-                    slotProps={{
-                      htmlInput: {
-                        maxLength: 32,
-                      },
-                    }}
-                    value={setting.password ?? ""}
-                    onChange={(e) => {
-                      const value = e.target.value.trim();
-                      if (!/^[a-zA-Z0-9]*$/.test(value) || value.length > 32) return;
-                      onSettingChange({ ...setting, password: value });
-                    }}
-                    required
-                  />
-                </FormControl>
-              </Collapse>
-            </Stack>
-          )}
-        </AccordionDetails>
-      </Accordion>
-      <Accordion expanded={expanded === "use_custom_link"} onChange={handleExpand("use_custom_link")}>
-        <AccordionSummary aria-controls="panel-slug-content" id="panel-slug-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <RenameOutlined />
-            </ListItemIcon>
-            <ListItemText primary={t("application:modals.customLink")} />
-            <ListItemSecondaryAction>
-              <Checkbox checked={!!setting.use_custom_link} onChange={handleCheck("use_custom_link")} />
-            </ListItemSecondaryAction>
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <Typography variant="body2">{t("application:modals.customLinkDes")}</Typography>
-          {setting.use_custom_link && (
-            <FormControl variant="standard" fullWidth sx={{ mt: 1 }}>
-              <FilledTextField
-                label={t("application:modals.customLinkName")}
-                slotProps={{
-                  input: {
-                    startAdornment: <span style={{ marginRight: 4, opacity: 0.6 }}>/s/</span>,
-                  },
-                }}
-                value={setting.slug ?? ""}
-                onChange={(e) => {
-                  const value = e.target.value.toLowerCase();
-                  if (value !== "" && !/^[a-z0-9][a-z0-9._~-]*$/.test(value)) return;
-                  onSettingChange({ ...setting, slug: value.slice(0, 64) });
-                }}
-              />
-            </FormControl>
-          )}
-        </AccordionDetails>
-      </Accordion>
-      <Accordion expanded={expanded === "note"} onChange={handleExpand("note")}>
-        <AccordionSummary aria-controls="panel-note-content" id="panel-note-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <RenameOutlined />
-            </ListItemIcon>
-            <ListItemText
-              primary={t("application:modals.shareNote")}
-              secondary={setting.note || undefined}
-              secondaryTypographyProps={{ noWrap: true }}
-            />
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            {t("application:modals.shareNoteDes")}
-          </Typography>
-          <FormControl variant="standard" fullWidth>
-            <FilledTextField
-              label={t("application:modals.shareNote")}
-              slotProps={{
-                htmlInput: {
-                  maxLength: 255,
-                },
-              }}
-              value={setting.note ?? ""}
-              onChange={(e) => onSettingChange({ ...setting, note: e.target.value })}
-            />
-          </FormControl>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion expanded={expanded === "price"} onChange={handleExpand("price")}>
-        <AccordionSummary aria-controls="panel-price-content" id="panel-price-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <CoinStack />
-            </ListItemIcon>
-            <ListItemText
-              primary={t("application:modals.paidShare")}
-              secondary={setting.price_points ? t("application:modals.paidSharePrice", { price: setting.price_points }) : undefined}
-            />
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            {t("application:modals.paidShareDes")}
-          </Typography>
-          <FormControl variant="standard" fullWidth>
-            <FilledTextField
-              label={t("application:modals.paidSharePriceLabel")}
-              type="number"
-              slotProps={{
-                htmlInput: {
-                  min: 0,
-                },
-              }}
-              value={setting.price_points ?? 0}
-              onChange={(e) => {
-                const v = Math.max(0, Math.floor(Number(e.target.value) || 0));
-                onSettingChange({ ...setting, price_points: v > 0 ? v : undefined });
-              }}
-            />
-          </FormControl>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion expanded={expanded === "listed_publicly"} onChange={handleExpand("listed_publicly")}>
-        <AccordionSummary aria-controls="panel-listed-content" id="panel-listed-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <Globe />
-            </ListItemIcon>
-            <ListItemText primary={t("application:modals.publicListing")} />
-            <ListItemSecondaryAction>
-              <Checkbox
-                checked={!!setting.listed_publicly}
-                disabled={!!setting.is_private}
-                onChange={handleCheck("listed_publicly")}
-              />
-            </ListItemSecondaryAction>
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails>{t("application:modals.publicListingDes")}</AccordionDetails>
-      </Accordion>
-      <Accordion expanded={expanded === "preview_only"} onChange={handleExpand("preview_only")}>
-        <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <EyeOff />
-            </ListItemIcon>
-            <ListItemText primary={t("application:modals.previewOnly")} />
-            <ListItemSecondaryAction>
-              <Checkbox checked={!!setting.preview_only} onChange={handleCheck("preview_only")} />
-            </ListItemSecondaryAction>
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails>{t("application:modals.previewOnlyDes")}</AccordionDetails>
-      </Accordion>
-      {file?.type == FileType.folder && (
-        <>
-          <Accordion expanded={expanded === "allow_upload"} onChange={handleExpand("allow_upload")}>
-            <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-              <StyledListItemButton>
-                <ListItemIcon>
-                  <Upload />
-                </ListItemIcon>
-                <ListItemText primary={t("application:modals.allowUpload")} />
-                <ListItemSecondaryAction>
-                  <Checkbox
-                    checked={!!setting.allow_upload || !!setting.allow_edit || !!setting.upload_only}
-                    disabled={!!setting.allow_edit || !!setting.upload_only}
-                    onChange={() => {
-                      if (!setting.allow_upload) {
-                        handleExpand("allow_upload")(null, true);
-                      }
-                      onSettingChange({ ...setting, allow_upload: !setting.allow_upload });
-                    }}
-                  />
-                </ListItemSecondaryAction>
-              </StyledListItemButton>
-            </AccordionSummary>
-            <AccordionDetails>{t("application:modals.allowUploadDes")}</AccordionDetails>
-          </Accordion>
-          <Accordion expanded={expanded === "allow_edit"} onChange={handleExpand("allow_edit")}>
-            <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-              <StyledListItemButton>
-                <ListItemIcon>
-                  <Edit />
-                </ListItemIcon>
-                <ListItemText primary={t("application:modals.allowEdit")} />
-                <ListItemSecondaryAction>
-                  <Checkbox
-                    checked={!!setting.allow_edit}
-                    disabled={!!setting.upload_only}
-                    onChange={() => {
-                      if (!setting.allow_edit) {
-                        handleExpand("allow_edit")(null, true);
-                      }
-                      onSettingChange({
-                        ...setting,
-                        allow_edit: !setting.allow_edit,
-                        allow_upload: true,
-                      });
-                    }}
-                  />
-                </ListItemSecondaryAction>
-              </StyledListItemButton>
-            </AccordionSummary>
-            <AccordionDetails>{t("application:modals.allowEditDes")}</AccordionDetails>
-          </Accordion>
-          <Accordion expanded={expanded === "upload_only"} onChange={handleExpand("upload_only")}>
-            <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-              <StyledListItemButton>
-                <ListItemIcon>
-                  <FolderAdd />
-                </ListItemIcon>
-                <ListItemText primary={t("application:modals.uploadOnly")} />
-                <ListItemSecondaryAction>
-                  <Checkbox
-                    checked={!!setting.upload_only}
-                    onChange={() => {
-                      if (!setting.upload_only) {
-                        handleExpand("upload_only")(null, true);
-                      }
-                      onSettingChange({
-                        ...setting,
-                        upload_only: !setting.upload_only,
-                        allow_edit: false,
-                      });
-                    }}
-                  />
-                </ListItemSecondaryAction>
-              </StyledListItemButton>
-            </AccordionSummary>
-            <AccordionDetails>{t("application:modals.uploadOnlyDes")}</AccordionDetails>
-          </Accordion>
-          <Accordion expanded={expanded === "share_view"} onChange={handleExpand("share_view")}>
-            <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-              <StyledListItemButton>
-                <ListItemIcon>
-                  <TableSettingsOutlined />
-                </ListItemIcon>
-                <ListItemText primary={t("application:modals.shareView")} />
-                <ListItemSecondaryAction>
-                  <Checkbox checked={setting.share_view} onChange={handleCheck("share_view")} />
-                </ListItemSecondaryAction>
-              </StyledListItemButton>
-            </AccordionSummary>
-            <AccordionDetails>{t("application:modals.shareViewDes")}</AccordionDetails>
-          </Accordion>
-          <Accordion expanded={expanded === "show_readme"} onChange={handleExpand("show_readme")}>
-            <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-              <StyledListItemButton>
-                <ListItemIcon>
-                  <BookInformation />
-                </ListItemIcon>
-                <ListItemText primary={t("application:modals.showReadme")} />
-                <ListItemSecondaryAction>
-                  <Checkbox checked={setting.show_readme} onChange={handleCheck("show_readme")} />
-                </ListItemSecondaryAction>
-              </StyledListItemButton>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Trans i18nKey="application:modals.showReadmeDes" components={[<Code />]} />
-              <StyledListItemButton disabled={!setting.show_readme}>
-                <ListItemText primary={t("application:modals.hideReadme")} secondary={t("application:modals.hideReadmeDes")} />
-                <ListItemSecondaryAction>
-                  <Checkbox
-                    checked={setting.show_readme && setting.hide_readme}
-                    disabled={!setting.show_readme}
-                    onChange={() => onSettingChange({ ...setting, hide_readme: !setting.hide_readme })}
-                  />
-                </ListItemSecondaryAction>
-              </StyledListItemButton>
-            </AccordionDetails>
-          </Accordion>
-        </>
-      )}
-      <Accordion expanded={expanded === "expires"} onChange={handleExpand("expires")}>
-        <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-          <StyledListItemButton>
-            <ListItemIcon>
-              <Timer />
-            </ListItemIcon>
-            <ListItemText primary={t("modals.expireAutomatically")} />
-            <ListItemSecondaryAction>
-              <Checkbox checked={setting.expires} onChange={handleCheck("expires")} />
-            </ListItemSecondaryAction>
-          </StyledListItemButton>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: "flex", alignItems: "center" }}>
-          <Typography>{t("application:modals.expirePrefix")}</Typography>
-          <FormControl
+    <>
+      <SectionLabel variant="subtitle2">{t("application:modals.accessSection")}</SectionLabel>
+      <List sx={{ padding: 0 }}>
+        <StyledListItemButton disableRipple sx={{ cursor: "default", gap: 1, flexWrap: "wrap" }}>
+          <ListItemIcon>
+            <Globe />
+          </ListItemIcon>
+          <ListItemText
+            primary={t("application:modals.anyoneWithLink")}
+            primaryTypographyProps={{ noWrap: true }}
+            sx={{ flex: "1 1 auto", minWidth: 0 }}
+          />
+          <Select
             variant="standard"
-            style={{
-              marginRight: 10,
-              marginLeft: 10,
-            }}
+            disableUnderline
+            size="small"
+            value={role}
+            onChange={(e) => setRole(e.target.value as AccessRole)}
+            sx={{ flexShrink: 0, ml: "64px" }}
           >
+            <MenuItem value="view">{t("application:modals.accessRoleViewer")}</MenuItem>
+            <MenuItem value="preview">{t("application:modals.previewOnly")}</MenuItem>
+            {isFolder && [
+              <MenuItem key="upload" value="upload">
+                {t("application:modals.accessRoleUploader")}
+              </MenuItem>,
+              <MenuItem key="edit" value="edit">
+                {t("application:modals.accessRoleEditor")}
+              </MenuItem>,
+              <MenuItem key="dropbox" value="dropbox">
+                {t("application:modals.uploadOnly")}
+              </MenuItem>,
+            ]}
+          </Select>
+          <Typography variant="body2" color="text.secondary" sx={{ flexBasis: "100%", pl: "64px" }}>
+            {roleDes[role]}
+          </Typography>
+        </StyledListItemButton>
+        <Accordion expanded={expanded === "is_private"} onChange={handleExpand("is_private")}>
+          <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+            <StyledListItemButton>
+              <ListItemIcon>
+                <Eye />
+              </ListItemIcon>
+              <ListItemText primary={t("application:modals.privateShare")} />
+              <ListItemSecondaryAction>
+                <Checkbox disabled={editing} checked={!!setting.is_private} onChange={handleCheck("is_private")} />
+              </ListItemSecondaryAction>
+            </StyledListItemButton>
+          </AccordionSummary>
+          <AccordionDetails sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Typography variant="body2">{t("application:modals.privateShareDes")}</Typography>
+            {setting.is_private && (
+              <Stack sx={{ mt: 1, width: "100%" }}>
+                {!editing && (
+                  <SmallFormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={setting.use_custom_password}
+                        onChange={() => {
+                          onSettingChange({ ...setting, use_custom_password: !setting.use_custom_password });
+                        }}
+                      />
+                    }
+                    label={t("application:modals.useCustomPassword")}
+                  />
+                )}
+                <Collapse in={setting.use_custom_password}>
+                  <FormControl variant="standard" fullWidth sx={{ mt: 1 }}>
+                    <FilledTextField
+                      label={t("application:modals.sharePassword")}
+                      disabled={editing}
+                      slotProps={{
+                        htmlInput: {
+                          maxLength: 32,
+                        },
+                      }}
+                      value={setting.password ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value.trim();
+                        if (!/^[a-zA-Z0-9]*$/.test(value) || value.length > 32) return;
+                        onSettingChange({ ...setting, password: value });
+                      }}
+                      required
+                    />
+                  </FormControl>
+                </Collapse>
+              </Stack>
+            )}
+          </AccordionDetails>
+        </Accordion>
+        <StyledListItemButton disableRipple sx={{ cursor: "default", gap: 1 }}>
+          <ListItemIcon>
+            <Timer />
+          </ListItemIcon>
+          <ListItemText
+            primary={t("application:modals.expireAutomatically")}
+            primaryTypographyProps={{ noWrap: true }}
+            sx={{ flex: "1 1 auto", minWidth: 0 }}
+          />
+          <FormControl variant="standard" sx={{ flexShrink: 0 }}>
             <Autocomplete
-              value={setting.expires_val}
+              size="small"
+              value={setting.expires ? (setting.expires_val ?? neverOption) : neverOption}
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);
 
@@ -526,7 +360,7 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
                 let expiry = 0;
                 let label = "";
                 if (typeof newValue === "string") {
-                  expiry = parseInt(newValue);
+                  expiry = parseInt(newValue) * 60;
                   label = newValue + " " + t("application:modals.minutes");
                 } else {
                   expiry = newValue?.value ?? 0;
@@ -535,97 +369,280 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
 
                 onSettingChange({
                   ...setting,
-                  expires_val: { value: expiry, label },
+                  expires: expiry > 0,
+                  ...(expiry > 0 ? { expires_val: { value: expiry, label } } : {}),
                 });
               }}
               freeSolo
               getOptionLabel={(option: string | valueOption) => (typeof option === "string" ? option : t(option.label))}
               disableClearable
-              options={expireOptions}
-              renderInput={(params) => <TextField sx={{ width: 150 }} {...params} variant={"standard"} />}
+              options={[neverOption, ...expireOptions]}
+              renderInput={(params) => <TextField sx={{ width: 120 }} {...params} variant={"standard"} />}
             />
           </FormControl>
-          <Typography>{t("application:modals.expireSuffix")}</Typography>
-        </AccordionDetails>
-      </Accordion>
-      {file?.type == FileType.file && (
-        <Accordion expanded={expanded === "downloads"} onChange={handleExpand("downloads")}>
-          <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
-            <StyledListItemButton>
-              <ListItemIcon>
-                <ClockArrowDownload />
-              </ListItemIcon>
-              <ListItemText primary={t("application:modals.expireAfterDownload")} />
-              <ListItemSecondaryAction>
-                <Checkbox checked={setting.downloads} onChange={handleCheck("downloads")} />
-              </ListItemSecondaryAction>
-            </StyledListItemButton>
-          </AccordionSummary>
-          <AccordionDetails sx={{ display: "flex", alignItems: "center" }}>
-            <Typography>{t("application:modals.expirePrefix")}</Typography>
-            <FormControl
-              variant="standard"
-              style={{
-                marginRight: 10,
-                marginLeft: 10,
-              }}
-            >
-              <Autocomplete
-                value={setting.downloads_val}
-                filterOptions={(options, params) => {
-                  const filtered = filter(options, params);
+        </StyledListItemButton>
+      </List>
+      <Divider sx={{ my: 0.5 }} />
+      <List sx={{ padding: 0 }}>
+        <ListItemButton onClick={() => setAdvancedToggled(!advancedOpen)}>
+          <ListItemIcon>
+            <SettingsOutlined />
+          </ListItemIcon>
+          <ListItemText
+            primary={t("application:modals.additionalOptions")}
+            secondary={advancedSummary || undefined}
+            secondaryTypographyProps={{ noWrap: true }}
+          />
+          <ChevronRight
+            fontSize="small"
+            sx={{
+              transform: advancedOpen ? "rotate(90deg)" : "none",
+              transition: "transform .2s",
+            }}
+          />
+        </ListItemButton>
+        <Collapse in={advancedOpen}>
+          <List sx={{ padding: 0 }}>
+            <Accordion expanded={expanded === "use_custom_link"} onChange={handleExpand("use_custom_link")}>
+              <AccordionSummary aria-controls="panel-slug-content" id="panel-slug-header">
+                <StyledListItemButton>
+                  <ListItemIcon>
+                    <RenameOutlined />
+                  </ListItemIcon>
+                  <ListItemText primary={t("application:modals.customLink")} />
+                  <ListItemSecondaryAction>
+                    <Checkbox checked={!!setting.use_custom_link} onChange={handleCheck("use_custom_link")} />
+                  </ListItemSecondaryAction>
+                </StyledListItemButton>
+              </AccordionSummary>
+              <AccordionDetails sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <Typography variant="body2">{t("application:modals.customLinkDes")}</Typography>
+                {setting.use_custom_link && (
+                  <FormControl variant="standard" fullWidth sx={{ mt: 1 }}>
+                    <FilledTextField
+                      label={t("application:modals.customLinkName")}
+                      slotProps={{
+                        input: {
+                          startAdornment: <span style={{ marginRight: 4, opacity: 0.6 }}>/s/</span>,
+                        },
+                      }}
+                      value={setting.slug ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase();
+                        if (value !== "" && !/^[a-z0-9][a-z0-9._~-]*$/.test(value)) return;
+                        onSettingChange({ ...setting, slug: value.slice(0, 64) });
+                      }}
+                    />
+                  </FormControl>
+                )}
+              </AccordionDetails>
+            </Accordion>
+            <Accordion expanded={expanded === "note"} onChange={handleExpand("note")}>
+              <AccordionSummary aria-controls="panel-note-content" id="panel-note-header">
+                <StyledListItemButton>
+                  <ListItemIcon>
+                    <RenameOutlined />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t("application:modals.shareNote")}
+                    secondary={setting.note || undefined}
+                    secondaryTypographyProps={{ noWrap: true }}
+                  />
+                </StyledListItemButton>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {t("application:modals.shareNoteDes")}
+                </Typography>
+                <FormControl variant="standard" fullWidth>
+                  <FilledTextField
+                    label={t("application:modals.shareNote")}
+                    slotProps={{
+                      htmlInput: {
+                        maxLength: 255,
+                      },
+                    }}
+                    value={setting.note ?? ""}
+                    onChange={(e) => onSettingChange({ ...setting, note: e.target.value })}
+                  />
+                </FormControl>
+              </AccordionDetails>
+            </Accordion>
+            <Accordion expanded={expanded === "price"} onChange={handleExpand("price")}>
+              <AccordionSummary aria-controls="panel-price-content" id="panel-price-header">
+                <StyledListItemButton>
+                  <ListItemIcon>
+                    <CoinStack />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t("application:modals.paidShare")}
+                    secondary={
+                      setting.price_points
+                        ? t("application:modals.paidSharePrice", { price: setting.price_points })
+                        : undefined
+                    }
+                  />
+                </StyledListItemButton>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {t("application:modals.paidShareDes")}
+                </Typography>
+                <FormControl variant="standard" fullWidth>
+                  <FilledTextField
+                    label={t("application:modals.paidSharePriceLabel")}
+                    type="number"
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                      },
+                    }}
+                    value={setting.price_points ?? 0}
+                    onChange={(e) => {
+                      const v = Math.max(0, Math.floor(Number(e.target.value) || 0));
+                      onSettingChange({ ...setting, price_points: v > 0 ? v : undefined });
+                    }}
+                  />
+                </FormControl>
+              </AccordionDetails>
+            </Accordion>
+            <Accordion expanded={expanded === "listed_publicly"} onChange={handleExpand("listed_publicly")}>
+              <AccordionSummary aria-controls="panel-listed-content" id="panel-listed-header">
+                <StyledListItemButton>
+                  <ListItemIcon>
+                    <Globe />
+                  </ListItemIcon>
+                  <ListItemText primary={t("application:modals.publicListing")} />
+                  <ListItemSecondaryAction>
+                    <Checkbox
+                      checked={!!setting.listed_publicly}
+                      disabled={!!setting.is_private}
+                      onChange={handleCheck("listed_publicly")}
+                    />
+                  </ListItemSecondaryAction>
+                </StyledListItemButton>
+              </AccordionSummary>
+              <AccordionDetails>{t("application:modals.publicListingDes")}</AccordionDetails>
+            </Accordion>
+            {isFile && (
+              <StyledListItemButton disableRipple sx={{ cursor: "default", gap: 1 }}>
+                <ListItemIcon>
+                  <ClockArrowDownload />
+                </ListItemIcon>
+                <ListItemText
+                  primary={t("application:modals.expireAfterDownload")}
+                  primaryTypographyProps={{ noWrap: true }}
+                  sx={{ flex: "1 1 auto", minWidth: 0 }}
+                />
+                <FormControl variant="standard" sx={{ flexShrink: 0 }}>
+                  <Autocomplete
+                    size="small"
+                    value={setting.downloads ? (setting.downloads_val ?? neverOption) : neverOption}
+                    filterOptions={(options, params) => {
+                      const filtered = filter(options, params);
 
-                  const { inputValue } = params;
-                  const value = parseInt(inputValue);
-                  if (
-                    inputValue !== "" &&
-                    isNumeric(inputValue) &&
-                    parseInt(inputValue) > 0 &&
-                    !filtered.find((v) => v.value == value)
-                  ) {
-                    filtered.push({
-                      inputValue,
-                      value,
-                      label: inputValue,
-                    });
-                  }
+                      const { inputValue } = params;
+                      const value = parseInt(inputValue);
+                      if (
+                        inputValue !== "" &&
+                        isNumeric(inputValue) &&
+                        parseInt(inputValue) > 0 &&
+                        !filtered.find((v) => v.value == value)
+                      ) {
+                        filtered.push({
+                          inputValue,
+                          value,
+                          label: inputValue,
+                        });
+                      }
 
-                  return filtered;
-                }}
-                onChange={(_event, newValue) => {
-                  let downloads = 0;
-                  let label = "";
-                  if (typeof newValue === "string") {
-                    downloads = parseInt(newValue);
-                    label = newValue;
-                  } else {
-                    downloads = newValue?.value ?? 0;
-                    label = newValue?.label ?? "";
-                  }
+                      return filtered;
+                    }}
+                    onChange={(_event, newValue) => {
+                      let downloads = 0;
+                      let label = "";
+                      if (typeof newValue === "string") {
+                        downloads = parseInt(newValue);
+                        label = newValue;
+                      } else {
+                        downloads = newValue?.value ?? 0;
+                        label = newValue?.label ?? "";
+                      }
 
-                  onSettingChange({
-                    ...setting,
-                    downloads_val: { value: downloads, label },
-                  });
-                }}
-                freeSolo
-                getOptionLabel={(option: string | valueOption) =>
-                  typeof option === "string"
-                    ? option
-                    : t("application:modals.downloadLimitOptions", {
-                        num: option.label,
-                      })
-                }
-                disableClearable
-                options={downloadOptions}
-                renderInput={(params) => <TextField sx={{ width: 200 }} {...params} variant={"standard"} />}
-              />
-            </FormControl>
-            <Typography>{t("application:modals.expireSuffix")}</Typography>
-          </AccordionDetails>
-        </Accordion>
-      )}
-    </List>
+                      onSettingChange({
+                        ...setting,
+                        downloads: downloads > 0,
+                        ...(downloads > 0 ? { downloads_val: { value: downloads, label } } : {}),
+                      });
+                    }}
+                    freeSolo
+                    getOptionLabel={(option: string | valueOption) =>
+                      typeof option === "string"
+                        ? option
+                        : option.value === 0
+                          ? t(option.label)
+                          : t("application:modals.downloadLimitOptions", {
+                              num: option.label,
+                            })
+                    }
+                    disableClearable
+                    options={[neverOption, ...downloadOptions]}
+                    renderInput={(params) => <TextField sx={{ width: 120 }} {...params} variant={"standard"} />}
+                  />
+                </FormControl>
+              </StyledListItemButton>
+            )}
+            {isFolder && (
+              <>
+                <Accordion expanded={expanded === "share_view"} onChange={handleExpand("share_view")}>
+                  <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+                    <StyledListItemButton>
+                      <ListItemIcon>
+                        <TableSettingsOutlined />
+                      </ListItemIcon>
+                      <ListItemText primary={t("application:modals.shareView")} />
+                      <ListItemSecondaryAction>
+                        <Checkbox checked={setting.share_view} onChange={handleCheck("share_view")} />
+                      </ListItemSecondaryAction>
+                    </StyledListItemButton>
+                  </AccordionSummary>
+                  <AccordionDetails>{t("application:modals.shareViewDes")}</AccordionDetails>
+                </Accordion>
+                <Accordion expanded={expanded === "show_readme"} onChange={handleExpand("show_readme")}>
+                  <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+                    <StyledListItemButton>
+                      <ListItemIcon>
+                        <BookInformation />
+                      </ListItemIcon>
+                      <ListItemText primary={t("application:modals.showReadme")} />
+                      <ListItemSecondaryAction>
+                        <Checkbox checked={setting.show_readme} onChange={handleCheck("show_readme")} />
+                      </ListItemSecondaryAction>
+                    </StyledListItemButton>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Trans i18nKey="application:modals.showReadmeDes" components={[<Code key="0" />]} />
+                    <StyledListItemButton disabled={!setting.show_readme}>
+                      <ListItemText
+                        primary={t("application:modals.hideReadme")}
+                        secondary={t("application:modals.hideReadmeDes")}
+                      />
+                      <ListItemSecondaryAction>
+                        <Checkbox
+                          checked={setting.show_readme && setting.hide_readme}
+                          disabled={!setting.show_readme}
+                          onChange={() => onSettingChange({ ...setting, hide_readme: !setting.hide_readme })}
+                        />
+                      </ListItemSecondaryAction>
+                    </StyledListItemButton>
+                  </AccordionDetails>
+                </Accordion>
+              </>
+            )}
+          </List>
+        </Collapse>
+      </List>
+    </>
   );
 };
 

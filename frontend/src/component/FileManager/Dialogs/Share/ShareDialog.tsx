@@ -195,7 +195,11 @@ const ShareDialog = () => {
   return (
     <>
       <DraggableDialog
-        title={t(`application:modals.${editTarget ? "edit" : "create"}ShareLink`)}
+        title={
+          !editTarget && multiCount === 0 && target?.name
+            ? t("application:modals.createShareLinkNamed", { name: target.name })
+            : t(`application:modals.${editTarget ? "edit" : "create"}ShareLink`)
+        }
         showActions
         loading={loading}
         showCancel
@@ -254,7 +258,7 @@ const ShareDialog = () => {
                     <Stack spacing={1}>
                       <FilledTextField
                         variant={"filled"}
-                        inputProps={{ readonly: true }}
+                        inputProps={{ readOnly: true }}
                         label={t("modals.shareLink")}
                         fullWidth
                         value={finalShareLink ?? ""}
@@ -278,7 +282,7 @@ const ShareDialog = () => {
                           <Collapse in={!includePassword}>
                             <FilledTextField
                               variant={"filled"}
-                              inputProps={{ readonly: true }}
+                              inputProps={{ readOnly: true }}
                               label={t("modals.sharePassword")}
                               fullWidth
                               value={finalShareLinkPassword ?? ""}
