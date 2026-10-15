@@ -3,7 +3,6 @@
 cloudreve-api/target/
 **/*.rs.bk
 *.pdb
-Cargo.lock
 
 # IDE
 .vscode/
