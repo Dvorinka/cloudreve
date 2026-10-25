@@ -29,6 +29,8 @@ type Database struct {
 	DatabaseURL string
 	// SSLMode 允许使用SSL连接数据库, 用户可以在sslmode string中添加证书等配置
 	SSLMode string
+	// MaxOpenConns 允许用户配置数据库连接池的最大连接数, 仅对非SQLite数据库有效
+	MaxOpenConns int
 }
 
 type SysMode string

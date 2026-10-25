@@ -119,7 +119,7 @@ func NewRawEntClient(l logging.Logger, config conf.ConfigProvider) (*ent.Client,
 
 	}
 	// Set connection pool
-	configureDBPool(client.DB(), confDBType)
+	configureDBPool(client.DB(), confDBType, dbConfig.MaxOpenConns)
 
 	driverOpt := ent.Driver(client)
 
@@ -139,17 +139,27 @@ func NewRawEntClient(l logging.Logger, config conf.ConfigProvider) (*ent.Client,
 // surface SQLITE_BUSY after busy_timeout instead of queueing invisibly.
 const sqliteMaxOpenConns = 10
 
+// defaultMaxOpenConns is the default maximum number of open connections for non-SQLite databases.
+const defaultMaxOpenConns = 100
+
 // configureDBPool sizes the connection pool. SQLite used to be capped at a
 // single connection, which let one held or stuck transaction starve every
 // other query — including WebDAV auth — until the process was restarted
 // (cloudreve/cloudreve#3608). With WAL + busy_timeout (sqlite3Driver) more
 // connections are safe: readers never block behind the writer.
-func configureDBPool(db *rawsql.DB, dbType conf.DBType) {
+func configureDBPool(db *rawsql.DB, dbType conf.DBType, maxOpenConns int) {
+	// Set the maximum number of idle connections to 50.
 	db.SetMaxIdleConns(50)
+	// Set the maximum number of open connections based on the database type and user-provided value.
 	if dbType == conf.SQLiteDB || dbType == "UNSET" {
 		db.SetMaxOpenConns(sqliteMaxOpenConns)
 	} else {
-		db.SetMaxOpenConns(100)
+		if maxOpenConns <= 10 || maxOpenConns > 5000 {
+			// Set default max open connections to 100 if the user-provided value is invalid.
+			db.SetMaxOpenConns(defaultMaxOpenConns)
+		} else {
+			db.SetMaxOpenConns(maxOpenConns)
+		}
 	}
 
 	// Set timeout

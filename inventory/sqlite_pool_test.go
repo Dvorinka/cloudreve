@@ -42,7 +42,7 @@ func TestSQLitePoolReadsDuringHeldTx(t *testing.T) {
 	db, err := rawsql.Open("sqlite3", filepath.Join(t.TempDir(), "app.db"))
 	require.NoError(t, err)
 	defer db.Close()
-	configureDBPool(db, conf.SQLiteDB)
+	configureDBPool(db, conf.SQLiteDB, 0)
 
 	_, err = db.ExecContext(ctx, "CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)")
 	require.NoError(t, err)
