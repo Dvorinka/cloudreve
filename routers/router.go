@@ -14,6 +14,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/fs"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/logging"
+	"github.com/cloudreve/Cloudreve/v4/pkg/mcp"
 	"github.com/cloudreve/Cloudreve/v4/pkg/webdav"
 	"github.com/cloudreve/Cloudreve/v4/routers/controllers"
 	abusesvc "github.com/cloudreve/Cloudreve/v4/service/abuse"
@@ -213,6 +214,8 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 	r.GET(".well-known/openid-configuration", controllers.OpenIDConfiguration)
 	r.Use(middleware.FrontendFileHandler(dep))
 	r.GET("manifest.json", controllers.Manifest)
+	// Agent MCP. Bearer access tokens, same credentials as the REST API.
+	mcp.Mount(r, dep)
 
 	noAuth := r.Group(constants.APIPrefix)
 	wopi := noAuth.Group("file/wopi", middleware.HashID(hashid.FileID), middleware.ViewerSessionValidation())
@@ -1580,6 +1583,16 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 				user.GET("me", middleware.RequiredScopes(types.ScopeUserInfoRead), controllers.UserMe)
 				// 存储信息
 				user.GET("capacity", middleware.RequiredScopes(types.ScopeUserInfoRead), controllers.UserStorage)
+				// Agent (MCP) tokens. The secret is returned only from POST.
+				mcpTokens := user.Group("mcp/token")
+				{
+					mcpTokens.GET("", controllers.UserListMCPTokens)
+					mcpTokens.POST("",
+						middleware.RateLimitByIP("mcp_token", 10, time.Hour),
+						controllers.UserIssueMCPToken,
+					)
+					mcpTokens.DELETE(":id", controllers.UserRevokeMCPToken)
+				}
 				// Search user by keywords
 				user.GET("search",
 					middleware.RequiredScopes(types.ScopeUserInfoRead),

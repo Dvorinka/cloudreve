@@ -4,11 +4,47 @@ import { useAppSelector } from "../../../redux/hooks.ts";
 import { CaptchaParams } from "./Captcha.tsx";
 import { Box, useTheme } from "@mui/material";
 
-// Cap Widget URLs
+// Cap Widget URLs. hashwx.wasm ships with @cap.js/wasm 0.0.8+ and must follow
+// the same asset source as cap_wasm_bg.wasm (cloudreve/cloudreve#3617).
 const CAP_WASM_UNPKG_URL = "https://unpkg.com/@cap.js/wasm/browser/cap_wasm_bg.wasm";
 const CAP_WASM_JSDELIVR_URL = "https://cdn.jsdelivr.net/npm/@cap.js/wasm/browser/cap_wasm_bg.wasm";
+const CAP_HASHWX_UNPKG_URL = "https://unpkg.com/@cap.js/wasm/browser/hashwx.wasm";
+const CAP_HASHWX_JSDELIVR_URL = "https://cdn.jsdelivr.net/npm/@cap.js/wasm/browser/hashwx.wasm";
 const CAP_WIDGET_UNPKG_URL = "https://unpkg.com/@cap.js/widget";
 const CAP_WIDGET_JSDELIVR_URL = "https://cdn.jsdelivr.net/npm/@cap.js/widget";
+
+export interface CapAssetURLs {
+  wasm: string;
+  hashwx: string;
+  widget: string;
+}
+
+// capAssetURLs picks the widget, proof-of-work wasm, and HashWX wasm from the
+// same origin. Older Cap instances that do not serve hashwx.wasm fail that
+// one request; leaving it on a public CDN would keep a dependency the
+// self-hosted setting exists to remove.
+export function capAssetURLs(assetServer: string | undefined, instanceURL: string | undefined): CapAssetURLs {
+  const base = (instanceURL || "").replace(/\/$/, "");
+  if (assetServer === "instance" && base) {
+    return {
+      wasm: `${base}/assets/cap_wasm_bg.wasm`,
+      hashwx: `${base}/assets/hashwx.wasm`,
+      widget: `${base}/assets/widget.js`,
+    };
+  }
+  if (assetServer === "unpkg") {
+    return {
+      wasm: CAP_WASM_UNPKG_URL,
+      hashwx: CAP_HASHWX_UNPKG_URL,
+      widget: CAP_WIDGET_UNPKG_URL,
+    };
+  }
+  return {
+    wasm: CAP_WASM_JSDELIVR_URL,
+    hashwx: CAP_HASHWX_JSDELIVR_URL,
+    widget: CAP_WIDGET_JSDELIVR_URL,
+  };
+}
 
 export interface CapProps {
   onStateChange: (state: CaptchaParams) => void;
@@ -134,15 +170,12 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
       return;
     }
 
-    // 在加载 widget 脚本之前设置 WASM URL
-    if (capAssetServer === "instance") {
-      (window as any).CAP_CUSTOM_WASM_URL = `${capInstanceURL.replace(/\/$/, "")}/assets/cap_wasm_bg.wasm`;
-    } else if (capAssetServer === "unpkg") {
-      (window as any).CAP_CUSTOM_WASM_URL = CAP_WASM_UNPKG_URL;
-    } else {
-      // jsdelivr - 默认CDN
-      (window as any).CAP_CUSTOM_WASM_URL = CAP_WASM_JSDELIVR_URL;
-    }
+    // Set both wasm URLs before the widget script loads. The widget reads
+    // CAP_CUSTOM_HASHWX_URL for the HashWX proof-of-work module and otherwise
+    // falls back to jsDelivr (cloudreve/cloudreve#3617).
+    const assets = capAssetURLs(capAssetServer, capInstanceURL);
+    (window as any).CAP_CUSTOM_WASM_URL = assets.wasm;
+    (window as any).CAP_CUSTOM_HASHWX_URL = assets.hashwx;
 
     const scriptId = "cap-widget-script";
     let script = document.getElementById(scriptId) as HTMLScriptElement;
@@ -160,18 +193,7 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
       script = document.createElement("script");
       script.id = scriptId;
 
-      // 根据配置选择静态资源源
-      let assetSource;
-      if (capAssetServer === "instance") {
-        assetSource = `${capInstanceURL.replace(/\/$/, "")}/assets/widget.js`;
-      } else if (capAssetServer === "unpkg") {
-        assetSource = CAP_WIDGET_UNPKG_URL;
-      } else {
-        // jsdelivr - 默认CDN
-        assetSource = CAP_WIDGET_JSDELIVR_URL;
-      }
-
-      script.src = assetSource;
+      script.src = assets.widget;
       script.async = true;
       script.onload = initWidget;
       script.onerror = () => {

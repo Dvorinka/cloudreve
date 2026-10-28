@@ -117,6 +117,8 @@ docs/                Documentation site — VitePress, EN + ZH (vendored from cl
   preview-only mode, anonymous upload, IP-restricted views.
 - Archive compress/extract, media metadata extraction, metadata/tag search.
 - WebDAV across all storage providers (read-only group enforcement fixed in this fork).
+- Agents (MCP): authenticated streamable HTTP at `POST /api/v4/mcp`. Tokens are created
+  under Settings → Agents or Connect → MCP and act as that user.
 - SSO: generic OIDC inbound consumer (auth-code + nonce, JWKS-verified, auto-provisioning),
   OAuth public clients with PKCE, passkeys, TOTP 2FA.
 - Multi-user, multi-group; admin task list with CIDR-capable creator-IP filtering; per-user trash
@@ -127,6 +129,29 @@ docs/                Documentation site — VitePress, EN + ZH (vendored from cl
 - Desktop client: on-demand placeholder sync (Windows cfapi, Linux FUSE), FileCloud-style share
   dialog from the Explorer right-click menu, in-app self-updates.
 - Server self-update: admins can upgrade in place from the dashboard.
+
+## Agents (MCP)
+
+Cloudreve exposes the signed-in user's files to MCP clients (Cursor and others) at
+`POST /api/v4/mcp`. Create a token in **Settings → Agents** or **Connect → MCP**. The
+secret is shown once. It lasts 30 days, can be revoked from the same page, and stops
+working if the password changes. The page also copies a client config:
+
+```json
+{
+  "mcpServers": {
+    "cloudreve": {
+      "type": "http",
+      "url": "https://your-site.example/api/v4/mcp",
+      "headers": { "Authorization": "Bearer TOKEN" }
+    }
+  }
+}
+```
+
+The token can read, change, and share that user's files. Paths look like `cloudreve://my`
+and `cloudreve://trash`. OAuth tokens need `Files.Read` / `Files.Write` and
+`Shares.Read` / `Shares.Write`. Details: [docs/en/usage/mcp.md](docs/en/usage/mcp.md).
 
 ## Build from source
 

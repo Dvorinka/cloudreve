@@ -119,7 +119,11 @@ func NewRawEntClient(l logging.Logger, config conf.ConfigProvider) (*ent.Client,
 
 	}
 	// Set connection pool
-	configureDBPool(client.DB(), confDBType)
+	open, idle, warn := poolLimits(confDBType, dbConfig.MaxOpenConns)
+	if warn != "" {
+		l.Warning("%s", warn)
+	}
+	configureDBPool(client.DB(), open, idle)
 
 	driverOpt := ent.Driver(client)
 
@@ -139,20 +143,52 @@ func NewRawEntClient(l logging.Logger, config conf.ConfigProvider) (*ent.Client,
 // surface SQLITE_BUSY after busy_timeout instead of queueing invisibly.
 const sqliteMaxOpenConns = 10
 
-// configureDBPool sizes the connection pool. SQLite used to be capped at a
+// defaultMaxOpenConns is the historical pool size for MySQL and Postgres.
+const defaultMaxOpenConns = 100
+
+// maxAllowedOpenConns rejects accidental huge pools (a typo of 100000) while
+// still letting a busy instance raise the old hard-coded 100.
+const maxAllowedOpenConns = 5000
+
+const defaultMaxIdleConns = 50
+
+// poolLimits sizes the database/sql pool. SQLite used to be capped at a
 // single connection, which let one held or stuck transaction starve every
 // other query — including WebDAV auth — until the process was restarted
-// (cloudreve/cloudreve#3608). With WAL + busy_timeout (sqlite3Driver) more
-// connections are safe: readers never block behind the writer.
-func configureDBPool(db *rawsql.DB, dbType conf.DBType) {
-	db.SetMaxIdleConns(50)
-	if dbType == conf.SQLiteDB || dbType == "UNSET" {
-		db.SetMaxOpenConns(sqliteMaxOpenConns)
-	} else {
-		db.SetMaxOpenConns(100)
+// (cloudreve/cloudreve#3608). With WAL + busy_timeout (sqlite3Driver) a small
+// pool is safe: readers never block behind the writer. A configured value is
+// ignored for SQLite because a large pool only queues SQLITE_BUSY.
+//
+// configured <= 0 keeps defaultMaxOpenConns. Values above maxAllowedOpenConns
+// are clamped. warn is empty when nothing was adjusted.
+func poolLimits(dbType conf.DBType, configured int) (open, idle int, warn string) {
+	if dbType == conf.SQLiteDB || dbType == conf.SQLite3DB || dbType == "" || dbType == "UNSET" {
+		if configured > 0 {
+			warn = "Database.MaxOpenConns is ignored for SQLite"
+		}
+		return sqliteMaxOpenConns, sqliteMaxOpenConns, warn
 	}
 
-	// Set timeout
+	switch {
+	case configured <= 0:
+		open = defaultMaxOpenConns
+	case configured > maxAllowedOpenConns:
+		open = maxAllowedOpenConns
+		warn = fmt.Sprintf("Database.MaxOpenConns %d exceeds %d; clamped", configured, maxAllowedOpenConns)
+	default:
+		open = configured
+	}
+
+	idle = open
+	if idle > defaultMaxIdleConns {
+		idle = defaultMaxIdleConns
+	}
+	return open, idle, warn
+}
+
+func configureDBPool(db *rawsql.DB, open, idle int) {
+	db.SetMaxIdleConns(idle)
+	db.SetMaxOpenConns(open)
 	db.SetConnMaxLifetime(time.Second * 30)
 }
 

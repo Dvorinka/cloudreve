@@ -1,4 +1,4 @@
-import { AccountBalanceWalletOutlined, PersonOutline } from "@mui/icons-material";
+import { AccountBalanceWalletOutlined, PersonOutline, SmartToyOutlined } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
@@ -20,6 +20,7 @@ import ProfileSetting from "./ProfileSetting.tsx";
 import SecuritySetting from "./Security/SecuritySetting.tsx";
 import Tag from "../../Icons/Tag.tsx";
 import TagSetting from "./TagSetting.tsx";
+import McpConnect from "../Devices/McpConnect.tsx";
 
 export enum SettingPageTab {
   Profile = "profile",
@@ -27,6 +28,7 @@ export enum SettingPageTab {
   Security = "security",
   Finance = "finance",
   Tags = "tags",
+  Agents = "agents",
 }
 
 const Setting = () => {
@@ -77,6 +79,11 @@ const Setting = () => {
           value: SettingPageTab.Tags,
           icon: <Tag />,
         },
+        {
+          label: t("application:setting.mcp"),
+          value: SettingPageTab.Agents,
+          icon: <SmartToyOutlined />,
+        },
       ],
     );
     return res;
@@ -124,6 +131,7 @@ const Setting = () => {
                   {tab == SettingPageTab.Security && <SecuritySetting setting={setting} setSetting={setSetting} />}
                   {tab == SettingPageTab.Finance && <FinanceSetting />}
                   {tab == SettingPageTab.Tags && <TagSetting />}
+                  {tab == SettingPageTab.Agents && <McpConnect />}
                 </Box>
               )}
             </Box>
