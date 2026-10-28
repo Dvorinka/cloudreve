@@ -813,6 +813,7 @@
     },
     "server": "Server",
     "tempPath": "Temporary path",
+    "mcpEndpointDes": "Agents connect with POST /api/v4/mcp and a bearer token. People create and revoke tokens under Settings → Agents or Connect → MCP. A token can read, change, and share that person's files until it is revoked, it expires (30 days), or the password changes.",
     "tempPathDes": "The directory for storing temporary files, relative to the Cloudreve data directory. Please ensure that no queue tasks are running before modifying it.",
     "siteID": "Site ID",
     "siteIDDes": "A unique ID for identifying the site, generally not needed to be modified.",

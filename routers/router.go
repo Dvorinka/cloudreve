@@ -1583,6 +1583,16 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 				user.GET("me", middleware.RequiredScopes(types.ScopeUserInfoRead), controllers.UserMe)
 				// 存储信息
 				user.GET("capacity", middleware.RequiredScopes(types.ScopeUserInfoRead), controllers.UserStorage)
+				// Agent (MCP) tokens. The secret is returned only from POST.
+				mcpTokens := user.Group("mcp/token")
+				{
+					mcpTokens.GET("", controllers.UserListMCPTokens)
+					mcpTokens.POST("",
+						middleware.RateLimitByIP("mcp_token", 10, time.Hour),
+						controllers.UserIssueMCPToken,
+					)
+					mcpTokens.DELETE(":id", controllers.UserRevokeMCPToken)
+				}
 				// Search user by keywords
 				user.GET("search",
 					middleware.RequiredScopes(types.ScopeUserInfoRead),

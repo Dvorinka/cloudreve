@@ -52,6 +52,8 @@ android/             原生 Android 客户端 — Kotlin + Jetpack Compose（v1.
 - 分享链接：过期时间、仅上传投递箱、在线编辑、仅预览、匿名上传、IP 限制访问。
 - 压缩包解压/打包、媒体元数据提取、元数据/标签检索。
 - 全存储端 WebDAV（本分支修复了只读用户组的权限执行问题）。
+- 智能体 (MCP)：已登录用户通过 `POST /api/v4/mcp` 接入。令牌在「设置 → 智能体」或
+  「连接 → MCP」中创建，并以该用户身份操作文件。
 - SSO：通用 OIDC 接入（授权码 + nonce、JWKS 校验、自动开户）、OAuth 公共客户端 PKCE、
   Passkey、TOTP 两步验证。
 - 多用户多用户组；管理员任务列表支持 CIDR 创建者 IP 过滤；按用户回收站保留期；
@@ -61,6 +63,28 @@ android/             原生 Android 客户端 — Kotlin + Jetpack Compose（v1.
 - 桌面客户端：按需占位同步（Windows cfapi、Linux FUSE），资源管理器右键菜单
   FileCloud 式分享对话框，应用内自动更新。
 - 服务端自更新：管理员可在后台一键升级。
+
+## 智能体 (MCP)
+
+Cloudreve 在 `POST /api/v4/mcp` 向 MCP 客户端（Cursor 等）开放当前用户的文件。
+在 **设置 → 智能体** 或 **连接 → MCP** 创建令牌。密钥只显示一次，有效期 30 天，
+可在同一页面撤销，修改密码后也会失效。页面可以复制客户端配置：
+
+```json
+{
+  "mcpServers": {
+    "cloudreve": {
+      "type": "http",
+      "url": "https://your-site.example/api/v4/mcp",
+      "headers": { "Authorization": "Bearer TOKEN" }
+    }
+  }
+}
+```
+
+令牌可以读取、修改并分享该用户的文件。路径形如 `cloudreve://my` 和 `cloudreve://trash`。
+OAuth 令牌需要 `Files.Read` / `Files.Write` 以及 `Shares.Read` / `Shares.Write`。
+说明见 [docs/zh/usage/mcp.md](docs/zh/usage/mcp.md)。
 
 ## 从源码构建
 

@@ -139,6 +139,7 @@ export default defineConfig({
           { text: "OIDC 认证", link: "/zh/usage/oidc" },
           { text: "文件加密", link: "/zh/usage/file-encryption" },
           { text: "桌面同步客户端", link: "/zh/usage/desktop-client" },
+          { text: "智能体 (MCP)", link: "/zh/usage/mcp" },
           {
             text: "文件搜索",
             collapsed: true,

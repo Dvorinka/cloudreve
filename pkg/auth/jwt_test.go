@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/logging"
 	"github.com/cloudreve/Cloudreve/v4/pkg/setting"
+	"github.com/gin-gonic/gin"
 )
 
 type stubSettingProvider struct {
@@ -189,6 +192,51 @@ func TestRefreshRejectsChangedUserState(t *testing.T) {
 
 	if _, err := ta.Refresh(context.Background(), token.RefreshToken); err != ErrInvalidRefreshToken {
 		t.Fatalf("expected ErrInvalidRefreshToken after password change, got %v", err)
+	}
+}
+
+func TestRevocableAccessToken(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	user := &ent.User{ID: 7, Email: "r@example.com", Password: "pw"}
+	kv := cache.NewMemoStore("", nil)
+	ta := newTestTokenAuth(t, &stubUserClient{user: user}, kv)
+
+	token, err := ta.Issue(context.Background(), &IssueTokenArgs{
+		User:              user,
+		Revocable:         true,
+		AccessTTLOverride: 30 * 24 * time.Hour,
+	})
+	if err != nil {
+		t.Fatalf("Issue failed: %v", err)
+	}
+	if token.AccessExpires.Before(time.Now().Add(29 * 24 * time.Hour)) {
+		t.Fatal("expected the access token to last about 30 days")
+	}
+
+	verify := func() error {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request.Header.Set(AuthorizationHeader, TokenHeaderPrefix+token.AccessToken)
+		_, err := ta.VerifyAndRetrieveUser(c)
+		return err
+	}
+	if err := verify(); err != nil {
+		t.Fatalf("fresh token rejected: %v", err)
+	}
+
+	claims, err := ta.Claims(context.Background(), token.AccessToken)
+	if err != nil || claims.RootTokenID == nil || len(claims.StateHash) == 0 {
+		t.Fatalf("revocable access token missing root id or state hash: %+v %v", claims, err)
+	}
+	kv.Set(RevokeTokenPrefix+claims.RootTokenID.String(), true, 0)
+	if err := verify(); err == nil {
+		t.Fatal("revoked token was accepted")
+	}
+
+	kv.Delete(RevokeTokenPrefix, claims.RootTokenID.String())
+	ta.userClient = &stubUserClient{user: &ent.User{ID: 7, Email: "r@example.com", Password: "new-pw"}}
+	if err := verify(); err == nil {
+		t.Fatal("token was accepted after a password change")
 	}
 }
 

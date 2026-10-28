@@ -1366,6 +1366,37 @@ export function getPublicShares(req: ListPublicShareService): ThunkResponse<List
   };
 }
 
+export interface AgentToken {
+  id: string;
+  created_at: string;
+  expires_at: string;
+  access_token?: string;
+}
+
+export function getAgentTokens(): ThunkResponse<AgentToken[]> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send("/user/mcp/token", { method: "GET" }, { ...defaultOpts }),
+    );
+  };
+}
+
+export function sendCreateAgentToken(): ThunkResponse<AgentToken> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send("/user/mcp/token", { method: "POST" }, { ...defaultOpts }),
+    );
+  };
+}
+
+export function sendRevokeAgentToken(id: string): ThunkResponse<void> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(`/user/mcp/token/${id}`, { method: "DELETE" }, { ...defaultOpts }),
+    );
+  };
+}
+
 export function getDavAccounts(req: ListDavAccountsService): ThunkResponse<ListDavAccountsResponse> {
   return async (dispatch, _getState) => {
     return await dispatch(

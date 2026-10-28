@@ -40,6 +40,12 @@ type IssueTokenArgs struct {
 	ClientID           string
 	Scopes             []string
 	RefreshTTLOverride time.Duration
+	// AccessTTLOverride replaces the site access-token lifetime when set.
+	AccessTTLOverride time.Duration
+	// Revocable stamps the access token with its root id and a hash of the
+	// user's password so it can be revoked and stops working after a password
+	// change. Login tokens leave this false.
+	Revocable bool
 }
 
 // Token stores token pair for authentication
@@ -225,6 +231,22 @@ func (t *tokenAuth) VerifyAndRetrieveUser(c *gin.Context) (bool, error) {
 		return false, serializer.NewError(serializer.CodeNotFound, "User not found", err)
 	}
 
+	if claims.RootTokenID != nil {
+		if _, revoked := t.kv.Get(fmt.Sprintf("%s%s", RevokeTokenPrefix, claims.RootTokenID.String())); revoked {
+			return false, serializer.NewError(serializer.CodeCredentialInvalid, "Token revoked", nil)
+		}
+	}
+	if len(claims.StateHash) > 0 {
+		user, err := t.userClient.GetActiveByID(c, uid)
+		if err != nil {
+			return false, serializer.NewError(serializer.CodeCredentialInvalid, "Token revoked", err)
+		}
+		expected := t.hashUserState(c, user)
+		if !bytes.Equal(claims.StateHash, expected[:]) {
+			return false, serializer.NewError(serializer.CodeCredentialInvalid, "Token revoked", nil)
+		}
+	}
+
 	util.WithValue(c, inventory.UserIDCtx{}, uid)
 
 	if claims.ClientID != "" {
@@ -240,7 +262,11 @@ func (t *tokenAuth) Issue(ctx context.Context, args *IssueTokenArgs) (*Token, er
 	uidEncoded := hashid.EncodeUserID(t.idEncoder, u.ID)
 	tokenSettings := t.s.TokenAuth(ctx)
 	issueDate := time.Now()
-	accessTokenExpired := time.Now().Add(tokenSettings.AccessTokenTTL)
+	accessTTL := tokenSettings.AccessTokenTTL
+	if args.AccessTTLOverride > 0 {
+		accessTTL = args.AccessTTLOverride
+	}
+	accessTokenExpired := time.Now().Add(accessTTL)
 	refreshTokenExpired := time.Now().Add(tokenSettings.RefreshTokenTTL)
 	if args.RefreshTTLOverride > 0 {
 		refreshTokenExpired = time.Now().Add(args.RefreshTTLOverride)
@@ -250,7 +276,7 @@ func (t *tokenAuth) Issue(ctx context.Context, args *IssueTokenArgs) (*Token, er
 		rootTokenID = &newRootTokenID
 	}
 
-	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
+	accessClaims := Claims{
 		TokenType: TokenTypeAccess,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   uidEncoded,
@@ -259,7 +285,13 @@ func (t *tokenAuth) Issue(ctx context.Context, args *IssueTokenArgs) (*Token, er
 		},
 		ClientID: args.ClientID,
 		Scopes:   args.Scopes,
-	}).SignedString(t.secret)
+	}
+	if args.Revocable {
+		accessClaims.RootTokenID = rootTokenID
+		userHash := t.hashUserState(ctx, u)
+		accessClaims.StateHash = userHash[:]
+	}
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(t.secret)
 	if err != nil {
 		return nil, fmt.Errorf("faield to sign access token: %w", err)
 	}

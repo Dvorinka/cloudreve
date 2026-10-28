@@ -22,6 +22,9 @@ const ServerSetting = () => {
           <Typography variant="h6" gutterBottom>
             {t("settings.server")}
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t("settings.mcpEndpointDes")}
+          </Typography>
           <SettingSectionContent>
             <SettingForm title={t("settings.tempPath")} lgWidth={5}>
               <FormControl fullWidth>

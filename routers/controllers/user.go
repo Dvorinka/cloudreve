@@ -316,6 +316,32 @@ func UserAnnouncement(c *gin.Context) {
 	c.JSON(200, serializer.Response{Data: res})
 }
 
+// UserListMCPTokens lists the caller's agent tokens.
+func UserListMCPTokens(c *gin.Context) {
+	res, err := user.ListAgentTokens(c)
+	if respondErr(c, err) {
+		return
+	}
+	c.JSON(200, serializer.Response{Data: res})
+}
+
+// UserIssueMCPToken creates a revocable agent token. The secret is in this response only.
+func UserIssueMCPToken(c *gin.Context) {
+	res, err := user.IssueAgentToken(c)
+	if respondErr(c, err) {
+		return
+	}
+	c.JSON(200, serializer.Response{Data: res})
+}
+
+// UserRevokeMCPToken revokes one agent token.
+func UserRevokeMCPToken(c *gin.Context) {
+	if respondErr(c, user.RevokeAgentToken(c, c.Param("id"))) {
+		return
+	}
+	c.JSON(200, serializer.Response{})
+}
+
 // UserCredit returns the caller's credit balance and active grants.
 func UserCredit(c *gin.Context) {
 	service := ParametersFromContext[*user.CreditService](c, user.CreditParamCtx{})

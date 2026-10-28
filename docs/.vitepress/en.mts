@@ -140,6 +140,7 @@ export default defineConfig({
           { text: "OIDC Authentication", link: "/en/usage/oidc" },
           { text: "File Encryption", link: "/en/usage/file-encryption" },
           { text: "Desktop Sync Client", link: "/en/usage/desktop-client" },
+          { text: "Agents (MCP)", link: "/en/usage/mcp" },
           {
             text: "Search",
             collapsed: true,

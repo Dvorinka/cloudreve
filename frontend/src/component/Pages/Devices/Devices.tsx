@@ -16,9 +16,11 @@ import { GroupPermission } from "../../../api/user.ts";
 import AppPromotion from "./AppPromotion.tsx";
 import DesktopAppPromotion from "./DesktopAppPromotion.tsx";
 import PageContainer from "../PageContainer.tsx";
+import McpConnect from "./McpConnect.tsx";
 
 export enum DevicePageTab {
   Dav = "dav",
+  Mcp = "mcp",
   App = "app",
   DesktopApp = "desktop",
 }
@@ -50,6 +52,10 @@ const Devices = () => {
         value: DevicePageTab.Dav,
       });
     }
+    res.push({
+      label: t("application:setting.mcp"),
+      value: DevicePageTab.Mcp,
+    });
     if (appPromotion) {
       res.push({
         label: t("application:setting.iOSApp"),
@@ -63,11 +69,17 @@ const Devices = () => {
       });
     }
     return res;
-  }, [webDavEnabled, appPromotion, desktopAppPromotion]);
+  }, [webDavEnabled, appPromotion, desktopAppPromotion, t]);
 
   const [tab, setTab] = useState(
-    searchParams.get(PageTabQuery) ?? (webDavEnabled ? DevicePageTab.Dav : DevicePageTab.App),
+    searchParams.get(PageTabQuery) ?? (webDavEnabled ? DevicePageTab.Dav : DevicePageTab.Mcp),
   );
+  const selectTab = (_event: React.SyntheticEvent, value: DevicePageTab) => {
+    setTab(value);
+    const next = new URLSearchParams(searchParams);
+    next.set(PageTabQuery, value);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     dispatch(loadSiteConfig("app"));
@@ -86,14 +98,17 @@ const Devices = () => {
           }
           title={t("application:navbar.connect")}
         />
-        <ResponsiveTabs value={tab} onChange={(_e, newValue) => setTab(newValue)} tabs={tabs} />
+        <ResponsiveTabs value={tab} onChange={selectTab} tabs={tabs} />
         {tab == DevicePageTab.Dav && webDavEnabled && (
           <DavAccountList creatAccountDialog={creatAccountDialog} setCreateAccountDialog={setCreateAccountDialog} />
         )}
+        {tab == DevicePageTab.Mcp && <McpConnect />}
         {tab == DevicePageTab.App && appPromotion && <AppPromotion />}
         {tab == DevicePageTab.DesktopApp && desktopAppPromotion && <DesktopAppPromotion />}
 
-        {!webDavEnabled && !appPromotion && !desktopAppPromotion && <Nothing primary={t("setting.deviceNothing")} />}
+        {!webDavEnabled && !appPromotion && !desktopAppPromotion && tab != DevicePageTab.Mcp && (
+          <Nothing primary={t("setting.deviceNothing")} />
+        )}
       </Container>
     </PageContainer>
   );

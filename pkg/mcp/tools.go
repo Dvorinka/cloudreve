@@ -12,7 +12,8 @@ Paths are cloudreve URIs: cloudreve://my, cloudreve://my/Documents, cloudreve://
 A path without a scheme is treated as a path under cloudreve://my.
 Call whoami first. delete_files moves items to the trash unless permanent is true.
 read_text and write_text only handle small UTF-8 files; use download_url for anything else.
-Share ids from create_share and list_shares are the values delete_shares accepts.`
+Share ids from create_share and list_shares are the values delete_shares accepts.
+People create and revoke the bearer token under Settings → Agents or Connect → MCP.`
 
 func registerTools(server *mcp.Server, store Store, principal Principal) {
 	add(server, "whoami", "Return the authenticated user.", true, false,
