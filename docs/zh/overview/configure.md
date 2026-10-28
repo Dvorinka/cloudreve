@@ -69,6 +69,9 @@ UnixSocket = false
 ; 数据库连接字符串，如果设置，其他数据库配置将忽略，但 Type 仍需设置。
 ; 例如：root:123456@tcp(127.0.0.1:3306)/cloudreve?charset=utf8mb4&parseTime=True&loc=Local 用于 MySQL。
 DatabaseURL =
+; MySQL 与 Postgres 的最大打开连接数。0 或省略时使用默认值 100。
+; SQLite 忽略此项。大于 5000 会被截断。也可通过环境变量 CR_CONF_Database.MaxOpenConns 设置。
+MaxOpenConns = 100
 
 ; 从机模式下的配置
 [Slave]

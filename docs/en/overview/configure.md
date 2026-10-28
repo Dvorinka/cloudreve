@@ -69,6 +69,9 @@ UnixSocket = false
 ; Database connection string, if set, other database configuration will be ignored, but Type is still required.
 ; e.g. root:123456@tcp(127.0.0.1:3306)/cloudreve?charset=utf8mb4&parseTime=True&loc=Local for MySQL.
 DatabaseURL =
+; Maximum open connections for MySQL and Postgres. 0 (or omitted) keeps the default of 100.
+; SQLite ignores this. Values above 5000 are clamped. Also settable as CR_CONF_Database.MaxOpenConns.
+MaxOpenConns = 100
 
 ; Slave mode configuration
 [Slave]

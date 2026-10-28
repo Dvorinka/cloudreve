@@ -29,6 +29,10 @@ type Database struct {
 	DatabaseURL string
 	// SSLMode 允许使用SSL连接数据库, 用户可以在sslmode string中添加证书等配置
 	SSLMode string
+	// MaxOpenConns is the maximum number of open connections for MySQL and
+	// Postgres. 0 keeps the default of 100. SQLite ignores this and stays
+	// on its own small pool. Values above 5000 are clamped.
+	MaxOpenConns int
 }
 
 type SysMode string
