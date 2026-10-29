@@ -1,9 +1,11 @@
 import {
   Alert,
+  Box,
   Button,
   Checkbox,
   DialogContent,
   FormControl,
+  FormGroup,
   InputLabel,
   MenuItem,
   Select,
@@ -50,28 +52,31 @@ export function agentConfig(token: string) {
   );
 }
 
-const scopeRead = "Files.Read";
-const scopeFilesWrite = "Files.Write";
-const scopeSharesWrite = "Shares.Write";
+const scopeKeys = ["Files.Read", "Files.Write", "Shares.Read", "Shares.Write"];
 
-const accessScopes: Record<string, string[]> = {
-  read: [scopeRead],
-  write: [scopeFilesWrite],
-  full: [scopeFilesWrite, scopeSharesWrite],
+const scopeI18n: Record<string, string> = {
+  "Files.Read": "agentScopeFilesRead",
+  "Files.Write": "agentScopeFilesWrite",
+  "Shares.Read": "agentScopeSharesRead",
+  "Shares.Write": "agentScopeSharesWrite",
 };
 
-const accessFromScopes = (scopes?: string[]) => {
-  if (!scopes || scopes.length === 0 || scopes.includes(scopeSharesWrite)) {
-    return "full";
+const describeScopes = (scopes: string[] | undefined, t: (key: string) => string) => {
+  if (!scopes || scopes.length === 0) {
+    return t("setting.agentScopeFull");
   }
-  if (scopes.includes(scopeFilesWrite)) {
-    return "write";
+  const parts = scopeKeys
+    .filter((key) => scopes.includes(key))
+    .filter((key) => !(key.endsWith(".Read") && scopes.includes(`${key.slice(0, -5)}.Write`)));
+  if (parts.length === scopeKeys.length) {
+    return t("setting.agentScopeFull");
   }
-  return "read";
+  return parts.map((key) => t(`setting.${scopeI18n[key]}`)).join(" + ");
 };
 
 const lifetimeOptions = [604800, 2592000, 7776000, 31536000, 0];
 const keepLifetime = -1;
+const maxFolders = 5;
 
 const rootDisplay = (root: string) => root.replace(/^cloudreve:\/\/my/, "") || "/";
 
@@ -89,28 +94,34 @@ const AgentTokenDialog = ({ open, editTarget, onClose, onCreated, onUpdated }: A
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [lifetime, setLifetime] = useState<number>(2592000);
-  const [access, setAccess] = useState("full");
+  const [scopes, setScopes] = useState<string[]>([...scopeKeys]);
   const [limitFolder, setLimitFolder] = useState(false);
-  const [folder, setFolder] = useState("cloudreve://my");
+  const [folders, setFolders] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && editTarget) {
       setLifetime(keepLifetime);
-      setAccess(accessFromScopes(editTarget.scopes));
+      setScopes(editTarget.scopes?.length ? [...editTarget.scopes] : [...scopeKeys]);
       setLimitFolder((editTarget.roots?.length ?? 0) > 0);
-      setFolder(editTarget.roots?.[0] ?? "cloudreve://my");
+      setFolders(editTarget.roots?.length ? [...editTarget.roots] : []);
     } else if (open) {
       setLifetime(2592000);
-      setAccess("full");
+      setScopes([...scopeKeys]);
       setLimitFolder(false);
-      setFolder("cloudreve://my");
+      setFolders([]);
     }
   }, [open]);
 
+  const toggleScope = (key: string) =>
+    setScopes((current) => (current.includes(key) ? current.filter((x) => x !== key) : [...current, key]));
+
+  const updateFolder = (index: number, path: string) =>
+    setFolders((current) => current.map((item, i) => (i === index ? path : item)));
+
   const onAccept = () => {
     const req: AgentTokenRequest = {
-      scopes: accessScopes[access],
-      roots: limitFolder ? [folder] : [],
+      scopes,
+      roots: limitFolder ? [...new Set(folders.filter(Boolean))] : [],
     };
     if (!editTarget || lifetime !== keepLifetime) {
       req.ttl_seconds = lifetime;
@@ -130,6 +141,9 @@ const AgentTokenDialog = ({ open, editTarget, onClose, onCreated, onUpdated }: A
       .finally(() => setLoading(false));
   };
 
+  const invalid =
+    scopes.length === 0 || (limitFolder && folders.filter(Boolean).length === 0);
+
   return (
     <DraggableDialog
       title={editTarget ? t("setting.editAgentToken") : t("setting.createAgentToken")}
@@ -137,7 +151,7 @@ const AgentTokenDialog = ({ open, editTarget, onClose, onCreated, onUpdated }: A
       showCancel
       loading={loading}
       onAccept={onAccept}
-      disabled={limitFolder && !folder}
+      disabled={invalid}
       dialogProps={{
         open,
         onClose,
@@ -172,31 +186,67 @@ const AgentTokenDialog = ({ open, editTarget, onClose, onCreated, onUpdated }: A
               {t("setting.agentTokenExpiresCap")}
             </Typography>
           )}
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("setting.agentTokenAccess")}</InputLabel>
-            <Select
-              value={access}
-              label={t("setting.agentTokenAccess")}
-              onChange={(e) => setAccess(e.target.value)}
-            >
-              <MenuItem value="read">{t("setting.agentTokenAccessRead")}</MenuItem>
-              <MenuItem value="write">{t("setting.agentTokenAccessWrite")}</MenuItem>
-              <MenuItem value="full">{t("setting.agentTokenAccessFull")}</MenuItem>
-            </Select>
-          </FormControl>
+          <Box>
+            <Typography variant="subtitle2">{t("setting.agentTokenAccess")}</Typography>
+            <FormGroup>
+              {scopeKeys.map((key) => (
+                <Box key={key}>
+                  <SmallFormControlLabel
+                    control={
+                      <Checkbox size="small" checked={scopes.includes(key)} onChange={() => toggleScope(key)} />
+                    }
+                    label={t(`setting.${scopeI18n[key]}`)}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ pl: "27px", display: "block" }}>
+                    {t(`setting.${scopeI18n[key]}Hint`)}
+                  </Typography>
+                </Box>
+              ))}
+            </FormGroup>
+          </Box>
           <SmallFormControlLabel
             control={
-              <Checkbox size="small" checked={limitFolder} onChange={(e) => setLimitFolder(e.target.checked)} />
+              <Checkbox
+                size="small"
+                checked={limitFolder}
+                onChange={(e) => {
+                  setLimitFolder(e.target.checked);
+                  if (e.target.checked && folders.length === 0) {
+                    setFolders(["cloudreve://my"]);
+                  }
+                }}
+              />
             }
             label={t("setting.agentTokenFolderLimit")}
           />
           {limitFolder && (
-            <PathSelectorForm
-              onChange={setFolder}
-              path={folder}
-              variant="agentTokenRoot"
-              label={t("setting.agentTokenFolderScope")}
-            />
+            <Stack spacing={1}>
+              {folders.map((folder, i) => (
+                <Stack key={i} direction="row" spacing={1} alignItems="center">
+                  <Box sx={{ flex: 1 }}>
+                    <PathSelectorForm
+                      onChange={(path) => updateFolder(i, path)}
+                      path={folder}
+                      variant="agentTokenRoot"
+                      label={t("setting.agentTokenFolderScope")}
+                    />
+                  </Box>
+                  {folders.length > 1 && (
+                    <SecondaryButton onClick={() => setFolders(folders.filter((_, j) => j !== i))}>
+                      <Dismiss />
+                    </SecondaryButton>
+                  )}
+                </Stack>
+              ))}
+              {folders.length < maxFolders && (
+                <SecondaryButton
+                  startIcon={<Add />}
+                  onClick={() => setFolders([...folders, "cloudreve://my"])}
+                >
+                  {t("setting.agentTokenAddFolder")}
+                </SecondaryButton>
+              )}
+            </Stack>
           )}
         </Stack>
       </DialogContent>
@@ -233,10 +283,7 @@ const McpConnect = () => {
       .catch(() => undefined);
   };
 
-  const accessLabel = (token: AgentToken) => {
-    const key = accessFromScopes(token.scopes);
-    return t(`setting.agentTokenAccess${key[0].toUpperCase()}${key.slice(1)}`);
-  };
+
 
   return (
     <Stack spacing={3} sx={{ mt: 3 }}>
@@ -280,7 +327,7 @@ const McpConnect = () => {
                 <Typography variant="body2">{t("setting.agentTokenLifetimeNever")}</Typography>
               )}
               <Typography variant="body2" color="text.secondary">
-                {accessLabel(token)}
+                {describeScopes(token.scopes, t)}
               </Typography>
               {(token.roots ?? []).map((root) => (
                 <Typography key={root} variant="body2" color="text.secondary" sx={{ fontFamily: "monospace" }}>
