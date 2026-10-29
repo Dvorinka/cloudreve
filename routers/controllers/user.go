@@ -342,6 +342,15 @@ func UserRevokeMCPToken(c *gin.Context) {
 	c.JSON(200, serializer.Response{})
 }
 
+// UserUpdateMCPToken edits one agent token's expiry, scopes and folder roots.
+func UserUpdateMCPToken(c *gin.Context) {
+	res, err := user.UpdateAgentToken(c, c.Param("id"))
+	if respondErr(c, err) {
+		return
+	}
+	c.JSON(200, serializer.Response{Data: res})
+}
+
 // UserCredit returns the caller's credit balance and active grants.
 func UserCredit(c *gin.Context) {
 	service := ParametersFromContext[*user.CreditService](c, user.CreditParamCtx{})

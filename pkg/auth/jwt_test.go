@@ -14,6 +14,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/logging"
 	"github.com/cloudreve/Cloudreve/v4/pkg/setting"
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid"
 )
 
 type stubSettingProvider struct {
@@ -237,6 +238,80 @@ func TestRevocableAccessToken(t *testing.T) {
 	ta.userClient = &stubUserClient{user: &ent.User{ID: 7, Email: "r@example.com", Password: "new-pw"}}
 	if err := verify(); err == nil {
 		t.Fatal("token was accepted after a password change")
+	}
+}
+
+func TestAgentTokenGating(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	user := &ent.User{ID: 7, Email: "r@example.com", Password: "pw"}
+	kv := cache.NewMemoStore("", nil)
+	ta := newTestTokenAuth(t, &stubUserClient{user: user}, kv)
+
+	rootID, err := uuid.NewV4()
+	if err != nil {
+		t.Fatalf("uuid: %v", err)
+	}
+	token, err := ta.Issue(context.Background(), &IssueTokenArgs{
+		User:              user,
+		RootTokenID:       &rootID,
+		Revocable:         true,
+		AccessTTLOverride: 30 * 24 * time.Hour,
+		Agent:             true,
+	})
+	if err != nil {
+		t.Fatalf("Issue failed: %v", err)
+	}
+
+	verify := func(path string) error {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest(http.MethodPost, path, nil)
+		c.Request.Header.Set(AuthorizationHeader, TokenHeaderPrefix+token.AccessToken)
+		_, err := ta.VerifyAndRetrieveUser(c)
+		return err
+	}
+
+	// Agent tokens are refused on any route but the MCP endpoint, with or
+	// without a record.
+	if err := verify("/api/v4/user/me"); err == nil {
+		t.Fatal("agent token accepted on a REST route")
+	}
+	if err := verify("/api/v4/mcp"); err == nil {
+		t.Fatal("agent token accepted without a record")
+	}
+
+	// With a live record the MCP endpoint accepts it.
+	if err := SaveAgentTokens(kv, user.ID, []AgentTokenMeta{{
+		ID:      rootID.String(),
+		Created: time.Now(),
+		Expires: time.Now().Add(time.Hour),
+	}}); err != nil {
+		t.Fatalf("SaveAgentTokens failed: %v", err)
+	}
+	if err := verify("/api/v4/mcp"); err != nil {
+		t.Fatalf("agent token rejected on the MCP endpoint: %v", err)
+	}
+
+	// An expired record cuts the token off immediately.
+	if err := SaveAgentTokens(kv, user.ID, []AgentTokenMeta{{
+		ID:      rootID.String(),
+		Created: time.Now().Add(-2 * time.Hour),
+		Expires: time.Now().Add(-time.Hour),
+	}}); err != nil {
+		t.Fatalf("SaveAgentTokens failed: %v", err)
+	}
+	if err := verify("/api/v4/mcp"); err == nil {
+		t.Fatal("expired agent token was accepted")
+	}
+
+	// A zero Expires means the token never expires.
+	if err := SaveAgentTokens(kv, user.ID, []AgentTokenMeta{{
+		ID:      rootID.String(),
+		Created: time.Now(),
+	}}); err != nil {
+		t.Fatalf("SaveAgentTokens failed: %v", err)
+	}
+	if err := verify("/api/v4/mcp"); err != nil {
+		t.Fatalf("never-expiring agent token rejected: %v", err)
 	}
 }
 

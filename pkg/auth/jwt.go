@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudreve/Cloudreve/v4/application/constants"
 	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
 	"github.com/cloudreve/Cloudreve/v4/pkg/cache"
@@ -46,6 +47,10 @@ type IssueTokenArgs struct {
 	// user's password so it can be revoked and stops working after a password
 	// change. Login tokens leave this false.
 	Revocable bool
+	// Agent marks the token as an MCP agent token. Agent tokens only work on
+	// the MCP endpoint and defer expiry, scope and folder limits to their
+	// editable AgentTokenMeta record.
+	Agent bool
 }
 
 // Token stores token pair for authentication
@@ -85,6 +90,7 @@ type Claims struct {
 	RootTokenID *uuid.UUID `json:"root_token_id,omitempty"`
 	Scopes      []string   `json:"scopes,omitempty"`
 	ClientID    string     `json:"client_id,omitempty"`
+	Agent       bool       `json:"agent,omitempty"`
 }
 
 // NewTokenAuth creates a new token based auth provider.
@@ -247,6 +253,19 @@ func (t *tokenAuth) VerifyAndRetrieveUser(c *gin.Context) (bool, error) {
 		}
 	}
 
+	if claims.Agent {
+		if claims.RootTokenID == nil || c.Request == nil || c.Request.URL.Path != constants.APIPrefix+"/mcp" {
+			return false, serializer.NewError(serializer.CodeCredentialInvalid, "Agent tokens only work on the MCP endpoint", nil)
+		}
+		meta, err := FindAgentToken(t.kv, uid, claims.RootTokenID.String())
+		if err != nil {
+			return false, serializer.NewError(serializer.CodeCacheOperation, "Failed to read agent token", err)
+		}
+		if meta == nil || meta.Expired(time.Now()) {
+			return false, serializer.NewError(serializer.CodeCredentialInvalid, "Agent token expired or revoked", nil)
+		}
+	}
+
 	util.WithValue(c, inventory.UserIDCtx{}, uid)
 
 	if claims.ClientID != "" {
@@ -285,6 +304,7 @@ func (t *tokenAuth) Issue(ctx context.Context, args *IssueTokenArgs) (*Token, er
 		},
 		ClientID: args.ClientID,
 		Scopes:   args.Scopes,
+		Agent:    args.Agent,
 	}
 	if args.Revocable {
 		accessClaims.RootTokenID = rootTokenID

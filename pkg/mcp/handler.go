@@ -5,11 +5,14 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"time"
 
 	"github.com/cloudreve/Cloudreve/v4/application/constants"
 	"github.com/cloudreve/Cloudreve/v4/application/dependency"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
 	"github.com/cloudreve/Cloudreve/v4/pkg/auth"
+	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/fs"
 	"github.com/gin-gonic/gin"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -47,7 +50,46 @@ func (a tokenAuthenticator) Authenticate(r *http.Request) (Principal, error) {
 		return Principal{}, errUnauthorized
 	}
 	scoped, scopes := auth.GetScopesFromContext(ctx)
-	return Principal{User: user, Scopes: scopes, Scoped: scoped}, nil
+	principal := Principal{User: user, Scopes: scopes, Scoped: scoped}
+
+	// Agent tokens carry an editable policy record; when one exists it
+	// replaces the token's own scope claims.
+	if raw := strings.TrimPrefix(r.Header.Get(auth.AuthorizationHeader), auth.TokenHeaderPrefix); raw != "" {
+		if claims, err := a.dep.TokenAuth().Claims(ctx, raw); err == nil && claims.RootTokenID != nil {
+			meta, err := auth.FindAgentToken(a.dep.KV(), uid, claims.RootTokenID.String())
+			if err != nil {
+				return Principal{}, err
+			}
+			if meta == nil {
+				// Marked tokens fail closed when their record is gone.
+				if claims.Agent {
+					return Principal{}, errUnauthorized
+				}
+			} else {
+				if meta.Expired(time.Now()) {
+					return Principal{}, errUnauthorized
+				}
+				principal.Scoped = len(meta.Scopes) > 0
+				principal.Scopes = meta.Scopes
+				principal.Roots = parseRoots(meta.Roots)
+				if len(meta.Roots) > 0 && len(principal.Roots) == 0 {
+					return Principal{}, errUnauthorized
+				}
+			}
+		}
+	}
+	return principal, nil
+}
+
+// parseRoots decodes stored folder-scope URIs. Invalid entries are dropped.
+func parseRoots(raws []string) []*fs.URI {
+	roots := make([]*fs.URI, 0, len(raws))
+	for _, raw := range raws {
+		if u, err := fs.NewUriFromString(raw); err == nil {
+			roots = append(roots, u)
+		}
+	}
+	return roots
 }
 
 var errUnauthorized = errors.New("unauthorized")

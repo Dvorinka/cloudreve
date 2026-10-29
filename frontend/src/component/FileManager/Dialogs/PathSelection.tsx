@@ -82,6 +82,12 @@ export const PathSelectionVariants: Record<string, PathSelectionVariant> = {
     disableSharedWithMe: true,
     disableTrash: true,
   },
+  agentTokenRoot: {
+    indicator: "application:setting.rootFolderIn",
+    title: "application:setting.agentTokenFolderScope",
+    disableSharedWithMe: true,
+    disableTrash: true,
+  },
 };
 
 export const SelectedFolderIndicator = ({ selectedFile, selectedPath, variant }: SelectedFolderIndicatorProps) => {

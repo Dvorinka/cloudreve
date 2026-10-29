@@ -12,7 +12,7 @@ Send `Authorization: Bearer <token>` and an `Accept` header that includes both `
 
 Open **Settings → Agents** or **Connect → MCP**, then choose **Create agent token**. Copy the secret when it appears. It is not shown again.
 
-Each person can hold 10 tokens. A token lasts 30 days. Revoke it on the same page, or change the account password, and it stops working immediately. The page also copies a client config:
+Each person can hold 10 tokens. When creating one you pick a lifetime (up to never expires), an access level (read files, read & write files, or files and shares), and optionally restrict it to a folder. Tokens only work on the MCP endpoint. Edit a token to change its expiry or limits, revoke it on the same page, or change the account password, and it stops working immediately. The page also copies a client config:
 
 ```json
 {

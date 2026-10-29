@@ -67,6 +67,38 @@ func (s liveStore) open(p Principal) (manager.FileManager, error) {
 	return manager.NewFileManager(s.dep, p.User), nil
 }
 
+func (s liveStore) uid(p Principal) string {
+	if p.User == nil {
+		return ""
+	}
+	return hashid.EncodeUserID(s.dep.HashIDEncoder(), p.User.ID)
+}
+
+// uri parses raw and checks it against the principal's folder scope.
+func (s liveStore) uri(p Principal, raw string) (*fs.URI, error) {
+	uri, err := parseURI(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := p.allowURI(s.uid(p), uri); err != nil {
+		return nil, err
+	}
+	return uri, nil
+}
+
+func (s liveStore) uris(p Principal, raw []string) ([]*fs.URI, error) {
+	uris, err := parseURIs(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := p.allowURI(s.uid(p), uris...); err != nil {
+		return nil, err
+	}
+	return uris, nil
+}
+
+var errFolderScoped = fmt.Errorf("not available for folder-scoped tokens")
+
 func (s liveStore) WhoAmI(_ context.Context, p Principal) (userInfo, error) {
 	if p.User == nil {
 		return userInfo{}, fmt.Errorf("login required")
@@ -98,7 +130,7 @@ func (s liveStore) Quota(ctx context.Context, p Principal) (quotaInfo, error) {
 }
 
 func (s liveStore) List(ctx context.Context, p Principal, in listInput) (listOutput, error) {
-	uri, err := parseURI(in.URI)
+	uri, err := s.uri(p, in.URI)
 	if err != nil {
 		return listOutput{}, err
 	}
@@ -106,7 +138,7 @@ func (s liveStore) List(ctx context.Context, p Principal, in listInput) (listOut
 }
 
 func (s liveStore) Get(ctx context.Context, p Principal, raw string) (fileInfo, error) {
-	uri, err := parseURI(raw)
+	uri, err := s.uri(p, raw)
 	if err != nil {
 		return fileInfo{}, err
 	}
@@ -128,10 +160,16 @@ func (s liveStore) Search(ctx context.Context, p Principal, in searchInput) (lis
 	if err != nil {
 		return listOutput{}, err
 	}
+	if err := p.allowURI(s.uid(p), uri); err != nil {
+		return listOutput{}, err
+	}
 	return s.listAt(ctx, p, uri, listInput{PageSize: in.PageSize, PageToken: in.PageToken})
 }
 
 func (s liveStore) SearchFullText(ctx context.Context, p Principal, in fullTextInput) (fullTextOutput, error) {
+	if len(p.Roots) > 0 {
+		return fullTextOutput{}, errFolderScoped
+	}
 	query := strings.TrimSpace(in.Query)
 	if query == "" {
 		return fullTextOutput{}, fmt.Errorf("query is required")
@@ -161,7 +199,7 @@ func (s liveStore) SearchFullText(ctx context.Context, p Principal, in fullTextI
 }
 
 func (s liveStore) Create(ctx context.Context, p Principal, raw string, folder bool) (fileInfo, error) {
-	uri, err := parseURI(raw)
+	uri, err := s.uri(p, raw)
 	if err != nil {
 		return fileInfo{}, err
 	}
@@ -189,7 +227,7 @@ func (s liveStore) WriteText(ctx context.Context, p Principal, raw, content stri
 	if !utf8.ValidString(content) {
 		return fileInfo{}, fmt.Errorf("content must be UTF-8 text")
 	}
-	uri, err := parseURI(raw)
+	uri, err := s.uri(p, raw)
 	if err != nil {
 		return fileInfo{}, err
 	}
@@ -217,7 +255,7 @@ func (s liveStore) WriteText(ctx context.Context, p Principal, raw, content stri
 }
 
 func (s liveStore) ReadText(ctx context.Context, p Principal, raw string) (textOutput, error) {
-	uri, err := parseURI(raw)
+	uri, err := s.uri(p, raw)
 	if err != nil {
 		return textOutput{}, err
 	}
@@ -264,7 +302,7 @@ func (s liveStore) Rename(ctx context.Context, p Principal, raw, name string) (f
 	if err := validName(name); err != nil {
 		return fileInfo{}, err
 	}
-	uri, err := parseURI(raw)
+	uri, err := s.uri(p, raw)
 	if err != nil {
 		return fileInfo{}, err
 	}
@@ -282,11 +320,11 @@ func (s liveStore) Rename(ctx context.Context, p Principal, raw, name string) (f
 }
 
 func (s liveStore) Transfer(ctx context.Context, p Principal, raw []string, dstRaw string, copy bool) error {
-	srcs, err := parseURIs(raw)
+	srcs, err := s.uris(p, raw)
 	if err != nil {
 		return err
 	}
-	dst, err := parseURI(dstRaw)
+	dst, err := s.uri(p, dstRaw)
 	if err != nil {
 		return err
 	}
@@ -299,7 +337,7 @@ func (s liveStore) Transfer(ctx context.Context, p Principal, raw []string, dstR
 }
 
 func (s liveStore) Delete(ctx context.Context, p Principal, raw []string, permanent bool) error {
-	uris, err := parseURIs(raw)
+	uris, err := s.uris(p, raw)
 	if err != nil {
 		return err
 	}
@@ -315,7 +353,7 @@ func (s liveStore) Delete(ctx context.Context, p Principal, raw []string, perman
 }
 
 func (s liveStore) Restore(ctx context.Context, p Principal, raw []string) error {
-	uris, err := parseURIs(raw)
+	uris, err := s.uris(p, raw)
 	if err != nil {
 		return err
 	}
@@ -328,6 +366,9 @@ func (s liveStore) Restore(ctx context.Context, p Principal, raw []string) error
 }
 
 func (s liveStore) EmptyTrash(ctx context.Context, p Principal) error {
+	if len(p.Roots) > 0 {
+		return errFolderScoped
+	}
 	m, err := s.open(p)
 	if err != nil {
 		return err
@@ -337,7 +378,7 @@ func (s liveStore) EmptyTrash(ctx context.Context, p Principal) error {
 }
 
 func (s liveStore) DownloadURL(ctx context.Context, p Principal, raw string) (downloadInfo, error) {
-	uri, err := parseURI(raw)
+	uri, err := s.uri(p, raw)
 	if err != nil {
 		return downloadInfo{}, err
 	}
@@ -379,7 +420,7 @@ func (s liveStore) CreateShare(ctx context.Context, p Principal, in shareInput) 
 	if len(in.Note) > maxNote {
 		return shareInfo{}, fmt.Errorf("note exceeds %d characters", maxNote)
 	}
-	uris, err := parseURIs(in.URIs)
+	uris, err := s.uris(p, in.URIs)
 	if err != nil {
 		return shareInfo{}, err
 	}

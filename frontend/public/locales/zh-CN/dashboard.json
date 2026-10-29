@@ -813,7 +813,7 @@
     },
     "server": "服务器设置",
     "tempPath": "临时路径",
-    "mcpEndpointDes": "智能体通过 POST /api/v4/mcp 使用 Bearer 令牌连接。用户在「设置 → 智能体」或「连接 → MCP」中创建和撤销令牌。令牌在撤销、30 天过期或修改密码之前，可以读取、修改并分享该用户的文件。",
+    "mcpEndpointDes": "智能体通过 POST /api/v4/mcp 使用 Bearer 令牌连接。用户在「设置 → 智能体」或「连接 → MCP」中创建和管理令牌，可选择有效期、访问权限和目录范围。令牌在撤销、过期或修改密码后失效。",
     "tempPathDes": "存储临时文件的目录，相对于 Cloudreve 数据目录。修改前请确保没有正在进行的队列任务。",
     "siteID": "站点 ID",
     "siteIDDes": "用于标识站点的唯一 ID，一般无需修改。",
