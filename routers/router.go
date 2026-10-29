@@ -1591,6 +1591,7 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 						middleware.RateLimitByIP("mcp_token", 10, time.Hour),
 						controllers.UserIssueMCPToken,
 					)
+					mcpTokens.PATCH(":id", controllers.UserUpdateMCPToken)
 					mcpTokens.DELETE(":id", controllers.UserRevokeMCPToken)
 				}
 				// Search user by keywords

@@ -10,6 +10,7 @@ import (
 
 	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
+	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/fs"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,6 +61,29 @@ func TestPrincipalAllow(t *testing.T) {
 	writer := Principal{Scoped: true, Scopes: []string{types.ScopeFilesWrite}}
 	require.NoError(t, writer.allow(types.ScopeFilesRead))
 	require.NoError(t, writer.allow(types.ScopeFilesWrite))
+}
+
+func TestPrincipalAllowURI(t *testing.T) {
+	t.Parallel()
+
+	roots := parseRoots([]string{"cloudreve://my/Documents", "cloudreve://my/Photos"})
+	p := Principal{Roots: roots}
+	uri := func(raw string) *fs.URI {
+		u, err := fs.NewUriFromString(raw)
+		require.NoError(t, err)
+		return u
+	}
+
+	require.NoError(t, p.allowURI("u1", uri("cloudreve://my/Documents")))
+	require.NoError(t, p.allowURI("u1", uri("cloudreve://my/Documents/a.txt")))
+	require.NoError(t, p.allowURI("u1", uri("cloudreve://my/Photos/x/y")))
+	require.Error(t, p.allowURI("u1", uri("cloudreve://my")))
+	require.Error(t, p.allowURI("u1", uri("cloudreve://my/Documents2/x")))
+	require.Error(t, p.allowURI("u1", uri("cloudreve://trash/x")))
+	require.Error(t, p.allowURI("u1", uri("cloudreve://my/ok"), uri("cloudreve://my/nope")))
+
+	open := Principal{}
+	require.NoError(t, open.allowURI("u1", uri("cloudreve://my/anything")))
 }
 
 func TestHandlerRequiresBearerToken(t *testing.T) {

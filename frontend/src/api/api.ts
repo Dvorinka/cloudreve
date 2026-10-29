@@ -1369,8 +1369,20 @@ export function getPublicShares(req: ListPublicShareService): ThunkResponse<List
 export interface AgentToken {
   id: string;
   created_at: string;
-  expires_at: string;
+  expires_at?: string | null;
+  expires_cap?: string;
+  scopes?: string[];
+  roots?: string[];
   access_token?: string;
+}
+
+export interface AgentTokenRequest {
+  // Token lifetime in seconds; 0 or negative means it never expires.
+  ttl_seconds?: number;
+  // MCP tool scopes; empty means unrestricted.
+  scopes?: string[];
+  // Folder URIs the token is limited to; empty means anywhere.
+  roots?: string[];
 }
 
 export function getAgentTokens(): ThunkResponse<AgentToken[]> {
@@ -1381,10 +1393,18 @@ export function getAgentTokens(): ThunkResponse<AgentToken[]> {
   };
 }
 
-export function sendCreateAgentToken(): ThunkResponse<AgentToken> {
+export function sendCreateAgentToken(req: AgentTokenRequest): ThunkResponse<AgentToken> {
   return async (dispatch, _getState) => {
     return await dispatch(
-      send("/user/mcp/token", { method: "POST" }, { ...defaultOpts }),
+      send("/user/mcp/token", { method: "POST", data: req }, { ...defaultOpts }),
+    );
+  };
+}
+
+export function sendUpdateAgentToken(id: string, req: AgentTokenRequest): ThunkResponse<AgentToken> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(`/user/mcp/token/${id}`, { method: "PATCH", data: req }, { ...defaultOpts }),
     );
   };
 }
