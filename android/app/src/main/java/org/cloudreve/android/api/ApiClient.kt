@@ -46,9 +46,16 @@ class ApiClient(private val session: SessionManager) {
     }
 
     private fun buildService(baseUrl: String): ApiService {
+        // Only our own API host may receive the Cloudreve bearer token. Chunk uploads and
+        // downloads for S3-style policies go to presigned object-storage URLs on a
+        // different host; S3/Ceph rejects a presigned request that also carries an
+        // Authorization header ("only one auth mechanism allowed", HTTP 400), so attaching
+        // the token there breaks every direct upload and download.
+        val apiHost = runCatching { java.net.URI(baseUrl).host }.getOrNull()
         val authInterceptor = Interceptor { chain ->
             val token = runBlocking { session.accessTokenNow() }
-            val request = if (token.isNotEmpty()) {
+            val sameHost = chain.request().url.host.equals(apiHost, ignoreCase = true)
+            val request = if (token.isNotEmpty() && sameHost) {
                 chain.request().newBuilder()
                     .header("Authorization", "Bearer $token")
                     .build()
