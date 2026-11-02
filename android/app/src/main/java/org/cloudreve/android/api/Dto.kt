@@ -40,6 +40,16 @@ data class PasswordLoginRequest(
     val password: String,
 )
 
+/**
+ * Second step of a password login when the account has two-factor auth enabled.
+ * [sessionId] is the value the server returned in `data` alongside code 203.
+ */
+@Serializable
+data class OtpLoginRequest(
+    val otp: String,
+    @SerialName("session_id") val sessionId: String,
+)
+
 @Serializable
 data class RefreshTokenRequest(
     @SerialName("refresh_token") val refreshToken: String,

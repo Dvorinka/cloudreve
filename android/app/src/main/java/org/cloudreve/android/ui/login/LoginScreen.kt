@@ -51,6 +51,13 @@ fun LoginScreen(viewModel: LoginViewModel, onLoggedIn: () -> Unit) {
     ) {
         Text("Cloudreve", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(8.dp))
+
+        // Password accepted, server is waiting for the authenticator code.
+        if (state.twoFactorSessionId != null) {
+            TwoFactorStep(state, viewModel)
+            return@Column
+        }
+
         Text(
             "Sign in to your server",
             style = MaterialTheme.typography.bodyMedium,
@@ -121,5 +128,54 @@ fun LoginScreen(viewModel: LoginViewModel, onLoggedIn: () -> Unit) {
         ) {
             Text("Sign in with browser")
         }
+    }
+}
+
+/**
+ * Second step of a password login for accounts with two-factor authentication:
+ * the server has accepted the password and issued a short-lived 2FA session;
+ * the user types the 6-digit TOTP code to finish.
+ */
+@Composable
+private fun TwoFactorStep(state: LoginUiState, viewModel: LoginViewModel) {
+    Text(
+        "Enter the 6-digit code from your authenticator app",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(32.dp))
+
+    OutlinedTextField(
+        value = state.otp,
+        onValueChange = viewModel::onOtpChange,
+        label = { Text("Verification code") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    state.error?.let {
+        Spacer(Modifier.height(12.dp))
+        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+    }
+
+    Spacer(Modifier.height(24.dp))
+    Button(
+        onClick = viewModel::verify2FA,
+        enabled = !state.loading && state.otp.length == 6,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        if (state.loading) {
+            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            Text("Verify")
+        }
+    }
+    Spacer(Modifier.height(12.dp))
+    androidx.compose.material3.TextButton(
+        onClick = viewModel::cancelTwoFactor,
+        enabled = !state.loading,
+    ) {
+        Text("Back")
     }
 }
