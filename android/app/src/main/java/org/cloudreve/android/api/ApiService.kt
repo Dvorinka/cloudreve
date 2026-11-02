@@ -1,5 +1,6 @@
 package org.cloudreve.android.api
 
+import kotlinx.serialization.json.JsonElement
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -18,8 +19,13 @@ import retrofit2.http.Url
 
 interface ApiService {
 
+    // With 2FA enabled the server answers code 203 and `data` holds a 2FA session id
+    // (JSON string) instead of a LoginResponse; finish with [verify2FA].
     @POST("api/v4/session/token")
-    suspend fun login(@Body request: PasswordLoginRequest): Response<ApiResponse<LoginResponse>>
+    suspend fun login(@Body request: PasswordLoginRequest): Response<ApiResponse<JsonElement>>
+
+    @POST("api/v4/session/token/2fa")
+    suspend fun verify2FA(@Body request: OtpLoginRequest): Response<ApiResponse<LoginResponse>>
 
     // OAuth token exchange returns raw OAuth JSON, not the ApiResponse envelope.
     @FormUrlEncoded

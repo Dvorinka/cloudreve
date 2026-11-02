@@ -5,7 +5,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import org.cloudreve.android.api.ApiClient
+import org.cloudreve.android.api.LoginResponse
+import org.cloudreve.android.api.OtpLoginRequest
 import org.cloudreve.android.api.PasswordLoginRequest
 import org.cloudreve.android.data.SessionManager
 import java.net.URLEncoder
@@ -19,6 +23,9 @@ data class LoginUiState(
     val loading: Boolean = false,
     val error: String? = null,
     val loggedIn: Boolean = false,
+    /** Non-null once the server has accepted the password and is waiting for a TOTP code. */
+    val twoFactorSessionId: String? = null,
+    val otp: String = "",
 )
 
 class LoginViewModel(
@@ -26,12 +33,23 @@ class LoginViewModel(
     private val api: ApiClient,
 ) : ViewModel() {
 
+    private companion object {
+        /** serializer.CodeNotFullySuccess: password accepted, 2FA code still required. */
+        const val CODE_NOT_FULLY_SUCCESS = 203
+        /** serializer.CodeNotFound: here, the 2FA session expired. */
+        const val CODE_NOT_FOUND = 404
+    }
+
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state
 
     fun onServerUrlChange(v: String) = _state.value.let { _state.value = it.copy(serverUrl = v, error = null) }
     fun onEmailChange(v: String) = _state.value.let { _state.value = it.copy(email = v, error = null) }
     fun onPasswordChange(v: String) = _state.value.let { _state.value = it.copy(password = v, error = null) }
+    fun onOtpChange(v: String) = _state.value.let { _state.value = it.copy(otp = v.filter(Char::isDigit).take(6), error = null) }
+
+    /** Abandon the pending 2FA challenge and return to the password form. */
+    fun cancelTwoFactor() = _state.value.let { _state.value = it.copy(twoFactorSessionId = null, otp = "", error = null) }
 
     fun login() {
         val s = _state.value
@@ -45,22 +63,67 @@ class LoginViewModel(
                 session.saveServerUrl(s.serverUrl)
                 val resp = api.service().login(PasswordLoginRequest(s.email, s.password))
                 val body = resp.body()
-                if (!resp.isSuccessful || body == null || body.code != 0 || body.data == null) {
+                if (!resp.isSuccessful || body == null || body.data == null) {
                     throw Exception(body?.msg ?: "Login failed (HTTP ${resp.code()})")
                 }
-                val login = body.data
-                session.saveSession(
-                    accessToken = login.token.accessToken,
-                    refreshToken = login.token.refreshToken,
-                    accessExpiresAt = ApiClient.parseExpiresAt(login.token.accessExpires),
-                    email = login.user.email,
-                    nick = login.user.nickname,
-                )
-                _state.value = _state.value.copy(loading = false, loggedIn = true)
+                when (body.code) {
+                    // Password accepted; the server wants a TOTP code before issuing tokens.
+                    // `data` is the 2FA session id, valid for ten minutes.
+                    CODE_NOT_FULLY_SUCCESS -> {
+                        val sessionId = (body.data as? JsonPrimitive)?.content
+                            ?: throw Exception("Server requested 2FA without a session id")
+                        _state.value = _state.value.copy(loading = false, twoFactorSessionId = sessionId, otp = "")
+                    }
+                    0 -> completeLogin(Json.decodeFromJsonElement(LoginResponse.serializer(), body.data))
+                    else -> throw Exception(body.msg.ifBlank { "Login failed" })
+                }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(loading = false, error = e.message ?: "Login failed")
             }
         }
+    }
+
+    /** Second step of a password login: submit the TOTP code for the pending 2FA session. */
+    fun verify2FA() {
+        val s = _state.value
+        val sessionId = s.twoFactorSessionId ?: return
+        if (s.otp.length != 6) {
+            _state.value = s.copy(error = "Enter the 6-digit code from your authenticator app")
+            return
+        }
+        _state.value = s.copy(loading = true, error = null)
+        viewModelScope.launch {
+            try {
+                val resp = api.service().verify2FA(OtpLoginRequest(otp = s.otp, sessionId = sessionId))
+                val body = resp.body()
+                if (!resp.isSuccessful || body == null || body.code != 0 || body.data == null) {
+                    // A 404 means the ten-minute 2FA session expired: start over.
+                    val expired = body?.code == CODE_NOT_FOUND
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        twoFactorSessionId = if (expired) null else sessionId,
+                        otp = "",
+                        error = if (expired) "Sign-in timed out, please enter your password again"
+                        else body?.msg?.ifBlank { null } ?: "Incorrect code (HTTP ${resp.code()})",
+                    )
+                    return@launch
+                }
+                completeLogin(body.data)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(loading = false, otp = "", error = e.message ?: "Verification failed")
+            }
+        }
+    }
+
+    private suspend fun completeLogin(login: LoginResponse) {
+        session.saveSession(
+            accessToken = login.token.accessToken,
+            refreshToken = login.token.refreshToken,
+            accessExpiresAt = ApiClient.parseExpiresAt(login.token.accessExpires),
+            email = login.user.email,
+            nick = login.user.nickname,
+        )
+        _state.value = _state.value.copy(loading = false, loggedIn = true, twoFactorSessionId = null, otp = "")
     }
 
     /**
