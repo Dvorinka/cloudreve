@@ -204,6 +204,6 @@ class LoginViewModel(
         private const val OAUTH_CLIENT_ID = "393a1839-f52e-498e-9972-e77cc2241eee"
         private const val OAUTH_REDIRECT = "/callback/desktop"
         private const val OAUTH_SCOPES =
-            "profile email openid offline_access UserInfo.Write UserSecurityInfo.Write Workflow.Write Files.Write Shares.Write"
+            "profile email openid offline_access UserInfo.Write Workflow.Write Files.Write Shares.Write"
     }
 }
