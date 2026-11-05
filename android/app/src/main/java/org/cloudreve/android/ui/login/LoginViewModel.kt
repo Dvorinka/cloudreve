@@ -33,13 +33,6 @@ class LoginViewModel(
     private val api: ApiClient,
 ) : ViewModel() {
 
-    private companion object {
-        /** serializer.CodeNotFullySuccess: password accepted, 2FA code still required. */
-        const val CODE_NOT_FULLY_SUCCESS = 203
-        /** serializer.CodeNotFound: here, the 2FA session expired. */
-        const val CODE_NOT_FOUND = 404
-    }
-
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state
 
@@ -202,6 +195,11 @@ class LoginViewModel(
             .trim()
 
     companion object {
+        /** serializer.CodeNotFullySuccess: password accepted, 2FA code still required. */
+        private const val CODE_NOT_FULLY_SUCCESS = 203
+        /** serializer.CodeNotFound: here, the 2FA session expired. */
+        private const val CODE_NOT_FOUND = 404
+
         // Built-in public OAuth client (seeded by the server migration).
         private const val OAUTH_CLIENT_ID = "393a1839-f52e-498e-9972-e77cc2241eee"
         private const val OAUTH_REDIRECT = "/callback/desktop"
