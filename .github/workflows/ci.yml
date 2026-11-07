@@ -14,7 +14,7 @@ jobs:
   # compile the Rust workspace on three OSes (and vice versa). Jobs
   # skipped via `if:` report Success, so required checks still pass.
   changes:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     outputs:
       backend: ${{ steps.f.outputs.backend }}
       frontend: ${{ steps.f.outputs.frontend }}
@@ -47,7 +47,7 @@ jobs:
   backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -63,7 +63,7 @@ jobs:
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     defaults:
       run:
         working-directory: frontend
@@ -86,8 +86,8 @@ jobs:
     if: needs.changes.outputs.desktop == 'true'
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        ro: [[self-hosted, linux, x64], [self-hosted, windows, x64], [self-hosted, macos, x64]]
+    runs-on: ${{ matrix.ro }}
     defaults:
       run:
         working-directory: desktop
@@ -105,7 +105,7 @@ jobs:
   android:
     needs: changes
     if: needs.changes.outputs.android == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     defaults:
       run:
         working-directory: android
