@@ -48,9 +48,10 @@ before the first start to get video, PDF and document thumbnails.
   upload-session flow (local + presigned remote policies)
 - Thumbnails via `/file/thumb` (Coil, lazily resolved per row)
 - Share-link creation (`PUT /share`), link copied to clipboard
-- Full-text search (`GET /file/search`): query bar in the files screen,
-  offset pagination, result rows show parent path + content snippet;
-  folder hits navigate into place
+- Search by name as you type (`GET /file?uri=…?name=<q>&case_folding`,
+  which works on every server; the full-text endpoint is off unless the
+  admin enabled FTS). Scope chips (this folder / everywhere) and type chips
+  (images, videos, audio, documents); result rows show the file's folder
 - Camera auto-upload: periodic WorkManager sync of new MediaStore
   photos/videos to a configurable remote folder, Wi-Fi-only constraint,
   media-permission gated toggle, synced/failed ID dedup, manual
@@ -94,6 +95,9 @@ Goal: feel like the system Files app.
   thumbnail and details; Move to / Copy to open a full-screen folder picker
 - Upload name clashes are resolved before queuing: Replace (new version),
   Keep both (` (1)` suffix) or Skip
+- Trash collection with Restore and Delete forever; share links created
+  on demand from a sheet with expiry and optional password, then Copy or
+  the system share sheet; Details sheet (size, location, dates, dimensions)
 - Folder listings cached per path and shown instantly on re-entry while a
   fresh listing loads behind a thin bar
 - Uploads: byte-level progress in a card above the destination folder's

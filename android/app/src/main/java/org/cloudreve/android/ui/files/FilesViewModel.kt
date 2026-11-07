@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 import org.cloudreve.android.api.FileObject
-import org.cloudreve.android.api.SearchHit
 import org.cloudreve.android.data.ApiException
 import org.cloudreve.android.data.FavoriteEntry
 import org.cloudreve.android.data.FavoritesStore
@@ -30,12 +29,12 @@ import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /** Files-app style categories, each a server-side search over the whole drive. */
-enum class Category(val uri: String, val label: String) {
-    RECENT("${CrUri.MY_PREFIX}?type=file", "Recent"),
-    IMAGES("${CrUri.MY_PREFIX}?category=image", "Images"),
-    VIDEOS("${CrUri.MY_PREFIX}?category=video", "Videos"),
-    AUDIO("${CrUri.MY_PREFIX}?category=audio", "Audio"),
-    DOCUMENTS("${CrUri.MY_PREFIX}?category=document", "Documents"),
+enum class Category(val uri: String, val label: String, val filter: String? = null) {
+    RECENT("${CrUri.MY_PREFIX}?type=file", "Recent", "type=file"),
+    IMAGES("${CrUri.MY_PREFIX}?category=image", "Images", "category=image"),
+    VIDEOS("${CrUri.MY_PREFIX}?category=video", "Videos", "category=video"),
+    AUDIO("${CrUri.MY_PREFIX}?category=audio", "Audio", "category=audio"),
+    DOCUMENTS("${CrUri.MY_PREFIX}?category=document", "Documents", "category=document"),
     TRASH("cloudreve://trash", "Trash");
 
     val gallery: Boolean get() = this == IMAGES || this == VIDEOS
@@ -67,9 +66,13 @@ data class FilesUiState(
     val uploads: List<UploadStatus> = emptyList(),
     /** Files being fetched for open/download: path to fraction (null = size unknown). */
     val downloading: Map<String, Float?> = emptyMap(),
+    /** Non-null while the search UI is open (even with an empty query). */
     val searchQuery: String? = null,
-    val searchResults: List<SearchHit> = emptyList(),
-    val searchTotal: Long = 0,
+    /** Folder the search is limited to; null = whole drive. */
+    val searchScope: String? = null,
+    val searchType: Category? = null,
+    val searchResults: List<FileObject> = emptyList(),
+    val searchNextToken: String? = null,
     val searchLoading: Boolean = false,
     val searchLoadingMore: Boolean = false,
     val searchError: String? = null,
@@ -456,43 +459,86 @@ class FilesViewModel(
     }
 
     // ---- search -----------------------------------------------------------
+    //
+    // Name search through the listing API's ?name= filter (case-folded), not
+    // the /file/search full-text endpoint: that one is off unless the admin
+    // enabled FTS, and answered "feature not enabled" on a stock server.
 
+    private var searchJob: Job? = null
+
+    /** Opens search; scoped to the current folder when inside one, otherwise everywhere. */
+    fun openSearch() {
+        val s = _state.value
+        val scope = if (!s.home && !s.virtual && !CrUri.isRoot(s.currentUri)) s.currentUri else null
+        _state.value = s.copy(searchQuery = "", searchScope = scope, searchType = null, searchResults = emptyList(), selected = emptySet())
+    }
+
+    fun setSearchScope(folder: String?) {
+        _state.value = _state.value.copy(searchScope = folder)
+        runSearch()
+    }
+
+    fun setSearchType(type: Category?) {
+        _state.value = _state.value.copy(searchType = type)
+        runSearch()
+    }
+
+    /** Called as the user types; results are fetched after a short pause. */
     fun search(query: String) {
-        val q = query.trim()
-        if (q.isEmpty()) return
-        _state.value = _state.value.copy(
-            searchQuery = q,
-            searchResults = emptyList(),
-            searchTotal = 0,
-            searchLoading = true,
-            searchError = null,
-            selected = emptySet(),
-        )
-        viewModelScope.launch {
+        _state.value = _state.value.copy(searchQuery = query)
+        runSearch(debounceMs = 300)
+    }
+
+    private fun searchUri(): String? {
+        val s = _state.value
+        val q = s.searchQuery?.trim().orEmpty()
+        if (q.isEmpty()) return null
+        val base = s.searchScope ?: CrUri.MY_PREFIX
+        val encoded = java.net.URLEncoder.encode(q, "UTF-8").replace("+", "%20")
+        return buildString {
+            append(base).append("?name=").append(encoded).append("&case_folding")
+            s.searchType?.filter?.let { append('&').append(it) }
+        }
+    }
+
+    private fun runSearch(debounceMs: Long = 0) {
+        searchJob?.cancel()
+        val uri = searchUri()
+        if (uri == null) {
+            _state.value = _state.value.copy(searchResults = emptyList(), searchNextToken = null, searchLoading = false, searchError = null)
+            return
+        }
+        _state.value = _state.value.copy(searchLoading = true, searchError = null)
+        searchJob = viewModelScope.launch {
+            if (debounceMs > 0) kotlinx.coroutines.delay(debounceMs)
             try {
-                val res = repo.search(q, 0)
+                val res = repo.list(uri, orderBy = "updated_at", orderDirection = "desc")
                 _state.value = _state.value.copy(
                     searchLoading = false,
-                    searchResults = res.hits,
-                    searchTotal = res.total,
+                    searchResults = res.files,
+                    searchNextToken = res.pagination.nextToken,
                 )
+                prefetchThumbs(res.files)
+            } catch (_: CancellationException) {
             } catch (e: Exception) {
-                _state.value = _state.value.copy(searchLoading = false, searchError = e.message)
+                if (!handleSessionExpiry(e)) _state.value = _state.value.copy(searchLoading = false, searchError = e.message)
             }
         }
     }
 
     fun searchMore() {
         val s = _state.value
-        val q = s.searchQuery ?: return
-        if (s.searchLoadingMore || s.searchResults.size >= s.searchTotal) return
+        val token = s.searchNextToken ?: return
+        val uri = searchUri() ?: return
+        if (s.searchLoadingMore || s.searchLoading) return
         _state.value = s.copy(searchLoadingMore = true)
         viewModelScope.launch {
             try {
-                val res = repo.search(q, s.searchResults.size)
+                val res = repo.list(uri, pageToken = token, orderBy = "updated_at", orderDirection = "desc")
                 _state.value = _state.value.copy(
                     searchLoadingMore = false,
-                    searchResults = _state.value.searchResults + res.hits,
+                    searchResults = _state.value.searchResults + res.files,
+                    searchNextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(searchLoadingMore = false, snackbar = e.message)
@@ -501,10 +547,13 @@ class FilesViewModel(
     }
 
     fun clearSearch() {
+        searchJob?.cancel()
         _state.value = _state.value.copy(
             searchQuery = null,
+            searchScope = null,
+            searchType = null,
             searchResults = emptyList(),
-            searchTotal = 0,
+            searchNextToken = null,
             searchLoading = false,
             searchLoadingMore = false,
             searchError = null,

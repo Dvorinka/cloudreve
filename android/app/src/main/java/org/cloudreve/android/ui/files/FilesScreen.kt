@@ -98,7 +98,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -140,12 +142,13 @@ fun FilesScreen(
     var deleteForeverTarget by remember { mutableStateOf<List<String>?>(null) }
     /** Paths to move/copy and whether it is a copy; non-null shows the folder picker. */
     var movePick by remember { mutableStateOf<Pair<List<String>, Boolean>?>(null) }
-    var searchOpen by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
+    /** Folder the search was opened from (scope chip), null when opened at root/home. */
+    var searchOpenedFrom by remember { mutableStateOf<String?>(null) }
     var favoritesOpen by remember { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
 
     val inSearch = state.searchQuery != null
+    val searchOpen = inSearch
 
     var pendingUpload by remember { mutableStateOf<PendingUpload?>(null) }
     val haptics = LocalHapticFeedback.current
@@ -189,14 +192,19 @@ fun FilesScreen(
         }
     }
 
-    LaunchedEffect(searchOpen) {
-        if (searchOpen) searchFocus.requestFocus()
+    LaunchedEffect(inSearch) {
+        if (inSearch) runCatching { searchFocus.requestFocus() }
+    }
+
+    fun openSearch() {
+        val s = state
+        searchOpenedFrom = if (!s.home && !s.virtual && !CrUri.isRoot(s.currentUri)) s.currentUri else null
+        viewModel.openSearch()
     }
 
     fun closeSearch() {
         viewModel.clearSearch()
-        searchOpen = false
-        searchText = ""
+        searchOpenedFrom = null
     }
 
     fun openWithSystemApp(file: FileObject) {
@@ -209,11 +217,12 @@ fun FilesScreen(
             openWithSystemApp(file)
             return
         }
-        val siblings = viewModel.previewableSiblings(file)
+        val siblings = if (inSearch || state.home) listOf(file) else viewModel.previewableSiblings(file)
         preview = siblings to siblings.indexOfFirst { it.path == file.path }.coerceAtLeast(0)
     }
 
     var shareTarget by remember { mutableStateOf<FileObject?>(null) }
+    var detailsTarget by remember { mutableStateOf<FileObject?>(null) }
     fun shareLink(file: FileObject) { shareTarget = file }
 
     fun actionsFor(file: FileObject): FileActions = FileActions(
@@ -254,10 +263,9 @@ fun FilesScreen(
                     onDelete = { if (state.inTrash) deleteForeverTarget = state.selected.toList() else deleteSelectedOpen = true },
                     onRestore = { viewModel.restore(state.selected.toList()) },
                 )
-                inSearch || searchOpen -> SearchTopBar(
-                    text = searchText,
-                    onTextChange = { searchText = it },
-                    onSearch = { viewModel.search(searchText) },
+                inSearch -> SearchTopBar(
+                    text = state.searchQuery.orEmpty(),
+                    onTextChange = { viewModel.search(it) },
                     onClose = { closeSearch() },
                     focus = searchFocus,
                 )
@@ -276,7 +284,7 @@ fun FilesScreen(
                     sort = state.view.sort,
                     hasFavorites = state.favorites.isNotEmpty(),
                     onBack = { viewModel.navigateUp() },
-                    onSearch = { searchOpen = true },
+                    onSearch = { openSearch() },
                     onToggleView = { viewModel.toggleViewMode() },
                     onSort = { viewModel.sortBy(it) },
                     onSelect = { state.files.firstOrNull()?.let { viewModel.toggleSelected(it) } },
@@ -329,7 +337,7 @@ fun FilesScreen(
                     HomeScreen(
                         state = state,
                         viewModel = viewModel,
-                        onSearch = { searchOpen = true },
+                        onSearch = { openSearch() },
                         onMenu = { homeMenuOpen = true },
                         onOpenFile = { openFile(it) },
                         onOpenMyFiles = { viewModel.openMyFiles() },
@@ -351,11 +359,21 @@ fun FilesScreen(
                     state = state,
                     viewModel = viewModel,
                     listState = listState,
-                    onOpenFolder = { file ->
-                        closeSearch()
-                        viewModel.navigateTo(file)
+                    openedFrom = searchOpenedFrom,
+                    actionsFor = { file ->
+                        FileActions(
+                            onOpen = {
+                                if (file.isFolder) {
+                                    closeSearch()
+                                    viewModel.navigateTo(file)
+                                } else {
+                                    openFile(file)
+                                }
+                            },
+                            onLongPress = {},
+                            onMore = { sheetTarget = file },
+                        )
                     },
-                    onOpenFile = { openFile(it) },
                 )
                 state.loading && state.files.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -424,6 +442,10 @@ fun FilesScreen(
         }
     }
 
+    detailsTarget?.let { file ->
+        DetailsSheet(file = file, thumbUrl = rememberThumbUrl(viewModel, file), onDismiss = { detailsTarget = null })
+    }
+
     shareTarget?.let { file ->
         ShareLinkSheet(
             file = file,
@@ -452,6 +474,7 @@ fun FilesScreen(
             onSelect = { sheetTarget = null; viewModel.toggleSelected(file) },
             onMove = { sheetTarget = null; movePick = listOf(file.path) to false },
             onCopy = { sheetTarget = null; movePick = listOf(file.path) to true },
+            onDetails = { sheetTarget = null; detailsTarget = file },
             inTrash = state.inTrash,
             onRestore = { sheetTarget = null; viewModel.restore(listOf(file.path)) },
             onDeleteForever = { sheetTarget = null; deleteForeverTarget = listOf(file.path) },
@@ -497,6 +520,8 @@ fun FilesScreen(
             title = "Rename",
             label = "New name",
             initial = file.name,
+            // Select the stem so typing replaces the name and keeps the extension.
+            selectEnd = if (file.isFolder) file.name.length else file.name.lastIndexOf('.').takeIf { it > 0 } ?: file.name.length,
             confirm = "Rename",
             onConfirm = {
                 viewModel.rename(file, it)
@@ -729,42 +754,6 @@ private fun SelectionTopBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchTopBar(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onSearch: () -> Unit,
-    onClose: () -> Unit,
-    focus: FocusRequester,
-) {
-    TopAppBar(
-        title = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = onTextChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focus),
-                placeholder = { Text("Search files") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close search")
-            }
-        },
-        actions = {
-            IconButton(onClick = onSearch) {
-                Icon(Icons.Default.Search, contentDescription = "Search")
-            }
-        },
-    )
-}
-
 // ---- content --------------------------------------------------------------
 
 @Composable
@@ -890,52 +879,6 @@ private fun EmptyState(
     }
 }
 
-@Composable
-private fun SearchResults(
-    state: FilesUiState,
-    viewModel: FilesViewModel,
-    listState: LazyListState,
-    onOpenFolder: (FileObject) -> Unit,
-    onOpenFile: (FileObject) -> Unit,
-) {
-    when {
-        state.searchLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        state.searchError != null -> EmptyState(
-            icon = Icons.Outlined.SearchOff,
-            title = "Search failed",
-            detail = state.searchError,
-            action = "Retry" to { viewModel.search(state.searchQuery ?: "") },
-        )
-        state.searchResults.isEmpty() -> EmptyState(
-            icon = Icons.Outlined.SearchOff,
-            title = "No results for \"${state.searchQuery}\"",
-        )
-        else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-            items(state.searchResults, key = { it.file.id + it.file.path }) { hit ->
-                val file = hit.file
-                val where = pathLabel(CrUri.parent(file.path))
-                val snippet = hit.content.trim()
-                FileListItem(
-                    file = file,
-                    thumbUrl = rememberThumbUrl(viewModel, file),
-                    selecting = false,
-                    selected = false,
-                    subtitle = if (snippet.isEmpty()) where else "$where • $snippet",
-                    actions = FileActions(
-                        onOpen = { if (file.isFolder) onOpenFolder(file) else onOpenFile(file) },
-                        onLongPress = {},
-                    ),
-                )
-            }
-            if (state.searchLoadingMore) {
-                item { LoadingMoreRow() }
-            }
-        }
-    }
-}
-
 // ---- dialogs --------------------------------------------------------------
 
 @Composable
@@ -1007,10 +950,15 @@ fun NameDialog(
     label: String,
     confirm: String,
     initial: String = "",
+    selectEnd: Int = initial.length,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var value by remember { mutableStateOf(initial) }
+    var value by remember {
+        mutableStateOf(TextFieldValue(initial, selection = TextRange(0, selectEnd.coerceIn(0, initial.length))))
+    }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -1020,9 +968,14 @@ fun NameDialog(
                 onValueChange = { value = it },
                 label = { Text(label) },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { if (value.text.isNotBlank()) onConfirm(value.text.trim()) }),
+                modifier = Modifier.focusRequester(focus),
             )
         },
-        confirmButton = { TextButton(onClick = { onConfirm(value) }) { Text(confirm) } },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(value.text.trim()) }, enabled = value.text.isNotBlank()) { Text(confirm) }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

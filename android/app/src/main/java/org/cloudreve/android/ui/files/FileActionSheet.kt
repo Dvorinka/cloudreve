@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.OfflinePin
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.OfflinePin
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -28,6 +29,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -59,13 +61,18 @@ fun FileActionSheet(
     onSelect: () -> Unit,
     onMove: () -> Unit,
     onCopy: () -> Unit,
+    onDetails: () -> Unit,
     /** Shown when the sheet was opened outside the file's own folder (home, categories, search). */
     onShowInFolder: (() -> Unit)? = null,
     inTrash: Boolean = false,
     onRestore: () -> Unit = {},
     onDeleteForever: () -> Unit = {},
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // Every action should be reachable without a second drag, so skip the half-open state.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -111,6 +118,7 @@ fun FileActionSheet(
         SheetAction(Icons.AutoMirrored.Filled.DriveFileMove, "Move to", onMove)
         SheetAction(Icons.Default.FileCopy, "Copy to", onCopy)
         SheetAction(Icons.Default.DriveFileRenameOutline, "Rename", onRename)
+        SheetAction(Icons.Outlined.Info, "Details", onDetails)
         SheetAction(Icons.Default.Delete, "Delete", onDelete, tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(24.dp))
     }
