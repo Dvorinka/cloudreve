@@ -38,6 +38,8 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     override suspend fun doWork(): Result {
         val uris = inputData.getStringArray(KEY_URIS)?.toList() ?: return Result.failure()
         val parentUri = inputData.getString(KEY_PARENT_URI) ?: return Result.failure()
+        val names = inputData.getStringArray(KEY_NAMES)
+        val overwrite = inputData.getBoolean(KEY_OVERWRITE, false)
         val app = applicationContext as CloudreveApp
 
         createChannel()
@@ -46,12 +48,12 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         try {
             uris.forEachIndexed { i, uriString ->
                 val uri = Uri.parse(uriString)
-                val name = resolveDisplayName(uri)
+                val name = names?.getOrNull(i) ?: resolveDisplayName(uri)
                 report(name, i, uris.size, sent = 0, size = 0, parentUri = parentUri, force = true)
                 try {
                     val tmp = stageToCache(uri, name)
                     try {
-                        app.fileRepository.uploadFile(tmp, parentUri) { sent, total ->
+                        app.fileRepository.uploadFile(tmp, parentUri, remoteName = name, overwrite = overwrite) { sent, total ->
                             report(name, i, uris.size, sent, total, parentUri)
                         }
                     } finally {
@@ -155,6 +157,10 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     companion object {
         const val TAG = "upload"
         const val KEY_URIS = "uris"
+        /** Target file names, parallel to [KEY_URIS]; absent = use each URI's display name. */
+        const val KEY_NAMES = "names"
+        /** Add a version to files that already exist instead of failing. */
+        const val KEY_OVERWRITE = "overwrite"
         const val KEY_PARENT_URI = "parent_uri"
         const val KEY_UPLOADED = "uploaded"
         const val KEY_FAILED = "failed"
@@ -171,18 +177,44 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         private const val CODE_OBJECT_EXISTS = 40004
         private const val CODE_QUOTA_EXCEEDED = 40051
 
-        fun enqueue(context: Context, uris: List<Uri>, parentUri: String) {
+        fun enqueue(
+            context: Context,
+            uris: List<Uri>,
+            parentUri: String,
+            names: List<String>? = null,
+            overwrite: Boolean = false,
+        ) {
+            if (uris.isEmpty()) return
+            val data = Data.Builder()
+                .putStringArray(KEY_URIS, uris.map { it.toString() }.toTypedArray())
+                .putString(KEY_PARENT_URI, parentUri)
+                .putBoolean(KEY_OVERWRITE, overwrite)
+            if (names != null) data.putStringArray(KEY_NAMES, names.toTypedArray())
             val request = OneTimeWorkRequestBuilder<UploadWorker>()
                 .addTag(TAG)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setInputData(
-                    Data.Builder()
-                        .putStringArray(KEY_URIS, uris.map { it.toString() }.toTypedArray())
-                        .putString(KEY_PARENT_URI, parentUri)
-                        .build()
-                )
+                .setInputData(data.build())
                 .build()
             WorkManager.getInstance(context).enqueue(request)
+        }
+
+        /** Display name of a picked document, as the picker shows it. */
+        fun displayName(context: Context, uri: Uri): String {
+            context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+                if (it.moveToFirst() && !it.isNull(0)) return it.getString(0)
+            }
+            return uri.lastPathSegment?.substringAfterLast('/') ?: "upload.bin"
+        }
+
+        /** "report.pdf" -> "report (1).pdf", counting up until the name is free. */
+        fun uniqueName(name: String, taken: Set<String>): String {
+            if (name !in taken) return name
+            val dot = name.lastIndexOf('.').takeIf { it > 0 } ?: name.length
+            val stem = name.substring(0, dot)
+            val ext = name.substring(dot)
+            var n = 1
+            while ("$stem ($n)$ext" in taken) n++
+            return "$stem ($n)$ext"
         }
     }
 }

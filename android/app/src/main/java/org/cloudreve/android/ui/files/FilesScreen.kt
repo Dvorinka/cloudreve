@@ -8,6 +8,11 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -88,6 +93,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -101,6 +108,8 @@ import org.cloudreve.android.data.SortBy
 import org.cloudreve.android.data.ViewMode
 import org.cloudreve.android.util.CrUri
 import org.cloudreve.android.work.UploadWorker
+import org.cloudreve.android.ui.files.transfers.PendingUpload
+import org.cloudreve.android.ui.files.transfers.UploadConflictDialog
 import org.cloudreve.android.ui.files.transfers.UploadsCard
 import org.cloudreve.android.ui.preview.PreviewScreen
 import org.cloudreve.android.ui.preview.previewKindOf
@@ -133,9 +142,20 @@ fun FilesScreen(
 
     val inSearch = state.searchQuery != null
 
+    var pendingUpload by remember { mutableStateOf<PendingUpload?>(null) }
+    val haptics = LocalHapticFeedback.current
+
     val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        // The transfer card above the files shows the batch as soon as it is queued.
-        if (uris.isNotEmpty()) UploadWorker.enqueue(context, uris, state.currentUri)
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        val names = uris.map { UploadWorker.displayName(context, it) }
+        val existing = state.files.map { it.name }.toSet()
+        val pending = PendingUpload(uris, names, state.currentUri, existing)
+        if (pending.conflicts.isEmpty()) {
+            // The transfer card above the files shows the batch as soon as it is queued.
+            UploadWorker.enqueue(context, uris, state.currentUri, names)
+        } else {
+            pendingUpload = pending
+        }
     }
 
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -208,7 +228,10 @@ fun FilesScreen(
                 else -> openFile(file)
             }
         },
-        onLongPress = { viewModel.toggleSelected(file) },
+        onLongPress = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            viewModel.toggleSelected(file)
+        },
         onMore = { sheetTarget = file },
     )
 
@@ -255,7 +278,12 @@ fun FilesScreen(
             }
         },
         floatingActionButton = {
-            if (!state.selecting && !inSearch && !searchOpen) {
+            val scrollingDown = rememberScrollingDown(listState, gridState)
+            AnimatedVisibility(
+                visible = !state.selecting && !inSearch && !searchOpen && !scrollingDown,
+                enter = scaleIn() + fadeIn(),
+                exit = scaleOut() + fadeOut(),
+            ) {
                 FloatingActionButton(onClick = { addSheetOpen = true }) {
                     Icon(Icons.Default.Add, contentDescription = "Add")
                 }
@@ -308,6 +336,17 @@ fun FilesScreen(
                 else -> FileList(state, viewModel, listState, ::actionsFor)
             }
         }
+    }
+
+    pendingUpload?.let { pending ->
+        UploadConflictDialog(
+            pending = pending,
+            onResolve = { r ->
+                pendingUpload = null
+                UploadWorker.enqueue(context, r.uris, pending.parentUri, r.names, r.overwrite)
+            },
+            onDismiss = { pendingUpload = null },
+        )
     }
 
     preview?.let { (files, index) ->
@@ -872,6 +911,32 @@ private fun TextFieldDialog(
 }
 
 // ---- helpers --------------------------------------------------------------
+
+/**
+ * True while the user scrolls away from the top (content moving up), so the
+ * FAB gets out of the way like in Gmail and Files; false again on any scroll
+ * back or at rest near the top.
+ */
+@Composable
+private fun rememberScrollingDown(listState: LazyListState, gridState: androidx.compose.foundation.lazy.grid.LazyGridState): Boolean {
+    var down by remember { mutableStateOf(false) }
+    LaunchedEffect(listState, gridState) {
+        var lastIndex = 0
+        var lastOffset = 0
+        snapshotFlow {
+            val l = listState.layoutInfo.totalItemsCount > 0
+            if (l) listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+            else gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+        }.collect { (index, offset) ->
+            val movingDown = index > lastIndex || (index == lastIndex && offset > lastOffset + 4)
+            val movingUp = index < lastIndex || (index == lastIndex && offset < lastOffset - 4)
+            if (movingDown) down = true else if (movingUp || (index == 0 && offset == 0)) down = false
+            lastIndex = index
+            lastOffset = offset
+        }
+    }
+    return down
+}
 
 private fun pathLabel(uri: String): String {
     val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')

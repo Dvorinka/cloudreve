@@ -132,6 +132,7 @@ class FileRepository(private val api: ApiClient) {
         size: Long,
         lastModified: Long,
         mimeType: String,
+        overwrite: Boolean = false,
     ): UploadSessionResponse =
         api.service().createUploadSession(
             CreateUploadSessionRequest(
@@ -139,6 +140,9 @@ class FileRepository(private val api: ApiClient) {
                 size = size,
                 lastModified = lastModified,
                 mimeType = mimeType,
+                // "version" tells the server to add a new version to the existing
+                // file instead of failing with 40004; it is what the web uploader sends.
+                entityType = if (overwrite) "version" else "",
             )
         ).unwrap()
 
@@ -150,16 +154,19 @@ class FileRepository(private val api: ApiClient) {
     suspend fun uploadFile(
         localFile: File,
         remoteParentUri: String,
+        remoteName: String = localFile.name,
+        overwrite: Boolean = false,
         onProgress: (sent: Long, total: Long) -> Unit = { _, _ -> },
     ): UploadSessionResponse {
-        val targetUri = CrUri.join(remoteParentUri, localFile.name)
-        val mime = java.net.URLConnection.guessContentTypeFromName(localFile.name)
+        val targetUri = CrUri.join(remoteParentUri, remoteName)
+        val mime = java.net.URLConnection.guessContentTypeFromName(remoteName)
             ?: "application/octet-stream"
         val session = createUploadSession(
             uri = targetUri,
             size = localFile.length(),
             lastModified = localFile.lastModified(),
             mimeType = mime,
+            overwrite = overwrite,
         )
 
         if (session.rapidUploaded) return session
