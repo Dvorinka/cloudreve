@@ -199,7 +199,7 @@ class CloudreveDocumentsProvider : DocumentsProvider() {
         val isDir = file.isFolder
         val flags = Document.FLAG_SUPPORTS_DELETE or
             Document.FLAG_SUPPORTS_RENAME or
-            (if (!isDir && file.thumbnail == true) Document.FLAG_SUPPORTS_THUMBNAIL else 0)
+            (if (file.mayHaveThumbnail) Document.FLAG_SUPPORTS_THUMBNAIL else 0)
         newRow().apply {
             add(Document.COLUMN_DOCUMENT_ID, file.path)
             add(Document.COLUMN_DISPLAY_NAME, file.name)
