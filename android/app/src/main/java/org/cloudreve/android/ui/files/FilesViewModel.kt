@@ -22,6 +22,7 @@ import org.cloudreve.android.data.ViewMode
 import org.cloudreve.android.data.ViewPrefs
 import org.cloudreve.android.data.ViewSettings
 import org.cloudreve.android.util.CrUri
+import org.cloudreve.android.work.BackgroundSync
 import org.cloudreve.android.work.UploadStatus
 import org.cloudreve.android.work.UploadWorker
 import java.io.File
@@ -64,6 +65,8 @@ data class FilesUiState(
     val selected: Set<String> = emptySet(),
     /** Upload batches still running, newest last. */
     val uploads: List<UploadStatus> = emptyList(),
+    /** Periodic camera backup / folder mirror runs in progress. */
+    val backgroundSyncs: List<BackgroundSync.Status> = emptyList(),
     /** Files being fetched for open/download: path to fraction (null = size unknown). */
     val downloading: Map<String, Float?> = emptyMap(),
     /** Non-null while the search UI is open (even with an empty query). */
@@ -288,6 +291,11 @@ class FilesViewModel(
     // ---- transfers --------------------------------------------------------
 
     private fun observeUploads() {
+        viewModelScope.launch {
+            workManager.getWorkInfosByTagFlow(BackgroundSync.TAG).collect { infos ->
+                _state.value = _state.value.copy(backgroundSyncs = infos.mapNotNull(BackgroundSync::statusOf))
+            }
+        }
         viewModelScope.launch {
             workManager.getWorkInfosByTagFlow(UploadWorker.TAG).collect { infos ->
                 val statuses = infos.map(UploadStatus::from)

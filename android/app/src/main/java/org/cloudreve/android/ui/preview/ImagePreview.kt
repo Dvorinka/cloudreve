@@ -2,6 +2,7 @@ package org.cloudreve.android.ui.preview
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import org.cloudreve.android.api.FileObject
@@ -32,7 +34,7 @@ import org.cloudreve.android.ui.files.rememberThumbUrl
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit) {
+fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit, onDismiss: () -> Unit = {}) {
     val thumb = rememberThumbUrl(viewModel, file)
     val fullUrl by produceState<String?>(initialValue = null, file.id) {
         value = runCatching { viewModel.previewUrl(file) }.getOrNull()
@@ -40,6 +42,9 @@ fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit)
 
     var scale by remember(file.id) { mutableFloatStateOf(1f) }
     var offset by remember(file.id) { mutableStateOf(Offset.Zero) }
+    // Vertical drag at 1x slides the image away and closes the viewer (the Photos gesture).
+    var dragY by remember(file.id) { mutableFloatStateOf(0f) }
+    val dismissThresholdPx = with(androidx.compose.ui.platform.LocalDensity.current) { 120.dp.toPx() }
 
     Box(
         Modifier
@@ -54,6 +59,14 @@ fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit)
                             scale = 2.5f
                         }
                     },
+                )
+            }
+            .pointerInput(file.id, scale > 1f) {
+                if (scale > 1f) return@pointerInput
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dy -> dragY += dy },
+                    onDragEnd = { if (kotlin.math.abs(dragY) > dismissThresholdPx) onDismiss() else dragY = 0f },
+                    onDragCancel = { dragY = 0f },
                 )
             }
             // Pan only while zoomed in, so at 1x a horizontal drag reaches the pager.
@@ -80,10 +93,12 @@ fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit)
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
+                        val shrink = 1f - (kotlin.math.abs(dragY) / (dismissThresholdPx * 6f)).coerceIn(0f, 0.25f)
+                        scaleX = scale * shrink
+                        scaleY = scale * shrink
                         translationX = offset.x
-                        translationY = offset.y
+                        translationY = offset.y + dragY
+                        alpha = 1f - (kotlin.math.abs(dragY) / (dismissThresholdPx * 3f)).coerceIn(0f, 0.6f)
                     },
                 loading = { LoadingOverlay(null) },
                 error = { FullWidthError("Couldn't load image") },

@@ -49,6 +49,7 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
             .take(MAX_PER_RUN)
 
         items.forEachIndexed { i, item ->
+            setProgress(BackgroundSync.progress(BackgroundSync.Kind.CAMERA, item.name, i, items.size))
             setForeground(progressInfo("Backing up ${item.name}", i, items.size))
             try {
                 val tmp = stageToCache(item)
@@ -163,6 +164,7 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
         fun apply(context: Context, wifiOnly: Boolean) {
             val wm = WorkManager.getInstance(context)
             val periodic = PeriodicWorkRequestBuilder<CameraUploadWorker>(15, TimeUnit.MINUTES)
+                .addTag(BackgroundSync.TAG)
                 .setConstraints(constraints(wifiOnly))
                 .build()
             wm.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, periodic)
@@ -170,6 +172,7 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
                 WORK_ONCE,
                 ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<CameraUploadWorker>()
+                .addTag(BackgroundSync.TAG)
                     .setConstraints(constraints(wifiOnly))
                     .build(),
             )
@@ -187,6 +190,7 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
                 WORK_ONCE,
                 ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<CameraUploadWorker>()
+                .addTag(BackgroundSync.TAG)
                     .setConstraints(constraints(wifiOnly))
                     .build(),
             )

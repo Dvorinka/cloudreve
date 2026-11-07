@@ -109,6 +109,7 @@ fun PreviewScreen(
                 viewModel = viewModel,
                 onTap = { chromeVisible = !chromeVisible },
                 onOpenWith = { onOpenWith(files[page]) },
+                onDismiss = onClose,
             )
         }
 
@@ -176,9 +177,10 @@ private fun PreviewPage(
     viewModel: FilesViewModel,
     onTap: () -> Unit,
     onOpenWith: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     when (previewKindOf(file)) {
-        PreviewKind.IMAGE -> ImagePreview(file, viewModel, onTap)
+        PreviewKind.IMAGE -> ImagePreview(file, viewModel, onTap, onDismiss)
         PreviewKind.VIDEO, PreviewKind.AUDIO -> MediaPreview(file, viewModel, onTap)
         PreviewKind.PDF -> PdfPreview(file, viewModel, onTap)
         PreviewKind.TEXT -> TextPreview(file, viewModel)

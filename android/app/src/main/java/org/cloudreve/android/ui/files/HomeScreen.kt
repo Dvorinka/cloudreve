@@ -73,6 +73,11 @@ fun HomeScreen(
     ) {
         SearchField(onSearch, onMenu)
 
+        // Background work the user did not start right now still deserves a line.
+        if (state.uploads.isNotEmpty() || state.backgroundSyncs.isNotEmpty()) {
+            ActivityCard(state, onOpenUploads = onOpenRecent)
+        }
+
         SectionHeader("Recent", action = if (state.recent.isNotEmpty()) "See all" to onOpenRecent else null)
         when {
             state.recent.isEmpty() && state.recentLoading -> Box(
@@ -139,6 +144,52 @@ fun HomeScreen(
             CollectionTile("Trash", "Kept for 7 days", Icons.Default.Delete, Modifier.weight(1f), onOpenTrash)
         }
     }
+}
+
+@Composable
+private fun ActivityCard(state: FilesUiState, onOpenUploads: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            state.uploads.forEach { u ->
+                ActivityRow(
+                    title = if (u.total > 1) "Uploading ${u.index + 1} of ${u.total}" else "Uploading",
+                    detail = u.name.ifEmpty { "Waiting…" } + " • to " + folderNameOf(u.parentUri),
+                    fraction = u.fraction,
+                )
+            }
+            state.backgroundSyncs.forEach { b ->
+                ActivityRow(
+                    title = "${b.kind.label} • ${b.index + 1} of ${b.total}",
+                    detail = b.name,
+                    fraction = b.fraction,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityRow(title: String, detail: String, fraction: Float?) {
+    Column {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (fraction != null) {
+            androidx.compose.material3.LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+        } else {
+            androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+        }
+    }
+}
+
+private fun folderNameOf(uri: String): String {
+    val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
+    return if (path.isEmpty()) "My files" else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
 }
 
 @Composable

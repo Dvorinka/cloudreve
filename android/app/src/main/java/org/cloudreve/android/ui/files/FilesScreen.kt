@@ -800,13 +800,15 @@ private fun FileGrid(
     gridState: androidx.compose.foundation.lazy.grid.LazyGridState,
     actionsFor: (FileObject) -> FileActions,
 ) {
+    val gallery = state.category?.gallery == true
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 110.dp),
+        columns = GridCells.Adaptive(minSize = if (gallery) 118.dp else 110.dp),
         state = gridState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 88.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = if (gallery) PaddingValues(start = 3.dp, end = 3.dp, top = 3.dp, bottom = 88.dp)
+        else PaddingValues(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 88.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (gallery) 3.dp else 4.dp),
+        verticalArrangement = Arrangement.spacedBy(if (gallery) 3.dp else 4.dp),
     ) {
         if (state.uploadsHere.isNotEmpty()) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "uploads") { UploadsCard(state.uploadsHere, viewModel::cancelUpload) }
@@ -820,6 +822,7 @@ private fun FileGrid(
                 downloadProgress = state.downloading[file.path],
                 downloading = file.path in state.downloading,
                 actions = actionsFor(file),
+                gallery = gallery,
             )
         }
         if (state.loadingMore) {

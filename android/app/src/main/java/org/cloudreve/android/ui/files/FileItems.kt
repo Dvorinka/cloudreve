@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -176,25 +177,38 @@ fun FileGridItem(
     actions: FileActions,
     downloading: Boolean = false,
     downloadProgress: Float? = null,
+    /** Photo-gallery look: edge-to-edge thumbnail, no caption, play badge on videos. */
+    gallery: Boolean = false,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(if (gallery) 6.dp else 16.dp)
     val background = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
     Column(
         Modifier
             .clip(shape)
             .background(background)
             .combinedClickable(onClick = actions.onOpen, onLongClick = actions.onLongPress)
-            .padding(6.dp),
+            .padding(if (gallery) 0.dp else 6.dp),
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
             FileThumb(
-                file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = 14.dp, iconSize = 44.dp,
+                file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = if (gallery) 6.dp else 14.dp, iconSize = 44.dp,
                 downloading = downloading, downloadProgress = downloadProgress,
             )
+            if (FileKind.of(file) == FileKind.VIDEO) {
+                Icon(
+                    Icons.Default.PlayCircle,
+                    contentDescription = "Video",
+                    tint = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier
+                        .align(if (gallery) Alignment.Center else Alignment.BottomStart)
+                        .padding(6.dp)
+                        .size(if (gallery) 36.dp else 22.dp),
+                )
+            }
             // Menu and selection mark sit on the tile so the caption keeps its full width.
             if (selecting) {
                 SelectionMark(selected, Modifier.align(Alignment.TopEnd).padding(6.dp))
-            } else {
+            } else if (!gallery) {
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
@@ -206,7 +220,7 @@ fun FileGridItem(
                 }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(top = 6.dp, start = 4.dp, end = 4.dp)) {
+        if (!gallery) Column(Modifier.fillMaxWidth().padding(top = 6.dp, start = 4.dp, end = 4.dp)) {
             Text(
                 file.name,
                 style = MaterialTheme.typography.bodyMedium,
