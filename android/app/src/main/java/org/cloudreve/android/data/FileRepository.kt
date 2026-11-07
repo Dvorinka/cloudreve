@@ -17,7 +17,12 @@ import org.cloudreve.android.util.CrUri
 import retrofit2.Response
 import java.io.File
 
-class ApiException(val code: Int, message: String) : Exception(message)
+class ApiException(val code: Int, message: String) : Exception(message) {
+    companion object {
+        /** Server envelope code for "login required" (session expired or revoked). */
+        const val CODE_LOGIN_REQUIRED = 401
+    }
+}
 
 class FileRepository(private val api: ApiClient) {
 
@@ -38,8 +43,18 @@ class FileRepository(private val api: ApiClient) {
         }
     }
 
-    suspend fun list(uri: String, pageToken: String? = null): ListFileResponse =
-        api.service().listFiles(uri = uri, nextPageToken = pageToken).unwrap()
+    suspend fun list(
+        uri: String,
+        pageToken: String? = null,
+        orderBy: String? = null,
+        orderDirection: String? = null,
+    ): ListFileResponse =
+        api.service().listFiles(
+            uri = uri,
+            nextPageToken = pageToken,
+            orderBy = orderBy,
+            orderDirection = orderDirection,
+        ).unwrap()
 
     suspend fun downloadUrl(uri: String): String =
         api.service().fileUrls(FileUrlRequest(listOf(uri), download = true))
