@@ -578,9 +578,9 @@ fun FilesScreen(
     }
 
     if (favoritesOpen) {
-        FavoritesDialog(
+        OfflineScreen(
             favorites = state.favorites,
-            onDismiss = { favoritesOpen = false },
+            onBack = { favoritesOpen = false },
             onOpen = { entry -> openWithSystem(context, File(entry.localFile)) },
             onRefresh = { entry -> viewModel.refreshFavorite(context, entry) },
             onRemove = { entry -> viewModel.removeFavorite(entry) },
@@ -891,56 +891,6 @@ private fun EmptyState(
 }
 
 // ---- dialogs --------------------------------------------------------------
-
-@Composable
-private fun FavoritesDialog(
-    favorites: List<FavoriteEntry>,
-    onDismiss: () -> Unit,
-    onOpen: (FavoriteEntry) -> Unit,
-    onRefresh: (FavoriteEntry) -> Unit,
-    onRemove: (FavoriteEntry) -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Offline files") },
-        text = {
-            if (favorites.isEmpty()) {
-                Text(
-                    "Nothing saved for offline use yet. Use a file's menu → Keep offline.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                LazyColumn {
-                    items(favorites, key = { it.path }) { entry ->
-                        ListItem(
-                            modifier = Modifier.clickable { onOpen(entry) },
-                            headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            supportingContent = {
-                                Text(
-                                    "${formatSize(entry.size)} • saved " +
-                                        java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT)
-                                            .format(java.util.Date(entry.savedAt)),
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            },
-                            trailingContent = {
-                                Row {
-                                    IconButton(onClick = { onRefresh(entry) }) {
-                                        Icon(Icons.Default.Refresh, contentDescription = "Re-download")
-                                    }
-                                    IconButton(onClick = { onRemove(entry) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
-    )
-}
 
 @Composable
 private fun ConfirmDeleteDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {

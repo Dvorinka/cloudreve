@@ -95,6 +95,8 @@ Goal: feel like the system Files app.
   thumbnail and details; Move to / Copy to open a full-screen folder picker
 - Upload name clashes are resolved before queuing: Replace (new version),
   Keep both (` (1)` suffix) or Skip
+- Delete offers Undo (restores from the trash); Offline files is a full
+  screen listing local copies with thumbnails, update and remove
 - Trash collection with Restore and Delete forever; share links created
   on demand from a sheet with expiry and optional password, then Copy or
   the system share sheet; Details sheet (size, location, dates, dimensions)
