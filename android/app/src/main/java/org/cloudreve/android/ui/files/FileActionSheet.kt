@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
@@ -56,6 +57,8 @@ fun FileActionSheet(
     onSelect: () -> Unit,
     onMove: () -> Unit,
     onCopy: () -> Unit,
+    /** Shown when the sheet was opened outside the file's own folder (home, categories, search). */
+    onShowInFolder: (() -> Unit)? = null,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Row(
@@ -82,6 +85,7 @@ fun FileActionSheet(
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
         SheetAction(Icons.AutoMirrored.Filled.OpenInNew, if (file.isFolder) "Open folder" else "Open", onOpen)
+        onShowInFolder?.let { SheetAction(Icons.Default.FolderOpen, "Show in folder", it) }
         SheetAction(Icons.Default.Link, "Copy share link", onShare)
         if (!file.isFolder) {
             SheetAction(Icons.Default.Download, "Download", onDownload)

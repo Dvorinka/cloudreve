@@ -49,9 +49,11 @@ class FileRepository(private val api: ApiClient) {
         pageToken: String? = null,
         orderBy: String? = null,
         orderDirection: String? = null,
+        pageSize: Int = 50,
     ): ListFileResponse =
         api.service().listFiles(
             uri = uri,
+            pageSize = pageSize,
             nextPageToken = pageToken,
             orderBy = orderBy,
             orderDirection = orderDirection,

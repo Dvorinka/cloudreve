@@ -28,7 +28,26 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 
+/** Files-app style categories, each a server-side search over the whole drive. */
+enum class Category(val query: String, val label: String) {
+    RECENT("type=file", "Recent"),
+    IMAGES("category=image", "Images"),
+    VIDEOS("category=video", "Videos"),
+    AUDIO("category=audio", "Audio"),
+    DOCUMENTS("category=document", "Documents");
+
+    val uri: String get() = "${CrUri.MY_PREFIX}?$query"
+
+    companion object {
+        fun fromUri(uri: String): Category? = entries.firstOrNull { it.uri == uri }
+    }
+}
+
 data class FilesUiState(
+    /** Landing page with Recent and Categories; false while browsing a folder or category. */
+    val home: Boolean = true,
+    val recent: List<FileObject> = emptyList(),
+    val recentLoading: Boolean = false,
     val currentUri: String = CrUri.MY_PREFIX,
     val files: List<FileObject> = emptyList(),
     /** No usable listing yet: show a spinner instead of files. */
@@ -61,8 +80,12 @@ data class FilesUiState(
     val uploadsHere: List<UploadStatus> get() = uploads.filter { it.parentUri == currentUri }
     val uploadsElsewhere: Int get() = uploads.size - uploadsHere.size
     val selectedFiles: List<FileObject> get() = files.filter { it.path in selected }
+    val category: Category? get() = Category.fromUri(currentUri)
+    /** Category listings mix folders; the row subtitle names each file's folder. */
+    val virtual: Boolean get() = category != null
     val folderName: String
         get() {
+            category?.let { return it.label }
             val path = currentUri.removePrefix(CrUri.MY_PREFIX).trim('/')
             return if (path.isEmpty()) "My files"
             else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
@@ -85,11 +108,16 @@ class FilesViewModel(
     private val thumbCache = ConcurrentHashMap<String, String>()
     private val noThumb = ConcurrentHashMap.newKeySet<String>()
 
+    private companion object {
+        const val RECENT_COUNT = 12
+    }
+
     private val downloadJobs = ConcurrentHashMap<String, Job>()
     /** Finished upload ids already reported, so a replayed WorkInfo is not announced twice. */
     private val announcedUploads = HashSet<java.util.UUID>()
 
     init {
+        loadRecent()
         observeUploads()
         viewModelScope.launch {
             favorites.entries.collect { list ->
@@ -173,12 +201,17 @@ class FilesViewModel(
     }
 
     private suspend fun list(uri: String, token: String? = null) =
-        repo.list(
-            uri,
-            pageToken = token,
-            orderBy = _state.value.view.sort.by.apiName,
-            orderDirection = _state.value.view.sort.apiDirection,
-        )
+        if (Category.fromUri(uri) != null) {
+            // Categories read like a timeline, as in the Files app.
+            repo.list(uri, pageToken = token, orderBy = "updated_at", orderDirection = "desc")
+        } else {
+            repo.list(
+                uri,
+                pageToken = token,
+                orderBy = _state.value.view.sort.by.apiName,
+                orderDirection = _state.value.view.sort.apiDirection,
+            )
+        }
 
     /** True (and session torn down) when the error means we must log in again. */
     private suspend fun handleSessionExpiry(e: Exception): Boolean {
@@ -191,16 +224,54 @@ class FilesViewModel(
 
     fun navigateTo(file: FileObject) {
         if (!file.isFolder) return
-        _state.value = _state.value.copy(currentUri = file.path)
+        _state.value = _state.value.copy(currentUri = file.path, home = false)
         refresh()
     }
 
+    /** Up one folder; from the root folder or a category back to the home page. */
     fun navigateUp(): Boolean {
-        val cur = _state.value.currentUri
-        if (CrUri.isRoot(cur)) return false
-        _state.value = _state.value.copy(currentUri = CrUri.parent(cur))
+        val s = _state.value
+        if (s.home) return false
+        if (CrUri.isRoot(s.currentUri) || s.virtual) {
+            goHome()
+            return true
+        }
+        _state.value = s.copy(currentUri = CrUri.parent(s.currentUri))
         refresh()
         return true
+    }
+
+    fun goHome() {
+        _state.value = _state.value.copy(home = true, currentUri = CrUri.MY_PREFIX, selected = emptySet())
+        loadRecent()
+    }
+
+    fun openMyFiles() {
+        _state.value = _state.value.copy(home = false, currentUri = CrUri.MY_PREFIX)
+        refresh()
+    }
+
+    fun openCategory(category: Category) {
+        _state.value = _state.value.copy(home = false, currentUri = category.uri)
+        refresh()
+    }
+
+    /** Newest files across the drive for the home page's Recent strip. */
+    fun loadRecent() {
+        if (_state.value.recentLoading) return
+        _state.value = _state.value.copy(recentLoading = true)
+        viewModelScope.launch {
+            runCatching {
+                repo.list(Category.RECENT.uri, orderBy = "updated_at", orderDirection = "desc", pageSize = RECENT_COUNT)
+            }.onSuccess { res ->
+                _state.value = _state.value.copy(recent = res.files.filter { !it.isFolder }, recentLoading = false)
+            }.onFailure { e ->
+                _state.value = _state.value.copy(recentLoading = false)
+                if (!handleSessionExpiry(e as? Exception ?: Exception(e))) {
+                    _state.value = _state.value.copy(snackbar = e.message)
+                }
+            }
+        }
     }
 
     // ---- transfers --------------------------------------------------------
@@ -224,7 +295,9 @@ class FilesViewModel(
             else -> "Uploaded ${u.uploaded}, ${u.failed} failed"
         }
         _state.value = _state.value.copy(snackbar = message)
-        if (u.uploaded > 0 && u.parentUri == _state.value.currentUri) refresh()
+        if (u.uploaded > 0) {
+            if (_state.value.home) loadRecent() else if (u.parentUri == _state.value.currentUri) refresh()
+        }
     }
 
     fun cancelUpload(id: java.util.UUID) {

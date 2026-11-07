@@ -162,7 +162,7 @@ fun FilesScreen(
         }
     }
 
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    LaunchedEffect(Unit) { if (!state.home) viewModel.refresh() }
 
     LaunchedEffect(state.snackbar) {
         state.snackbar?.let {
@@ -239,13 +239,14 @@ fun FilesScreen(
         onMore = { sheetTarget = file },
     )
 
-    BackHandler(enabled = state.selecting || inSearch || searchOpen || !CrUri.isRoot(state.currentUri)) {
+    BackHandler(enabled = state.selecting || inSearch || searchOpen || !state.home) {
         when {
             state.selecting -> viewModel.clearSelection()
             inSearch || searchOpen -> closeSearch()
             else -> viewModel.navigateUp()
         }
     }
+    var homeMenuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -265,10 +266,16 @@ fun FilesScreen(
                     onClose = { closeSearch() },
                     focus = searchFocus,
                 )
+                state.home -> Unit
                 else -> FolderTopBar(
                     title = state.folderName,
-                    subtitle = if (CrUri.isRoot(state.currentUri)) null else pathLabel(CrUri.parent(state.currentUri)),
-                    showBack = !CrUri.isRoot(state.currentUri),
+                    subtitle = when {
+                        state.virtual -> "Across all folders"
+                        CrUri.isRoot(state.currentUri) -> null
+                        else -> pathLabel(CrUri.parent(state.currentUri))
+                    },
+                    showBack = true,
+                    showSort = !state.virtual,
                     viewMode = state.view.mode,
                     sort = state.view.sort,
                     hasFavorites = state.favorites.isNotEmpty(),
@@ -286,7 +293,7 @@ fun FilesScreen(
         floatingActionButton = {
             val scrollingDown = rememberScrollingDown(listState, gridState)
             AnimatedVisibility(
-                visible = !state.selecting && !inSearch && !searchOpen && !scrollingDown,
+                visible = !state.home && !state.virtual && !state.selecting && !inSearch && !searchOpen && !scrollingDown,
                 enter = scaleIn() + fadeIn(),
                 exit = scaleOut() + fadeOut(),
             ) {
@@ -297,9 +304,17 @@ fun FilesScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
+        // Spin the pull indicator only for a pull the user made; initial and
+        // background loads have their own, quieter indicators.
+        var pulled by remember { mutableStateOf(false) }
+        val busy = if (state.home) state.recentLoading else state.loading || state.revalidating
+        LaunchedEffect(busy) { if (!busy) pulled = false }
         PullToRefreshBox(
-            isRefreshing = state.loading && state.files.isEmpty() && !inSearch,
-            onRefresh = { viewModel.refresh() },
+            isRefreshing = pulled && busy,
+            onRefresh = {
+                pulled = true
+                if (state.home) viewModel.loadRecent() else viewModel.refresh()
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
@@ -314,6 +329,27 @@ fun FilesScreen(
                 )
             }
             when {
+                state.home && !inSearch -> Box {
+                    HomeScreen(
+                        state = state,
+                        viewModel = viewModel,
+                        onSearch = { searchOpen = true },
+                        onMenu = { homeMenuOpen = true },
+                        onOpenFile = { openFile(it) },
+                        onOpenMyFiles = { viewModel.openMyFiles() },
+                        onOpenRecent = { viewModel.openCategory(Category.RECENT) },
+                        onOpenCategory = { viewModel.openCategory(it) },
+                        onOpenOffline = { favoritesOpen = true },
+                        onFileMore = { sheetTarget = it },
+                    )
+                    DropdownMenu(expanded = homeMenuOpen, onDismissRequest = { homeMenuOpen = false }, modifier = Modifier.padding(start = 16.dp)) {
+                        DropdownMenuItem(
+                            text = { Text("Settings") },
+                            leadingIcon = { Icon(Icons.Default.Settings, null) },
+                            onClick = { homeMenuOpen = false; onOpenSettings() },
+                        )
+                    }
+                }
                 inSearch -> SearchResults(
                     state = state,
                     viewModel = viewModel,
@@ -409,6 +445,11 @@ fun FilesScreen(
             onSelect = { sheetTarget = null; viewModel.toggleSelected(file) },
             onMove = { sheetTarget = null; movePick = listOf(file.path) to false },
             onCopy = { sheetTarget = null; movePick = listOf(file.path) to true },
+            onShowInFolder = if (state.home || state.virtual || inSearch) ({
+                sheetTarget = null
+                if (inSearch) closeSearch()
+                viewModel.navigateTo(FileObject(type = 1, path = CrUri.parent(file.path)))
+            }) else null,
         )
     }
 
@@ -497,6 +538,7 @@ private fun FolderTopBar(
     title: String,
     subtitle: String?,
     showBack: Boolean,
+    showSort: Boolean,
     viewMode: ViewMode,
     sort: org.cloudreve.android.data.SortOrder,
     hasFavorites: Boolean,
@@ -548,7 +590,7 @@ private fun FolderTopBar(
                     Icon(Icons.Default.MoreVert, contentDescription = "More options")
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
+                    if (showSort) DropdownMenuItem(
                         text = { Text("Sort by") },
                         leadingIcon = { Icon(Icons.AutoMirrored.Filled.Sort, null) },
                         onClick = { menuOpen = false; sortOpen = true },
@@ -711,6 +753,11 @@ private fun FileList(
                 downloadProgress = state.downloading[file.path],
                 downloading = file.path in state.downloading,
                 actions = actionsFor(file),
+                subtitle = if (state.virtual) {
+                    "${subtitleFor(file.size, file.updatedAt, file.isFolder)} • ${folderLabelOf(file)}"
+                } else {
+                    subtitleFor(file.size, file.updatedAt, file.isFolder)
+                },
             )
         }
         if (state.loadingMore) {
@@ -968,6 +1015,12 @@ private fun rememberScrollingDown(listState: LazyListState, gridState: androidx.
         }
     }
     return down
+}
+
+/** Name of the folder a file lives in, "My files" at the root. */
+private fun folderLabelOf(file: FileObject): String {
+    val parent = CrUri.parent(file.path)
+    return if (CrUri.isRoot(parent)) "My files" else CrUri.fileName(parent)
 }
 
 private fun pathLabel(uri: String): String {
