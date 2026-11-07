@@ -1,43 +1,57 @@
 package org.cloudreve.android.ui.files
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.DriveFileRenameOutline
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -49,20 +63,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -72,55 +86,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
-import org.cloudreve.android.CloudreveApp
-import org.cloudreve.android.R
 import org.cloudreve.android.api.FileObject
-import org.cloudreve.android.data.CameraUploadSettings
 import org.cloudreve.android.data.FavoriteEntry
-import org.cloudreve.android.data.SyncFolderSettings
+import org.cloudreve.android.data.SortBy
+import org.cloudreve.android.data.ViewMode
 import org.cloudreve.android.util.CrUri
-import org.cloudreve.android.work.CameraUploadWorker
-import org.cloudreve.android.work.SyncFolderWorker
-import org.cloudreve.android.work.TaskPollWorker
 import org.cloudreve.android.work.UploadWorker
-import java.text.DecimalFormat
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilesScreen(
     viewModel: FilesViewModel,
-    onSignOut: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
     var mkdirOpen by remember { mutableStateOf(false) }
+    var addSheetOpen by remember { mutableStateOf(false) }
     var renameTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteTarget by remember { mutableStateOf<FileObject?>(null) }
+    var deleteSelectedOpen by remember { mutableStateOf(false) }
     var searchOpen by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    var cameraSettingsOpen by remember { mutableStateOf(false) }
     var favoritesOpen by remember { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
 
     val inSearch = state.searchQuery != null
 
-    val uploadLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenMultipleDocuments()
-    ) { uris ->
+    val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNotEmpty()) {
             UploadWorker.enqueue(context, uris, state.currentUri)
-            scope.launch { snackbar.showSnackbar("Upload queued (${uris.size} file${if (uris.size > 1) "s" else ""})") }
+            scope.launch { snackbar.showSnackbar("Uploading ${uris.size} file${if (uris.size > 1) "s" else ""}") }
         }
     }
 
@@ -133,17 +142,21 @@ fun FilesScreen(
         }
     }
 
-    // Infinite scroll — load next page when the end is near.
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { last ->
-                if (last == null) return@collect
-                if (inSearch) {
-                    if (last >= state.searchResults.size - 5) viewModel.searchMore()
-                } else if (last >= state.files.size - 5) {
-                    viewModel.loadMore()
-                }
+    // Infinite scroll: load the next page when the end comes into view.
+    LaunchedEffect(listState, gridState, state.view.mode) {
+        val lastVisible = if (state.view.mode == ViewMode.GRID) {
+            snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+        } else {
+            snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+        }
+        lastVisible.collect { last ->
+            if (last == null) return@collect
+            if (inSearch) {
+                if (last >= state.searchResults.size - 5) viewModel.searchMore()
+            } else if (last >= state.files.size - 5) {
+                viewModel.loadMore()
             }
+        }
     }
 
     LaunchedEffect(searchOpen) {
@@ -156,96 +169,95 @@ fun FilesScreen(
         searchText = ""
     }
 
-    BackHandler(enabled = inSearch || !CrUri.isRoot(state.currentUri)) {
-        if (inSearch) closeSearch() else viewModel.navigateUp()
+    fun openFile(file: FileObject) {
+        scope.launch {
+            runCatching { viewModel.downloadToCache(context, file) }
+                .onSuccess { local -> openWithSystem(context, local) }
+                .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
+        }
+    }
+
+    fun shareLink(file: FileObject) {
+        scope.launch {
+            runCatching { viewModel.shareLink(file) }
+                .onSuccess { link ->
+                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    cm.setPrimaryClip(ClipData.newPlainText("share", link))
+                    snackbar.showSnackbar("Share link copied")
+                }
+                .onFailure { snackbar.showSnackbar(it.message ?: "Share failed") }
+        }
+    }
+
+    fun actionsFor(file: FileObject): FileActions = FileActions(
+        onOpen = {
+            when {
+                state.selecting -> viewModel.toggleSelected(file)
+                file.isFolder -> viewModel.navigateTo(file)
+                else -> openFile(file)
+            }
+        },
+        onLongPress = { viewModel.toggleSelected(file) },
+        onRename = { renameTarget = file },
+        onDelete = { deleteTarget = file },
+        onShare = { shareLink(file) },
+        onDownload = {
+            scope.launch {
+                runCatching { viewModel.downloadToCache(context, file) }
+                    .onSuccess { snackbar.showSnackbar("Saved ${it.name}") }
+                    .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
+            }
+        },
+        onToggleFavorite = { viewModel.toggleFavorite(context, file) },
+    )
+
+    BackHandler(enabled = state.selecting || inSearch || searchOpen || !CrUri.isRoot(state.currentUri)) {
+        when {
+            state.selecting -> viewModel.clearSelection()
+            inSearch || searchOpen -> closeSearch()
+            else -> viewModel.navigateUp()
+        }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    if (inSearch || searchOpen) {
-                        OutlinedTextField(
-                            value = searchText,
-                            onValueChange = { searchText = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(searchFocus),
-                            placeholder = { Text("Search files") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(
-                                onSearch = { viewModel.search(searchText) },
-                            ),
-                        )
-                    } else {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(R.mipmap.ic_launcher_foreground),
-                                contentDescription = null,
-                                modifier = Modifier.size(22.dp),
-                            )
-                            Column(modifier = Modifier.padding(start = 8.dp)) {
-                                Text("Files")
-                                Text(
-                                    pathLabel(state.currentUri),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (inSearch || searchOpen) {
-                        IconButton(onClick = { closeSearch() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Close search")
-                        }
-                    } else if (!CrUri.isRoot(state.currentUri)) {
-                        IconButton(onClick = { viewModel.navigateUp() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Up")
-                        }
-                    }
-                },
-                actions = {
-                    if (!inSearch && !searchOpen) {
-                        IconButton(onClick = { searchOpen = true }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
-                        }
-                        IconButton(onClick = { favoritesOpen = true }) {
-                            Icon(
-                                if (state.favorites.isEmpty()) Icons.Default.StarBorder
-                                else Icons.Default.Star,
-                                contentDescription = "Offline files",
-                                tint = if (state.favorites.isEmpty()) MaterialTheme.colorScheme.onSurface
-                                else MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                        IconButton(onClick = { cameraSettingsOpen = true }) {
-                            Icon(Icons.Default.Settings, contentDescription = "Backup & sync")
-                        }
-                        IconButton(onClick = { mkdirOpen = true }) {
-                            Icon(Icons.Default.CreateNewFolder, contentDescription = "New folder")
-                        }
-                        IconButton(onClick = { viewModel.refresh() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                        }
-                        IconButton(onClick = onSignOut) {
-                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign out")
-                        }
-                    } else if (!inSearch) {
-                        IconButton(onClick = { viewModel.search(searchText) }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
-                        }
-                    }
-                },
-            )
+            when {
+                state.selecting -> SelectionTopBar(
+                    count = state.selected.size,
+                    onClose = { viewModel.clearSelection() },
+                    onSelectAll = { viewModel.selectAll() },
+                    onDelete = { deleteSelectedOpen = true },
+                )
+                inSearch || searchOpen -> SearchTopBar(
+                    text = searchText,
+                    onTextChange = { searchText = it },
+                    onSearch = { viewModel.search(searchText) },
+                    onClose = { closeSearch() },
+                    focus = searchFocus,
+                )
+                else -> FolderTopBar(
+                    title = state.folderName,
+                    subtitle = if (CrUri.isRoot(state.currentUri)) null else pathLabel(CrUri.parent(state.currentUri)),
+                    showBack = !CrUri.isRoot(state.currentUri),
+                    viewMode = state.view.mode,
+                    sort = state.view.sort,
+                    hasFavorites = state.favorites.isNotEmpty(),
+                    onBack = { viewModel.navigateUp() },
+                    onSearch = { searchOpen = true },
+                    onToggleView = { viewModel.toggleViewMode() },
+                    onSort = { viewModel.sortBy(it) },
+                    onSelect = { state.files.firstOrNull()?.let { viewModel.toggleSelected(it) } },
+                    onRefresh = { viewModel.refresh() },
+                    onFavorites = { favoritesOpen = true },
+                    onSettings = onOpenSettings,
+                )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { uploadLauncher.launch(arrayOf("*/*")) }) {
-                Icon(Icons.Default.UploadFile, contentDescription = "Upload")
+            if (!state.selecting && !inSearch && !searchOpen) {
+                FloatingActionButton(onClick = { addSheetOpen = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add")
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -258,100 +270,56 @@ fun FilesScreen(
                 .padding(padding),
         ) {
             when {
-                inSearch -> {
-                    SearchResults(
-                        state = state,
-                        viewModel = viewModel,
-                        listState = listState,
-                        onOpenFolder = { file ->
-                            closeSearch()
-                            viewModel.navigateTo(file)
-                        },
-                        onOpenFile = { file ->
-                            scope.launch {
-                                runCatching { viewModel.downloadToCache(context, file) }
-                                    .onSuccess { local -> openFile(context, local) }
-                                    .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
-                            }
-                        },
-                    )
+                inSearch -> SearchResults(
+                    state = state,
+                    viewModel = viewModel,
+                    listState = listState,
+                    onOpenFolder = { file ->
+                        closeSearch()
+                        viewModel.navigateTo(file)
+                    },
+                    onOpenFile = { openFile(it) },
+                )
+                state.loading && state.files.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                state.loading && state.files.isEmpty() -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                state.error != null -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(state.error ?: "Error", color = MaterialTheme.colorScheme.error)
-                            TextButton(onClick = { viewModel.refresh() }) { Text("Retry") }
-                        }
-                    }
-                }
-                state.files.isEmpty() -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Empty folder", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                else -> {
-                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                        items(state.files, key = { it.id + it.path }) { file ->
-                            FileRow(
-                                file = file,
-                                thumbUrl = thumbUrlFor(viewModel, file),
-                                isFavorite = file.path in state.favoritePaths,
-                                onToggleFavorite = {
-                                    viewModel.toggleFavorite(context, file)
-                                },
-                                onClick = {
-                                    if (file.isFolder) {
-                                        viewModel.navigateTo(file)
-                                    } else {
-                                        scope.launch {
-                                            runCatching { viewModel.downloadToCache(context, file) }
-                                                .onSuccess { local -> openFile(context, local) }
-                                                .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
-                                        }
-                                    }
-                                },
-                                onRename = { renameTarget = file },
-                                onDelete = { deleteTarget = file },
-                                onShare = {
-                                    scope.launch {
-                                        runCatching { viewModel.shareLink(file) }
-                                            .onSuccess { link ->
-                                                val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
-                                                    as android.content.ClipboardManager
-                                                cm.setPrimaryClip(
-                                                    android.content.ClipData.newPlainText("share", link)
-                                                )
-                                                snackbar.showSnackbar("Share link copied")
-                                            }
-                                            .onFailure { snackbar.showSnackbar(it.message ?: "Share failed") }
-                                    }
-                                },
-                                onDownload = {
-                                    scope.launch {
-                                        runCatching { viewModel.downloadToCache(context, file) }
-                                            .onSuccess { snackbar.showSnackbar("Saved to cache: ${it.name}") }
-                                            .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
-                                    }
-                                },
-                            )
-                            HorizontalDivider()
-                        }
-                        if (state.loadingMore) {
-                            item {
-                                Row(
-                                    Modifier.fillMaxWidth().padding(12.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                ) { CircularProgressIndicator() }
-                            }
-                        }
-                    }
-                }
+                state.error != null -> EmptyState(
+                    icon = Icons.Outlined.FolderOpen,
+                    title = "Couldn't load this folder",
+                    detail = state.error,
+                    action = "Retry" to { viewModel.refresh() },
+                )
+                state.files.isEmpty() -> EmptyState(
+                    icon = Icons.Outlined.FolderOpen,
+                    title = "This folder is empty",
+                    detail = "Upload files or create a folder with the + button",
+                )
+                state.view.mode == ViewMode.GRID -> FileGrid(state, viewModel, gridState, ::actionsFor)
+                else -> FileList(state, viewModel, listState, ::actionsFor)
             }
+        }
+    }
+
+    if (addSheetOpen) {
+        ModalBottomSheet(onDismissRequest = { addSheetOpen = false }) {
+            ListItem(
+                modifier = Modifier.clickable {
+                    addSheetOpen = false
+                    uploadLauncher.launch(arrayOf("*/*"))
+                },
+                headlineContent = { Text("Upload files") },
+                supportingContent = { Text("Into ${state.folderName}") },
+                leadingContent = { Icon(Icons.Default.UploadFile, contentDescription = null) },
+            )
+            ListItem(
+                modifier = Modifier.clickable {
+                    addSheetOpen = false
+                    mkdirOpen = true
+                },
+                headlineContent = { Text("New folder") },
+                leadingContent = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
+            )
+            Box(Modifier.height(24.dp))
         }
     }
 
@@ -383,35 +351,383 @@ fun FilesScreen(
     }
 
     deleteTarget?.let { file ->
-        AlertDialog(
-            onDismissRequest = { deleteTarget = null },
-            title = { Text("Delete ${file.name}?") },
-            text = { Text("The file will be moved to trash.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.delete(file)
-                    deleteTarget = null
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+        ConfirmDeleteDialog(
+            title = "Delete ${file.name}?",
+            onConfirm = {
+                viewModel.delete(file)
+                deleteTarget = null
             },
-            dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancel") }
-            },
+            onDismiss = { deleteTarget = null },
         )
     }
 
-    if (cameraSettingsOpen) {
-        CameraUploadDialog(onDismiss = { cameraSettingsOpen = false })
+    if (deleteSelectedOpen) {
+        val n = state.selected.size
+        ConfirmDeleteDialog(
+            title = "Delete $n item${if (n == 1) "" else "s"}?",
+            onConfirm = {
+                viewModel.deleteSelected()
+                deleteSelectedOpen = false
+            },
+            onDismiss = { deleteSelectedOpen = false },
+        )
     }
+
     if (favoritesOpen) {
         FavoritesDialog(
             favorites = state.favorites,
             onDismiss = { favoritesOpen = false },
-            onOpen = { entry -> openFile(context, java.io.File(entry.localFile)) },
+            onOpen = { entry -> openWithSystem(context, File(entry.localFile)) },
             onRefresh = { entry -> viewModel.refreshFavorite(context, entry) },
             onRemove = { entry -> viewModel.removeFavorite(entry) },
         )
     }
 }
+
+// ---- top bars -------------------------------------------------------------
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FolderTopBar(
+    title: String,
+    subtitle: String?,
+    showBack: Boolean,
+    viewMode: ViewMode,
+    sort: org.cloudreve.android.data.SortOrder,
+    hasFavorites: Boolean,
+    onBack: () -> Unit,
+    onSearch: () -> Unit,
+    onToggleView: () -> Unit,
+    onSort: (SortBy) -> Unit,
+    onSelect: () -> Unit,
+    onRefresh: () -> Unit,
+    onFavorites: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    var sortOpen by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = {
+            Column {
+                Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (subtitle != null) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        },
+        navigationIcon = {
+            if (showBack) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Up")
+                }
+            }
+        },
+        actions = {
+            IconButton(onClick = onSearch) {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            }
+            IconButton(onClick = onToggleView) {
+                Icon(
+                    if (viewMode == ViewMode.LIST) Icons.Default.GridView else Icons.Default.ViewList,
+                    contentDescription = if (viewMode == ViewMode.LIST) "Grid view" else "List view",
+                )
+            }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Sort by") },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.Sort, null) },
+                        onClick = { menuOpen = false; sortOpen = true },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Select") },
+                        leadingIcon = { Icon(Icons.Default.Checklist, null) },
+                        onClick = { menuOpen = false; onSelect() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Refresh") },
+                        leadingIcon = { Icon(Icons.Default.Refresh, null) },
+                        onClick = { menuOpen = false; onRefresh() },
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Offline files") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Star, null,
+                                tint = if (hasFavorites) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        onClick = { menuOpen = false; onFavorites() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Settings") },
+                        leadingIcon = { Icon(Icons.Default.Settings, null) },
+                        onClick = { menuOpen = false; onSettings() },
+                    )
+                }
+                DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
+                    SortBy.entries.forEach { by ->
+                        val active = sort.by == by
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    when (by) {
+                                        SortBy.NAME -> "Name"
+                                        SortBy.SIZE -> "Size"
+                                        SortBy.UPDATED -> "Date modified"
+                                    },
+                                )
+                            },
+                            leadingIcon = {
+                                if (active) Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                                else Box(Modifier.size(24.dp))
+                            },
+                            trailingIcon = {
+                                if (active) Icon(
+                                    if (sort.ascending) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                    contentDescription = if (sort.ascending) "Ascending" else "Descending",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                            onClick = { sortOpen = false; onSort(by) },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectionTopBar(
+    count: Int,
+    onClose: () -> Unit,
+    onSelectAll: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text("$count selected") },
+        navigationIcon = {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Default.Close, contentDescription = "Clear selection")
+            }
+        },
+        actions = {
+            IconButton(onClick = onSelectAll) {
+                Icon(Icons.Default.SelectAll, contentDescription = "Select all")
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete")
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        ),
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchTopBar(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onClose: () -> Unit,
+    focus: FocusRequester,
+) {
+    TopAppBar(
+        title = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focus),
+                placeholder = { Text("Search files") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Default.Close, contentDescription = "Close search")
+            }
+        },
+        actions = {
+            IconButton(onClick = onSearch) {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            }
+        },
+    )
+}
+
+// ---- content --------------------------------------------------------------
+
+@Composable
+private fun FileList(
+    state: FilesUiState,
+    viewModel: FilesViewModel,
+    listState: LazyListState,
+    actionsFor: (FileObject) -> FileActions,
+) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 88.dp),
+    ) {
+        items(state.files, key = { it.id + it.path }) { file ->
+            FileListItem(
+                file = file,
+                thumbUrl = rememberThumbUrl(viewModel, file),
+                selecting = state.selecting,
+                selected = file.path in state.selected,
+                isFavorite = file.path in state.favoritePaths,
+                actions = actionsFor(file),
+            )
+        }
+        if (state.loadingMore) {
+            item { LoadingMoreRow() }
+        }
+    }
+}
+
+@Composable
+private fun FileGrid(
+    state: FilesUiState,
+    viewModel: FilesViewModel,
+    gridState: androidx.compose.foundation.lazy.grid.LazyGridState,
+    actionsFor: (FileObject) -> FileActions,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 110.dp),
+        state = gridState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 88.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        items(state.files, key = { it.id + it.path }) { file ->
+            FileGridItem(
+                file = file,
+                thumbUrl = rememberThumbUrl(viewModel, file),
+                selecting = state.selecting,
+                selected = file.path in state.selected,
+                isFavorite = file.path in state.favoritePaths,
+                actions = actionsFor(file),
+            )
+        }
+        if (state.loadingMore) {
+            item(span = { GridItemSpan(maxLineSpan) }) { LoadingMoreRow() }
+        }
+    }
+}
+
+@Composable
+private fun LoadingMoreRow() {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) { CircularProgressIndicator(Modifier.size(28.dp)) }
+}
+
+@Composable
+private fun EmptyState(
+    icon: ImageVector,
+    title: String,
+    detail: String? = null,
+    action: Pair<String, () -> Unit>? = null,
+) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(64.dp),
+            )
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+            if (detail != null) {
+                Text(
+                    detail,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            if (action != null) {
+                TextButton(onClick = action.second, modifier = Modifier.padding(top = 8.dp)) { Text(action.first) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchResults(
+    state: FilesUiState,
+    viewModel: FilesViewModel,
+    listState: LazyListState,
+    onOpenFolder: (FileObject) -> Unit,
+    onOpenFile: (FileObject) -> Unit,
+) {
+    when {
+        state.searchLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        state.searchError != null -> EmptyState(
+            icon = Icons.Outlined.SearchOff,
+            title = "Search failed",
+            detail = state.searchError,
+            action = "Retry" to { viewModel.search(state.searchQuery ?: "") },
+        )
+        state.searchResults.isEmpty() -> EmptyState(
+            icon = Icons.Outlined.SearchOff,
+            title = "No results for \"${state.searchQuery}\"",
+        )
+        else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+            items(state.searchResults, key = { it.file.id + it.file.path }) { hit ->
+                val file = hit.file
+                val where = pathLabel(CrUri.parent(file.path))
+                val snippet = hit.content.trim()
+                FileListItem(
+                    file = file,
+                    thumbUrl = rememberThumbUrl(viewModel, file),
+                    selecting = false,
+                    selected = false,
+                    isFavorite = file.path in state.favoritePaths,
+                    subtitle = if (snippet.isEmpty()) where else "$where • $snippet",
+                    actions = FileActions(
+                        onOpen = { if (file.isFolder) onOpenFolder(file) else onOpenFile(file) },
+                        onLongPress = {},
+                    ),
+                )
+            }
+            if (state.searchLoadingMore) {
+                item { LoadingMoreRow() }
+            }
+        }
+    }
+}
+
+// ---- dialogs --------------------------------------------------------------
 
 @Composable
 private fun FavoritesDialog(
@@ -435,12 +751,10 @@ private fun FavoritesDialog(
                     items(favorites, key = { it.path }) { entry ->
                         ListItem(
                             modifier = Modifier.clickable { onOpen(entry) },
-                            headlineContent = {
-                                Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            },
+                            headlineContent = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                             supportingContent = {
                                 Text(
-                                    "${formatSize(entry.size)} · saved " +
+                                    "${formatSize(entry.size)} • saved " +
                                         java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT)
                                             .format(java.util.Date(entry.savedAt)),
                                     style = MaterialTheme.typography.labelMedium,
@@ -449,18 +763,10 @@ private fun FavoritesDialog(
                             trailingContent = {
                                 Row {
                                     IconButton(onClick = { onRefresh(entry) }) {
-                                        Icon(
-                                            Icons.Default.Refresh,
-                                            contentDescription = "Re-download",
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                                        Icon(Icons.Default.Refresh, contentDescription = "Re-download")
                                     }
                                     IconButton(onClick = { onRemove(entry) }) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = "Remove",
-                                            tint = MaterialTheme.colorScheme.error,
-                                        )
+                                        Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             },
@@ -469,452 +775,20 @@ private fun FavoritesDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Done") }
-        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
     )
 }
 
-private fun pathLabel(uri: String): String {
-    val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
-    return if (path.isEmpty()) "My files" else "My files / ${java.net.URLDecoder.decode(path, "UTF-8")}"
-}
-
 @Composable
-private fun SearchResults(
-    state: FilesUiState,
-    viewModel: FilesViewModel,
-    listState: androidx.compose.foundation.lazy.LazyListState,
-    onOpenFolder: (FileObject) -> Unit,
-    onOpenFile: (FileObject) -> Unit,
-) {
-    when {
-        state.searchLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-        state.searchError != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(state.searchError ?: "Search failed", color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = { viewModel.search(state.searchQuery ?: "") }) {
-                        Text("Retry")
-                    }
-                }
-            }
-        }
-        state.searchResults.isEmpty() -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    "No results for \"${state.searchQuery}\"",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        else -> {
-            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                items(state.searchResults, key = { it.file.id + it.file.path }) { hit ->
-                    val file = hit.file
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            if (file.isFolder) onOpenFolder(file) else onOpenFile(file)
-                        },
-                        headlineContent = {
-                            Text(file.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        },
-                        supportingContent = {
-                            Column {
-                                Text(
-                                    pathLabel(CrUri.parent(file.path)),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                if (hit.content.isNotBlank()) {
-                                    Text(
-                                        hit.content.trim(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        },
-                        leadingContent = {
-                            Icon(
-                                if (file.isFolder) Icons.Default.Folder
-                                else Icons.AutoMirrored.Filled.InsertDriveFile,
-                                contentDescription = null,
-                                tint = if (file.isFolder) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                    )
-                    HorizontalDivider()
-                }
-                if (state.searchLoadingMore) {
-                    item {
-                        Row(
-                            Modifier.fillMaxWidth().padding(12.dp),
-                            horizontalArrangement = Arrangement.Center,
-                        ) { CircularProgressIndicator() }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CameraUploadDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    val app = context.applicationContext as CloudreveApp
-    val settings = app.cameraUploadSettings
-    val notifySettings = app.taskNotifySettings
-    val syncSettings = app.syncFolderSettings
-    val scope = rememberCoroutineScope()
-    val snap by settings.snapshot.collectAsState(initial = null)
-    val notifyEnabled by notifySettings.enabled.collectAsState(initial = false)
-    val syncSnap by syncSettings.snapshot.collectAsState(initial = null)
-    var folderText by remember(snap?.remoteFolder) {
-        mutableStateOf(snap?.remoteFolder ?: CameraUploadSettings.DEFAULT_FOLDER)
-    }
-    var syncFolderText by remember(syncSnap?.remoteFolder) {
-        mutableStateOf(syncSnap?.remoteFolder ?: SyncFolderSettings.DEFAULT_FOLDER)
-    }
-
-    val treeLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocumentTree()
-    ) { uri ->
-        if (uri != null) {
-            context.contentResolver.takePersistableUriPermission(
-                uri, Intent.FLAG_GRANT_READ_URI_PERMISSION,
-            )
-            scope.launch {
-                syncSettings.setTreeUri(uri.toString())
-                syncSettings.setRemoteFolder(syncFolderText)
-                syncSettings.setEnabled(true)
-                SyncFolderWorker.apply(context, syncSnap?.wifiOnly ?: true)
-            }
-        }
-    }
-
-    val notifPermLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            scope.launch {
-                notifySettings.setEnabled(true)
-                TaskPollWorker.apply(context)
-            }
-        }
-    }
-
-    val permLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { grants ->
-        if (grants.values.all { it }) {
-            scope.launch {
-                settings.setRemoteFolder(folderText)
-                settings.setEnabled(true)
-                CameraUploadWorker.apply(context, snap?.wifiOnly ?: true)
-            }
-        }
-    }
-
+private fun ConfirmDeleteDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Backup & sync") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Back up new photos & videos", Modifier.weight(1f))
-                    Switch(
-                        checked = snap?.enabled == true,
-                        onCheckedChange = { want ->
-                            if (want) {
-                                permLauncher.launch(mediaPermissions())
-                            } else {
-                                scope.launch {
-                                    settings.setEnabled(false)
-                                    CameraUploadWorker.cancel(context)
-                                }
-                            }
-                        },
-                    )
-                }
-                OutlinedTextField(
-                    value = folderText,
-                    onValueChange = { folderText = it },
-                    label = { Text("Remote folder") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Wi-Fi only", Modifier.weight(1f))
-                    Switch(
-                        checked = snap?.wifiOnly ?: true,
-                        onCheckedChange = { wifiOnly ->
-                            scope.launch {
-                                settings.setWifiOnly(wifiOnly)
-                                if (snap?.enabled == true) {
-                                    CameraUploadWorker.apply(context, wifiOnly)
-                                }
-                            }
-                        },
-                    )
-                }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Include videos", Modifier.weight(1f))
-                    Switch(
-                        checked = snap?.includeVideos ?: true,
-                        onCheckedChange = { scope.launch { settings.setIncludeVideos(it) } },
-                    )
-                }
-                snap?.lastSyncAt?.takeIf { it > 0 }?.let {
-                    Text(
-                        "Last backup: " + java.text.DateFormat.getDateTimeInstance(
-                            java.text.DateFormat.SHORT, java.text.DateFormat.SHORT,
-                        ).format(java.util.Date(it)),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                HorizontalDivider()
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Notify on finished tasks", Modifier.weight(1f))
-                    Switch(
-                        checked = notifyEnabled,
-                        onCheckedChange = { want ->
-                            if (want) {
-                                if (android.os.Build.VERSION.SDK_INT >= 33) {
-                                    notifPermLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                } else {
-                                    scope.launch {
-                                        notifySettings.setEnabled(true)
-                                        TaskPollWorker.apply(context)
-                                    }
-                                }
-                            } else {
-                                scope.launch {
-                                    notifySettings.setEnabled(false)
-                                    TaskPollWorker.cancel(context)
-                                }
-                            }
-                        },
-                    )
-                }
-                HorizontalDivider()
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Mirror a local folder", Modifier.weight(1f))
-                    Switch(
-                        checked = syncSnap?.enabled == true && syncSnap?.treeUri != null,
-                        onCheckedChange = { want ->
-                            if (want) {
-                                treeLauncher.launch(null)
-                            } else {
-                                scope.launch {
-                                    syncSettings.setEnabled(false)
-                                    SyncFolderWorker.cancel(context)
-                                }
-                            }
-                        },
-                    )
-                }
-                syncSnap?.treeUri?.let {
-                    Text(
-                        "Local: " + android.net.Uri.parse(it).lastPathSegment.orEmpty(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                OutlinedTextField(
-                    value = syncFolderText,
-                    onValueChange = { syncFolderText = it },
-                    label = { Text("Remote folder (sync)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Sync Wi-Fi only", Modifier.weight(1f))
-                    Switch(
-                        checked = syncSnap?.wifiOnly ?: true,
-                        onCheckedChange = { wifiOnly ->
-                            scope.launch {
-                                syncSettings.setWifiOnly(wifiOnly)
-                                if (syncSnap?.enabled == true) {
-                                    SyncFolderWorker.apply(context, wifiOnly)
-                                }
-                            }
-                        },
-                    )
-                }
-                syncSnap?.lastSyncAt?.takeIf { it > 0 }?.let {
-                    Text(
-                        "Last folder sync: " + java.text.DateFormat.getDateTimeInstance(
-                            java.text.DateFormat.SHORT, java.text.DateFormat.SHORT,
-                        ).format(java.util.Date(it)),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        },
+        title = { Text(title) },
+        text = { Text("Items are moved to the trash and can be restored from the web app.") },
         confirmButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    settings.setRemoteFolder(folderText)
-                    syncSettings.setRemoteFolder(syncFolderText)
-                    CameraUploadWorker.syncNow(context, snap?.wifiOnly ?: true)
-                    if (syncSnap?.enabled == true) {
-                        SyncFolderWorker.syncNow(context, syncSnap?.wifiOnly ?: true)
-                    }
-                }
-            }) { Text("Sync now") }
+            TextButton(onClick = onConfirm) { Text("Delete", color = MaterialTheme.colorScheme.error) }
         },
-        dismissButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    settings.setRemoteFolder(folderText)
-                    syncSettings.setRemoteFolder(syncFolderText)
-                }
-                onDismiss()
-            }) { Text("Done") }
-        },
-    )
-}
-
-private fun mediaPermissions(): Array<String> =
-    if (android.os.Build.VERSION.SDK_INT >= 33) {
-        arrayOf(
-            android.Manifest.permission.READ_MEDIA_IMAGES,
-            android.Manifest.permission.READ_MEDIA_VIDEO,
-        )
-    } else {
-        arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-    }
-
-private fun openFile(context: android.content.Context, local: java.io.File) {
-    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", local)
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, context.contentResolver.getType(uri) ?: "*/*")
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    try {
-        context.startActivity(intent)
-    } catch (_: ActivityNotFoundException) {
-        // No handler — the file is still in cache for manual access.
-    }
-}
-
-@Composable
-private fun thumbUrlFor(viewModel: FilesViewModel, file: FileObject): String? {
-    val url by produceState<String?>(initialValue = null, file.id) {
-        value = viewModel.thumbUrl(file)
-    }
-    return url
-}
-
-@Composable
-private fun FileRow(
-    file: FileObject,
-    thumbUrl: String?,
-    isFavorite: Boolean,
-    onToggleFavorite: () -> Unit,
-    onClick: () -> Unit,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-    onShare: () -> Unit,
-    onDownload: () -> Unit,
-) {
-    var menuOpen by remember { mutableStateOf(false) }
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        headlineContent = { Text(file.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Text(
-                if (file.isFolder) "Folder" else formatSize(file.size),
-                style = MaterialTheme.typography.labelMedium,
-            )
-        },
-        leadingContent = {
-            if (thumbUrl != null) {
-                coil.compose.AsyncImage(
-                    model = thumbUrl,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                )
-            } else {
-                Icon(
-                    if (file.isFolder) Icons.Default.Folder else Icons.AutoMirrored.Filled.InsertDriveFile,
-                    contentDescription = null,
-                    tint = if (file.isFolder) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        trailingContent = {
-            Box {
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More")
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    if (!file.isFolder) {
-                        DropdownMenuItem(
-                            text = { Text("Download") },
-                            leadingIcon = { Icon(Icons.Default.Download, null) },
-                            onClick = { menuOpen = false; onDownload() },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(if (isFavorite) "Remove offline copy" else "Keep offline") },
-                            leadingIcon = {
-                                Icon(
-                                    if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                                    null,
-                                )
-                            },
-                            onClick = { menuOpen = false; onToggleFavorite() },
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text("Share") },
-                        leadingIcon = { Icon(Icons.Default.Share, null) },
-                        onClick = { menuOpen = false; onShare() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Rename") },
-                        leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, null) },
-                        onClick = { menuOpen = false; onRename() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete") },
-                        leadingIcon = { Icon(Icons.Default.Delete, null) },
-                        onClick = { menuOpen = false; onDelete() },
-                    )
-                }
-            }
-        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
 
@@ -944,9 +818,22 @@ private fun TextFieldDialog(
     )
 }
 
-private fun formatSize(size: Long): String {
-    if (size <= 0) return "0 B"
-    val units = arrayOf("B", "KB", "MB", "GB", "TB")
-    val group = (Math.log10(size.toDouble()) / Math.log10(1024.0)).toInt().coerceAtMost(units.size - 1)
-    return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, group.toDouble())) + " " + units[group]
+// ---- helpers --------------------------------------------------------------
+
+private fun pathLabel(uri: String): String {
+    val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
+    return if (path.isEmpty()) "My files" else "My files / " + java.net.URLDecoder.decode(path, "UTF-8").replace("/", " / ")
+}
+
+private fun openWithSystem(context: Context, local: File) {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", local)
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, context.contentResolver.getType(uri) ?: "*/*")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        // No handler; the file stays in cache.
+    }
 }

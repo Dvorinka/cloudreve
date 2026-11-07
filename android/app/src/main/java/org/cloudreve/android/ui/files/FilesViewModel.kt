@@ -1,7 +1,6 @@
 package org.cloudreve.android.ui.files
 
 import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,12 +8,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.api.SearchHit
+import org.cloudreve.android.data.ApiException
 import org.cloudreve.android.data.FavoriteEntry
 import org.cloudreve.android.data.FavoritesStore
 import org.cloudreve.android.data.FileRepository
+import org.cloudreve.android.data.SortBy
+import org.cloudreve.android.data.SortOrder
+import org.cloudreve.android.data.ViewMode
+import org.cloudreve.android.data.ViewPrefs
+import org.cloudreve.android.data.ViewSettings
 import org.cloudreve.android.util.CrUri
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.ConcurrentHashMap
 
 data class FilesUiState(
     val currentUri: String = CrUri.MY_PREFIX,
@@ -24,6 +30,9 @@ data class FilesUiState(
     val nextToken: String? = null,
     val error: String? = null,
     val snackbar: String? = null,
+    val view: ViewPrefs = ViewPrefs(),
+    /** Paths of files picked in selection mode; empty means not selecting. */
+    val selected: Set<String> = emptySet(),
     val searchQuery: String? = null,
     val searchResults: List<SearchHit> = emptyList(),
     val searchTotal: Long = 0,
@@ -34,15 +43,30 @@ data class FilesUiState(
     val favoriteSaving: Boolean = false,
 ) {
     val favoritePaths: Set<String> get() = favorites.map { it.path }.toSet()
+    val selecting: Boolean get() = selected.isNotEmpty()
+    val selectedFiles: List<FileObject> get() = files.filter { it.path in selected }
+    val folderName: String
+        get() {
+            val path = currentUri.removePrefix(CrUri.MY_PREFIX).trim('/')
+            return if (path.isEmpty()) "My files"
+            else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
+        }
 }
 
 class FilesViewModel(
     private val repo: FileRepository,
     private val favorites: FavoritesStore,
+    private val viewSettings: ViewSettings,
+    /** Invoked when the server no longer accepts our session; the caller returns to login. */
+    private val onSessionExpired: suspend () -> Unit,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(FilesUiState())
     val state: StateFlow<FilesUiState> = _state
+
+    /** Resolved thumbnail URLs by file id, shared across list/grid recompositions. */
+    private val thumbCache = ConcurrentHashMap<String, String>()
+    private val noThumb = ConcurrentHashMap.newKeySet<String>()
 
     init {
         viewModelScope.launch {
@@ -50,21 +74,35 @@ class FilesViewModel(
                 _state.value = _state.value.copy(favorites = list)
             }
         }
+        viewModelScope.launch {
+            var first = true
+            viewSettings.prefs.collect { prefs ->
+                val sortChanged = prefs.sort != _state.value.view.sort
+                _state.value = _state.value.copy(view = prefs)
+                // Sorting is done server-side, so a new order means a new listing.
+                if (!first && sortChanged) refresh()
+                first = false
+            }
+        }
     }
 
     fun refresh() {
         val uri = _state.value.currentUri
-        _state.value = _state.value.copy(loading = true, error = null, files = emptyList(), nextToken = null)
+        _state.value = _state.value.copy(
+            loading = true, error = null, files = emptyList(), nextToken = null, selected = emptySet(),
+        )
         viewModelScope.launch {
             try {
-                val res = repo.list(uri)
+                val res = list(uri)
                 _state.value = _state.value.copy(
                     loading = false,
                     files = sortFiles(res.files),
                     nextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
-                _state.value = _state.value.copy(loading = false, error = e.message)
+                if (!handleSessionExpiry(e)) {
+                    _state.value = _state.value.copy(loading = false, error = e.message)
+                }
             }
         }
     }
@@ -76,7 +114,7 @@ class FilesViewModel(
         _state.value = s.copy(loadingMore = true)
         viewModelScope.launch {
             try {
-                val res = repo.list(s.currentUri, pageToken = token)
+                val res = list(s.currentUri, token)
                 _state.value = _state.value.copy(
                     loadingMore = false,
                     files = sortFiles(_state.value.files + res.files),
@@ -86,6 +124,23 @@ class FilesViewModel(
                 _state.value = _state.value.copy(loadingMore = false, snackbar = e.message)
             }
         }
+    }
+
+    private suspend fun list(uri: String, token: String? = null) =
+        repo.list(
+            uri,
+            pageToken = token,
+            orderBy = _state.value.view.sort.by.apiName,
+            orderDirection = _state.value.view.sort.apiDirection,
+        )
+
+    /** True (and session torn down) when the error means we must log in again. */
+    private suspend fun handleSessionExpiry(e: Exception): Boolean {
+        if (e is ApiException && e.code == ApiException.CODE_LOGIN_REQUIRED) {
+            onSessionExpired()
+            return true
+        }
+        return false
     }
 
     fun navigateTo(file: FileObject) {
@@ -102,6 +157,58 @@ class FilesViewModel(
         return true
     }
 
+    // ---- view preferences -------------------------------------------------
+
+    fun setViewMode(mode: ViewMode) {
+        viewModelScope.launch { viewSettings.setMode(mode) }
+    }
+
+    fun toggleViewMode() {
+        setViewMode(if (_state.value.view.mode == ViewMode.LIST) ViewMode.GRID else ViewMode.LIST)
+    }
+
+    /** Picking the active key again flips the direction, like the Files app. */
+    fun sortBy(by: SortBy) {
+        val cur = _state.value.view.sort
+        val next = if (cur.by == by) cur.copy(ascending = !cur.ascending)
+        else SortOrder(by, ascending = by == SortBy.NAME)
+        viewModelScope.launch { viewSettings.setSort(next) }
+    }
+
+    // ---- selection --------------------------------------------------------
+
+    fun toggleSelected(file: FileObject) {
+        val cur = _state.value.selected
+        _state.value = _state.value.copy(
+            selected = if (file.path in cur) cur - file.path else cur + file.path,
+        )
+    }
+
+    fun selectAll() {
+        _state.value = _state.value.copy(selected = _state.value.files.map { it.path }.toSet())
+    }
+
+    fun clearSelection() {
+        _state.value = _state.value.copy(selected = emptySet())
+    }
+
+    fun deleteSelected() {
+        val paths = _state.value.selected.toList()
+        if (paths.isEmpty()) return
+        viewModelScope.launch {
+            runCatching { repo.delete(paths) }
+                .onSuccess {
+                    _state.value = _state.value.copy(
+                        snackbar = "${paths.size} item${if (paths.size == 1) "" else "s"} moved to trash",
+                    )
+                    refresh()
+                }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+        }
+    }
+
+    // ---- search -----------------------------------------------------------
+
     fun search(query: String) {
         val q = query.trim()
         if (q.isEmpty()) return
@@ -111,6 +218,7 @@ class FilesViewModel(
             searchTotal = 0,
             searchLoading = true,
             searchError = null,
+            selected = emptySet(),
         )
         viewModelScope.launch {
             try {
@@ -154,6 +262,8 @@ class FilesViewModel(
             searchError = null,
         )
     }
+
+    // ---- file operations --------------------------------------------------
 
     fun mkdir(name: String) {
         if (name.isBlank()) return
@@ -257,13 +367,28 @@ class FilesViewModel(
 
     suspend fun shareLink(file: FileObject): String = repo.createShare(file.path)
 
-    suspend fun thumbUrl(file: FileObject): String? =
-        if (file.mayHaveThumbnail) repo.thumbUrl(file.path) else null
+    suspend fun thumbUrl(file: FileObject): String? {
+        if (!file.mayHaveThumbnail || file.id in noThumb) return null
+        thumbCache[file.id]?.let { return it }
+        val url = repo.thumbUrl(file.path)
+        if (url == null) noThumb.add(file.id) else thumbCache[file.id] = url
+        return url
+    }
 
     fun consumeSnackbar() {
         _state.value = _state.value.copy(snackbar = null)
     }
 
-    private fun sortFiles(files: List<FileObject>): List<FileObject> =
-        files.sortedWith(compareByDescending<FileObject> { it.isFolder }.thenBy { it.name.lowercase() })
+    /**
+     * Folders always stay on top like the Files app. The server's name order is
+     * case-sensitive (uppercase first), which reads as random to people, so the
+     * name sort is redone here case-insensitively; size and date come as-is.
+     */
+    private fun sortFiles(files: List<FileObject>): List<FileObject> {
+        val sort = _state.value.view.sort
+        val byType = compareByDescending<FileObject> { it.isFolder }
+        if (sort.by != SortBy.NAME) return files.sortedWith(byType)
+        val byName = compareBy<FileObject, String>(String.CASE_INSENSITIVE_ORDER) { it.name }
+        return files.sortedWith(byType.then(if (sort.ascending) byName else byName.reversed()))
+    }
 }

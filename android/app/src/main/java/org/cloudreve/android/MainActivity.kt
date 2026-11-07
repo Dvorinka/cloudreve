@@ -39,6 +39,7 @@ import org.cloudreve.android.ui.files.FilesScreen
 import org.cloudreve.android.ui.files.FilesViewModel
 import org.cloudreve.android.ui.login.LoginScreen
 import org.cloudreve.android.ui.login.LoginViewModel
+import org.cloudreve.android.ui.settings.SettingsScreen
 import org.cloudreve.android.ui.theme.CloudreveTheme
 import org.cloudreve.android.util.CrUri
 import org.cloudreve.android.work.UploadWorker
@@ -129,7 +130,12 @@ private class AppViewModelFactory(private val app: CloudreveApp) : ViewModelProv
         modelClass.isAssignableFrom(LoginViewModel::class.java) ->
             LoginViewModel(app.sessionManager, app.apiClient) as T
         modelClass.isAssignableFrom(FilesViewModel::class.java) ->
-            FilesViewModel(app.fileRepository, app.favoritesStore) as T
+            FilesViewModel(
+                app.fileRepository,
+                app.favoritesStore,
+                app.viewSettings,
+                onSessionExpired = { app.sessionManager.clear() },
+            ) as T
         else -> throw IllegalArgumentException("Unknown ViewModel ${modelClass.name}")
     }
 }
@@ -201,6 +207,12 @@ fun App() {
                 composable("files") {
                     FilesScreen(
                         viewModel = viewModel(factory = factory),
+                        onOpenSettings = { nav.navigate("settings") },
+                    )
+                }
+                composable("settings") {
+                    SettingsScreen(
+                        onBack = { nav.popBackStack() },
                         onSignOut = signOut,
                     )
                 }

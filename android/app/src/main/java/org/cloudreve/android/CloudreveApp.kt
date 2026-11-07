@@ -10,6 +10,7 @@ import org.cloudreve.android.data.FileRepository
 import org.cloudreve.android.data.SessionManager
 import org.cloudreve.android.data.TaskNotifySettings
 import org.cloudreve.android.data.SyncFolderSettings
+import org.cloudreve.android.data.ViewSettings
 
 class CloudreveApp : Application() {
 
@@ -32,6 +33,8 @@ class CloudreveApp : Application() {
     lateinit var taskNotifySettings: TaskNotifySettings
     lateinit var syncFolderSettings: SyncFolderSettings
         private set
+    lateinit var viewSettings: ViewSettings
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -42,5 +45,6 @@ class CloudreveApp : Application() {
         favoritesStore = FavoritesStore(this)
         taskNotifySettings = TaskNotifySettings(this)
         syncFolderSettings = SyncFolderSettings(this)
+        viewSettings = ViewSettings(this)
     }
 }

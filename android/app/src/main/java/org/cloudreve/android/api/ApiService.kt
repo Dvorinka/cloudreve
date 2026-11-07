@@ -57,6 +57,8 @@ interface ApiService {
         @Query("uri") uri: String,
         @Query("page_size") pageSize: Int = 50,
         @Query("next_page_token") nextPageToken: String? = null,
+        @Query("order_by") orderBy: String? = null,
+        @Query("order_direction") orderDirection: String? = null,
     ): Response<ApiResponse<ListFileResponse>>
 
     @POST("api/v4/file/url")
