@@ -16,6 +16,16 @@ ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:assembleDebug
 
 CI runs `assembleDebug` on every PR.
 
+Unit tests cover the pure helpers (formatting, grouping, file kinds,
+upload naming and conflict resolution):
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew :app:testDebugUnitTest
+```
+
+Gradle 8.11 cannot create the test task under JDK 24 ("Type T not
+present"); building works on 24, running tests needs 17 or 21.
+
 ## Development backend
 
 `dev/devserver.py` (stdlib Python) builds the server from this checkout,
