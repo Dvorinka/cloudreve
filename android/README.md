@@ -78,6 +78,10 @@ before the first start to get video, PDF and document thumbnails.
 
 Goal: feel like the system Files app.
 
+- Home page like the Files app: search field, Recent strip (newest files
+  anywhere in the drive), Images / Videos / Audio / Documents tiles (each a
+  server-side `?category=` search listed newest first with the file's
+  folder in the subtitle), My files, Offline files
 - Material You dynamic colour; folder name as title with parent path
   below; search, list/grid toggle and an overflow menu (sort, select,
   refresh, offline files, settings) instead of a row of icons
@@ -85,8 +89,11 @@ Goal: feel like the system Files app.
   tints, `size • date` subtitles; grid view with adaptive tiles
 - Sort by name / size / date (tap again to flip), persisted, sent to the
   server as `order_by`; folders always first
-- Long-press selection with select-all and batch delete; per-file
-  actions in a bottom sheet headed by the file's thumbnail and details
+- Long-press selection (haptic) with select-all, move, copy and batch
+  delete; per-file actions in a bottom sheet headed by the file's
+  thumbnail and details; Move to / Copy to open a full-screen folder picker
+- Upload name clashes are resolved before queuing: Replace (new version),
+  Keep both (` (1)` suffix) or Skip
 - Folder listings cached per path and shown instantly on re-entry while a
   fresh listing loads behind a thin bar
 - Uploads: byte-level progress in a card above the destination folder's
