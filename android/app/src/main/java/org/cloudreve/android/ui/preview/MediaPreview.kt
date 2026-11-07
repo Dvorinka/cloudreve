@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import org.cloudreve.android.api.FileObject
@@ -23,6 +24,7 @@ import org.cloudreve.android.ui.files.FilesViewModel
  * ExoPlayer; nothing is downloaded up front. Audio shows the default
  * controls over an artwork-less surface, which is enough for a quick listen.
  */
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun MediaPreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit) {
     val context = LocalContext.current

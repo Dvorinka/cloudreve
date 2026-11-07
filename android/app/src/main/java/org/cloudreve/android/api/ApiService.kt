@@ -99,12 +99,6 @@ interface ApiService {
     @GET("api/v4/file/thumb")
     suspend fun thumb(@Query("uri") uri: String): Response<ApiResponse<ThumbResponse>>
 
-    @GET("api/v4/file/search")
-    suspend fun searchFiles(
-        @Query("query") query: String,
-        @Query("offset") offset: Int = 0,
-    ): Response<ApiResponse<SearchResponse>>
-
     @GET("api/v4/workflow")
     suspend fun listTasks(
         @Query("page_size") pageSize: Int = 20,

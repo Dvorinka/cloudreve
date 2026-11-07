@@ -11,7 +11,6 @@ import org.cloudreve.android.api.ListFileResponse
 import org.cloudreve.android.api.MoveFileRequest
 import org.cloudreve.android.api.RenameFileRequest
 import org.cloudreve.android.api.RestoreFileRequest
-import org.cloudreve.android.api.SearchResponse
 import org.cloudreve.android.api.ShareCreateRequest
 import org.cloudreve.android.api.UploadSessionResponse
 import org.cloudreve.android.util.CrUri
@@ -125,9 +124,6 @@ class FileRepository(private val api: ApiClient) {
         return if (password.isEmpty()) "$base/s/$link" else "$base/s/$link/$password"
     }
 
-    suspend fun search(query: String, offset: Int = 0): SearchResponse =
-        api.service().searchFiles(query = query, offset = offset).unwrap()
-
     suspend fun mkdir(uri: String) {
         api.service().createFile(CreateFileRequest(uri = uri, type = "folder")).unwrapEmpty()
     }
@@ -210,7 +206,7 @@ class FileRepository(private val api: ApiClient) {
         localFile.inputStream().buffered().use { input ->
             val buffer = ByteArray(chunkSize.coerceAtMost(64L * 1024 * 1024).toInt())
             for (index in 0 until totalChunks) {
-                val read = input.readNBytes(buffer, 0, buffer.size)
+                val read = input.readFully(buffer)
                 if (index == 0 && read == 0 && localFile.length() > 0) break
                 val target = if (conventional) {
                     session_serverBase() + "/api/v4/file/upload/${session.sessionId}/$index"
@@ -246,6 +242,17 @@ class FileRepository(private val api: ApiClient) {
             resp.body()?.close()
         }
         return session
+    }
+
+    /** Fills [buffer] as far as the stream allows; `InputStream.readNBytes` needs API 33. */
+    private fun java.io.InputStream.readFully(buffer: ByteArray): Int {
+        var filled = 0
+        while (filled < buffer.size) {
+            val n = read(buffer, filled, buffer.size - filled)
+            if (n < 0) break
+            filled += n
+        }
+        return filled
     }
 
     /**

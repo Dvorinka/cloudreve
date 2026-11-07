@@ -14,9 +14,8 @@ fun formatSize(size: Long): String {
     return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, group.toDouble())) + " " + units[group]
 }
 
-private val timeFormat = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-private val dayMonthFormat = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
-private val fullFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+// Built per call so a locale change while the app is running is honoured.
+private fun pattern(p: String) = DateTimeFormatter.ofPattern(p, Locale.getDefault())
 
 /**
  * Short, Files-app-style timestamp: time of day for today, day and month
@@ -28,9 +27,9 @@ fun formatDate(iso: String, now: Instant = Instant.now()): String {
     val date = instant.atZone(zone).toLocalDate()
     val today = now.atZone(zone).toLocalDate()
     return when {
-        date == today -> timeFormat.format(instant.atZone(zone))
-        date.year == today.year -> dayMonthFormat.format(date)
-        else -> fullFormat.format(date)
+        date == today -> pattern("HH:mm").format(instant.atZone(zone))
+        date.year == today.year -> pattern("d MMM").format(date)
+        else -> pattern("d MMM yyyy").format(date)
     }
 }
 

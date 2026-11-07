@@ -86,8 +86,6 @@ data class FilesUiState(
     val selecting: Boolean get() = selected.isNotEmpty()
     /** Uploads landing in the folder on screen; shown inline above the files. */
     val uploadsHere: List<UploadStatus> get() = uploads.filter { it.parentUri == currentUri }
-    val uploadsElsewhere: Int get() = uploads.size - uploadsHere.size
-    val selectedFiles: List<FileObject> get() = files.filter { it.path in selected }
     val category: Category? get() = Category.fromUri(currentUri)
     /** Category listings mix folders; the row subtitle names each file's folder. */
     val virtual: Boolean get() = category != null

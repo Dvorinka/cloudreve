@@ -44,7 +44,9 @@ class SyncTileService : TileService() {
         val enabled = app.cameraUploadSettings.snapshotNow().enabled
         qsTile?.apply {
             state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            subtitle = if (enabled) "Camera backup on" else "Camera backup off"
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                subtitle = if (enabled) "Camera backup on" else "Camera backup off"
+            }
             updateTile()
         }
     }

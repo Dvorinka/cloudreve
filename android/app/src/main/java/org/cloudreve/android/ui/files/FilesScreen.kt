@@ -56,7 +56,7 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.UploadFile
-import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.AlertDialog
@@ -631,7 +631,7 @@ private fun FolderTopBar(
             }
             IconButton(onClick = onToggleView) {
                 Icon(
-                    if (viewMode == ViewMode.LIST) Icons.Default.GridView else Icons.Default.ViewList,
+                    if (viewMode == ViewMode.LIST) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
                     contentDescription = if (viewMode == ViewMode.LIST) "Grid view" else "List view",
                 )
             }

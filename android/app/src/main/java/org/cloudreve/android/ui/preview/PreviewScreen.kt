@@ -202,8 +202,8 @@ private fun NoPreview(file: FileObject, onOpenWith: () -> Unit) {
 
 /** Centered progress used by the loaders below. */
 @Composable
-internal fun LoadingOverlay(progress: Float?, modifier: Modifier = Modifier.fillMaxSize()) {
-    Box(modifier, contentAlignment = Alignment.Center) {
+internal fun LoadingOverlay(progress: Float?, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (progress != null) CircularProgressIndicator(progress = { progress }) else CircularProgressIndicator()
     }
 }
