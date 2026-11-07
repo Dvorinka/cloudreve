@@ -37,6 +37,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
+import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -135,6 +137,8 @@ fun FilesScreen(
     var renameTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteSelectedOpen by remember { mutableStateOf(false) }
+    /** Paths to move/copy and whether it is a copy; non-null shows the folder picker. */
+    var movePick by remember { mutableStateOf<Pair<List<String>, Boolean>?>(null) }
     var searchOpen by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     var favoritesOpen by remember { mutableStateOf(false) }
@@ -250,6 +254,8 @@ fun FilesScreen(
                     count = state.selected.size,
                     onClose = { viewModel.clearSelection() },
                     onSelectAll = { viewModel.selectAll() },
+                    onMove = { movePick = state.selected.toList() to false },
+                    onCopy = { movePick = state.selected.toList() to true },
                     onDelete = { deleteSelectedOpen = true },
                 )
                 inSearch || searchOpen -> SearchTopBar(
@@ -401,11 +407,29 @@ fun FilesScreen(
             onRename = { sheetTarget = null; renameTarget = file },
             onDelete = { sheetTarget = null; deleteTarget = file },
             onSelect = { sheetTarget = null; viewModel.toggleSelected(file) },
+            onMove = { sheetTarget = null; movePick = listOf(file.path) to false },
+            onCopy = { sheetTarget = null; movePick = listOf(file.path) to true },
+        )
+    }
+
+    movePick?.let { (paths, copy) ->
+        FolderPicker(
+            title = if (copy) "Copy to" else "Move to",
+            confirmLabel = if (copy) "Copy to" else "Move to",
+            startUri = state.currentUri,
+            excluded = if (copy) emptySet() else paths.toSet(),
+            loadFolders = { viewModel.listFolders(it) },
+            onCreateFolder = { parent, name -> viewModel.mkdirIn(parent, name) },
+            onPick = { dst ->
+                movePick = null
+                viewModel.moveTo(paths, dst, copy)
+            },
+            onDismiss = { movePick = null },
         )
     }
 
     if (mkdirOpen) {
-        TextFieldDialog(
+        NameDialog(
             title = "New folder",
             label = "Folder name",
             confirm = "Create",
@@ -418,7 +442,7 @@ fun FilesScreen(
     }
 
     renameTarget?.let { file ->
-        TextFieldDialog(
+        NameDialog(
             title = "Rename",
             label = "New name",
             initial = file.name,
@@ -596,6 +620,8 @@ private fun SelectionTopBar(
     count: Int,
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
+    onMove: () -> Unit,
+    onCopy: () -> Unit,
     onDelete: () -> Unit,
 ) {
     TopAppBar(
@@ -608,6 +634,12 @@ private fun SelectionTopBar(
         actions = {
             IconButton(onClick = onSelectAll) {
                 Icon(Icons.Default.SelectAll, contentDescription = "Select all")
+            }
+            IconButton(onClick = onMove) {
+                Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = "Move to")
+            }
+            IconButton(onClick = onCopy) {
+                Icon(Icons.Default.FileCopy, contentDescription = "Copy to")
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete")
@@ -885,7 +917,7 @@ private fun ConfirmDeleteDialog(title: String, onConfirm: () -> Unit, onDismiss:
 }
 
 @Composable
-private fun TextFieldDialog(
+fun NameDialog(
     title: String,
     label: String,
     confirm: String,

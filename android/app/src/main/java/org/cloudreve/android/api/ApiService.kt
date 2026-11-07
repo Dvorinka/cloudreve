@@ -70,6 +70,9 @@ interface ApiService {
     @POST("api/v4/file/rename")
     suspend fun renameFile(@Body request: RenameFileRequest): Response<ApiResponse<Unit>>
 
+    @POST("api/v4/file/move")
+    suspend fun moveFiles(@Body request: MoveFileRequest): Response<ApiResponse<Unit>>
+
     @HTTP(method = "DELETE", path = "api/v4/file", hasBody = true)
     suspend fun deleteFiles(@Body request: DeleteFileRequest): Response<ApiResponse<Unit>>
 

@@ -8,6 +8,7 @@ import org.cloudreve.android.api.DeleteFileRequest
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.api.FileUrlRequest
 import org.cloudreve.android.api.ListFileResponse
+import org.cloudreve.android.api.MoveFileRequest
 import org.cloudreve.android.api.RenameFileRequest
 import org.cloudreve.android.api.SearchResponse
 import org.cloudreve.android.api.ShareCreateRequest
@@ -122,6 +123,15 @@ class FileRepository(private val api: ApiClient) {
     suspend fun rename(uri: String, newName: String) {
         api.service().renameFile(RenameFileRequest(uri = uri, newName = newName)).unwrapEmpty()
     }
+
+    /** Moves (or copies) [uris] into the folder [dst]. */
+    suspend fun move(uris: List<String>, dst: String, copy: Boolean) {
+        api.service().moveFiles(MoveFileRequest(uris = uris, dst = dst, copy = copy)).unwrapEmpty()
+    }
+
+    /** Subfolders of [uri] only, for the destination picker. */
+    suspend fun listFolders(uri: String): List<FileObject> =
+        list(uri, orderBy = "name", orderDirection = "asc").files.filter { it.isFolder }
 
     suspend fun delete(uris: List<String>) {
         api.service().deleteFiles(DeleteFileRequest(uris = uris)).unwrapEmpty()

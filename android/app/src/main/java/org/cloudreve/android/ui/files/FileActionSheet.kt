@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
@@ -52,6 +54,8 @@ fun FileActionSheet(
     onRename: () -> Unit,
     onDelete: () -> Unit,
     onSelect: () -> Unit,
+    onMove: () -> Unit,
+    onCopy: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Row(
@@ -88,6 +92,8 @@ fun FileActionSheet(
             )
         }
         SheetAction(Icons.Default.Checklist, "Select", onSelect)
+        SheetAction(Icons.AutoMirrored.Filled.DriveFileMove, "Move to", onMove)
+        SheetAction(Icons.Default.FileCopy, "Copy to", onCopy)
         SheetAction(Icons.Default.DriveFileRenameOutline, "Rename", onRename)
         SheetAction(Icons.Default.Delete, "Delete", onDelete, tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(24.dp))

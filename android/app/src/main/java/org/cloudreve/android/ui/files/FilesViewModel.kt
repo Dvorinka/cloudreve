@@ -344,6 +344,33 @@ class FilesViewModel(
         }
     }
 
+    /** Move or copy [paths] into [dst]; the list refreshes and the cache for both folders is dropped. */
+    fun moveTo(paths: List<String>, dst: String, copy: Boolean) {
+        if (paths.isEmpty()) return
+        viewModelScope.launch {
+            runCatching { repo.move(paths, dst, copy) }
+                .onSuccess {
+                    listingCache.remove(dst)
+                    val n = paths.size
+                    val what = "$n item${if (n == 1) "" else "s"}"
+                    val where = folderLabel(dst)
+                    _state.value = _state.value.copy(
+                        selected = emptySet(),
+                        snackbar = if (copy) "Copied $what to $where" else "Moved $what to $where",
+                    )
+                    refresh()
+                }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+        }
+    }
+
+    suspend fun listFolders(uri: String): List<FileObject> = repo.listFolders(uri)
+
+    private fun folderLabel(uri: String): String {
+        val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
+        return if (path.isEmpty()) "My files" else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
+    }
+
     // ---- search -----------------------------------------------------------
 
     fun search(query: String) {
@@ -402,11 +429,17 @@ class FilesViewModel(
 
     // ---- file operations --------------------------------------------------
 
-    fun mkdir(name: String) {
+    fun mkdir(name: String) = mkdirIn(_state.value.currentUri, name)
+
+    /** Creates [name] under [parent]; refreshes if that is the folder on screen. */
+    fun mkdirIn(parent: String, name: String) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            runCatching { repo.mkdir(CrUri.join(_state.value.currentUri, name)) }
-                .onSuccess { refresh() }
+            runCatching { repo.mkdir(CrUri.join(parent, name)) }
+                .onSuccess {
+                    listingCache.remove(parent)
+                    if (parent == _state.value.currentUri) refresh()
+                }
                 .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
         }
     }

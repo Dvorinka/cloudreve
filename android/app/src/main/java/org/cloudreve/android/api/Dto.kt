@@ -143,6 +143,13 @@ data class RenameFileRequest(
 )
 
 @Serializable
+data class MoveFileRequest(
+    val uris: List<String>,
+    val dst: String,
+    val copy: Boolean = false,
+)
+
+@Serializable
 data class DeleteFileRequest(
     val uris: List<String>,
     val unlink: Boolean = false,
