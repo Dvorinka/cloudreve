@@ -1,7 +1,6 @@
 package org.cloudreve.android.data
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.cloudreve.android.api.ApiClient
 import org.cloudreve.android.api.CreateFileRequest
 import org.cloudreve.android.api.CreateUploadSessionRequest
@@ -14,6 +13,7 @@ import org.cloudreve.android.api.SearchResponse
 import org.cloudreve.android.api.ShareCreateRequest
 import org.cloudreve.android.api.UploadSessionResponse
 import org.cloudreve.android.util.CrUri
+import kotlinx.coroutines.ensureActive
 import retrofit2.Response
 import java.io.File
 
@@ -62,6 +62,39 @@ class FileRepository(private val api: ApiClient) {
             ?: throw ApiException(-1, "No download URL returned")
 
     suspend fun download(url: String) = api.service().download(url)
+
+    /**
+     * Streams [url] into [dest] through a `.part` sibling, reporting
+     * (bytes, total) as it goes; total is -1 when the server sends no length.
+     * Cooperative with coroutine cancellation between buffers.
+     */
+    suspend fun downloadToFile(url: String, dest: File, onProgress: (Long, Long) -> Unit = { _, _ -> }) {
+        val resp = api.service().download(url)
+        if (!resp.isSuccessful) throw ApiException(resp.code(), "Download failed: HTTP ${resp.code()}")
+        val body = resp.body() ?: throw ApiException(-1, "Empty download")
+        val total = body.contentLength()
+        dest.parentFile?.mkdirs()
+        val part = File(dest.path + ".part")
+        try {
+            body.byteStream().use { input ->
+                java.io.FileOutputStream(part).use { out ->
+                    val buffer = ByteArray(256 * 1024)
+                    var copied = 0L
+                    while (true) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                        val n = input.read(buffer)
+                        if (n < 0) break
+                        out.write(buffer, 0, n)
+                        copied += n
+                        onProgress(copied, total)
+                    }
+                }
+            }
+            if (!part.renameTo(dest)) throw ApiException(-1, "Could not save ${dest.name}")
+        } finally {
+            part.delete()
+        }
+    }
 
     /** Resolves a thumbnail URL for the file, or null when none exists. */
     suspend fun thumbUrl(uri: String): String? =
@@ -146,8 +179,10 @@ class FileRepository(private val api: ApiClient) {
                     if (index >= urls!!.size) break
                     resolveUrl(urls[index])
                 }
-                val body = buffer.copyOf(read)
-                    .toRequestBody(mime.toMediaTypeOrNull())
+                val chunkStart = sent
+                val body = ProgressRequestBody(buffer, read, mime.toMediaTypeOrNull()) { written ->
+                    onProgress(chunkStart + written, localFile.length())
+                }
                 val resp = if (target.contains("/file/upload/")) {
                     svc.uploadChunk(target, body)
                 } else {
@@ -172,6 +207,34 @@ class FileRepository(private val api: ApiClient) {
             resp.body()?.close()
         }
         return session
+    }
+
+    /**
+     * Request body over a byte range that reports bytes written as OkHttp
+     * drains it, so a single large chunk still yields smooth progress.
+     * Reports on every [STEP] bytes to keep callbacks cheap.
+     */
+    private class ProgressRequestBody(
+        private val bytes: ByteArray,
+        private val length: Int,
+        private val mediaType: okhttp3.MediaType?,
+        private val onWritten: (Long) -> Unit,
+    ) : okhttp3.RequestBody() {
+        override fun contentType() = mediaType
+        override fun contentLength(): Long = length.toLong()
+        override fun writeTo(sink: okio.BufferedSink) {
+            var offset = 0
+            while (offset < length) {
+                val n = minOf(STEP, length - offset)
+                sink.write(bytes, offset, n)
+                offset += n
+                onWritten(offset.toLong())
+            }
+        }
+
+        private companion object {
+            const val STEP = 256 * 1024
+        }
     }
 
     private suspend fun resolveUrl(url: String): String {

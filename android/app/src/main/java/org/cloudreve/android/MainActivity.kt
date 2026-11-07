@@ -134,6 +134,7 @@ private class AppViewModelFactory(private val app: CloudreveApp) : ViewModelProv
                 app.fileRepository,
                 app.favoritesStore,
                 app.viewSettings,
+                androidx.work.WorkManager.getInstance(app),
                 onSessionExpired = { app.sessionManager.clear() },
             ) as T
         else -> throw IllegalArgumentException("Unknown ViewModel ${modelClass.name}")

@@ -99,6 +99,7 @@ import org.cloudreve.android.data.SortBy
 import org.cloudreve.android.data.ViewMode
 import org.cloudreve.android.util.CrUri
 import org.cloudreve.android.work.UploadWorker
+import org.cloudreve.android.ui.files.transfers.UploadsCard
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,10 +128,8 @@ fun FilesScreen(
     val inSearch = state.searchQuery != null
 
     val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isNotEmpty()) {
-            UploadWorker.enqueue(context, uris, state.currentUri)
-            scope.launch { snackbar.showSnackbar("Uploading ${uris.size} file${if (uris.size > 1) "s" else ""}") }
-        }
+        // The transfer card above the files shows the batch as soon as it is queued.
+        if (uris.isNotEmpty()) UploadWorker.enqueue(context, uris, state.currentUri)
     }
 
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -170,11 +169,7 @@ fun FilesScreen(
     }
 
     fun openFile(file: FileObject) {
-        scope.launch {
-            runCatching { viewModel.downloadToCache(context, file) }
-                .onSuccess { local -> openWithSystem(context, local) }
-                .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
-        }
+        viewModel.fetchForOpen(context, file) { local -> openWithSystem(context, local) }
     }
 
     fun shareLink(file: FileObject) {
@@ -202,11 +197,7 @@ fun FilesScreen(
         onDelete = { deleteTarget = file },
         onShare = { shareLink(file) },
         onDownload = {
-            scope.launch {
-                runCatching { viewModel.downloadToCache(context, file) }
-                    .onSuccess { snackbar.showSnackbar("Saved ${it.name}") }
-                    .onFailure { snackbar.showSnackbar(it.message ?: "Download failed") }
-            }
+            viewModel.fetchForOpen(context, file) { scope.launch { snackbar.showSnackbar("Saved ${it.name}") } }
         },
         onToggleFavorite = { viewModel.toggleFavorite(context, file) },
     )
@@ -289,7 +280,7 @@ fun FilesScreen(
                     detail = state.error,
                     action = "Retry" to { viewModel.refresh() },
                 )
-                state.files.isEmpty() -> EmptyState(
+                state.files.isEmpty() && state.uploadsHere.isEmpty() -> EmptyState(
                     icon = Icons.Outlined.FolderOpen,
                     title = "This folder is empty",
                     detail = "Upload files or create a folder with the + button",
@@ -588,6 +579,7 @@ private fun FileList(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 88.dp),
     ) {
+        uploadItems(state, viewModel)
         items(state.files, key = { it.id + it.path }) { file ->
             FileListItem(
                 file = file,
@@ -595,6 +587,8 @@ private fun FileList(
                 selecting = state.selecting,
                 selected = file.path in state.selected,
                 isFavorite = file.path in state.favoritePaths,
+                downloadProgress = state.downloading[file.path],
+                downloading = file.path in state.downloading,
                 actions = actionsFor(file),
             )
         }
@@ -619,6 +613,9 @@ private fun FileGrid(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        if (state.uploadsHere.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "uploads") { UploadsCard(state.uploadsHere, viewModel::cancelUpload) }
+        }
         items(state.files, key = { it.id + it.path }) { file ->
             FileGridItem(
                 file = file,
@@ -626,12 +623,20 @@ private fun FileGrid(
                 selecting = state.selecting,
                 selected = file.path in state.selected,
                 isFavorite = file.path in state.favoritePaths,
+                downloadProgress = state.downloading[file.path],
+                downloading = file.path in state.downloading,
                 actions = actionsFor(file),
             )
         }
         if (state.loadingMore) {
             item(span = { GridItemSpan(maxLineSpan) }) { LoadingMoreRow() }
         }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.uploadItems(state: FilesUiState, viewModel: FilesViewModel) {
+    if (state.uploadsHere.isNotEmpty()) {
+        item(key = "uploads") { UploadsCard(state.uploadsHere, viewModel::cancelUpload) }
     }
 }
 

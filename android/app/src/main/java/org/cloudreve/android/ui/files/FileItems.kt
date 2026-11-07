@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -78,6 +79,9 @@ fun FileThumb(
     modifier: Modifier = Modifier,
     corner: Dp = 12.dp,
     iconSize: Dp = (size ?: 48.dp) / 2,
+    /** Show a progress ring over the tile (determinate when a fraction is known). */
+    downloading: Boolean = false,
+    downloadProgress: Float? = null,
 ) {
     val kind = FileKind.of(file)
     val shape = RoundedCornerShape(corner)
@@ -100,6 +104,21 @@ fun FileThumb(
         } else {
             KindIcon(kind, iconSize)
         }
+        if (downloading) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                val ring = Modifier.size(iconSize * 1.2f)
+                if (downloadProgress != null) {
+                    CircularProgressIndicator(progress = { downloadProgress }, modifier = ring, strokeWidth = 3.dp, color = Color.White)
+                } else {
+                    CircularProgressIndicator(modifier = ring, strokeWidth = 3.dp, color = Color.White)
+                }
+            }
+        }
     }
 }
 
@@ -117,6 +136,8 @@ fun FileListItem(
     selected: Boolean,
     isFavorite: Boolean,
     actions: FileActions,
+    downloading: Boolean = false,
+    downloadProgress: Float? = null,
     subtitle: String = subtitleFor(file.size, file.updatedAt, file.isFolder),
 ) {
     val shape = RoundedCornerShape(16.dp)
@@ -131,7 +152,7 @@ fun FileListItem(
             .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        FileThumb(file, thumbUrl, size = 48.dp)
+        FileThumb(file, thumbUrl, size = 48.dp, downloading = downloading, downloadProgress = downloadProgress)
         Column(
             Modifier
                 .weight(1f)
@@ -170,6 +191,8 @@ fun FileGridItem(
     selected: Boolean,
     isFavorite: Boolean,
     actions: FileActions,
+    downloading: Boolean = false,
+    downloadProgress: Float? = null,
 ) {
     val shape = RoundedCornerShape(16.dp)
     val background = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
@@ -181,7 +204,10 @@ fun FileGridItem(
             .padding(6.dp),
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
-            FileThumb(file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = 14.dp, iconSize = 44.dp)
+            FileThumb(
+                file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = 14.dp, iconSize = 44.dp,
+                downloading = downloading, downloadProgress = downloadProgress,
+            )
             // Menu and selection mark sit on the tile so the caption keeps its full width.
             if (selecting) {
                 SelectionMark(selected, Modifier.align(Alignment.TopEnd).padding(6.dp))

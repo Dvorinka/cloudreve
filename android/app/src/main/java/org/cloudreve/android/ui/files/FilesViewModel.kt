@@ -3,6 +3,10 @@ package org.cloudreve.android.ui.files
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,6 +22,8 @@ import org.cloudreve.android.data.ViewMode
 import org.cloudreve.android.data.ViewPrefs
 import org.cloudreve.android.data.ViewSettings
 import org.cloudreve.android.util.CrUri
+import org.cloudreve.android.work.UploadStatus
+import org.cloudreve.android.work.UploadWorker
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -33,6 +39,10 @@ data class FilesUiState(
     val view: ViewPrefs = ViewPrefs(),
     /** Paths of files picked in selection mode; empty means not selecting. */
     val selected: Set<String> = emptySet(),
+    /** Upload batches still running, newest last. */
+    val uploads: List<UploadStatus> = emptyList(),
+    /** Files being fetched for open/download: path to fraction (null = size unknown). */
+    val downloading: Map<String, Float?> = emptyMap(),
     val searchQuery: String? = null,
     val searchResults: List<SearchHit> = emptyList(),
     val searchTotal: Long = 0,
@@ -44,6 +54,9 @@ data class FilesUiState(
 ) {
     val favoritePaths: Set<String> get() = favorites.map { it.path }.toSet()
     val selecting: Boolean get() = selected.isNotEmpty()
+    /** Uploads landing in the folder on screen; shown inline above the files. */
+    val uploadsHere: List<UploadStatus> get() = uploads.filter { it.parentUri == currentUri }
+    val uploadsElsewhere: Int get() = uploads.size - uploadsHere.size
     val selectedFiles: List<FileObject> get() = files.filter { it.path in selected }
     val folderName: String
         get() {
@@ -57,6 +70,7 @@ class FilesViewModel(
     private val repo: FileRepository,
     private val favorites: FavoritesStore,
     private val viewSettings: ViewSettings,
+    private val workManager: WorkManager,
     /** Invoked when the server no longer accepts our session; the caller returns to login. */
     private val onSessionExpired: suspend () -> Unit,
 ) : ViewModel() {
@@ -68,7 +82,12 @@ class FilesViewModel(
     private val thumbCache = ConcurrentHashMap<String, String>()
     private val noThumb = ConcurrentHashMap.newKeySet<String>()
 
+    private val downloadJobs = ConcurrentHashMap<String, Job>()
+    /** Finished upload ids already reported, so a replayed WorkInfo is not announced twice. */
+    private val announcedUploads = HashSet<java.util.UUID>()
+
     init {
+        observeUploads()
         viewModelScope.launch {
             favorites.entries.collect { list ->
                 _state.value = _state.value.copy(favorites = list)
@@ -156,6 +175,76 @@ class FilesViewModel(
         refresh()
         return true
     }
+
+    // ---- transfers --------------------------------------------------------
+
+    private fun observeUploads() {
+        viewModelScope.launch {
+            workManager.getWorkInfosByTagFlow(UploadWorker.TAG).collect { infos ->
+                val statuses = infos.map(UploadStatus::from)
+                _state.value = _state.value.copy(uploads = statuses.filter { it.active })
+                statuses.filter { !it.active && announcedUploads.add(it.id) }.forEach(::announceUpload)
+                if (statuses.any { !it.active }) workManager.pruneWork()
+            }
+        }
+    }
+
+    private fun announceUpload(u: UploadStatus) {
+        val message = when {
+            u.state == WorkInfo.State.CANCELLED -> "Upload cancelled"
+            u.failed == 0 -> "Uploaded ${u.uploaded} file${if (u.uploaded == 1) "" else "s"}"
+            u.uploaded == 0 -> "Upload failed" + (u.error?.let { ": $it" } ?: "")
+            else -> "Uploaded ${u.uploaded}, ${u.failed} failed"
+        }
+        _state.value = _state.value.copy(snackbar = message)
+        if (u.uploaded > 0 && u.parentUri == _state.value.currentUri) refresh()
+    }
+
+    fun cancelUpload(id: java.util.UUID) {
+        workManager.cancelWorkById(id)
+    }
+
+    /**
+     * Fetches [file] into the app cache, reusing a previous copy when the size
+     * still matches, and reports progress in [FilesUiState.downloading]. A
+     * second call for a file already in flight cancels that download.
+     */
+    fun fetchForOpen(context: Context, file: FileObject, onReady: (File) -> Unit) {
+        downloadJobs.remove(file.path)?.let {
+            it.cancel()
+            return
+        }
+        val dest = cacheFileFor(context, file)
+        if (dest.exists() && dest.length() == file.size) {
+            onReady(dest)
+            return
+        }
+        setDownloading(file.path, null)
+        val job = viewModelScope.launch {
+            try {
+                val url = repo.downloadUrl(file.path)
+                repo.downloadToFile(url, dest) { done, total ->
+                    setDownloading(file.path, if (total > 0) done.toFloat() / total else null)
+                }
+                onReady(dest)
+            } catch (_: CancellationException) {
+                // user cancelled; nothing to say
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(snackbar = e.message ?: "Download failed")
+            } finally {
+                downloadJobs.remove(file.path)
+                _state.value = _state.value.copy(downloading = _state.value.downloading - file.path)
+            }
+        }
+        downloadJobs[file.path] = job
+    }
+
+    private fun setDownloading(path: String, fraction: Float?) {
+        _state.value = _state.value.copy(downloading = _state.value.downloading + (path to fraction))
+    }
+
+    private fun cacheFileFor(context: Context, file: FileObject): File =
+        File(File(context.cacheDir, "downloads"), file.id).resolve(file.name)
 
     // ---- view preferences -------------------------------------------------
 
@@ -290,10 +379,6 @@ class FilesViewModel(
                 .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
         }
     }
-
-    /** Downloads into app cache and returns the file for the caller to open/share. */
-    suspend fun downloadToCache(context: Context, file: FileObject): File =
-        downloadTo(File(context.cacheDir, "downloads"), file, file.name)
 
     /** Saves the file under filesDir/offline and registers it as a favorite. */
     fun toggleFavorite(context: Context, file: FileObject) {

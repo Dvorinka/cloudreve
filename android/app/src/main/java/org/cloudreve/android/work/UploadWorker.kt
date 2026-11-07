@@ -11,19 +11,29 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
+import kotlinx.coroutines.CancellationException
 import org.cloudreve.android.CloudreveApp
-import org.cloudreve.android.R
+import org.cloudreve.android.data.ApiException
 import java.io.File
 import java.io.FileOutputStream
 
 /**
  * UploadWorker copies SAF/content URIs into cache, then streams them through
  * the Cloudreve upload-session flow. WorkManager survives process death for
- * large transfers; the foreground notification shows progress.
+ * large transfers. Progress goes two ways: a determinate foreground
+ * notification with a cancel action, and [WorkInfo.progress] for the in-app
+ * transfer card (see [UploadStatus.from]).
  */
 class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+
+    private val notifications =
+        applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private var lastNotified = 0L
 
     override suspend fun doWork(): Result {
         val uris = inputData.getStringArray(KEY_URIS)?.toList() ?: return Result.failure()
@@ -32,24 +42,70 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 
         createChannel()
         var failed = 0
-        uris.forEachIndexed { i, uriString ->
-            val uri = Uri.parse(uriString)
-            val name = resolveDisplayName(uri)
-            setForeground(progressInfo("Uploading $name", i, uris.size))
-            try {
-                val tmp = stageToCache(uri, name)
+        var lastError: String? = null
+        try {
+            uris.forEachIndexed { i, uriString ->
+                val uri = Uri.parse(uriString)
+                val name = resolveDisplayName(uri)
+                report(name, i, uris.size, sent = 0, size = 0, parentUri = parentUri, force = true)
                 try {
-                    app.fileRepository.uploadFile(tmp, parentUri) { _, _ -> }
-                } finally {
-                    tmp.delete()
+                    val tmp = stageToCache(uri, name)
+                    try {
+                        app.fileRepository.uploadFile(tmp, parentUri) { sent, total ->
+                            report(name, i, uris.size, sent, total, parentUri)
+                        }
+                    } finally {
+                        tmp.delete()
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    failed++
+                    lastError = describe(e, name)
                 }
-            } catch (_: Exception) {
-                failed++
             }
+        } finally {
+            notifications.cancel(NOTIF_ID)
         }
-        return if (failed == 0) Result.success() else Result.failure(
-            Data.Builder().putInt(KEY_FAILED, failed).build()
+
+        val output = workDataOf(
+            KEY_PARENT_URI to parentUri,
+            KEY_UPLOADED to uris.size - failed,
+            KEY_FAILED to failed,
+            KEY_ERROR to lastError,
         )
+        return if (failed == 0) Result.success(output) else Result.failure(output)
+    }
+
+    /**
+     * Pushes progress to WorkManager and (throttled) to the notification.
+     * Called from OkHttp's write loop, hence the non-suspending Async variants.
+     */
+    private fun report(
+        name: String, index: Int, total: Int, sent: Long, size: Long, parentUri: String, force: Boolean = false,
+    ) {
+        setProgressAsync(
+            workDataOf(
+                KEY_PARENT_URI to parentUri,
+                KEY_PROGRESS_NAME to name,
+                KEY_PROGRESS_INDEX to index,
+                KEY_PROGRESS_TOTAL to total,
+                KEY_PROGRESS_SENT to sent,
+                KEY_PROGRESS_SIZE to size,
+            )
+        )
+        val now = System.currentTimeMillis()
+        if (force || now - lastNotified >= NOTIFY_INTERVAL_MS) {
+            lastNotified = now
+            setForegroundAsync(foregroundInfo(name, index, total, sent, size))
+        }
+    }
+
+    /** Server error codes read like log lines; say what happened to this file instead. */
+    private fun describe(e: Exception, name: String): String = when {
+        e is ApiException && e.code == CODE_OBJECT_EXISTS -> "$name already exists in this folder"
+        e is ApiException && e.code == CODE_QUOTA_EXCEEDED -> "Not enough storage for $name"
+        else -> e.message ?: "Could not upload $name"
     }
 
     private fun resolveDisplayName(uri: Uri): String {
@@ -70,12 +126,18 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         return tmp
     }
 
-    private fun progressInfo(name: String, index: Int, total: Int): ForegroundInfo {
+    private fun foregroundInfo(name: String, index: Int, total: Int, sent: Long, size: Long): ForegroundInfo {
+        val cancel = WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
+        val percent = if (size > 0) (sent * 100 / size).toInt() else 0
+        val title = if (total > 1) "Uploading ${index + 1} of $total" else "Uploading"
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
-            .setContentTitle("Cloudreve upload")
-            .setContentText("$name (${index + 1}/$total)")
+            .setContentTitle(title)
+            .setContentText(name)
+            .setProgress(100, percent, size <= 0)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Cancel", cancel)
             .build()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ForegroundInfo(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -85,21 +147,34 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     }
 
     private fun createChannel() {
-        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(
+        notifications.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "Uploads", NotificationManager.IMPORTANCE_LOW)
         )
     }
 
     companion object {
+        const val TAG = "upload"
         const val KEY_URIS = "uris"
         const val KEY_PARENT_URI = "parent_uri"
+        const val KEY_UPLOADED = "uploaded"
         const val KEY_FAILED = "failed"
+        const val KEY_ERROR = "error"
+        const val KEY_PROGRESS_NAME = "name"
+        const val KEY_PROGRESS_INDEX = "index"
+        const val KEY_PROGRESS_TOTAL = "total"
+        const val KEY_PROGRESS_SENT = "sent"
+        const val KEY_PROGRESS_SIZE = "size"
         private const val CHANNEL_ID = "uploads"
         private const val NOTIF_ID = 41
+        private const val NOTIFY_INTERVAL_MS = 500L
+        // pkg/serializer/error.go
+        private const val CODE_OBJECT_EXISTS = 40004
+        private const val CODE_QUOTA_EXCEEDED = 40051
 
         fun enqueue(context: Context, uris: List<Uri>, parentUri: String) {
             val request = OneTimeWorkRequestBuilder<UploadWorker>()
+                .addTag(TAG)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setInputData(
                     Data.Builder()
                         .putStringArray(KEY_URIS, uris.map { it.toString() }.toTypedArray())
@@ -108,6 +183,50 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
                 )
                 .build()
             WorkManager.getInstance(context).enqueue(request)
+        }
+    }
+}
+
+/** In-app view of one upload request, derived from [WorkInfo]. */
+data class UploadStatus(
+    val id: java.util.UUID,
+    val state: WorkInfo.State,
+    val parentUri: String,
+    val name: String,
+    val index: Int,
+    val total: Int,
+    val sent: Long,
+    val size: Long,
+    val uploaded: Int,
+    val failed: Int,
+    val error: String?,
+) {
+    val active: Boolean get() = !state.isFinished
+    /** Whole-batch fraction, or null while the current file's size is unknown. */
+    val fraction: Float?
+        get() {
+            if (total <= 0) return null
+            val current = if (size > 0) sent.toFloat() / size else return if (index > 0) index.toFloat() / total else null
+            return ((index + current) / total).coerceIn(0f, 1f)
+        }
+
+    companion object {
+        fun from(info: WorkInfo): UploadStatus {
+            val p = info.progress
+            val o = info.outputData
+            return UploadStatus(
+                id = info.id,
+                state = info.state,
+                parentUri = p.getString(UploadWorker.KEY_PARENT_URI) ?: o.getString(UploadWorker.KEY_PARENT_URI) ?: "",
+                name = p.getString(UploadWorker.KEY_PROGRESS_NAME) ?: "",
+                index = p.getInt(UploadWorker.KEY_PROGRESS_INDEX, 0),
+                total = p.getInt(UploadWorker.KEY_PROGRESS_TOTAL, 0),
+                sent = p.getLong(UploadWorker.KEY_PROGRESS_SENT, 0),
+                size = p.getLong(UploadWorker.KEY_PROGRESS_SIZE, 0),
+                uploaded = o.getInt(UploadWorker.KEY_UPLOADED, 0),
+                failed = o.getInt(UploadWorker.KEY_FAILED, 0),
+                error = o.getString(UploadWorker.KEY_ERROR),
+            )
         }
     }
 }
