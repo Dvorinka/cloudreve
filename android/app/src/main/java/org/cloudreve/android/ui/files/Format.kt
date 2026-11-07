@@ -42,3 +42,21 @@ fun subtitleFor(size: Long, updatedAt: String, isFolder: Boolean): String {
         else -> "${formatSize(size)} • $date"
     }
 }
+
+/** Header label for date-grouped lists: Today, Yesterday, then "Sat, 10 Oct", with the year once it differs. */
+fun dayGroupLabel(iso: String, now: Instant = Instant.now()): String {
+    val instant = runCatching { OffsetDateTime.parse(iso).toInstant() }.getOrNull() ?: return "Unknown date"
+    val zone = ZoneId.systemDefault()
+    val date = instant.atZone(zone).toLocalDate()
+    val today = now.atZone(zone).toLocalDate()
+    return when {
+        date == today -> "Today"
+        date == today.minusDays(1) -> "Yesterday"
+        date.year == today.year -> pattern("EEE, d MMM").format(date)
+        else -> pattern("d MMM yyyy").format(date)
+    }
+}
+
+/** Stable key for grouping: the local calendar day. */
+fun dayKey(iso: String): String =
+    runCatching { OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault()).toLocalDate().toString() }.getOrDefault("")

@@ -416,6 +416,13 @@ class FilesViewModel(
         )
     }
 
+    /** Select or clear a whole date group from its header control. */
+    fun toggleGroup(files: List<FileObject>) {
+        val paths = files.map { it.path }
+        val cur = _state.value.selected
+        _state.value = _state.value.copy(selected = if (paths.all { it in cur }) cur - paths.toSet() else cur + paths)
+    }
+
     fun selectAll() {
         _state.value = _state.value.copy(selected = _state.value.files.map { it.path }.toSet())
     }

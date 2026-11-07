@@ -11,6 +11,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +46,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreateNewFolder
@@ -779,6 +783,7 @@ private fun SelectionTopBar(
 // ---- content --------------------------------------------------------------
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun FileList(
     state: FilesUiState,
     viewModel: FilesViewModel,
@@ -791,6 +796,32 @@ private fun FileList(
         contentPadding = PaddingValues(bottom = 88.dp),
     ) {
         uploadItems(state, viewModel)
+        if (state.virtual && !state.inTrash) {
+            // Timeline views read by day, like the Files app's category lists.
+            state.files.groupBy { dayKey(it.updatedAt) }.forEach { (day, group) ->
+                stickyHeader(key = "day-$day") {
+                    DayHeader(
+                        label = dayGroupLabel(group.first().updatedAt),
+                        allSelected = group.all { it.path in state.selected },
+                        onToggle = { viewModel.toggleGroup(group) },
+                    )
+                }
+                items(group, key = { it.id + it.path }) { file ->
+                    FileListItem(
+                        file = file,
+                        thumbUrl = rememberThumbUrl(viewModel, file),
+                        selecting = state.selecting,
+                        selected = file.path in state.selected,
+                        downloadProgress = state.downloading[file.path],
+                        downloading = file.path in state.downloading,
+                        actions = actionsFor(file),
+                        subtitle = "${subtitleFor(file.size, file.updatedAt, file.isFolder)} • ${folderLabelOf(file)}",
+                    )
+                }
+            }
+            if (state.loadingMore) item { LoadingMoreRow() }
+            return@LazyColumn
+        }
         items(state.files, key = { it.id + it.path }) { file ->
             FileListItem(
                 file = file,
@@ -856,6 +887,27 @@ private fun FileGrid(
 private fun androidx.compose.foundation.lazy.LazyListScope.uploadItems(state: FilesUiState, viewModel: FilesViewModel) {
     if (state.uploadsHere.isNotEmpty()) {
         item(key = "uploads") { UploadsCard(state.uploadsHere, viewModel::cancelUpload) }
+    }
+}
+
+/** Day separator with a Files-app style select-all circle at the end. */
+@Composable
+private fun DayHeader(label: String, allSelected: Boolean, onToggle: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+        IconButton(onClick = onToggle, modifier = Modifier.size(36.dp)) {
+            Icon(
+                if (allSelected) Icons.Default.CheckCircle else Icons.Outlined.CheckCircle,
+                contentDescription = if (allSelected) "Clear selection for $label" else "Select all from $label",
+                tint = if (allSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
