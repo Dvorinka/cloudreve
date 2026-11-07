@@ -15,27 +15,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,15 +36,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import org.cloudreve.android.api.FileObject
 
-/** What a row or tile can do; null callbacks hide the matching menu entry. */
+/** Gestures a row or tile responds to. [onMore] is null for rows without a menu (search hits). */
 data class FileActions(
     val onOpen: () -> Unit,
     val onLongPress: () -> Unit,
-    val onRename: (() -> Unit)? = null,
-    val onDelete: (() -> Unit)? = null,
-    val onShare: (() -> Unit)? = null,
-    val onDownload: (() -> Unit)? = null,
-    val onToggleFavorite: (() -> Unit)? = null,
+    val onMore: (() -> Unit)? = null,
 )
 
 @Composable
@@ -134,7 +119,6 @@ fun FileListItem(
     thumbUrl: String?,
     selecting: Boolean,
     selected: Boolean,
-    isFavorite: Boolean,
     actions: FileActions,
     downloading: Boolean = false,
     downloadProgress: Float? = null,
@@ -177,7 +161,7 @@ fun FileListItem(
         if (selecting) {
             SelectionMark(selected, Modifier.padding(12.dp))
         } else {
-            FileMenuButton(file, isFavorite, actions)
+            FileMenuButton(actions)
         }
     }
 }
@@ -189,7 +173,6 @@ fun FileGridItem(
     thumbUrl: String?,
     selecting: Boolean,
     selected: Boolean,
-    isFavorite: Boolean,
     actions: FileActions,
     downloading: Boolean = false,
     downloadProgress: Float? = null,
@@ -219,7 +202,7 @@ fun FileGridItem(
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)),
                 ) {
-                    FileMenuButton(file, isFavorite, actions, compact = true)
+                    FileMenuButton(actions, compact = true)
                 }
             }
         }
@@ -264,55 +247,9 @@ private fun SelectionMark(selected: Boolean, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun FileMenuButton(
-    file: FileObject,
-    isFavorite: Boolean,
-    actions: FileActions,
-    compact: Boolean = false,
-) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }, modifier = if (compact) Modifier.size(36.dp) else Modifier) {
-            Icon(Icons.Default.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            if (!file.isFolder) {
-                actions.onDownload?.let {
-                    DropdownMenuItem(
-                        text = { Text("Download") },
-                        leadingIcon = { Icon(Icons.Default.Download, null) },
-                        onClick = { open = false; it() },
-                    )
-                }
-                actions.onToggleFavorite?.let {
-                    DropdownMenuItem(
-                        text = { Text(if (isFavorite) "Remove offline copy" else "Keep offline") },
-                        leadingIcon = { Icon(if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder, null) },
-                        onClick = { open = false; it() },
-                    )
-                }
-            }
-            actions.onShare?.let {
-                DropdownMenuItem(
-                    text = { Text("Share link") },
-                    leadingIcon = { Icon(Icons.Default.Share, null) },
-                    onClick = { open = false; it() },
-                )
-            }
-            actions.onRename?.let {
-                DropdownMenuItem(
-                    text = { Text("Rename") },
-                    leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, null) },
-                    onClick = { open = false; it() },
-                )
-            }
-            actions.onDelete?.let {
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    leadingIcon = { Icon(Icons.Default.Delete, null) },
-                    onClick = { open = false; it() },
-                )
-            }
-        }
+private fun FileMenuButton(actions: FileActions, compact: Boolean = false) {
+    val onMore = actions.onMore ?: return
+    IconButton(onClick = onMore, modifier = if (compact) Modifier.size(36.dp) else Modifier) {
+        Icon(Icons.Default.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

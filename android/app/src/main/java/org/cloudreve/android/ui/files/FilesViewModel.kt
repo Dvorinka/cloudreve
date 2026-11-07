@@ -31,7 +31,10 @@ import java.util.concurrent.ConcurrentHashMap
 data class FilesUiState(
     val currentUri: String = CrUri.MY_PREFIX,
     val files: List<FileObject> = emptyList(),
+    /** No usable listing yet: show a spinner instead of files. */
     val loading: Boolean = false,
+    /** A cached listing is on screen while a fresh one is fetched. */
+    val revalidating: Boolean = false,
     val loadingMore: Boolean = false,
     val nextToken: String? = null,
     val error: String? = null,
@@ -105,22 +108,44 @@ class FilesViewModel(
         }
     }
 
+    /** Last good listing per folder, so going back (or returning) paints instantly. */
+    private val listingCache = HashMap<String, Listing>()
+    private data class Listing(val files: List<FileObject>, val nextToken: String?, val sortKey: SortOrder)
+
     fun refresh() {
         val uri = _state.value.currentUri
+        val cached = listingCache[uri]?.takeIf { it.sortKey == _state.value.view.sort }
         _state.value = _state.value.copy(
-            loading = true, error = null, files = emptyList(), nextToken = null, selected = emptySet(),
+            loading = cached == null,
+            revalidating = cached != null,
+            error = null,
+            files = cached?.files ?: emptyList(),
+            nextToken = cached?.nextToken,
+            selected = emptySet(),
         )
         viewModelScope.launch {
             try {
                 val res = list(uri)
+                // The user may have moved on while this was in flight.
+                if (_state.value.currentUri != uri) return@launch
+                val files = sortFiles(res.files)
+                listingCache[uri] = Listing(files, res.pagination.nextToken, _state.value.view.sort)
                 _state.value = _state.value.copy(
                     loading = false,
-                    files = sortFiles(res.files),
+                    revalidating = false,
+                    files = files,
                     nextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
+                if (_state.value.currentUri != uri) return@launch
                 if (!handleSessionExpiry(e)) {
-                    _state.value = _state.value.copy(loading = false, error = e.message)
+                    // Keep showing the cached files if we had them; only surface the error otherwise.
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        revalidating = false,
+                        error = if (cached == null) e.message else null,
+                        snackbar = if (cached != null) e.message else null,
+                    )
                 }
             }
         }
@@ -134,9 +159,11 @@ class FilesViewModel(
         viewModelScope.launch {
             try {
                 val res = list(s.currentUri, token)
+                val files = sortFiles(_state.value.files + res.files)
+                listingCache[s.currentUri] = Listing(files, res.pagination.nextToken, _state.value.view.sort)
                 _state.value = _state.value.copy(
                     loadingMore = false,
-                    files = sortFiles(_state.value.files + res.files),
+                    files = files,
                     nextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {

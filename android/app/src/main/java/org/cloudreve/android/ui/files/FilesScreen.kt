@@ -61,6 +61,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -91,6 +92,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
 import org.cloudreve.android.api.FileObject
@@ -117,6 +119,7 @@ fun FilesScreen(
 
     var mkdirOpen by remember { mutableStateOf(false) }
     var addSheetOpen by remember { mutableStateOf(false) }
+    var sheetTarget by remember { mutableStateOf<FileObject?>(null) }
     var renameTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteSelectedOpen by remember { mutableStateOf(false) }
@@ -193,13 +196,7 @@ fun FilesScreen(
             }
         },
         onLongPress = { viewModel.toggleSelected(file) },
-        onRename = { renameTarget = file },
-        onDelete = { deleteTarget = file },
-        onShare = { shareLink(file) },
-        onDownload = {
-            viewModel.fetchForOpen(context, file) { scope.launch { snackbar.showSnackbar("Saved ${it.name}") } }
-        },
-        onToggleFavorite = { viewModel.toggleFavorite(context, file) },
+        onMore = { sheetTarget = file },
     )
 
     BackHandler(enabled = state.selecting || inSearch || searchOpen || !CrUri.isRoot(state.currentUri)) {
@@ -254,12 +251,21 @@ fun FilesScreen(
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.loading && state.files.isEmpty() && !inSearch,
             onRefresh = { viewModel.refresh() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
+            // Cached folder shown while the fresh listing arrives: a thin bar, no spinner.
+            if (state.revalidating && !inSearch) {
+                LinearProgressIndicator(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                        .zIndex(1f),
+                )
+            }
             when {
                 inSearch -> SearchResults(
                     state = state,
@@ -312,6 +318,25 @@ fun FilesScreen(
             )
             Box(Modifier.height(24.dp))
         }
+    }
+
+    sheetTarget?.let { file ->
+        FileActionSheet(
+            file = file,
+            thumbUrl = rememberThumbUrl(viewModel, file),
+            isFavorite = file.path in state.favoritePaths,
+            onDismiss = { sheetTarget = null },
+            onOpen = { sheetTarget = null; if (file.isFolder) viewModel.navigateTo(file) else openFile(file) },
+            onShare = { sheetTarget = null; shareLink(file) },
+            onDownload = {
+                sheetTarget = null
+                viewModel.fetchForOpen(context, file) { scope.launch { snackbar.showSnackbar("Saved ${it.name}") } }
+            },
+            onToggleFavorite = { sheetTarget = null; viewModel.toggleFavorite(context, file) },
+            onRename = { sheetTarget = null; renameTarget = file },
+            onDelete = { sheetTarget = null; deleteTarget = file },
+            onSelect = { sheetTarget = null; viewModel.toggleSelected(file) },
+        )
     }
 
     if (mkdirOpen) {
@@ -586,7 +611,6 @@ private fun FileList(
                 thumbUrl = rememberThumbUrl(viewModel, file),
                 selecting = state.selecting,
                 selected = file.path in state.selected,
-                isFavorite = file.path in state.favoritePaths,
                 downloadProgress = state.downloading[file.path],
                 downloading = file.path in state.downloading,
                 actions = actionsFor(file),
@@ -622,7 +646,6 @@ private fun FileGrid(
                 thumbUrl = rememberThumbUrl(viewModel, file),
                 selecting = state.selecting,
                 selected = file.path in state.selected,
-                isFavorite = file.path in state.favoritePaths,
                 downloadProgress = state.downloading[file.path],
                 downloading = file.path in state.downloading,
                 actions = actionsFor(file),
@@ -717,7 +740,6 @@ private fun SearchResults(
                     thumbUrl = rememberThumbUrl(viewModel, file),
                     selecting = false,
                     selected = false,
-                    isFavorite = file.path in state.favoritePaths,
                     subtitle = if (snippet.isEmpty()) where else "$where • $snippet",
                     actions = FileActions(
                         onOpen = { if (file.isFolder) onOpenFolder(file) else onOpenFile(file) },
