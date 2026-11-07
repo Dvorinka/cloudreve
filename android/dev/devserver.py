@@ -532,26 +532,36 @@ def cmd_login() -> None:
         sh("install", "-r", str(apk))
     sh("shell", "pm", "clear", pkg)
     sh("shell", "am", "start", "-n", f"{pkg}/org.cloudreve.android.MainActivity")
-    time.sleep(3)
-    dump = sh("exec-out", "uiautomator", "dump", "/dev/tty").stdout
-    centres = []
-    for m in re.finditer(r'<node[^>]*?class="([^"]+)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', dump):
-        cls, l, t, r, b = m.groups()
-        if cls.endswith("EditText") or cls.endswith("Button"):
-            centres.append((cls, (int(l) + int(r)) // 2, (int(t) + int(b)) // 2))
-    fields = [c for c in centres if c[0].endswith("EditText")]
-    button = next(c for c in centres if c[0].endswith("Button"))
-    if len(fields) < 3:
+    node = re.compile(r'<node[^>]*?class="([^"]+)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
+    fields: list[tuple[int, int]] = []
+    buttons: list[tuple[int, int]] = []
+    for _ in range(20):  # the form takes a moment to appear after a cold start
+        time.sleep(1)
+        dump = sh("exec-out", "uiautomator", "dump", "/dev/tty").stdout
+        fields, buttons = [], []
+        for cls, l, t, r, b in node.findall(dump):
+            centre = ((int(l) + int(r)) // 2, (int(t) + int(b)) // 2)
+            if cls.endswith("EditText"):
+                fields.append(centre)
+            elif cls.endswith("Button"):
+                buttons.append(centre)
+        if len(fields) >= 3 and buttons:
+            break
+    else:
         sys.exit("login form not found on screen; is the app showing the login screen?")
-    for (_, x, y), text in zip(fields, (EMULATOR_URL, DEV_USER, DEV_PASSWORD)):
+    button = buttons[0]
+    for (x, y), text in zip(fields, (EMULATOR_URL, DEV_USER, DEV_PASSWORD)):
         sh("shell", "input", "tap", str(x), str(y))
         time.sleep(0.4)
         sh("shell", "input", "keyevent", "KEYCODE_MOVE_END")
         sh("shell", "input", "keyevent", *(["KEYCODE_DEL"] * 40))
         sh("shell", "input", "text", text)
-    sh("shell", "input", "keyevent", "KEYCODE_BACK")  # hide the keyboard
-    time.sleep(0.4)
-    sh("shell", "input", "tap", str(button[1]), str(button[2]))
+    # Only dismiss a soft keyboard when one is actually up: with the emulator's
+    # hardware keyboard enabled none appears, and BACK would leave the app.
+    if "mInputShown=true" in sh("shell", "dumpsys", "input_method").stdout:
+        sh("shell", "input", "keyevent", "KEYCODE_BACK")
+        time.sleep(0.4)
+    sh("shell", "input", "tap", str(button[0]), str(button[1]))
     print("signed in on the emulator")
 
 
