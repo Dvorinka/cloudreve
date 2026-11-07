@@ -56,10 +56,15 @@ class FileRepository(private val api: ApiClient) {
             orderDirection = orderDirection,
         ).unwrap()
 
-    suspend fun downloadUrl(uri: String): String =
-        api.service().fileUrls(FileUrlRequest(listOf(uri), download = true))
+    suspend fun downloadUrl(uri: String): String = signedUrl(uri, download = true)
+
+    /** Signed URL served inline (no attachment disposition), for streaming previews. */
+    suspend fun contentUrl(uri: String): String = signedUrl(uri, download = false)
+
+    private suspend fun signedUrl(uri: String, download: Boolean): String =
+        api.service().fileUrls(FileUrlRequest(listOf(uri), download = download))
             .unwrap().urls.firstOrNull()?.url
-            ?: throw ApiException(-1, "No download URL returned")
+            ?: throw ApiException(-1, "No URL returned for $uri")
 
     suspend fun download(url: String) = api.service().download(url)
 

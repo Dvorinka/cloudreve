@@ -74,6 +74,31 @@ before the first start to get video, PDF and document thumbnails.
   skipped via mtime/size signatures, Wi-Fi-only option
 - Quick Settings tile toggling camera backup, with active/inactive state
 
+## UX (feat/android-ux)
+
+Goal: feel like the system Files app.
+
+- Material You dynamic colour; folder name as title with parent path
+  below; search, list/grid toggle and an overflow menu (sort, select,
+  refresh, offline files, settings) instead of a row of icons
+- Rows without dividers, rounded thumbnail tiles with per-type icons and
+  tints, `size • date` subtitles; grid view with adaptive tiles
+- Sort by name / size / date (tap again to flip), persisted, sent to the
+  server as `order_by`; folders always first
+- Long-press selection with select-all and batch delete; per-file
+  actions in a bottom sheet headed by the file's thumbnail and details
+- Folder listings cached per path and shown instantly on re-entry while a
+  fresh listing loads behind a thin bar
+- Uploads: byte-level progress in a card above the destination folder's
+  files and in a notification with Cancel; the folder refreshes itself
+  when the batch lands. Downloads show a progress ring on the tile; a
+  second tap cancels; cached copies open at once
+- In-app viewer: swipeable image gallery with pinch zoom, video and
+  audio streamed with media3, PDF pages via `PdfRenderer`, plain text
+  and source files; everything else goes to the system via `ACTION_VIEW`
+- Settings as a full screen (photo backup, folder sync, notifications,
+  account)
+
 ## Planned next
 
 - No iOS. Ever.

@@ -102,6 +102,8 @@ import org.cloudreve.android.data.ViewMode
 import org.cloudreve.android.util.CrUri
 import org.cloudreve.android.work.UploadWorker
 import org.cloudreve.android.ui.files.transfers.UploadsCard
+import org.cloudreve.android.ui.preview.PreviewScreen
+import org.cloudreve.android.ui.preview.previewKindOf
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,6 +122,7 @@ fun FilesScreen(
     var mkdirOpen by remember { mutableStateOf(false) }
     var addSheetOpen by remember { mutableStateOf(false) }
     var sheetTarget by remember { mutableStateOf<FileObject?>(null) }
+    var preview by remember { mutableStateOf<Pair<List<FileObject>, Int>?>(null) }
     var renameTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteSelectedOpen by remember { mutableStateOf(false) }
@@ -171,8 +174,18 @@ fun FilesScreen(
         searchText = ""
     }
 
-    fun openFile(file: FileObject) {
+    fun openWithSystemApp(file: FileObject) {
         viewModel.fetchForOpen(context, file) { local -> openWithSystem(context, local) }
+    }
+
+    /** In-app viewer for media, PDFs and text; everything else goes to the system. */
+    fun openFile(file: FileObject) {
+        if (previewKindOf(file) == null) {
+            openWithSystemApp(file)
+            return
+        }
+        val siblings = viewModel.previewableSiblings(file)
+        preview = siblings to siblings.indexOfFirst { it.path == file.path }.coerceAtLeast(0)
     }
 
     fun shareLink(file: FileObject) {
@@ -295,6 +308,19 @@ fun FilesScreen(
                 else -> FileList(state, viewModel, listState, ::actionsFor)
             }
         }
+    }
+
+    preview?.let { (files, index) ->
+        PreviewScreen(
+            files = files,
+            startIndex = index,
+            viewModel = viewModel,
+            onClose = { preview = null },
+            onShare = { shareLink(it) },
+            onDownload = { f -> viewModel.fetchForOpen(context, f) { scope.launch { snackbar.showSnackbar("Saved ${it.name}") } } },
+            onOpenWith = { openWithSystemApp(it) },
+            onDelete = { preview = null; deleteTarget = it },
+        )
     }
 
     if (addSheetOpen) {

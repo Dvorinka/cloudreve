@@ -273,6 +273,27 @@ class FilesViewModel(
     private fun cacheFileFor(context: Context, file: FileObject): File =
         File(File(context.cacheDir, "downloads"), file.id).resolve(file.name)
 
+    /** Signed inline URL for streaming a preview (image, video, audio). */
+    suspend fun previewUrl(file: FileObject): String = repo.contentUrl(file.path)
+
+    /** Local copy for renderers that need a file (PDF, text); downloads if missing. */
+    suspend fun localCopy(context: Context, file: FileObject, onProgress: (Float?) -> Unit): File {
+        val dest = cacheFileFor(context, file)
+        if (dest.exists() && dest.length() == file.size) return dest
+        val url = repo.downloadUrl(file.path)
+        repo.downloadToFile(url, dest) { done, total -> onProgress(if (total > 0) done.toFloat() / total else null) }
+        return dest
+    }
+
+    /** Files of the folder on screen that open in the in-app viewer, in list order. */
+    fun previewableSiblings(file: FileObject): List<FileObject> {
+        val kind = FileKind.of(file)
+        val gallery = kind == FileKind.IMAGE || kind == FileKind.VIDEO
+        return _state.value.files.filter {
+            !it.isFolder && if (gallery) FileKind.of(it).let { k -> k == FileKind.IMAGE || k == FileKind.VIDEO } else FileKind.of(it) == kind
+        }.ifEmpty { listOf(file) }
+    }
+
     // ---- view preferences -------------------------------------------------
 
     fun setViewMode(mode: ViewMode) {

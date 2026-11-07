@@ -94,6 +94,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-video:2.7.0")
+
+    // In-app video/audio preview. 1.11 needs Kotlin 2.2; stay on 1.10 until the Kotlin plugin moves.
+    implementation("androidx.media3:media3-exoplayer:1.10.1")
+    implementation("androidx.media3:media3-ui:1.10.1")
 
     // Play in-app updates — no-op on sideloaded/non-Play installs
     implementation("com.google.android.play:app-update-ktx:2.1.0")
