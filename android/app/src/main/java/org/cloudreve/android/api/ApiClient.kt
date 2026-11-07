@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit
  */
 class ApiClient(private val session: SessionManager) {
 
-    private val json = Json {
+    /** Lenient decoder shared with callers that unwrap `JsonElement` payloads by hand. */
+    val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
