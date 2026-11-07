@@ -16,6 +16,27 @@ ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:assembleDebug
 
 CI runs `assembleDebug` on every PR.
 
+## Development backend
+
+`dev/devserver.py` (stdlib Python) builds the server from this checkout,
+runs it on `127.0.0.1:5212` and fills a dev account with sample data so
+the app can be exercised without touching a real deployment. The emulator
+reaches it at `http://10.0.2.2:5212`; sign in as `dev@example.com` /
+`cloudreve-dev`.
+
+```bash
+dev/devserver.py all     # build + start + seed + push sample files to the emulator
+dev/devserver.py login   # install the debug APK and sign in on the emulator via adb
+dev/devserver.py status  # pid, API health, credentials
+dev/devserver.py reset   # wipe the database and start over
+```
+
+Sample data: photos (Lorem Picsum), generated multi-page PDFs, Big Buck
+Bunny clips, generated WAVs, a zip, source files, two large blobs for
+transfer-progress testing, deep folders, long and non-ASCII names. State
+lives in `dev/.data/` (gitignored). Install `ffmpeg`, `vips` or LibreOffice
+before the first start to get video, PDF and document thumbnails.
+
 ## What's implemented
 
 - `api/v4` auth: password login → access/refresh tokens, single-flight
