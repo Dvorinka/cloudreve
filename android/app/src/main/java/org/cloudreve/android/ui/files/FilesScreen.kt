@@ -75,7 +75,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -169,10 +171,16 @@ fun FilesScreen(
     LaunchedEffect(Unit) { if (!state.home) viewModel.refresh() }
 
     LaunchedEffect(state.snackbar) {
-        state.snackbar?.let {
-            snackbar.showSnackbar(it)
-            viewModel.consumeSnackbar()
-        }
+        val msg = state.snackbar ?: return@LaunchedEffect
+        // Consume only after showing: clearing first would change this effect's
+        // key and cancel it before the snackbar appears.
+        val result = snackbar.showSnackbar(
+            message = msg.text,
+            actionLabel = msg.actionLabel,
+            duration = if (msg.action != null) SnackbarDuration.Long else SnackbarDuration.Short,
+        )
+        viewModel.consumeSnackbar()
+        if (result == SnackbarResult.ActionPerformed) msg.action?.invoke()
     }
 
     // Infinite scroll: load the next page when the end comes into view.

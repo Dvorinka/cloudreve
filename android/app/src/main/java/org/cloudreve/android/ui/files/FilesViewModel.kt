@@ -45,6 +45,9 @@ enum class Category(val uri: String, val label: String, val filter: String? = nu
     }
 }
 
+/** One-off message for the snackbar, optionally with an action such as Undo. */
+data class UiMessage(val text: String, val actionLabel: String? = null, val action: (() -> Unit)? = null)
+
 data class FilesUiState(
     /** Landing page with Recent and Categories; false while browsing a folder or category. */
     val home: Boolean = true,
@@ -59,7 +62,7 @@ data class FilesUiState(
     val loadingMore: Boolean = false,
     val nextToken: String? = null,
     val error: String? = null,
-    val snackbar: String? = null,
+    val snackbar: UiMessage? = null,
     val view: ViewPrefs = ViewPrefs(),
     /** Paths of files picked in selection mode; empty means not selecting. */
     val selected: Set<String> = emptySet(),
@@ -184,7 +187,7 @@ class FilesViewModel(
                         loading = false,
                         revalidating = false,
                         error = if (cached == null) e.message else null,
-                        snackbar = if (cached != null) e.message else null,
+                        snackbar = (if (cached != null) e.message else null).toMessage(),
                     )
                 }
             }
@@ -207,7 +210,7 @@ class FilesViewModel(
                     nextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
-                _state.value = _state.value.copy(loadingMore = false, snackbar = e.message)
+                _state.value = _state.value.copy(loadingMore = false, snackbar = (e.message).toMessage())
             }
         }
     }
@@ -280,7 +283,7 @@ class FilesViewModel(
             }.onFailure { e ->
                 _state.value = _state.value.copy(recentLoading = false)
                 if (!handleSessionExpiry(e as? Exception ?: Exception(e))) {
-                    _state.value = _state.value.copy(snackbar = e.message)
+                    _state.value = _state.value.copy(snackbar = (e.message).toMessage())
                 }
             }
         }
@@ -311,7 +314,7 @@ class FilesViewModel(
             u.uploaded == 0 -> "Upload failed" + (u.error?.let { ": $it" } ?: "")
             else -> "Uploaded ${u.uploaded}, ${u.failed} failed"
         }
-        _state.value = _state.value.copy(snackbar = message)
+        _state.value = _state.value.copy(snackbar = (message).toMessage())
         if (u.uploaded > 0) {
             if (_state.value.home) loadRecent() else if (u.parentUri == _state.value.currentUri) refresh()
         }
@@ -347,7 +350,7 @@ class FilesViewModel(
             } catch (_: CancellationException) {
                 // user cancelled; nothing to say
             } catch (e: Exception) {
-                _state.value = _state.value.copy(snackbar = e.message ?: "Download failed")
+                _state.value = _state.value.copy(snackbar = (e.message ?: "Download failed").toMessage())
             } finally {
                 downloadJobs.remove(file.path)
                 _state.value = _state.value.copy(downloading = _state.value.downloading - file.path)
@@ -422,20 +425,7 @@ class FilesViewModel(
         _state.value = _state.value.copy(selected = emptySet())
     }
 
-    fun deleteSelected() {
-        val paths = _state.value.selected.toList()
-        if (paths.isEmpty()) return
-        viewModelScope.launch {
-            runCatching { repo.delete(paths) }
-                .onSuccess {
-                    _state.value = _state.value.copy(
-                        snackbar = "${paths.size} item${if (paths.size == 1) "" else "s"} moved to trash",
-                    )
-                    refresh()
-                }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
-        }
-    }
+    fun deleteSelected() = deletePaths(_state.value.selected.toList())
 
     /** Move or copy [paths] into [dst]; the list refreshes and the cache for both folders is dropped. */
     fun moveTo(paths: List<String>, dst: String, copy: Boolean) {
@@ -449,11 +439,11 @@ class FilesViewModel(
                     val where = folderLabel(dst)
                     _state.value = _state.value.copy(
                         selected = emptySet(),
-                        snackbar = if (copy) "Copied $what to $where" else "Moved $what to $where",
+                        snackbar = (if (copy) "Copied $what to $where" else "Moved $what to $where").toMessage(),
                     )
                     refresh()
                 }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
@@ -547,7 +537,7 @@ class FilesViewModel(
                     searchNextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
-                _state.value = _state.value.copy(searchLoadingMore = false, snackbar = e.message)
+                _state.value = _state.value.copy(searchLoadingMore = false, snackbar = (e.message).toMessage())
             }
         }
     }
@@ -579,7 +569,7 @@ class FilesViewModel(
                     listingCache.remove(parent)
                     if (parent == _state.value.currentUri) refresh()
                 }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
@@ -588,15 +578,47 @@ class FilesViewModel(
         viewModelScope.launch {
             runCatching { repo.rename(file.path, newName) }
                 .onSuccess { refresh() }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
-    fun delete(file: FileObject) {
+    fun delete(file: FileObject) = deletePaths(listOf(file.path))
+
+    /** Moves to trash and offers Undo, which restores from the trash by origin path. */
+    private fun deletePaths(paths: List<String>) {
+        if (paths.isEmpty()) return
         viewModelScope.launch {
-            runCatching { repo.delete(listOf(file.path)) }
-                .onSuccess { refresh() }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+            runCatching { repo.delete(paths) }
+                .onSuccess {
+                    val n = paths.size
+                    _state.value = _state.value.copy(
+                        snackbar = UiMessage(
+                            text = if (n == 1) "${CrUri.fileName(paths[0])} moved to trash" else "$n items moved to trash",
+                            actionLabel = "Undo",
+                            action = { undoDelete(paths) },
+                        ),
+                    )
+                    refresh()
+                }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
+        }
+    }
+
+    private fun undoDelete(originalPaths: List<String>) {
+        viewModelScope.launch {
+            runCatching {
+                val wanted = originalPaths.toSet()
+                val trashed = repo.list(Category.TRASH.uri, orderBy = "updated_at", orderDirection = "desc", pageSize = 200)
+                    .files.filter { it.restoreUri in wanted }.map { it.path }
+                if (trashed.isEmpty()) error("Couldn't find the items in the trash")
+                repo.restore(trashed)
+            }
+                .onSuccess {
+                    listingCache.clear()
+                    _state.value = _state.value.copy(snackbar = UiMessage("Restored"))
+                    refresh()
+                }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
@@ -628,8 +650,8 @@ class FilesViewModel(
                     )
                 )
             }
-                .onSuccess { _state.value = _state.value.copy(snackbar = "Saved for offline") }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onSuccess { _state.value = _state.value.copy(snackbar = UiMessage("Saved for offline")) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
             _state.value = _state.value.copy(favoriteSaving = false)
         }
     }
@@ -647,7 +669,7 @@ class FilesViewModel(
                 }
                 favorites.put(entry.copy(savedAt = System.currentTimeMillis()))
             }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
@@ -682,11 +704,11 @@ class FilesViewModel(
                     listingCache.clear()
                     _state.value = _state.value.copy(
                         selected = emptySet(),
-                        snackbar = "Restored ${paths.size} item${if (paths.size == 1) "" else "s"}",
+                        snackbar = ("Restored ${paths.size} item${if (paths.size == 1) "" else "s"}").toMessage(),
                     )
                     refresh()
                 }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
@@ -698,11 +720,11 @@ class FilesViewModel(
                 .onSuccess {
                     _state.value = _state.value.copy(
                         selected = emptySet(),
-                        snackbar = "Deleted ${paths.size} item${if (paths.size == 1) "" else "s"} permanently",
+                        snackbar = ("Deleted ${paths.size} item${if (paths.size == 1) "" else "s"} permanently").toMessage(),
                     )
                     refresh()
                 }
-                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
         }
     }
 
@@ -732,6 +754,8 @@ class FilesViewModel(
     fun consumeSnackbar() {
         _state.value = _state.value.copy(snackbar = null)
     }
+
+    private fun String?.toMessage(): UiMessage? = this?.let { UiMessage(it) }
 
     /**
      * Folders always stay on top like the Files app. The server's name order is
