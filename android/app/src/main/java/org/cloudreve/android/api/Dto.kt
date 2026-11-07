@@ -86,8 +86,12 @@ data class FileObject(
     val mayHaveThumbnail: Boolean
         get() = !isFolder && metadata?.containsKey(METADATA_THUMB_DISABLED) != true
 
+    /** Where a trashed file came from; only set on items listed under cloudreve://trash. */
+    val restoreUri: String? get() = metadata?.get(METADATA_RESTORE_URI)
+
     companion object {
         const val METADATA_THUMB_DISABLED = "thumb:disabled"
+        const val METADATA_RESTORE_URI = "sys:restore_uri"
     }
 }
 
@@ -153,7 +157,12 @@ data class MoveFileRequest(
 data class DeleteFileRequest(
     val uris: List<String>,
     val unlink: Boolean = false,
+    /** Bypass the trash and remove right away (used from the trash view). */
+    @SerialName("skip_soft_delete") val skipSoftDelete: Boolean = false,
 )
+
+@Serializable
+data class RestoreFileRequest(val uris: List<String>)
 
 @Serializable
 data class CreateUploadSessionRequest(

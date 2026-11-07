@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.RestoreFromTrash
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Link
@@ -59,6 +61,9 @@ fun FileActionSheet(
     onCopy: () -> Unit,
     /** Shown when the sheet was opened outside the file's own folder (home, categories, search). */
     onShowInFolder: (() -> Unit)? = null,
+    inTrash: Boolean = false,
+    onRestore: () -> Unit = {},
+    onDeleteForever: () -> Unit = {},
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Row(
@@ -84,9 +89,16 @@ fun FileActionSheet(
         }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
+        if (inTrash) {
+            SheetAction(Icons.Default.RestoreFromTrash, "Restore", onRestore)
+            SheetAction(Icons.Default.DeleteForever, "Delete forever", onDeleteForever, tint = MaterialTheme.colorScheme.error)
+            Spacer(Modifier.height(24.dp))
+            return@ModalBottomSheet
+        }
+
         SheetAction(Icons.AutoMirrored.Filled.OpenInNew, if (file.isFolder) "Open folder" else "Open", onOpen)
         onShowInFolder?.let { SheetAction(Icons.Default.FolderOpen, "Show in folder", it) }
-        SheetAction(Icons.Default.Link, "Copy share link", onShare)
+        SheetAction(Icons.Default.Link, "Share link", onShare)
         if (!file.isFolder) {
             SheetAction(Icons.Default.Download, "Download", onDownload)
             SheetAction(

@@ -10,6 +10,7 @@ import org.cloudreve.android.api.FileUrlRequest
 import org.cloudreve.android.api.ListFileResponse
 import org.cloudreve.android.api.MoveFileRequest
 import org.cloudreve.android.api.RenameFileRequest
+import org.cloudreve.android.api.RestoreFileRequest
 import org.cloudreve.android.api.SearchResponse
 import org.cloudreve.android.api.ShareCreateRequest
 import org.cloudreve.android.api.UploadSessionResponse
@@ -108,11 +109,20 @@ class FileRepository(private val api: ApiClient) {
     suspend fun thumbUrl(uri: String): String? =
         runCatching { api.service().thumb(uri).unwrap().url }.getOrNull()
 
-    /** Creates a public share link and returns its absolute URL. */
-    suspend fun createShare(uri: String): String {
-        val id = api.service().createShare(ShareCreateRequest(uri = uri)).unwrap()
-        val base = api.serverBase()
-        return "$base/s/$id"
+    /**
+     * Creates a share link. [expireSeconds] 0 = never; [password] empty = public.
+     * Mirrors the web app's link format: the password rides along as a path
+     * segment so the recipient does not have to type it.
+     */
+    suspend fun createShare(uri: String, password: String = "", expireSeconds: Int = 0, downloads: Int = 0): String {
+        val link = api.service().createShare(
+            ShareCreateRequest(uri = uri, password = password, expire = expireSeconds, downloads = downloads, isPrivate = password.isNotEmpty())
+        ).unwrap()
+        // PUT /share answers with the complete URL (`…/s/<id>[/<password>]`); older
+        // builds of this client assumed a bare id and produced a doubled URL.
+        if (link.startsWith("http")) return link
+        val base = api.serverBase().trimEnd('/')
+        return if (password.isEmpty()) "$base/s/$link" else "$base/s/$link/$password"
     }
 
     suspend fun search(query: String, offset: Int = 0): SearchResponse =
@@ -135,8 +145,13 @@ class FileRepository(private val api: ApiClient) {
     suspend fun listFolders(uri: String): List<FileObject> =
         list(uri, orderBy = "name", orderDirection = "asc").files.filter { it.isFolder }
 
-    suspend fun delete(uris: List<String>) {
-        api.service().deleteFiles(DeleteFileRequest(uris = uris)).unwrapEmpty()
+    suspend fun delete(uris: List<String>, permanently: Boolean = false) {
+        api.service().deleteFiles(DeleteFileRequest(uris = uris, skipSoftDelete = permanently)).unwrapEmpty()
+    }
+
+    /** Puts trashed items (cloudreve://trash/… URIs) back where they came from. */
+    suspend fun restore(uris: List<String>) {
+        api.service().restoreFiles(RestoreFileRequest(uris)).unwrapEmpty()
     }
 
     suspend fun createUploadSession(

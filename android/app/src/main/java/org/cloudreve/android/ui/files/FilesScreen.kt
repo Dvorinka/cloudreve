@@ -1,8 +1,6 @@
 package org.cloudreve.android.ui.files
 
 import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -38,7 +36,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DriveFileMove
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.RestoreFromTrash
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -137,6 +137,7 @@ fun FilesScreen(
     var renameTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteTarget by remember { mutableStateOf<FileObject?>(null) }
     var deleteSelectedOpen by remember { mutableStateOf(false) }
+    var deleteForeverTarget by remember { mutableStateOf<List<String>?>(null) }
     /** Paths to move/copy and whether it is a copy; non-null shows the folder picker. */
     var movePick by remember { mutableStateOf<Pair<List<String>, Boolean>?>(null) }
     var searchOpen by remember { mutableStateOf(false) }
@@ -172,8 +173,8 @@ fun FilesScreen(
     }
 
     // Infinite scroll: load the next page when the end comes into view.
-    LaunchedEffect(listState, gridState, state.view.mode) {
-        val lastVisible = if (state.view.mode == ViewMode.GRID) {
+    LaunchedEffect(listState, gridState, state.effectiveMode) {
+        val lastVisible = if (state.effectiveMode == ViewMode.GRID) {
             snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
         } else {
             snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
@@ -212,22 +213,14 @@ fun FilesScreen(
         preview = siblings to siblings.indexOfFirst { it.path == file.path }.coerceAtLeast(0)
     }
 
-    fun shareLink(file: FileObject) {
-        scope.launch {
-            runCatching { viewModel.shareLink(file) }
-                .onSuccess { link ->
-                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    cm.setPrimaryClip(ClipData.newPlainText("share", link))
-                    snackbar.showSnackbar("Share link copied")
-                }
-                .onFailure { snackbar.showSnackbar(it.message ?: "Share failed") }
-        }
-    }
+    var shareTarget by remember { mutableStateOf<FileObject?>(null) }
+    fun shareLink(file: FileObject) { shareTarget = file }
 
     fun actionsFor(file: FileObject): FileActions = FileActions(
         onOpen = {
             when {
                 state.selecting -> viewModel.toggleSelected(file)
+                state.inTrash -> sheetTarget = file
                 file.isFolder -> viewModel.navigateTo(file)
                 else -> openFile(file)
             }
@@ -253,11 +246,13 @@ fun FilesScreen(
             when {
                 state.selecting -> SelectionTopBar(
                     count = state.selected.size,
+                    inTrash = state.inTrash,
                     onClose = { viewModel.clearSelection() },
                     onSelectAll = { viewModel.selectAll() },
                     onMove = { movePick = state.selected.toList() to false },
                     onCopy = { movePick = state.selected.toList() to true },
-                    onDelete = { deleteSelectedOpen = true },
+                    onDelete = { if (state.inTrash) deleteForeverTarget = state.selected.toList() else deleteSelectedOpen = true },
+                    onRestore = { viewModel.restore(state.selected.toList()) },
                 )
                 inSearch || searchOpen -> SearchTopBar(
                     text = searchText,
@@ -270,13 +265,14 @@ fun FilesScreen(
                 else -> FolderTopBar(
                     title = state.folderName,
                     subtitle = when {
+                        state.inTrash -> "Items are kept for 7 days"
                         state.virtual -> "Across all folders"
                         CrUri.isRoot(state.currentUri) -> null
                         else -> pathLabel(CrUri.parent(state.currentUri))
                     },
                     showBack = true,
                     showSort = !state.virtual,
-                    viewMode = state.view.mode,
+                    viewMode = state.effectiveMode,
                     sort = state.view.sort,
                     hasFavorites = state.favorites.isNotEmpty(),
                     onBack = { viewModel.navigateUp() },
@@ -340,6 +336,7 @@ fun FilesScreen(
                         onOpenRecent = { viewModel.openCategory(Category.RECENT) },
                         onOpenCategory = { viewModel.openCategory(it) },
                         onOpenOffline = { favoritesOpen = true },
+                        onOpenTrash = { viewModel.openCategory(Category.TRASH) },
                         onFileMore = { sheetTarget = it },
                     )
                     DropdownMenu(expanded = homeMenuOpen, onDismissRequest = { homeMenuOpen = false }, modifier = Modifier.padding(start = 16.dp)) {
@@ -374,7 +371,7 @@ fun FilesScreen(
                     title = "This folder is empty",
                     detail = "Upload files or create a folder with the + button",
                 )
-                state.view.mode == ViewMode.GRID -> FileGrid(state, viewModel, gridState, ::actionsFor)
+                state.effectiveMode == ViewMode.GRID -> FileGrid(state, viewModel, gridState, ::actionsFor)
                 else -> FileList(state, viewModel, listState, ::actionsFor)
             }
         }
@@ -427,6 +424,16 @@ fun FilesScreen(
         }
     }
 
+    shareTarget?.let { file ->
+        ShareLinkSheet(
+            file = file,
+            thumbUrl = rememberThumbUrl(viewModel, file),
+            createLink = { pw, exp -> viewModel.shareLink(file, pw, exp) },
+            onDismiss = { shareTarget = null },
+            onMessage = { msg -> scope.launch { snackbar.showSnackbar(msg) } },
+        )
+    }
+
     sheetTarget?.let { file ->
         FileActionSheet(
             file = file,
@@ -445,7 +452,10 @@ fun FilesScreen(
             onSelect = { sheetTarget = null; viewModel.toggleSelected(file) },
             onMove = { sheetTarget = null; movePick = listOf(file.path) to false },
             onCopy = { sheetTarget = null; movePick = listOf(file.path) to true },
-            onShowInFolder = if (state.home || state.virtual || inSearch) ({
+            inTrash = state.inTrash,
+            onRestore = { sheetTarget = null; viewModel.restore(listOf(file.path)) },
+            onDeleteForever = { sheetTarget = null; deleteForeverTarget = listOf(file.path) },
+            onShowInFolder = if (!state.inTrash && (state.home || state.virtual || inSearch)) ({
                 sheetTarget = null
                 if (inSearch) closeSearch()
                 viewModel.navigateTo(FileObject(type = 1, path = CrUri.parent(file.path)))
@@ -504,6 +514,21 @@ fun FilesScreen(
                 deleteTarget = null
             },
             onDismiss = { deleteTarget = null },
+        )
+    }
+
+    deleteForeverTarget?.let { paths ->
+        val n = paths.size
+        AlertDialog(
+            onDismissRequest = { deleteForeverTarget = null },
+            title = { Text("Delete $n item${if (n == 1) "" else "s"} forever?") },
+            text = { Text("This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.deleteForever(paths); deleteForeverTarget = null }) {
+                    Text("Delete forever", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton(onClick = { deleteForeverTarget = null }) { Text("Cancel") } },
         )
     }
 
@@ -660,11 +685,13 @@ private fun FolderTopBar(
 @Composable
 private fun SelectionTopBar(
     count: Int,
+    inTrash: Boolean,
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
     onMove: () -> Unit,
     onCopy: () -> Unit,
     onDelete: () -> Unit,
+    onRestore: () -> Unit,
 ) {
     TopAppBar(
         title = { Text("$count selected") },
@@ -677,14 +704,23 @@ private fun SelectionTopBar(
             IconButton(onClick = onSelectAll) {
                 Icon(Icons.Default.SelectAll, contentDescription = "Select all")
             }
-            IconButton(onClick = onMove) {
-                Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = "Move to")
-            }
-            IconButton(onClick = onCopy) {
-                Icon(Icons.Default.FileCopy, contentDescription = "Copy to")
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete")
+            if (inTrash) {
+                IconButton(onClick = onRestore) {
+                    Icon(Icons.Default.RestoreFromTrash, contentDescription = "Restore")
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.DeleteForever, contentDescription = "Delete forever")
+                }
+            } else {
+                IconButton(onClick = onMove) {
+                    Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = "Move to")
+                }
+                IconButton(onClick = onCopy) {
+                    Icon(Icons.Default.FileCopy, contentDescription = "Copy to")
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -753,7 +789,9 @@ private fun FileList(
                 downloadProgress = state.downloading[file.path],
                 downloading = file.path in state.downloading,
                 actions = actionsFor(file),
-                subtitle = if (state.virtual) {
+                subtitle = if (state.inTrash) {
+                    "Deleted ${formatDate(file.updatedAt)} • from ${file.restoreUri?.let { folderLabelOf(FileObject(path = it)) } ?: "unknown"}"
+                } else if (state.virtual) {
                     "${subtitleFor(file.size, file.updatedAt, file.isFolder)} • ${folderLabelOf(file)}"
                 } else {
                     subtitleFor(file.size, file.updatedAt, file.isFolder)

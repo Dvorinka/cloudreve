@@ -25,6 +25,8 @@ data class SortOrder(val by: SortBy = SortBy.NAME, val ascending: Boolean = true
 
 data class ViewPrefs(
     val mode: ViewMode = ViewMode.LIST,
+    /** Images and Videos categories read as a gallery, so they keep their own mode. */
+    val galleryMode: ViewMode = ViewMode.GRID,
     val sort: SortOrder = SortOrder(),
 )
 
@@ -33,6 +35,7 @@ class ViewSettings(private val context: Context) {
 
     private object Keys {
         val mode = stringPreferencesKey("mode")
+        val galleryMode = stringPreferencesKey("gallery_mode")
         val sortBy = stringPreferencesKey("sort_by")
         val sortAsc = booleanPreferencesKey("sort_asc")
     }
@@ -40,6 +43,7 @@ class ViewSettings(private val context: Context) {
     val prefs: Flow<ViewPrefs> = context.viewStore.data.map { p ->
         ViewPrefs(
             mode = p[Keys.mode]?.let { runCatching { ViewMode.valueOf(it) }.getOrNull() } ?: ViewMode.LIST,
+            galleryMode = p[Keys.galleryMode]?.let { runCatching { ViewMode.valueOf(it) }.getOrNull() } ?: ViewMode.GRID,
             sort = SortOrder(
                 by = p[Keys.sortBy]?.let { runCatching { SortBy.valueOf(it) }.getOrNull() } ?: SortBy.NAME,
                 ascending = p[Keys.sortAsc] ?: true,
@@ -49,6 +53,10 @@ class ViewSettings(private val context: Context) {
 
     suspend fun setMode(mode: ViewMode) {
         context.viewStore.edit { it[Keys.mode] = mode.name }
+    }
+
+    suspend fun setGalleryMode(mode: ViewMode) {
+        context.viewStore.edit { it[Keys.galleryMode] = mode.name }
     }
 
     suspend fun setSort(sort: SortOrder) {

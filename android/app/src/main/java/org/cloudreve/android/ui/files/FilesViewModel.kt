@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withPermit
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.api.SearchHit
 import org.cloudreve.android.data.ApiException
@@ -29,14 +30,15 @@ import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /** Files-app style categories, each a server-side search over the whole drive. */
-enum class Category(val query: String, val label: String) {
-    RECENT("type=file", "Recent"),
-    IMAGES("category=image", "Images"),
-    VIDEOS("category=video", "Videos"),
-    AUDIO("category=audio", "Audio"),
-    DOCUMENTS("category=document", "Documents");
+enum class Category(val uri: String, val label: String) {
+    RECENT("${CrUri.MY_PREFIX}?type=file", "Recent"),
+    IMAGES("${CrUri.MY_PREFIX}?category=image", "Images"),
+    VIDEOS("${CrUri.MY_PREFIX}?category=video", "Videos"),
+    AUDIO("${CrUri.MY_PREFIX}?category=audio", "Audio"),
+    DOCUMENTS("${CrUri.MY_PREFIX}?category=document", "Documents"),
+    TRASH("cloudreve://trash", "Trash");
 
-    val uri: String get() = "${CrUri.MY_PREFIX}?$query"
+    val gallery: Boolean get() = this == IMAGES || this == VIDEOS
 
     companion object {
         fun fromUri(uri: String): Category? = entries.firstOrNull { it.uri == uri }
@@ -83,6 +85,9 @@ data class FilesUiState(
     val category: Category? get() = Category.fromUri(currentUri)
     /** Category listings mix folders; the row subtitle names each file's folder. */
     val virtual: Boolean get() = category != null
+    val inTrash: Boolean get() = category == Category.TRASH
+    /** Effective display mode: galleries keep their own preference. */
+    val effectiveMode: ViewMode get() = if (category?.gallery == true) view.galleryMode else view.mode
     val folderName: String
         get() {
             category?.let { return it.label }
@@ -110,6 +115,8 @@ class FilesViewModel(
 
     private companion object {
         const val RECENT_COUNT = 12
+        const val PREFETCH_THUMBS = 40
+        const val PREFETCH_PARALLELISM = 6
     }
 
     private val downloadJobs = ConcurrentHashMap<String, Job>()
@@ -164,6 +171,7 @@ class FilesViewModel(
                     files = files,
                     nextToken = res.pagination.nextToken,
                 )
+                prefetchThumbs(files)
             } catch (e: Exception) {
                 if (_state.value.currentUri != uri) return@launch
                 if (!handleSessionExpiry(e)) {
@@ -374,7 +382,10 @@ class FilesViewModel(
     }
 
     fun toggleViewMode() {
-        setViewMode(if (_state.value.view.mode == ViewMode.LIST) ViewMode.GRID else ViewMode.LIST)
+        val s = _state.value
+        val next = if (s.effectiveMode == ViewMode.LIST) ViewMode.GRID else ViewMode.LIST
+        if (s.category?.gallery == true) viewModelScope.launch { viewSettings.setGalleryMode(next) }
+        else setViewMode(next)
     }
 
     /** Picking the active key again flips the direction, like the Files app. */
@@ -604,7 +615,56 @@ class FilesViewModel(
         return out
     }
 
-    suspend fun shareLink(file: FileObject): String = repo.createShare(file.path)
+    suspend fun shareLink(file: FileObject, password: String = "", expireSeconds: Int = 0): String =
+        repo.createShare(file.path, password = password, expireSeconds = expireSeconds)
+
+    /** Trash: put items back where they were. */
+    fun restore(paths: List<String>) {
+        if (paths.isEmpty()) return
+        viewModelScope.launch {
+            runCatching { repo.restore(paths) }
+                .onSuccess {
+                    listingCache.clear()
+                    _state.value = _state.value.copy(
+                        selected = emptySet(),
+                        snackbar = "Restored ${paths.size} item${if (paths.size == 1) "" else "s"}",
+                    )
+                    refresh()
+                }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+        }
+    }
+
+    /** Trash: remove for good. */
+    fun deleteForever(paths: List<String>) {
+        if (paths.isEmpty()) return
+        viewModelScope.launch {
+            runCatching { repo.delete(paths, permanently = true) }
+                .onSuccess {
+                    _state.value = _state.value.copy(
+                        selected = emptySet(),
+                        snackbar = "Deleted ${paths.size} item${if (paths.size == 1) "" else "s"} permanently",
+                    )
+                    refresh()
+                }
+                .onFailure { _state.value = _state.value.copy(snackbar = it.message) }
+        }
+    }
+
+    /**
+     * Resolve thumbnail URLs for the first screenfuls in parallel right after
+     * a listing lands, so rows do not each pay a round trip as they scroll in.
+     */
+    private fun prefetchThumbs(files: List<FileObject>) {
+        val wanted = files.filter { it.mayHaveThumbnail && !thumbCache.containsKey(it.id) && it.id !in noThumb }.take(PREFETCH_THUMBS)
+        if (wanted.isEmpty()) return
+        viewModelScope.launch {
+            val gate = kotlinx.coroutines.sync.Semaphore(PREFETCH_PARALLELISM)
+            wanted.forEach { f ->
+                launch { gate.withPermit { runCatching { thumbUrl(f) } } }
+            }
+        }
+    }
 
     suspend fun thumbUrl(file: FileObject): String? {
         if (!file.mayHaveThumbnail || file.id in noThumb) return null

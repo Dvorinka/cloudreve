@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
@@ -61,6 +62,7 @@ fun HomeScreen(
     onOpenRecent: () -> Unit,
     onOpenCategory: (Category) -> Unit,
     onOpenOffline: () -> Unit,
+    onOpenTrash: () -> Unit,
     onFileMore: (FileObject) -> Unit,
 ) {
     Column(
@@ -126,30 +128,15 @@ fun HomeScreen(
         }
 
         SectionHeader("Collections")
-        Surface(
-            onClick = onOpenOffline,
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        ) {
-            Row(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.Star, contentDescription = null,
-                    tint = if (state.favorites.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp),
-                )
-                Column(Modifier.padding(start = 20.dp)) {
-                    Text("Offline files", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        if (state.favorites.isEmpty()) "Nothing saved yet"
-                        else "${state.favorites.size} file${if (state.favorites.size == 1) "" else "s"} available offline",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            CollectionTile(
+                "Offline files",
+                if (state.favorites.isEmpty()) "Nothing saved yet" else "${state.favorites.size} saved",
+                Icons.Default.Star,
+                Modifier.weight(1f),
+                onOpenOffline,
+            )
+            CollectionTile("Trash", "Kept for 7 days", Icons.Default.Delete, Modifier.weight(1f), onOpenTrash)
         }
     }
 }
@@ -236,6 +223,25 @@ private fun RecentCard(file: FileObject, thumbUrl: String?, onClick: () -> Unit,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 4.dp, end = 4.dp),
         )
+    }
+}
+
+@Composable
+private fun CollectionTile(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = modifier.height(84.dp),
+    ) {
+        Row(Modifier.padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
     }
 }
 
