@@ -57,7 +57,13 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -392,11 +398,19 @@ fun FilesScreen(
                     detail = state.error,
                     action = "Retry" to { viewModel.refresh() },
                 )
-                state.files.isEmpty() && state.uploadsHere.isEmpty() -> EmptyState(
-                    icon = Icons.Outlined.FolderOpen,
-                    title = "This folder is empty",
-                    detail = "Upload files or create a folder with the + button",
-                )
+                state.files.isEmpty() && state.uploadsHere.isEmpty() -> when (state.category) {
+                    null -> EmptyState(
+                        icon = Icons.Outlined.FolderOpen,
+                        title = "This folder is empty",
+                        detail = "Upload files or create a folder with the + button",
+                    )
+                    Category.TRASH -> EmptyState(icon = Icons.Outlined.Delete, title = "Trash is empty", detail = "Deleted items stay here for 7 days")
+                    Category.RECENT -> EmptyState(icon = Icons.Outlined.History, title = "Nothing recent", detail = "Files you upload or change show up here")
+                    Category.IMAGES -> EmptyState(icon = Icons.Outlined.Image, title = "No images yet")
+                    Category.VIDEOS -> EmptyState(icon = Icons.Outlined.Videocam, title = "No videos yet")
+                    Category.AUDIO -> EmptyState(icon = Icons.Outlined.MusicNote, title = "No audio files yet")
+                    Category.DOCUMENTS -> EmptyState(icon = Icons.Outlined.Description, title = "No documents yet")
+                }
                 state.effectiveMode == ViewMode.GRID -> FileGrid(state, viewModel, gridState, ::actionsFor)
                 else -> FileList(state, viewModel, listState, ::actionsFor)
             }

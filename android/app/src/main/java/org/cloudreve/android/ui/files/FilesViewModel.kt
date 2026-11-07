@@ -83,7 +83,6 @@ data class FilesUiState(
     val searchLoadingMore: Boolean = false,
     val searchError: String? = null,
     val favorites: List<FavoriteEntry> = emptyList(),
-    val favoriteSaving: Boolean = false,
 ) {
     val favoritePaths: Set<String> get() = favorites.map { it.path }.toSet()
     val selecting: Boolean get() = selected.isNotEmpty()
@@ -622,7 +621,7 @@ class FilesViewModel(
         }
     }
 
-    /** Saves the file under filesDir/offline and registers it as a favorite. */
+    /** Saves the file under filesDir/offline and registers it as a favorite, with the tile showing progress. */
     fun toggleFavorite(context: Context, file: FileObject) {
         if (file.isFolder) return
         val existing = _state.value.favorites.firstOrNull { it.path == file.path }
@@ -630,15 +629,16 @@ class FilesViewModel(
             removeFavorite(existing)
             return
         }
-        if (_state.value.favoriteSaving) return
-        _state.value = _state.value.copy(favoriteSaving = true)
+        if (file.path in _state.value.downloading) return
+        setDownloading(file.path, null)
         viewModelScope.launch {
             runCatching {
-                val local = downloadTo(
-                    File(context.filesDir, "offline"),
-                    file,
-                    "${file.path.hashCode()}_${file.name}",
-                )
+                val dir = File(context.filesDir, "offline").apply { mkdirs() }
+                val local = File(dir, "${file.path.hashCode()}_${file.name}")
+                val url = repo.downloadUrl(file.path)
+                repo.downloadToFile(url, local) { done, total ->
+                    setDownloading(file.path, if (total > 0) done.toFloat() / total else null)
+                }
                 favorites.put(
                     FavoriteEntry(
                         path = file.path,
@@ -650,9 +650,9 @@ class FilesViewModel(
                     )
                 )
             }
-                .onSuccess { _state.value = _state.value.copy(snackbar = UiMessage("Saved for offline")) }
+                .onSuccess { _state.value = _state.value.copy(snackbar = UiMessage("${file.name} available offline")) }
                 .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
-            _state.value = _state.value.copy(favoriteSaving = false)
+            _state.value = _state.value.copy(downloading = _state.value.downloading - file.path)
         }
     }
 
@@ -678,18 +678,6 @@ class FilesViewModel(
             File(entry.localFile).delete()
             favorites.remove(entry.path)
         }
-    }
-
-    private suspend fun downloadTo(dir: File, file: FileObject, name: String): File {
-        val url = repo.downloadUrl(file.path)
-        val resp = repo.download(url)
-        if (!resp.isSuccessful) throw Exception("Download failed: HTTP ${resp.code()}")
-        dir.mkdirs()
-        val out = File(dir, name)
-        resp.body()!!.byteStream().use { input ->
-            FileOutputStream(out).use { input.copyTo(it) }
-        }
-        return out
     }
 
     suspend fun shareLink(file: FileObject, password: String = "", expireSeconds: Int = 0): String =
