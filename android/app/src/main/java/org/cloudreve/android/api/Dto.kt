@@ -75,9 +75,20 @@ data class FileObject(
     val metadata: Map<String, String>? = null,
     val path: String = "",
     val shared: Boolean? = null,
-    val thumbnail: Boolean? = null,
 ) {
     val isFolder: Boolean get() = type == 1
+
+    /**
+     * The list API carries no per-file thumbnail flag. Like the web UI, ask
+     * for a thumbnail for every file the server has not yet marked with
+     * `thumb:disabled` (set after the first failed generation attempt).
+     */
+    val mayHaveThumbnail: Boolean
+        get() = !isFolder && metadata?.containsKey(METADATA_THUMB_DISABLED) != true
+
+    companion object {
+        const val METADATA_THUMB_DISABLED = "thumb:disabled"
+    }
 }
 
 @Serializable
