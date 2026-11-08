@@ -240,6 +240,7 @@ fun FilesScreen(
             ) { mode -> when (mode) {
                 "select" -> SelectionTopBar(
                     count = state.selected.size,
+                    total = state.files.size,
                     inTrash = state.inTrash,
                     onClose = { viewModel.clearSelection() },
                     onSelectAll = { viewModel.selectAll() },
@@ -257,12 +258,15 @@ fun FilesScreen(
                 "home" -> Unit
                 else -> FolderTopBar(
                     title = state.folderName,
-                    subtitle = when {
-                        state.inTrash -> "Items are kept for 7 days"
-                        state.virtual -> "Across all folders"
-                        CrUri.isRoot(state.currentUri) -> null
-                        else -> CrUri.displayPath(CrUri.parent(state.currentUri))
-                    },
+                    subtitle = listOfNotNull(
+                        when {
+                            state.inTrash -> "Kept for 7 days"
+                            state.virtual -> "Across all folders"
+                            CrUri.isRoot(state.currentUri) -> null
+                            else -> CrUri.displayPath(CrUri.parent(state.currentUri))
+                        },
+                        state.itemCountLabel,
+                    ).joinToString(" • ").ifEmpty { null },
                     showBack = true,
                     showSort = !state.virtual,
                     viewMode = state.effectiveMode,
@@ -342,6 +346,9 @@ fun FilesScreen(
                     onOpenOffline = { favoritesOpen = true },
                     onOpenTrash = { viewModel.openCategory(Category.TRASH) },
                     onFileMore = { sheetTarget = it },
+                    onBackUpNow = { viewModel.backUpNow(context) },
+                    onRetryFailedBackups = { viewModel.retryFailedBackups(context) },
+                    onOpenFolder = { viewModel.openFolder(it) },
                 )
                 inSearch -> SearchResults(
                     state = state,

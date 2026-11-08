@@ -532,36 +532,46 @@ def cmd_login() -> None:
         sh("install", "-r", str(apk))
     sh("shell", "pm", "clear", pkg)
     sh("shell", "am", "start", "-n", f"{pkg}/org.cloudreve.android.MainActivity")
-    node = re.compile(r'<node[^>]*?text="([^"]*)"[^>]*?class="([^"]+)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
-    fields: list[tuple[int, int]] = []
-    button: tuple[int, int] | None = None
-    for _ in range(20):  # the form takes a moment to appear after a cold start
-        time.sleep(1)
+    node = re.compile(r'<node[^>]*?class="([^"]+)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
+
+    def controls() -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
+        """EditText centres top-to-bottom, and full-width Button centres top-to-bottom."""
         dump = sh("exec-out", "uiautomator", "dump", "/dev/tty").stdout
-        fields, button = [], None
-        for text, cls, l, t, r, b in node.findall(dump):
+        fields, wide = [], []
+        for cls, l, t, r, b in node.findall(dump):
             centre = ((int(l) + int(r)) // 2, (int(t) + int(b)) // 2)
             if cls.endswith("EditText"):
                 fields.append(centre)
-            # Match the label, not "first button": the password-eye toggle is a Button too.
-            elif cls.endswith("Button") and text.strip().lower() == "sign in":
-                button = centre
-        if len(fields) >= 3 and button:
+            # Compose buttons expose no text; the password eye toggle is small,
+            # Sign in is the topmost full-width button.
+            elif cls.endswith("Button") and int(r) - int(l) > 600:
+                wide.append(centre)
+        return sorted(fields, key=lambda c: c[1]), sorted(wide, key=lambda c: c[1])
+
+    for _ in range(20):  # the form takes a moment to appear after a cold start
+        time.sleep(1)
+        fields, wide = controls()
+        if len(fields) >= 3 and wide:
             break
     else:
         sys.exit("login form not found on screen; is the app showing the login screen?")
-    for (x, y), text in zip(fields, (EMULATOR_URL, DEV_USER, DEV_PASSWORD)):
+
+    # The form moves up when the soft keyboard opens (imePadding), so re-read
+    # positions before every tap instead of trusting the first dump.
+    for i, text in enumerate((EMULATOR_URL, DEV_USER, DEV_PASSWORD)):
+        fields, _ = controls()
+        x, y = fields[i]
         sh("shell", "input", "tap", str(x), str(y))
-        time.sleep(0.4)
+        time.sleep(0.8)
         sh("shell", "input", "keyevent", "KEYCODE_MOVE_END")
         sh("shell", "input", "keyevent", *(["KEYCODE_DEL"] * 40))
         sh("shell", "input", "text", text)
-    # Only dismiss a soft keyboard when one is actually up: with the emulator's
-    # hardware keyboard enabled none appears, and BACK would leave the app.
+        time.sleep(0.3)
     if "mInputShown=true" in sh("shell", "dumpsys", "input_method").stdout:
         sh("shell", "input", "keyevent", "KEYCODE_BACK")
-        time.sleep(0.4)
-    sh("shell", "input", "tap", str(button[0]), str(button[1]))
+        time.sleep(1.5)
+    _, wide = controls()
+    sh("shell", "input", "tap", str(wide[0][0]), str(wide[0][1]))
     print("signed in on the emulator")
 
 

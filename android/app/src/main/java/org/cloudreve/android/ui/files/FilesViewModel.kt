@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.data.ApiException
+import org.cloudreve.android.data.BackupStats
+import org.cloudreve.android.data.CameraUploadSettings
 import org.cloudreve.android.data.FavoriteEntry
 import org.cloudreve.android.data.FavoritesStore
 import org.cloudreve.android.data.FileRepository
@@ -23,6 +25,7 @@ import org.cloudreve.android.data.ViewPrefs
 import org.cloudreve.android.data.ViewSettings
 import org.cloudreve.android.util.CrUri
 import org.cloudreve.android.work.BackgroundSync
+import org.cloudreve.android.work.CameraUploadWorker
 import org.cloudreve.android.work.UploadStatus
 import org.cloudreve.android.work.UploadWorker
 import java.io.File
@@ -70,6 +73,8 @@ data class FilesUiState(
     val uploads: List<UploadStatus> = emptyList(),
     /** Periodic camera backup / folder mirror runs in progress. */
     val backgroundSyncs: List<BackgroundSync.Status> = emptyList(),
+    /** Photo backup standing; null while off, unpermitted or not yet computed. */
+    val backupStats: BackupStats.Stats? = null,
     /** Files being fetched for open/download: path to fraction (null = size unknown). */
     val downloading: Map<String, Float?> = emptyMap(),
     /** Non-null while the search UI is open (even with an empty query). */
@@ -92,6 +97,20 @@ data class FilesUiState(
     /** Category listings mix folders; the row subtitle names each file's folder. */
     val virtual: Boolean get() = category != null
     val inTrash: Boolean get() = category == Category.TRASH
+    val backupRunning: Boolean get() = backgroundSyncs.any { it.kind == BackgroundSync.Kind.CAMERA }
+
+    /**
+     * "24 items" for the top bar; "50+ items" while more pages remain, since
+     * the cursor-paginated API gives no total. Null while nothing is loaded.
+     */
+    val itemCountLabel: String?
+        get() {
+            if (loading && files.isEmpty()) return null
+            val n = files.size
+            if (n == 0 && nextToken == null) return null
+            val more = if (nextToken != null) "+" else ""
+            return "${"%,d".format(n)}$more item${if (n == 1 && more.isEmpty()) "" else "s"}"
+        }
     /** Effective display mode: galleries keep their own preference. */
     val effectiveMode: ViewMode get() = if (category?.gallery == true) view.galleryMode else view.mode
     val folderName: String
@@ -105,6 +124,8 @@ class FilesViewModel(
     private val favorites: FavoritesStore,
     private val viewSettings: ViewSettings,
     private val workManager: WorkManager,
+    private val backupStats: BackupStats,
+    private val cameraSettings: CameraUploadSettings,
     /** Invoked when the server no longer accepts our session; the caller returns to login. */
     private val onSessionExpired: suspend () -> Unit,
 ) : ViewModel() {
@@ -128,7 +149,10 @@ class FilesViewModel(
 
     init {
         loadRecent()
+        loadBackupStats()
         observeUploads()
+        // Settings toggles (enable, include videos, folder) change the numbers.
+        viewModelScope.launch { cameraSettings.snapshot.collect { loadBackupStats() } }
         viewModelScope.launch {
             favorites.entries.collect { list ->
                 _state.value = _state.value.copy(favorites = list)
@@ -255,6 +279,13 @@ class FilesViewModel(
     fun goHome() {
         _state.value = _state.value.copy(home = true, currentUri = CrUri.MY_PREFIX, selected = emptySet())
         loadRecent()
+        loadBackupStats()
+    }
+
+    /** Jump straight to a folder by URI (used by the backup card). */
+    fun openFolder(uri: String) {
+        _state.value = _state.value.copy(home = false, currentUri = uri)
+        refresh()
     }
 
     fun openMyFiles() {
@@ -265,6 +296,25 @@ class FilesViewModel(
     fun openCategory(category: Category) {
         _state.value = _state.value.copy(home = false, currentUri = category.uri)
         refresh()
+    }
+
+    fun loadBackupStats() {
+        viewModelScope.launch {
+            val stats = runCatching { backupStats.compute() }.getOrNull()
+            _state.value = _state.value.copy(backupStats = stats)
+        }
+    }
+
+    fun retryFailedBackups(context: Context) {
+        viewModelScope.launch {
+            cameraSettings.clearFailed()
+            CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly)
+            loadBackupStats()
+        }
+    }
+
+    fun backUpNow(context: Context) {
+        viewModelScope.launch { CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly) }
     }
 
     /** Newest files across the drive for the home page's Recent strip. */
@@ -289,8 +339,13 @@ class FilesViewModel(
 
     private fun observeUploads() {
         viewModelScope.launch {
+            var wasRunning = false
             workManager.getWorkInfosByTagFlow(BackgroundSync.TAG).collect { infos ->
-                _state.value = _state.value.copy(backgroundSyncs = infos.mapNotNull(BackgroundSync::statusOf))
+                val syncs = infos.mapNotNull(BackgroundSync::statusOf)
+                _state.value = _state.value.copy(backgroundSyncs = syncs)
+                val running = syncs.any { it.kind == BackgroundSync.Kind.CAMERA }
+                if (wasRunning && !running) loadBackupStats()
+                wasRunning = running
             }
         }
         viewModelScope.launch {

@@ -98,6 +98,16 @@ class CameraUploadSettings(private val context: Context) {
         }
     }
 
+    /** Forget permanent failures so the next run tries them again. */
+    suspend fun clearFailed() {
+        context.cameraUploadStore.edit { it.remove(Keys.failedIds) }
+    }
+
+    /** A run finished (even with nothing to do); the stats card shows this as "Last run". */
+    suspend fun markRun() {
+        context.cameraUploadStore.edit { it[Keys.lastSyncAt] = System.currentTimeMillis() }
+    }
+
     private fun Set<String>.bounded(): Set<String> =
         if (size <= MAX_TRACKED_IDS) this else this.drop(size - MAX_TRACKED_IDS).toSet()
 

@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import org.cloudreve.android.CloudreveApp
+import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.data.CameraUploadSettings
+import org.cloudreve.android.ui.files.transfers.PhotoBackupCard
 import org.cloudreve.android.data.SyncFolderSettings
 import org.cloudreve.android.work.CameraUploadWorker
 import org.cloudreve.android.work.SyncFolderWorker
@@ -128,6 +131,19 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             SectionLabel("Photo backup")
+            val stats by produceState<BackupStats.Stats?>(initialValue = null, cameraSnap) {
+                value = runCatching { app.backupStats.compute() }.getOrNull()
+            }
+            stats?.let {
+                PhotoBackupCard(
+                    stats = it,
+                    running = false,
+                    onSyncNow = { CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true) },
+                    onRetryFailed = { scope.launch { camera.clearFailed(); CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true) } },
+                    onOpenFolder = {},
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
             SwitchRow(
                 title = "Back up new photos & videos",
                 subtitle = cameraSnap?.lastSyncAt?.takeIf { it > 0 }?.let { "Last backup ${formatDateTime(it)}" },

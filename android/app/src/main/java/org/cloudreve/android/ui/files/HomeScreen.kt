@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.cloudreve.android.api.FileObject
+import org.cloudreve.android.ui.files.transfers.PhotoBackupCard
 import org.cloudreve.android.util.CrUri
 
 /**
@@ -73,6 +74,9 @@ fun HomeScreen(
     onOpenOffline: () -> Unit,
     onOpenTrash: () -> Unit,
     onFileMore: (FileObject) -> Unit,
+    onBackUpNow: () -> Unit,
+    onRetryFailedBackups: () -> Unit,
+    onOpenFolder: (String) -> Unit,
 ) {
     // Home has no top app bar, so the Scaffold gives it no top inset: take the
     // status bar height here or the search field draws under the clock.
@@ -88,6 +92,16 @@ fun HomeScreen(
         // Background work the user did not start right now still deserves a line.
         if (state.uploads.isNotEmpty() || state.backgroundSyncs.isNotEmpty()) {
             ActivityCard(state, onOpenUploads = onOpenRecent)
+        }
+        state.backupStats?.let { stats ->
+            PhotoBackupCard(
+                stats = stats,
+                running = state.backupRunning,
+                onSyncNow = onBackUpNow,
+                onRetryFailed = onRetryFailedBackups,
+                onOpenFolder = { onOpenFolder(stats.remoteFolder) },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
         }
 
         SectionHeader("Recent", action = if (state.recent.isNotEmpty()) "See all" to onOpenRecent else null)

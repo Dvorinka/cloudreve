@@ -176,6 +176,7 @@ internal fun FolderTopBar(
 @Composable
 internal fun SelectionTopBar(
     count: Int,
+    total: Int,
     inTrash: Boolean,
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
@@ -185,7 +186,7 @@ internal fun SelectionTopBar(
     onRestore: () -> Unit,
 ) {
     TopAppBar(
-        title = { Text("$count selected") },
+        title = { Text("$count of $total selected") },
         navigationIcon = {
             IconButton(onClick = onClose) {
                 Icon(Icons.Default.Close, contentDescription = "Clear selection")

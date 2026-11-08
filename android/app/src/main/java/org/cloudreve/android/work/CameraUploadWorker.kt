@@ -19,6 +19,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import org.cloudreve.android.CloudreveApp
+import org.cloudreve.android.data.ApiException
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
@@ -59,12 +60,23 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
                 } finally {
                     tmp.delete()
                 }
-            } catch (_: Exception) {
+            } catch (e: ApiException) {
+                if (e.code == CODE_OBJECT_EXISTS) {
+                    // A same-named photo is already in the folder (earlier run, another
+                    // device, re-enabled backup): that is the outcome we wanted.
+                    settings.markSynced(item.id, item.dateAddedSec)
+                } else {
+                    android.util.Log.w(TAG, "backup of ${item.name} failed", e)
+                    settings.markFailed(item.id)
+                }
+            } catch (e: Exception) {
                 // Permanently skipped: retried MediaStore rows that keep
                 // failing would otherwise block every later photo.
+                android.util.Log.w(TAG, "backup of ${item.name} failed", e)
                 settings.markFailed(item.id)
             }
         }
+        settings.markRun()
         return Result.success()
     }
 
@@ -146,6 +158,8 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
     }
 
     companion object {
+        private const val TAG = "CameraUpload"
+        private const val CODE_OBJECT_EXISTS = 40004 // pkg/serializer/error.go
         private const val WORK_NAME = "camera_upload_periodic"
         private const val WORK_ONCE = "camera_upload_once"
         private const val CHANNEL_ID = "camera_upload"

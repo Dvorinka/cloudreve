@@ -112,6 +112,10 @@ Goal: feel like the system Files app.
   the system share sheet; Details sheet (size, location, dates, dimensions)
 - Folder listings cached per path and shown instantly on re-entry while a
   fresh listing loads behind a thin bar
+- Folder and category top bars show the item count ("5 items", "50+ items"
+  while more pages remain); selection reads "3 of 24 selected"
+- Photo backup card on the home page and in Settings: backed up / total on
+  the device, waiting, failed, last run, with Back up now and Retry failed
 - Uploads: byte-level progress in a card above the destination folder's
   files and in a notification with Cancel; the folder refreshes itself
   when the batch lands. The home page shows an activity card for uploads
