@@ -6,7 +6,14 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -266,12 +273,21 @@ fun FilesScreen(
             else -> viewModel.navigateUp()
         }
     }
-    var homeMenuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            when {
-                state.selecting -> SelectionTopBar(
+            val barMode = when {
+                state.selecting -> "select"
+                inSearch -> "search"
+                state.home -> "home"
+                else -> "folder"
+            }
+            AnimatedContent(
+                targetState = barMode,
+                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
+                label = "topBar",
+            ) { mode -> when (mode) {
+                "select" -> SelectionTopBar(
                     count = state.selected.size,
                     inTrash = state.inTrash,
                     onClose = { viewModel.clearSelection() },
@@ -281,13 +297,13 @@ fun FilesScreen(
                     onDelete = { if (state.inTrash) deleteForeverTarget = state.selected.toList() else deleteSelectedOpen = true },
                     onRestore = { viewModel.restore(state.selected.toList()) },
                 )
-                inSearch -> SearchTopBar(
+                "search" -> SearchTopBar(
                     text = state.searchQuery.orEmpty(),
                     onTextChange = { viewModel.search(it) },
                     onClose = { closeSearch() },
                     focus = searchFocus,
                 )
-                state.home -> Unit
+                "home" -> Unit
                 else -> FolderTopBar(
                     title = state.folderName,
                     subtitle = when {
@@ -310,7 +326,7 @@ fun FilesScreen(
                     onFavorites = { favoritesOpen = true },
                     onSettings = onOpenSettings,
                 )
-            }
+            } }
         },
         floatingActionButton = {
             val scrollingDown = rememberScrollingDown(listState, gridState)
@@ -350,29 +366,32 @@ fun FilesScreen(
                         .zIndex(1f),
                 )
             }
-            when {
-                state.home && !inSearch -> Box {
-                    HomeScreen(
-                        state = state,
-                        viewModel = viewModel,
-                        onSearch = { openSearch() },
-                        onMenu = { homeMenuOpen = true },
-                        onOpenFile = { openFile(it) },
-                        onOpenMyFiles = { viewModel.openMyFiles() },
-                        onOpenRecent = { viewModel.openCategory(Category.RECENT) },
-                        onOpenCategory = { viewModel.openCategory(it) },
-                        onOpenOffline = { favoritesOpen = true },
-                        onOpenTrash = { viewModel.openCategory(Category.TRASH) },
-                        onFileMore = { sheetTarget = it },
-                    )
-                    DropdownMenu(expanded = homeMenuOpen, onDismissRequest = { homeMenuOpen = false }, modifier = Modifier.padding(start = 16.dp)) {
-                        DropdownMenuItem(
-                            text = { Text("Settings") },
-                            leadingIcon = { Icon(Icons.Default.Settings, null) },
-                            onClick = { homeMenuOpen = false; onOpenSettings() },
-                        )
-                    }
-                }
+            // One fade per place (home, a folder, a category, search); state changes within a
+            // place (loading, empty, revalidating) swap without animation so nothing flickers.
+            val place = when {
+                inSearch -> "search"
+                state.home -> "home"
+                else -> state.currentUri
+            }
+            AnimatedContent(
+                targetState = place,
+                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) },
+                label = "content",
+            ) { shownPlace -> when {
+                shownPlace != place -> Box(Modifier.fillMaxSize()) // outgoing frame: fade on empty surface
+                state.home && !inSearch -> HomeScreen(
+                    state = state,
+                    viewModel = viewModel,
+                    onSearch = { openSearch() },
+                    onOpenSettings = onOpenSettings,
+                    onOpenFile = { openFile(it) },
+                    onOpenMyFiles = { viewModel.openMyFiles() },
+                    onOpenRecent = { viewModel.openCategory(Category.RECENT) },
+                    onOpenCategory = { viewModel.openCategory(it) },
+                    onOpenOffline = { favoritesOpen = true },
+                    onOpenTrash = { viewModel.openCategory(Category.TRASH) },
+                    onFileMore = { sheetTarget = it },
+                )
                 inSearch -> SearchResults(
                     state = state,
                     viewModel = viewModel,
@@ -417,7 +436,7 @@ fun FilesScreen(
                 }
                 state.effectiveMode == ViewMode.GRID -> FileGrid(state, viewModel, gridState, ::actionsFor)
                 else -> FileList(state, viewModel, listState, ::actionsFor)
-            }
+            } }
         }
     }
 
@@ -432,7 +451,14 @@ fun FilesScreen(
         )
     }
 
-    preview?.let { (files, index) ->
+    var lastPreview by remember { mutableStateOf(preview) }
+    if (preview != null) lastPreview = preview
+    AnimatedVisibility(
+        visible = preview != null,
+        enter = fadeIn(tween(220)) + scaleIn(tween(260), initialScale = 0.94f),
+        exit = fadeOut(tween(180)) + scaleOut(tween(200), targetScale = 0.96f),
+    ) {
+      lastPreview?.let { (files, index) ->
         PreviewScreen(
             files = files,
             startIndex = index,
@@ -443,6 +469,7 @@ fun FilesScreen(
             onOpenWith = { openWithSystemApp(it) },
             onDelete = { preview = null; deleteTarget = it },
         )
+      }
     }
 
     if (addSheetOpen) {
@@ -512,7 +539,14 @@ fun FilesScreen(
         )
     }
 
-    movePick?.let { (paths, copy) ->
+    var lastPick by remember { mutableStateOf(movePick) }
+    if (movePick != null) lastPick = movePick
+    AnimatedVisibility(
+        visible = movePick != null,
+        enter = slideInVertically(tween(260)) { it / 4 } + fadeIn(tween(200)),
+        exit = slideOutVertically(tween(200)) { it / 4 } + fadeOut(tween(160)),
+    ) {
+      lastPick?.let { (paths, copy) ->
         FolderPicker(
             title = if (copy) "Copy to" else "Move to",
             confirmLabel = if (copy) "Copy to" else "Move to",
@@ -526,6 +560,7 @@ fun FilesScreen(
             },
             onDismiss = { movePick = null },
         )
+      }
     }
 
     if (mkdirOpen) {
@@ -595,7 +630,11 @@ fun FilesScreen(
         )
     }
 
-    if (favoritesOpen) {
+    AnimatedVisibility(
+        visible = favoritesOpen,
+        enter = slideInHorizontally(tween(260)) { it / 3 } + fadeIn(tween(200)),
+        exit = slideOutHorizontally(tween(200)) { it / 3 } + fadeOut(tween(160)),
+    ) {
         OfflineScreen(
             favorites = state.favorites,
             onBack = { favoritesOpen = false },

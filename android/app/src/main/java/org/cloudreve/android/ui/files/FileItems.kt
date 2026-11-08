@@ -1,5 +1,7 @@
 package org.cloudreve.android.ui.files
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -25,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,7 +37,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import org.cloudreve.android.api.FileObject
 
 /** Gestures a row or tile responds to. [onMore] is null for rows without a menu (search hits). */
@@ -80,7 +85,7 @@ fun FileThumb(
     ) {
         if (thumbUrl != null) {
             SubcomposeAsyncImage(
-                model = thumbUrl,
+                model = ImageRequest.Builder(LocalContext.current).data(thumbUrl).crossfade(180).build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -126,7 +131,10 @@ fun FileListItem(
     subtitle: String = subtitleFor(file.size, file.updatedAt, file.isFolder),
 ) {
     val shape = RoundedCornerShape(16.dp)
-    val background = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+    val background by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+        animationSpec = tween(160), label = "rowBg",
+    )
     Row(
         Modifier
             .fillMaxWidth()

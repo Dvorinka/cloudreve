@@ -27,9 +27,12 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +40,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,7 +63,7 @@ fun HomeScreen(
     state: FilesUiState,
     viewModel: FilesViewModel,
     onSearch: () -> Unit,
-    onMenu: () -> Unit,
+    onOpenSettings: () -> Unit,
     onOpenFile: (FileObject) -> Unit,
     onOpenMyFiles: () -> Unit,
     onOpenRecent: () -> Unit,
@@ -71,7 +78,7 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = 96.dp),
     ) {
-        SearchField(onSearch, onMenu)
+        SearchField(onSearch, onOpenSettings)
 
         // Background work the user did not start right now still deserves a line.
         if (state.uploads.isNotEmpty() || state.backgroundSyncs.isNotEmpty()) {
@@ -193,7 +200,8 @@ private fun folderNameOf(uri: String): String {
 }
 
 @Composable
-private fun SearchField(onSearch: () -> Unit, onMenu: () -> Unit) {
+private fun SearchField(onSearch: () -> Unit, onOpenSettings: () -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
     Surface(
         onClick = onSearch,
         shape = RoundedCornerShape(28.dp),
@@ -204,8 +212,18 @@ private fun SearchField(onSearch: () -> Unit, onMenu: () -> Unit) {
             .height(56.dp),
     ) {
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onMenu) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            // The menu lives inside this Box so it drops down from the button it belongs to.
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Settings") },
+                        leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                        onClick = { menuOpen = false; onOpenSettings() },
+                    )
+                }
             }
             Text(
                 "Search files",

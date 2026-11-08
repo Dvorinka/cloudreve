@@ -532,24 +532,24 @@ def cmd_login() -> None:
         sh("install", "-r", str(apk))
     sh("shell", "pm", "clear", pkg)
     sh("shell", "am", "start", "-n", f"{pkg}/org.cloudreve.android.MainActivity")
-    node = re.compile(r'<node[^>]*?class="([^"]+)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
+    node = re.compile(r'<node[^>]*?text="([^"]*)"[^>]*?class="([^"]+)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
     fields: list[tuple[int, int]] = []
-    buttons: list[tuple[int, int]] = []
+    button: tuple[int, int] | None = None
     for _ in range(20):  # the form takes a moment to appear after a cold start
         time.sleep(1)
         dump = sh("exec-out", "uiautomator", "dump", "/dev/tty").stdout
-        fields, buttons = [], []
-        for cls, l, t, r, b in node.findall(dump):
+        fields, button = [], None
+        for text, cls, l, t, r, b in node.findall(dump):
             centre = ((int(l) + int(r)) // 2, (int(t) + int(b)) // 2)
             if cls.endswith("EditText"):
                 fields.append(centre)
-            elif cls.endswith("Button"):
-                buttons.append(centre)
-        if len(fields) >= 3 and buttons:
+            # Match the label, not "first button": the password-eye toggle is a Button too.
+            elif cls.endswith("Button") and text.strip().lower() == "sign in":
+                button = centre
+        if len(fields) >= 3 and button:
             break
     else:
         sys.exit("login form not found on screen; is the app showing the login screen?")
-    button = buttons[0]
     for (x, y), text in zip(fields, (EMULATOR_URL, DEV_USER, DEV_PASSWORD)):
         sh("shell", "input", "tap", str(x), str(y))
         time.sleep(0.4)

@@ -44,12 +44,14 @@ class LoginViewModel(
     /** Abandon the pending 2FA challenge and return to the password form. */
     fun cancelTwoFactor() = _state.value.let { _state.value = it.copy(twoFactorSessionId = null, otp = "", error = null) }
 
+
     fun login() {
-        val s = _state.value
-        if (s.serverUrl.isBlank() || s.email.isBlank() || s.password.isBlank()) {
-            _state.value = s.copy(error = "Fill in server, email and password")
+        val s0 = _state.value
+        if (s0.serverUrl.isBlank() || s0.email.isBlank() || s0.password.isBlank()) {
+            _state.value = s0.copy(error = "Fill in server, email and password")
             return
         }
+        val s = s0
         _state.value = s.copy(loading = true, error = null)
         val serverUrl = normalizeServerUrl(s.serverUrl)
         viewModelScope.launch {
@@ -72,9 +74,19 @@ class LoginViewModel(
                     else -> throw Exception(body.msg.ifBlank { "Login failed" })
                 }
             } catch (e: Exception) {
-                _state.value = _state.value.copy(loading = false, error = e.message ?: "Login failed")
+                _state.value = _state.value.copy(loading = false, error = describe(e))
             }
         }
+    }
+
+    /** Network failures in words a person can act on, instead of OkHttp's internals. */
+    private fun describe(e: Exception): String = when {
+        e is javax.net.ssl.SSLException || e.message?.contains("TLS", ignoreCase = true) == true ->
+            "Couldn't make a secure connection. If the server uses plain HTTP, start the address with http://"
+        e is java.net.UnknownHostException -> "Server not found. Check the address."
+        e is java.net.ConnectException -> "Couldn't reach the server. Is it online?"
+        e is java.net.SocketTimeoutException -> "The server took too long to respond."
+        else -> e.message ?: "Login failed"
     }
 
     /** Second step of a password login: submit the TOTP code for the pending 2FA session. */
@@ -127,11 +139,12 @@ class LoginViewModel(
      * server URL is missing.
      */
     fun startOAuth(): String? {
-        val s = _state.value
-        if (s.serverUrl.isBlank()) {
-            _state.value = s.copy(error = "Enter the server URL first")
+        val s0 = _state.value
+        if (s0.serverUrl.isBlank()) {
+            _state.value = s0.copy(error = "Enter the server URL first")
             return null
         }
+        val s = s0.copy(serverUrl = normalizeServerUrl(s0.serverUrl))
         val verifier = randomBase64Url(48)
         val challenge = base64Url(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray()))
         val state = randomBase64Url(24)

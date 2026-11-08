@@ -42,9 +42,9 @@ class FormatTest {
 
     @Test
     fun `subtitle combines size and date and omits size for folders`() {
-        assertEquals("12.6 kB • 10:30", subtitleFor(12_870, at(2026, 11, 7), isFolder = false))
-        assertEquals("10:30", subtitleFor(0, at(2026, 11, 7), isFolder = true))
-        assertEquals("852 B", subtitleFor(852, "", isFolder = false))
+        assertEquals("12.6 kB • 10:30", subtitleFor(12_870, at(2026, 11, 7), isFolder = false, now = now))
+        assertEquals("10:30", subtitleFor(0, at(2026, 11, 7), isFolder = true, now = now))
+        assertEquals("852 B", subtitleFor(852, "", isFolder = false, now = now))
     }
 
     @Test

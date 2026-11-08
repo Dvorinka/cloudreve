@@ -17,6 +17,11 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -211,7 +216,13 @@ fun App() {
                         onOpenSettings = { nav.navigate("settings") },
                     )
                 }
-                composable("settings") {
+                composable(
+                    "settings",
+                    enterTransition = { slideInHorizontally(tween(260)) { it / 3 } + fadeIn(tween(200)) },
+                    exitTransition = { fadeOut(tween(160)) },
+                    popEnterTransition = { fadeIn(tween(200)) },
+                    popExitTransition = { slideOutHorizontally(tween(220)) { it / 3 } + fadeOut(tween(160)) },
+                ) {
                     SettingsScreen(
                         onBack = { nav.popBackStack() },
                         onSignOut = signOut,
