@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -72,10 +73,13 @@ fun HomeScreen(
     onOpenTrash: () -> Unit,
     onFileMore: (FileObject) -> Unit,
 ) {
+    // Home has no top app bar, so the Scaffold gives it no top inset: take the
+    // status bar height here or the search field draws under the clock.
     Column(
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .statusBarsPadding()
             .padding(bottom = 96.dp),
     ) {
         SearchField(onSearch, onOpenSettings)
