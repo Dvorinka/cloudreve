@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -15,6 +17,7 @@ import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.data.ApiException
 import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.data.CameraUploadSettings
+import org.cloudreve.android.data.backup.BackupLedger
 import org.cloudreve.android.data.FavoriteEntry
 import org.cloudreve.android.data.FavoritesStore
 import org.cloudreve.android.data.FileRepository
@@ -126,6 +129,7 @@ class FilesViewModel(
     private val workManager: WorkManager,
     private val backupStats: BackupStats,
     private val cameraSettings: CameraUploadSettings,
+    private val backupLedger: BackupLedger,
     /** Invoked when the server no longer accepts our session; the caller returns to login. */
     private val onSessionExpired: suspend () -> Unit,
 ) : ViewModel() {
@@ -305,9 +309,13 @@ class FilesViewModel(
         }
     }
 
+    /** Photos the server refused, or that went missing from it, become pending again. */
     fun retryFailedBackups(context: Context) {
         viewModelScope.launch {
-            cameraSettings.clearFailed()
+            withContext(Dispatchers.IO) {
+                backupLedger.forget(BackupLedger.State.REJECTED)
+                backupLedger.forget(BackupLedger.State.MISSING)
+            }
             CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly)
             loadBackupStats()
         }

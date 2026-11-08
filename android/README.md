@@ -62,10 +62,21 @@ before the first start to get video, PDF and document thumbnails.
   which works on every server; the full-text endpoint is off unless the
   admin enabled FTS). Scope chips (this folder / everywhere) and type chips
   (images, videos, audio, documents); result rows show the file's folder
-- Camera auto-upload: periodic WorkManager sync of new MediaStore
-  photos/videos to a configurable remote folder, Wi-Fi-only constraint,
-  media-permission gated toggle, synced/failed ID dedup, manual
-  "sync now" — settings dialog in the files top bar
+- Photo backup (`work/CameraUploadWorker`, `data/backup/`): every run scans
+  MediaStore, subtracts what the ledger accounts for and uploads the rest
+  newest-first until nothing is left, chaining a continuation after 30 min.
+  Files go to `<root>/yyyy/MM` by capture date (EXIF, else modification
+  time). While a file is staged its SHA-256 is computed and sent with the
+  upload session; the server links identical bytes it already has. A photo
+  counts as UPLOADED only once the server lists it with the same size. A
+  name collision is settled against the remote file: same size is the same
+  photo (how uploads from earlier builds in the flat root are adopted),
+  otherwise ours goes up as `name~<hash8>.ext`. The ledger is a SQLite table
+  keyed by (content hash, MediaStore row) with no cap and no date
+  watermark; once a day the run checks every UPLOADED row is still on the
+  server and flags the rest as MISSING for the user to re-upload. Network
+  errors retry the run; only verdicts about one file mark it REJECTED.
+  `dev/gallery.py` seeds a bulk gallery on the emulator to exercise it.
 - Offline favorites: "Keep offline" in a file's menu downloads to
   `filesDir/offline/` and registers the entry (DataStore JSON);
   star icon in the top bar opens the offline list — open via
@@ -114,8 +125,9 @@ Goal: feel like the system Files app.
   fresh listing loads behind a thin bar
 - Folder and category top bars show the item count ("5 items", "50+ items"
   while more pages remain); selection reads "3 of 24 selected"
-- Photo backup card on the home page and in Settings: backed up / total on
-  the device, waiting, failed, last run, with Back up now and Retry failed
+- Photo backup card on the home page and in Settings: safely uploaded /
+  total on the device, waiting, missing on the server, failed, last run,
+  with Back up now and Retry / Re-upload
 - Uploads: byte-level progress in a card above the destination folder's
   files and in a notification with Cancel; the folder refreshes itself
   when the batch lands. The home page shows an activity card for uploads

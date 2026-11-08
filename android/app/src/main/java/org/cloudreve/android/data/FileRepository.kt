@@ -22,8 +22,15 @@ class ApiException(val code: Int, message: String) : Exception(message) {
     companion object {
         /** Server envelope code for "login required" (session expired or revoked). */
         const val CODE_LOGIN_REQUIRED = 401
+        /** A file or folder with that name is already there (pkg/serializer/error.go). */
+        const val CODE_OBJECT_EXISTS = 40004
     }
+
+    /** Server trouble or an expired session, as opposed to a verdict on one request. */
+    val isTransient: Boolean get() = code in 500..599 || code == 429 || code == CODE_LOGIN_REQUIRED
 }
+
+private const val CODE_OBJECT_EXISTS = ApiException.CODE_OBJECT_EXISTS
 
 class FileRepository(private val api: ApiClient) {
 
@@ -156,6 +163,7 @@ class FileRepository(private val api: ApiClient) {
         lastModified: Long,
         mimeType: String,
         overwrite: Boolean = false,
+        hash: String = "",
     ): UploadSessionResponse =
         api.service().createUploadSession(
             CreateUploadSessionRequest(
@@ -166,8 +174,49 @@ class FileRepository(private val api: ApiClient) {
                 // "version" tells the server to add a new version to the existing
                 // file instead of failing with 40004; it is what the web uploader sends.
                 entityType = if (overwrite) "version" else "",
+                hash = hash,
             )
         ).unwrap()
+
+    /** Creates [uri] and any missing ancestors; folders that already exist are fine. */
+    suspend fun mkdirs(uri: String) {
+        if (CrUri.isRoot(uri)) return
+        mkdirs(CrUri.parent(uri))
+        try {
+            mkdir(uri)
+        } catch (e: ApiException) {
+            if (e.code != CODE_OBJECT_EXISTS) throw e
+        }
+    }
+
+    /** The file at exactly [uri], or null. One name-filtered listing of the parent. */
+    suspend fun stat(uri: String): FileObject? {
+        val parent = CrUri.parent(uri)
+        val name = CrUri.fileName(uri)
+        var token: String? = null
+        do {
+            val page = list("$parent?name=${java.net.URLEncoder.encode(name, "UTF-8")}", pageToken = token, pageSize = 200)
+            page.files.firstOrNull { it.name == name && !it.isFolder }?.let { return it }
+            token = page.pagination.nextToken
+        } while (!token.isNullOrEmpty())
+        return null
+    }
+
+    /**
+     * Every file under [rootUri], recursively, as `canonical uri -> size`. The `type=file`
+     * search walks the whole subtree server-side, so this is one request per 500
+     * files rather than one per folder.
+     */
+    suspend fun indexFiles(rootUri: String): Map<String, Long> {
+        val out = HashMap<String, Long>()
+        var token: String? = null
+        do {
+            val page = list("$rootUri?type=file", pageToken = token, pageSize = 500)
+            for (f in page.files) if (!f.isFolder && f.path.isNotEmpty()) out[CrUri.canonical(f.path)] = f.size
+            token = page.pagination.nextToken
+        } while (!token.isNullOrEmpty())
+        return out
+    }
 
     /**
      * Streams a local file through the upload-session flow: create session,
@@ -179,6 +228,8 @@ class FileRepository(private val api: ApiClient) {
         remoteParentUri: String,
         remoteName: String = localFile.name,
         overwrite: Boolean = false,
+        hash: String = "",
+        lastModified: Long = localFile.lastModified(),
         onProgress: (sent: Long, total: Long) -> Unit = { _, _ -> },
     ): UploadSessionResponse {
         val targetUri = CrUri.join(remoteParentUri, remoteName)
@@ -187,9 +238,10 @@ class FileRepository(private val api: ApiClient) {
         val session = createUploadSession(
             uri = targetUri,
             size = localFile.length(),
-            lastModified = localFile.lastModified(),
+            lastModified = lastModified,
             mimeType = mime,
             overwrite = overwrite,
+            hash = hash,
         )
 
         if (session.rapidUploaded) return session

@@ -173,6 +173,9 @@ data class CreateUploadSessionRequest(
     @SerialName("policy_id") val policyId: String = "",
     @SerialName("entity_type") val entityType: String = "",
     val previous: String = "",
+    /** Client-computed SHA-256 hex. Servers with upload_dedup link identical bytes
+     *  already in the account instead of receiving them (rapid_uploaded). */
+    val hash: String = "",
 )
 
 @Serializable

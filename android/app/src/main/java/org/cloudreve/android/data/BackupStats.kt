@@ -6,30 +6,43 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.cloudreve.android.data.backup.BackupLedger
+import org.cloudreve.android.data.backup.BackupLedger.State
+import org.cloudreve.android.data.backup.MediaScanner
 
 /**
- * Where photo backup stands, computed from the same inputs the worker uses:
- * MediaStore for what is on the device, the settings store for what has been
- * sent or given up on. Cheap enough to run on every home-page load (ids and
- * dates only, no file access).
+ * Where photo backup stands: every MediaStore row, classified by the ledger
+ * entry that describes its current content. Rows with no entry are pending;
+ * there is no shortcut by date or position. Ids and sizes only, no file
+ * access, so cheap enough for every home-page load.
  */
-class BackupStats(private val context: Context, private val settings: CameraUploadSettings) {
+class BackupStats(
+    context: Context,
+    private val settings: CameraUploadSettings,
+    private val ledger: BackupLedger,
+) {
+    private val context = context.applicationContext
+    private val scanner = MediaScanner(context)
 
     data class Stats(
+        /** Photos and videos currently on the device. */
         val total: Int,
-        val synced: Int,
+        /** On the server, upload completed and size confirmed. Safe to free up. */
+        val uploaded: Int,
         val pending: Int,
+        /** Refused by the server or unreadable; retried only on request. */
         val failed: Int,
+        /** Were uploaded; the last check no longer found them on the server. */
+        val missing: Int,
         val lastRunAt: Long,
         val remoteFolder: String,
         /** Backup is Wi-Fi only and the device is on a metered connection right now. */
         val waitingForWifi: Boolean,
     ) {
-        val fraction: Float get() = if (total > 0) synced.toFloat() / total else 1f
-        val done: Boolean get() = pending == 0 && failed == 0
+        val fraction: Float get() = if (total > 0) uploaded.toFloat() / total else 1f
+        val done: Boolean get() = pending == 0 && failed == 0 && missing == 0
     }
 
     /** Null when backup is off or the media permission has not been granted. */
@@ -37,40 +50,27 @@ class BackupStats(private val context: Context, private val settings: CameraUplo
         val snap = settings.snapshotNow()
         if (!snap.enabled || !hasMediaPermission()) return@withContext null
 
-        val synced = settings.syncedIdsNow()
-        val failed = settings.failedIdsNow()
-        val lastTs = settings.lastSyncTsNow()
-
+        val known = ledger.byMediaId()
         var total = 0
+        var uploaded = 0
         var pending = 0
-        var failedOnDevice = 0
-        val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        val types = buildList {
-            add(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE)
-            if (snap.includeVideos) add(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)
-        }
-        val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (${types.joinToString(",") { "?" }})"
-        context.contentResolver.query(
-            collection,
-            arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.DATE_ADDED),
-            selection, types.map { it.toString() }.toTypedArray(), null,
-        )?.use { c ->
-            while (c.moveToNext()) {
-                total++
-                val id = c.getLong(0).toString()
-                when {
-                    id in failed -> failedOnDevice++
-                    // Same rule as the worker's query: at or after the watermark and not
-                    // marked means still to do. Older than the watermark means done.
-                    c.getLong(1) >= lastTs && id !in synced -> pending++
-                }
+        var failed = 0
+        var missing = 0
+        for (row in scanner.scan(snap.includeVideos)) {
+            total++
+            when (ledger.match(known, row.id, row.size, row.dateModified)?.state) {
+                State.UPLOADED -> uploaded++
+                State.REJECTED -> failed++
+                State.MISSING -> missing++
+                null -> pending++
             }
         }
         Stats(
             total = total,
-            synced = total - pending - failedOnDevice,
+            uploaded = uploaded,
             pending = pending,
-            failed = failedOnDevice,
+            failed = failed,
+            missing = missing,
             lastRunAt = snap.lastSyncAt,
             remoteFolder = snap.remoteFolder,
             waitingForWifi = snap.wifiOnly && pending > 0 && isMetered(),

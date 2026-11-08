@@ -3,6 +3,7 @@
 
     dev/gallery.py seed 230      put 230 small PNGs in /sdcard/Pictures/Bulk and index them
     dev/gallery.py count         how many of them MediaStore knows about
+    dev/gallery.py replace 7     give BULK_0007.png different content (same-name collision)
     dev/gallery.py clear         remove them again
 
 Standard library only; needs adb on PATH or ANDROID_HOME set.
@@ -68,6 +69,18 @@ def seed(n: int) -> None:
     print(f"pushed {n}; MediaStore indexes {count()}")
 
 
+def replace(i: int) -> None:
+    """Overwrite BULK_i with different bytes under the same name: a same-name,
+    different-content collision for the backup worker to resolve."""
+    name = f"{PREFIX}{i:04d}.png"
+    with tempfile.TemporaryDirectory() as tmp:
+        Path(tmp, name).write_bytes(png(96, 96, (255 - i % 256, 1, 2)))
+        adb("push", f"{tmp}/{name}", f"{REMOTE_DIR}/{name}", capture=True)
+    adb("shell", "content", "call", "--uri", "content://media/external/file",
+        "--method", "scan_file", "--arg", f"/storage/emulated/0/Pictures/Bulk/{name}", capture=True)
+    print(f"replaced {name}")
+
+
 def clear() -> None:
     adb("shell", "rm", "-rf", REMOTE_DIR)
     rescan()
@@ -75,12 +88,14 @@ def clear() -> None:
 
 
 def main(argv: list[str]) -> None:
-    if not argv or argv[0] not in ("seed", "count", "clear"):
+    if not argv or argv[0] not in ("seed", "count", "clear", "replace"):
         sys.exit(__doc__)
     if argv[0] == "seed":
         seed(int(argv[1]) if len(argv) > 1 else 230)
     elif argv[0] == "count":
         print(count())
+    elif argv[0] == "replace":
+        replace(int(argv[1]))
     else:
         clear()
 

@@ -65,7 +65,7 @@ fun PhotoBackupCard(
                 Column(Modifier.weight(1f)) {
                     Text("Photo backup", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "${"%,d".format(stats.synced)} of ${"%,d".format(stats.total)} backed up to ${CrUri.displayName(stats.remoteFolder)}",
+                        "${"%,d".format(stats.uploaded)} of ${"%,d".format(stats.total)} safely in ${CrUri.displayName(stats.remoteFolder)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -93,11 +93,11 @@ fun PhotoBackupCard(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (stats.failed > 0) {
+                if (stats.failed + stats.missing > 0) {
                     TextButton(onClick = onRetryFailed, enabled = !running) {
                         Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Retry ${stats.failed} failed")
+                        Text(if (stats.missing > 0 && stats.failed == 0) "Re-upload ${stats.missing}" else "Retry ${stats.failed + stats.missing}")
                     }
                 }
                 TextButton(onClick = onSyncNow, enabled = !running) {
@@ -121,8 +121,9 @@ private fun statusLine(s: BackupStats.Stats, running: Boolean): String {
         running -> parts += "Backing up now"
         s.pending > 0 && s.waitingForWifi -> parts += "${"%,d".format(s.pending)} waiting for Wi-Fi"
         s.pending > 0 -> parts += "${"%,d".format(s.pending)} waiting"
-        s.failed == 0 -> parts += "Everything is backed up"
+        s.done -> parts += "Everything is backed up"
     }
+    if (s.missing > 0) parts += "${s.missing} missing on the server"
     if (s.failed > 0) parts += "${s.failed} failed"
     if (s.lastRunAt > 0) {
         val iso = OffsetDateTime.ofInstant(Instant.ofEpochMilli(s.lastRunAt), ZoneId.systemDefault()).toString()

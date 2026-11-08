@@ -39,10 +39,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.cloudreve.android.CloudreveApp
 import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.data.CameraUploadSettings
+import org.cloudreve.android.data.backup.BackupLedger
 import org.cloudreve.android.ui.files.transfers.PhotoBackupCard
 import org.cloudreve.android.data.SyncFolderSettings
 import org.cloudreve.android.work.CameraUploadWorker
@@ -139,7 +142,15 @@ fun SettingsScreen(
                     stats = it,
                     running = false,
                     onSyncNow = { CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true) },
-                    onRetryFailed = { scope.launch { camera.clearFailed(); CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true) } },
+                    onRetryFailed = {
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                app.backupLedger.forget(BackupLedger.State.REJECTED)
+                                app.backupLedger.forget(BackupLedger.State.MISSING)
+                            }
+                            CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
+                        }
+                    },
                     onOpenFolder = {},
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )

@@ -31,6 +31,15 @@ object CrUri {
 
     fun isRoot(uri: String): Boolean = uri.trimEnd('/') == MY_PREFIX
 
+    /**
+     * One spelling for comparing URIs from different sources: the server leaves
+     * `(` and `'` bare where [join] percent-encodes them. Decoded, no query part.
+     */
+    fun canonical(uri: String): String {
+        val rel = uri.substringBefore('?').removePrefix(MY_PREFIX).trim('/')
+        return if (rel.isEmpty()) MY_PREFIX else MY_PREFIX + "/" + URLDecoder.decode(rel, "UTF-8")
+    }
+
     const val ROOT_LABEL = "My files"
 
     /** Display name of the folder at [uri]: its last segment, or "My files" at the root. */

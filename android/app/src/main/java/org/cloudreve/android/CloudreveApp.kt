@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.cloudreve.android.api.ApiClient
 import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.data.CameraUploadSettings
+import org.cloudreve.android.data.backup.BackupLedger
 import org.cloudreve.android.data.FavoritesStore
 import org.cloudreve.android.data.FileRepository
 import org.cloudreve.android.data.SessionManager
@@ -36,6 +37,8 @@ class CloudreveApp : Application() {
         private set
     lateinit var viewSettings: ViewSettings
         private set
+    lateinit var backupLedger: BackupLedger
+        private set
     lateinit var backupStats: BackupStats
         private set
 
@@ -49,6 +52,7 @@ class CloudreveApp : Application() {
         taskNotifySettings = TaskNotifySettings(this)
         syncFolderSettings = SyncFolderSettings(this)
         viewSettings = ViewSettings(this)
-        backupStats = BackupStats(this, cameraUploadSettings)
+        backupLedger = BackupLedger(this)
+        backupStats = BackupStats(this, cameraUploadSettings, backupLedger)
     }
 }
