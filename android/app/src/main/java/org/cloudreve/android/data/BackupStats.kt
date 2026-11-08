@@ -60,9 +60,9 @@ class BackupStats(private val context: Context, private val settings: CameraUplo
                 val id = c.getLong(0).toString()
                 when {
                     id in failed -> failedOnDevice++
-                    // The worker walks media in DATE_ADDED order and remembers the newest it
-                    // finished, so anything newer that it has not marked is still to do.
-                    c.getLong(1) > lastTs && id !in synced -> pending++
+                    // Same rule as the worker's query: at or after the watermark and not
+                    // marked means still to do. Older than the watermark means done.
+                    c.getLong(1) >= lastTs && id !in synced -> pending++
                 }
             }
         }
