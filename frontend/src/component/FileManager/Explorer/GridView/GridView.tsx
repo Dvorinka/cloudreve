@@ -41,6 +41,12 @@ const GridItem = styled(Grid)(() => ({
 
 export const loadingPlaceHolderNumb = 3;
 
+// Path for a "loading more" placeholder row. Every row builds a CrUri from its
+// path (useActionDisplayOpt), so this must parse as a URL. The page token goes
+// in the path segment, percent-encoded: search tokens contain "|" (and tokens
+// may contain "%"), which the URL parser rejects in the host position.
+export const loadingPlaceholderPath = (id: string) => `${CrUriPrefix}placeholder/${encodeURIComponent(id)}`;
+
 const GridView = React.forwardRef(({ ...rest }: GridViewProps, ref) => {
   const { t } = useTranslation("application");
   const fmIndex = useContext(FmIndexContext);
@@ -96,7 +102,7 @@ const GridView = React.forwardRef(({ ...rest }: GridViewProps, ref) => {
                 showThumb={list.Files.length > 0 ? showThumb : mixedType}
                 file={{
                   ...files[0],
-                  path: `${CrUriPrefix}${id}`,
+                  path: loadingPlaceholderPath(id),
                   id: id,
                   first: i == 0,
                   placeholder: true,
