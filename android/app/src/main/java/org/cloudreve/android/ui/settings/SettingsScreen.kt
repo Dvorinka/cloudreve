@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import org.cloudreve.android.CloudreveApp
 import org.cloudreve.android.data.CameraUploadSettings
@@ -160,7 +161,7 @@ fun SettingsScreen(
             SectionLabel("Folder sync")
             SwitchRow(
                 title = "Mirror a local folder",
-                subtitle = syncSnap?.treeUri?.let { "Local: " + android.net.Uri.parse(it).lastPathSegment.orEmpty() }
+                subtitle = syncSnap?.treeUri?.let { "Local: " + it.toUri().lastPathSegment.orEmpty() }
                     ?: "Pick a device folder to keep uploaded",
                 checked = syncSnap?.enabled == true && syncSnap?.treeUri != null,
                 onCheckedChange = { want ->

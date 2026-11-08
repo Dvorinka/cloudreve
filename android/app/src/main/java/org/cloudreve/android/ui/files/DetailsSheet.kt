@@ -46,7 +46,7 @@ fun DetailsSheet(file: FileObject, thumbUrl: String?, onDismiss: () -> Unit) {
         SelectionContainer {
             Column {
                 if (!file.isFolder) DetailRow("Size", "${formatSize(file.size)} (${"%,d".format(file.size)} bytes)")
-                DetailRow("Location", locationOf(file))
+                DetailRow("Location", CrUri.displayPath(CrUri.parent(file.path)))
                 DetailRow("Modified", longDate(file.updatedAt))
                 DetailRow("Created", longDate(file.createdAt))
                 val w = file.metadata?.get("exif:x")
@@ -94,11 +94,6 @@ private fun kindLabel(file: FileObject): String {
         else -> "file"
     }
     return if (ext.isEmpty() || kind == "PDF document") kind.replaceFirstChar { it.uppercase() } else "$ext $kind"
-}
-
-private fun locationOf(file: FileObject): String {
-    val parent = CrUri.parent(file.path).removePrefix(CrUri.MY_PREFIX).trim('/')
-    return if (parent.isEmpty()) "My files" else "My files / " + java.net.URLDecoder.decode(parent, "UTF-8").replace("/", " / ")
 }
 
 private fun longDate(iso: String): String = runCatching {

@@ -96,10 +96,7 @@ data class FilesUiState(
     val effectiveMode: ViewMode get() = if (category?.gallery == true) view.galleryMode else view.mode
     val folderName: String
         get() {
-            category?.let { return it.label }
-            val path = currentUri.removePrefix(CrUri.MY_PREFIX).trim('/')
-            return if (path.isEmpty()) "My files"
-            else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
+            return category?.label ?: CrUri.displayName(currentUri)
         }
 }
 
@@ -388,15 +385,12 @@ class FilesViewModel(
 
     // ---- view preferences -------------------------------------------------
 
-    fun setViewMode(mode: ViewMode) {
-        viewModelScope.launch { viewSettings.setMode(mode) }
-    }
-
     fun toggleViewMode() {
         val s = _state.value
         val next = if (s.effectiveMode == ViewMode.LIST) ViewMode.GRID else ViewMode.LIST
-        if (s.category?.gallery == true) viewModelScope.launch { viewSettings.setGalleryMode(next) }
-        else setViewMode(next)
+        viewModelScope.launch {
+            if (s.category?.gallery == true) viewSettings.setGalleryMode(next) else viewSettings.setMode(next)
+        }
     }
 
     /** Picking the active key again flips the direction, like the Files app. */
@@ -442,7 +436,7 @@ class FilesViewModel(
                     listingCache.remove(dst)
                     val n = paths.size
                     val what = "$n item${if (n == 1) "" else "s"}"
-                    val where = folderLabel(dst)
+                    val where = CrUri.displayName(dst)
                     _state.value = _state.value.copy(
                         selected = emptySet(),
                         snackbar = (if (copy) "Copied $what to $where" else "Moved $what to $where").toMessage(),
@@ -454,11 +448,6 @@ class FilesViewModel(
     }
 
     suspend fun listFolders(uri: String): List<FileObject> = repo.listFolders(uri)
-
-    private fun folderLabel(uri: String): String {
-        val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
-        return if (path.isEmpty()) "My files" else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
-    }
 
     // ---- search -----------------------------------------------------------
     //

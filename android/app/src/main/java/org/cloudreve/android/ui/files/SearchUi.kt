@@ -141,13 +141,12 @@ fun SearchResults(
             state.searchResults.isEmpty() -> Hint(Icons.Outlined.SearchOff, "No files match \"$query\"")
             else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                 items(state.searchResults, key = { it.id + it.path }) { file ->
-                    val parent = CrUri.parent(file.path)
                     FileListItem(
                         file = file,
                         thumbUrl = rememberThumbUrl(viewModel, file),
                         selecting = false,
                         selected = false,
-                        subtitle = "${subtitleFor(file.size, file.updatedAt, file.isFolder)} • ${if (CrUri.isRoot(parent)) "My files" else CrUri.fileName(parent)}",
+                        subtitle = "${subtitleFor(file.size, file.updatedAt, file.isFolder)} • ${CrUri.parentDisplayName(file.path)}",
                         actions = actionsFor(file),
                     )
                 }

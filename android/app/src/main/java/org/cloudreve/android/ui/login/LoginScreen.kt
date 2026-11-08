@@ -1,7 +1,7 @@
 package org.cloudreve.android.ui.login
 
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -189,7 +189,7 @@ private fun PasswordStep(state: LoginUiState, viewModel: LoginViewModel) {
         FilledTonalButton(
             onClick = {
                 viewModel.startOAuth()?.let { url ->
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                 }
             },
             enabled = !state.loading,

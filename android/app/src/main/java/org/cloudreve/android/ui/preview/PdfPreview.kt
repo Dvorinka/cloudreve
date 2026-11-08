@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,8 +28,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.createBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -61,13 +64,13 @@ private fun PdfPages(local: File, onTap: () -> Unit) {
         FullWidthError("Couldn't read this PDF")
         return
     }
-    val widthPx = with(LocalDensity.current) { (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp - 24.dp).roundToPx() }
+    val widthPx = with(LocalDensity.current) { (LocalConfiguration.current.screenWidthDp.dp - 24.dp).roundToPx() }
 
     LazyColumn(
         Modifier
             .fillMaxSize()
             .pointerInput(Unit) { detectTapGestures(onTap = { onTap() }) },
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 12.dp, end = 12.dp, top = chromeTopPadding(), bottom = 24.dp),
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = chromeTopPadding(), bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(document.pageCount) { index ->
@@ -107,7 +110,7 @@ private class PdfDocument private constructor(
         lock.withLock {
             renderer.openPage(index).use { page ->
                 val height = (widthPx.toFloat() * page.height / page.width).toInt().coerceAtLeast(1)
-                Bitmap.createBitmap(widthPx, height, Bitmap.Config.ARGB_8888).also {
+                createBitmap(widthPx, height).also {
                     it.eraseColor(android.graphics.Color.WHITE)
                     page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 }

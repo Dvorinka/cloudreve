@@ -36,6 +36,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -170,7 +171,7 @@ private fun ActivityCard(state: FilesUiState, onOpenUploads: () -> Unit) {
             state.uploads.forEach { u ->
                 ActivityRow(
                     title = if (u.total > 1) "Uploading ${u.index + 1} of ${u.total}" else "Uploading",
-                    detail = u.name.ifEmpty { "Waiting…" } + " • to " + folderNameOf(u.parentUri),
+                    detail = u.name.ifEmpty { "Waiting…" } + " • to " + CrUri.displayName(u.parentUri),
                     fraction = u.fraction,
                 )
             }
@@ -191,16 +192,11 @@ private fun ActivityRow(title: String, detail: String, fraction: Float?) {
         Text(title, style = MaterialTheme.typography.bodyLarge)
         Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (fraction != null) {
-            androidx.compose.material3.LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+            LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
         } else {
-            androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
         }
     }
-}
-
-private fun folderNameOf(uri: String): String {
-    val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
-    return if (path.isEmpty()) "My files" else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
 }
 
 @Composable
@@ -289,7 +285,7 @@ private fun RecentCard(file: FileObject, thumbUrl: String?, onClick: () -> Unit,
             modifier = Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp),
         )
         Text(
-            CrUri.fileName(CrUri.parent(file.path)).ifEmpty { "My files" }.let { if (it == "my") "My files" else it },
+            CrUri.parentDisplayName(file.path),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

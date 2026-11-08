@@ -43,12 +43,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.ui.files.FileKind
 import org.cloudreve.android.ui.files.FilesViewModel
 import org.cloudreve.android.ui.files.subtitleFor
+import java.io.File
 
 /** Which viewer to use; anything else is handed to the system. */
 enum class PreviewKind { IMAGE, VIDEO, AUDIO, PDF, TEXT }
@@ -210,9 +212,9 @@ internal fun LoadingOverlay(progress: Float?, modifier: Modifier = Modifier) {
 
 /** Load a file's local copy, reporting progress; null until ready. */
 @Composable
-internal fun rememberLocalCopy(file: FileObject, viewModel: FilesViewModel): Pair<java.io.File?, Float?> {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    var local by remember(file.id) { mutableStateOf<java.io.File?>(null) }
+internal fun rememberLocalCopy(file: FileObject, viewModel: FilesViewModel): Pair<File?, Float?> {
+    val context = LocalContext.current
+    var local by remember(file.id) { mutableStateOf<File?>(null) }
     var progress by remember(file.id) { mutableStateOf<Float?>(null) }
     LaunchedEffect(file.id) {
         runCatching { viewModel.localCopy(context, file) { progress = it } }

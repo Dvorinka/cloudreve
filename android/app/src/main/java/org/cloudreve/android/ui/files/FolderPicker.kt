@@ -2,6 +2,7 @@ package org.cloudreve.android.ui.files
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,7 +65,7 @@ fun FolderPicker(
     var folders by remember { mutableStateOf<List<FileObject>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var mkdirOpen by remember { mutableStateOf(false) }
-    var reload by remember { mutableStateOf(0) }
+    var reload by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(current, reload) {
         folders = null
@@ -79,7 +81,6 @@ fun FolderPicker(
     // Drawn as an overlay inside the files screen rather than a Dialog window:
     // dialog windows sit below the status bar and then overflow the Scaffold.
     Surface(Modifier.fillMaxSize()) {
-        run {
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -87,7 +88,7 @@ fun FolderPicker(
                             Column {
                                 Text(title, style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    folderName(current),
+                                    CrUri.displayName(current),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
@@ -116,10 +117,10 @@ fun FolderPicker(
                         Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
+                        horizontalArrangement = Arrangement.End,
                     ) {
                         Button(onClick = { onPick(current) }, enabled = current !in excluded) {
-                            Text("$confirmLabel ${folderName(current)}")
+                            Text("$confirmLabel ${CrUri.displayName(current)}")
                         }
                     }
                 },
@@ -170,7 +171,6 @@ fun FolderPicker(
                     }
                 }
             }
-        }
     }
 
     if (mkdirOpen) {
@@ -188,7 +188,3 @@ fun FolderPicker(
     }
 }
 
-private fun folderName(uri: String): String {
-    val path = uri.removePrefix(CrUri.MY_PREFIX).trim('/')
-    return if (path.isEmpty()) "My files" else java.net.URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
-}

@@ -20,6 +20,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
@@ -44,7 +46,7 @@ fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit,
     var offset by remember(file.id) { mutableStateOf(Offset.Zero) }
     // Vertical drag at 1x slides the image away and closes the viewer (the Photos gesture).
     var dragY by remember(file.id) { mutableFloatStateOf(0f) }
-    val dismissThresholdPx = with(androidx.compose.ui.platform.LocalDensity.current) { 120.dp.toPx() }
+    val dismissThresholdPx = with(LocalDensity.current) { 120.dp.toPx() }
 
     Box(
         Modifier
@@ -83,7 +85,7 @@ fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit,
         val model = fullUrl ?: thumb
         if (model != null) {
             SubcomposeAsyncImage(
-                model = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                model = ImageRequest.Builder(LocalContext.current)
                     .data(model)
                     .placeholderMemoryCacheKey(thumb)
                     .crossfade(true)
