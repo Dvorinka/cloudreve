@@ -1,5 +1,24 @@
 # Linux file-manager integration
 
+## Application menu entry
+
+The `.deb` package ships its own desktop entry. For AppImage or manual
+installs, install the bundled one yourself so the app appears in the
+application menu and `cloudreve://` links open it:
+
+```sh
+mkdir -p ~/.local/share/applications
+cp cloudreve.desktop ~/.local/share/applications/
+update-desktop-database ~/.local/share/applications 2>/dev/null || true
+xdg-mime default cloudreve.desktop x-scheme-handler/cloudreve
+```
+
+The app also registers the `cloudreve://` scheme itself at startup, so this
+is only needed once per install. Adjust `Exec=` if the binary is not on
+`PATH` (e.g. point it at the AppImage path).
+
+## `cloudreve-share`
+
 `cloudreve-share` opens the share dialog for a local path via the
 `cloudreve://share/<path>` deep link — the same dialog the Windows Explorer
 context menu opens. Works whether the app is running or not.

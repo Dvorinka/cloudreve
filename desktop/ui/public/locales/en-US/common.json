@@ -31,6 +31,13 @@
     "reauthorizeDescription": "Click confirm to update your credentials for this drive.",
     "reauthorizeConfirm": "Confirm",
     "reauthorizeSuccessTitle": "Reauthorization Complete!",
+    "orSignIn": "or sign in with email",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "otp": "Two-factor code",
+    "otpDescription": "Enter the code from your authenticator app.",
+    "verify": "Verify",
     "errors": {
       "httpError": "HTTP error: {{status}}",
       "apiError": "API error: {{message}}",

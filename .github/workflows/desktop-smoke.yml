@@ -1,0 +1,64 @@
+name: Desktop Smoke
+
+# Headless GUI smoke test for the Linux desktop app. The self-hosted runner
+# image ships Xvfb plus the webkit2gtk/appindicator stack, so the real Tauri
+# binary can launch, present its first-run window and be screenshotted —
+# catching window-chrome, theme and startup regressions that cargo check
+# cannot see. Dispatch-only: `cargo build` is heavy, so this runs on demand
+# rather than on every desktop PR.
+#
+#   kern exec "Desktop Smoke"            (from a desktop/ checkout)
+#   kern runs trigger cloudreve "Desktop Smoke"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: desktop/ui/yarn.lock
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+      - name: Build frontend
+        working-directory: desktop/ui
+        run: |
+          yarn install --frozen-lockfile --network-timeout 1000000
+          yarn build
+      - name: Build desktop binary
+        run: cargo build --locked
+      - name: Launch under Xvfb and capture screenshot
+        run: |
+          xvfb-run -a sh -c '
+            set -m
+            ./target/debug/cloudreve-desktop > /tmp/cloudreve-desktop.log 2>&1 &
+            APP_PID=$!
+            sleep 25
+            if ! kill -0 $APP_PID 2>/dev/null; then
+              echo "app exited early"; cat /tmp/cloudreve-desktop.log; exit 1
+            fi
+            import -window root /tmp/desktop-smoke.png 2>/dev/null \
+              || scrot /tmp/desktop-smoke.png 2>/dev/null \
+              || xwd -root -silent | convert xwd:- /tmp/desktop-smoke.png 2>/dev/null \
+              || true
+            kill $APP_PID 2>/dev/null
+          '
+      - name: Show app log tail
+        if: always()
+        run: tail -50 /tmp/cloudreve-desktop.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-smoke
+          path: /tmp/desktop-smoke.png
+          if-no-files-found: warn

@@ -37,7 +37,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { platform } from "@tauri-apps/plugin-os";
+
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -172,9 +172,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function Share() {
   const { t } = useTranslation();
-  // Windows draws caption buttons via tauri-plugin-frame, macOS via the
-  // overlay title bar; only Linux has no native controls to close with.
-  const needsCloseButton = platform() === "linux";
   const [params] = useSearchParams();
   const driveId = params.get("drive") ?? "";
   const uri = params.get("uri") ?? "";
@@ -554,15 +551,6 @@ export default function Share() {
         <Typography variant="subtitle1" fontWeight={600} noWrap>
           {t("share.title", { name })}
         </Typography>
-        {needsCloseButton && (
-          <IconButton
-            size="small"
-            onClick={() => getCurrentWindow().close()}
-            sx={{ WebkitAppRegion: "no-drag", appRegion: "no-drag" }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        )}
       </Box>
 
       {/* Settings / History tabs — history needs an existing share */}

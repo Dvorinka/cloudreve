@@ -53,7 +53,8 @@
     "linux": {
       "deb": {
         "depends": [
-          "fuse3"
+          "fuse3",
+          "libnotify4"
         ]
       }
     },

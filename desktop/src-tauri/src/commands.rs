@@ -780,6 +780,16 @@ fn show_drive_window_internal(app: &AppHandle, title: &str, url_path: &str) {
             }
 
             move_window_safely(&window, Position::Center, "add-drive");
+            // Linux has no custom caption buttons (tauri-plugin-frame is
+            // Windows-only and the macOS overlay title bar does not apply), so
+            // hand the window back to the desktop's own decorations: real
+            // close/minimize controls plus taskbar/dash integration.
+            #[cfg(target_os = "linux")]
+            {
+                let _ = window.set_decorations(true);
+                let _ = window.set_minimizable(true);
+                let _ = window.set_maximizable(false);
+            }
             #[cfg(windows)]
             let _ = window.create_overlay_titlebar();
             let _ = window.show();
@@ -863,6 +873,12 @@ pub fn show_settings_window_impl(app: &AppHandle) {
             }
 
             move_window_safely(&window, Position::Center, "settings");
+            // See the add-drive window: Linux relies on native decorations.
+            #[cfg(target_os = "linux")]
+            {
+                let _ = window.set_decorations(true);
+                let _ = window.set_minimizable(true);
+            }
             #[cfg(windows)]
             let _ = window.create_overlay_titlebar();
             let _ = window.show();
@@ -940,6 +956,13 @@ pub fn show_share_window_impl(
             }
 
             move_window_safely(&window, Position::Center, "share");
+            // See the add-drive window: Linux relies on native decorations.
+            #[cfg(target_os = "linux")]
+            {
+                let _ = window.set_decorations(true);
+                let _ = window.set_minimizable(true);
+                let _ = window.set_maximizable(false);
+            }
             #[cfg(windows)]
             let _ = window.create_overlay_titlebar();
             let _ = window.show();
@@ -1816,6 +1839,13 @@ pub fn show_update_window_impl(app: &AppHandle, auto_download: bool) {
             }
 
             move_window_safely(&window, Position::Center, "update");
+            // See the add-drive window: Linux relies on native decorations.
+            #[cfg(target_os = "linux")]
+            {
+                let _ = window.set_decorations(true);
+                let _ = window.set_minimizable(true);
+                let _ = window.set_maximizable(false);
+            }
             #[cfg(windows)]
             let _ = window.create_overlay_titlebar();
             let _ = window.show();

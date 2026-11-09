@@ -3,6 +3,9 @@ import { CALLBACK_PATH, CLIENT_ID, CLIENT_SECRET } from "./constants";
 
 export const MIN_VERSION = "4.12.0";
 
+/** Upper bound for a single API round-trip so the UI never hangs silently. */
+const REQUEST_TIMEOUT_MS = 20000;
+
 export interface PingResponse {
   code: number;
   data: string;
@@ -82,6 +85,7 @@ export async function exchangeTokens(
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: body.toString(),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -119,7 +123,9 @@ export async function validateSiteVersion(siteUrl: string): Promise<string> {
   let response: Response;
   try {
     const url = new URL("/api/v4/site/ping", siteUrl);
-    response = await fetch(url.toString());
+    response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     throw { type: "connectionFailed", params: { message } } as ValidationError;

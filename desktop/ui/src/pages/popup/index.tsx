@@ -8,6 +8,7 @@ import {
   Divider,
 } from "@mui/material";
 import {
+  Close as CloseIcon,
   Folder as FolderIcon,
   CheckCircle as CheckCircleIcon,
   Refresh as RefreshIcon,
@@ -180,9 +181,18 @@ export default function Popup() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CloudreveLogo height={28} />
           </Box>
-          <IconButton size="small" onClick={handleSettings}>
-            <Settings fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <IconButton size="small" onClick={handleSettings}>
+              <Settings fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => getCurrentWindow().close()}
+              aria-label={t("popup.close", "Close")}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </Box>
 
         {/* Drive filter chips */}

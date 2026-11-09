@@ -13,7 +13,7 @@ export const applyThemeWithOverrides = (themeConfig: ThemeOptions): ThemeOptions
         styleOverrides: {
           body: {
             overscrollBehavior: "none",
-            backgroundColor: themeConfig.palette?.mode === "dark" ? "#121212" : "#fff",
+            backgroundColor: themeConfig.palette?.mode === "dark" ? "#121212" : "#fafafa",
           },
           img: {
             userSelect: "none",
@@ -122,9 +122,29 @@ export const applyThemeWithOverrides = (themeConfig: ThemeOptions): ThemeOptions
 };
 
 export const createAppTheme = (mode: "light" | "dark" = "light") => {
+  const isDark = mode === "dark";
   const themeConfig: ThemeOptions = {
     palette: {
       mode,
+      // Explicit surfaces keep text readable in both modes instead of
+      // relying on MUI's mode-derived greys, which wash out on dark.
+      background: {
+        default: isDark ? "#121212" : "#fafafa",
+        paper: isDark ? "#1e1e1e" : "#ffffff",
+      },
+      text: {
+        primary: isDark ? "#e8e8e8" : "#1c1c1c",
+        secondary: isDark ? "#a3a3a3" : "#616161",
+      },
+      // Cloudreve brand: the icon's azure #056FEE with cyan #02C0FA accents.
+      // Dark mode lifts the primary toward the cyan end so buttons keep
+      // contrast on the near-black surfaces.
+      primary: isDark
+        ? { main: "#6fa8ff", light: "#9ecbff", dark: "#056fee", contrastText: "#0a1a33" }
+        : { main: "#056fee", light: "#4d8dff", dark: "#0456c4" },
+      secondary: isDark
+        ? { main: "#38bdf8", contrastText: "#062a3a" }
+        : { main: "#0284c7", contrastText: "#ffffff" },
     },
   };
 

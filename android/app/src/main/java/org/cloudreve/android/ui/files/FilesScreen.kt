@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,12 +73,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
 import org.cloudreve.android.CloudreveApp
+import org.cloudreve.android.R
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.data.CameraUploadSettings
 import org.cloudreve.android.data.FavoriteEntry
@@ -176,15 +179,22 @@ fun FilesScreen(
                             ),
                         )
                     } else {
-                        Column {
-                            Text("Files")
-                            Text(
-                                pathLabel(state.currentUri),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(R.mipmap.ic_launcher_foreground),
+                                contentDescription = null,
+                                modifier = Modifier.size(22.dp),
                             )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Files")
+                                Text(
+                                    pathLabel(state.currentUri),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 },
