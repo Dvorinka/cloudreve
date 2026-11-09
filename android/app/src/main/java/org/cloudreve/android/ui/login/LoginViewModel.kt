@@ -11,6 +11,7 @@ import org.cloudreve.android.api.LoginResponse
 import org.cloudreve.android.api.OtpLoginRequest
 import org.cloudreve.android.api.PasswordLoginRequest
 import org.cloudreve.android.data.SessionManager
+import org.cloudreve.android.data.normalizeServerUrl
 import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -50,9 +51,10 @@ class LoginViewModel(
             return
         }
         _state.value = s.copy(loading = true, error = null)
+        val serverUrl = normalizeServerUrl(s.serverUrl)
         viewModelScope.launch {
             try {
-                session.saveServerUrl(s.serverUrl)
+                session.saveServerUrl(serverUrl)
                 val resp = api.service().login(PasswordLoginRequest(s.email, s.password))
                 val body = resp.body()
                 if (!resp.isSuccessful || body == null || body.data == null) {
@@ -133,12 +135,13 @@ class LoginViewModel(
         val verifier = randomBase64Url(48)
         val challenge = base64Url(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray()))
         val state = randomBase64Url(24)
+        val serverUrl = normalizeServerUrl(s.serverUrl)
         viewModelScope.launch {
-            session.saveServerUrl(s.serverUrl)
+            session.saveServerUrl(serverUrl)
             session.savePendingOAuth(verifier, state)
         }
         val enc: (String) -> String = { URLEncoder.encode(it, "UTF-8") }
-        return "${s.serverUrl.trimEnd('/')}/session/authorize" +
+        return "${serverUrl.trimEnd('/')}/session/authorize" +
             "?response_type=code&client_id=${enc(OAUTH_CLIENT_ID)}" +
             "&redirect_uri=${enc(OAUTH_REDIRECT)}&state=${enc(state)}" +
             "&scope=${enc(OAUTH_SCOPES)}&code_challenge=${enc(challenge)}" +

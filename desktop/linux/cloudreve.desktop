@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Cloudreve
+Comment=Sync your Cloudreve drives to this computer
+# %U forwards cloudreve:// links (OAuth callbacks, share links) to a
+# running instance via the single-instance plugin.
+Exec=cloudreve %U
+Icon=cloudreve
+Terminal=false
+Categories=Network;FileTransfer;
+MimeType=x-scheme-handler/cloudreve;
+StartupNotify=true
+StartupWMClass=cloudreve.desktop

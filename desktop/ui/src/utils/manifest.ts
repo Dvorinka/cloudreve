@@ -29,7 +29,9 @@ export function isValidUrl(url: string): boolean {
  */
 export async function fetchSiteIcon(siteUrl: string): Promise<string | null> {
   const manifestUrl = new URL("/manifest.json", siteUrl);
-  const response = await fetch(manifestUrl.toString());
+  const response = await fetch(manifestUrl.toString(), {
+    signal: AbortSignal.timeout(10000),
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch manifest: ${response.status}`);

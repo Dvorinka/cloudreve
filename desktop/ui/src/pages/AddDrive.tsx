@@ -1,5 +1,4 @@
-import { Alert, Box, Button, CircularProgress, Container, FormControlLabel, IconButton, InputAdornment, Radio, RadioGroup, Snackbar, Typography } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Alert, Box, Button, CircularProgress, Container, Divider, FormControlLabel, InputAdornment, Radio, RadioGroup, Snackbar, Typography } from "@mui/material";
 import { openUrl, openPath } from "@tauri-apps/plugin-opener";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { invoke } from '@tauri-apps/api/core';
@@ -18,6 +17,11 @@ import {
   validateSiteVersion,
   type TokenResponse,
 } from "../utils/siteValidation";
+import {
+  passwordLogin,
+  verifyTwoFactor,
+  type PasswordAuthResult,
+} from "../utils/passwordAuth";
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { platform } from "@tauri-apps/plugin-os";
@@ -90,9 +94,6 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
   const isReauthorize = mode === "reauthorize" && driveId && encodedSiteUrl;
   const decodedSiteUrl = encodedSiteUrl ? decodeURIComponent(encodedSiteUrl) : "";
   const isWindows10 = useIsWindows10();
-  // Windows draws caption buttons via tauri-plugin-frame, macOS via the
-  // overlay title bar; only Linux has no native controls to close with.
-  const needsCloseButton = platform() === "linux";
 
   const [siteUrl, setSiteUrl] = useState(isReauthorize ? decodedSiteUrl : "");
   const [loading, setLoading] = useState(false);
@@ -106,6 +107,13 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
   const isLinux = platform() === "linux";
   const [syncMode, setSyncMode] = useState<"full" | "ondemand">("full");
   const [driveName, setDriveName] = useState(driveNameQuery ? decodeURIComponent(driveNameQuery) : "");
+  // Manual credential sign-in (alternative to browser OAuth).
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [twoFactorSessionId, setTwoFactorSessionId] = useState<string | null>(null);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const passwordAuthRef = useRef<{ siteUrl: string; result: PasswordAuthResult } | null>(null);
   const lastFetchedUrl = useRef<string>("");
   const currentIconUrl = useRef<string | undefined>(undefined);
   const pkceSessionRef = useRef<PKCESession | null>(null);
@@ -282,11 +290,70 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
     }
   };
 
+  const reportAuthError = (error: unknown) => {
+    if (isValidationError(error)) {
+      setError(t(`addDrive.errors.${error.type}`, error.params));
+    } else {
+      const message = error instanceof Error ? error.message : String(error);
+      setError(t("addDrive.errors.connectionFailed", { message }));
+    }
+    setSnackbarOpen(true);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    setSnackbarOpen(false);
+    const urlToAuth = siteUrl.trim();
+    try {
+      await validateSiteVersion(urlToAuth);
+      const outcome = await passwordLogin(urlToAuth, email.trim(), password);
+      if (outcome.kind === "two_factor") {
+        setTwoFactorSessionId(outcome.sessionId);
+        setOtp("");
+        return;
+      }
+      passwordAuthRef.current = { siteUrl: urlToAuth, result: outcome.result };
+      if (outcome.result.nickname) {
+        setDriveName((prev) => prev || outcome.result.nickname);
+      }
+      setPageState("final_setup");
+    } catch (error) {
+      reportAuthError(error);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorSessionId) return;
+    setPasswordLoading(true);
+    setSnackbarOpen(false);
+    const urlToAuth = siteUrl.trim();
+    try {
+      const result = await verifyTwoFactor(urlToAuth, twoFactorSessionId, otp.trim());
+      passwordAuthRef.current = { siteUrl: urlToAuth, result };
+      if (result.nickname) {
+        setDriveName((prev) => prev || result.nickname);
+      }
+      setTwoFactorSessionId(null);
+      setPageState("final_setup");
+    } catch (error) {
+      reportAuthError(error);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const handleBack = () => {
     setAuthorizeUrl(null);
     setPageState("url_input");
     setLocalPath("");
     setFolderNotEmpty(false);
+    setTwoFactorSessionId(null);
+    setOtp("");
+    passwordAuthRef.current = null;
     pkceSessionRef.current = null;
   };
 
@@ -318,15 +385,41 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
   const handleFinish = async (e: React.FormEvent) => {
     e.preventDefault();
     setPageState("setting_up");
-    // TODO: Call backend to complete drive setup
 
-    let tokens: TokenResponse;
+    const passwordAuth = passwordAuthRef.current;
+    let cleanSiteUrl: string;
+    let tokens: {
+      access_token: string;
+      refresh_token: string;
+      access_token_expires: number;
+      refresh_token_expires: number;
+    };
+    let remotePath: string;
+    let userId: string;
+
     try {
-      tokens = await exchangeTokens(
-        pkceSessionRef.current!.siteUrl,
-        pkceSessionRef.current!.callbackData!.code,
-        pkceSessionRef.current!.codeVerifier
-      );
+      if (passwordAuth) {
+        cleanSiteUrl = new URL(passwordAuth.siteUrl).origin;
+        tokens = passwordAuth.result.tokens;
+        remotePath = "cloudreve://my";
+        userId = passwordAuth.result.user_id;
+      } else {
+        const session = pkceSessionRef.current!;
+        const oauthTokens: TokenResponse = await exchangeTokens(
+          session.siteUrl,
+          session.callbackData!.code,
+          session.codeVerifier
+        );
+        tokens = {
+          access_token: oauthTokens.access_token,
+          refresh_token: oauthTokens.refresh_token,
+          access_token_expires: oauthTokens.expires_in,
+          refresh_token_expires: oauthTokens.refresh_token_expires_in,
+        };
+        cleanSiteUrl = new URL(session.siteUrl).origin;
+        remotePath = session.callbackData!.path;
+        userId = session.callbackData!.user_id || "";
+      }
     } catch (error) {
       if (isValidationError(error)) {
         setError(t(`addDrive.errors.${error.type}`, error.params));
@@ -339,21 +432,18 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
       return;
     }
 
-    // Clean the site URL to only include origin (no path or trailing slash)
-    const cleanSiteUrl = new URL(pkceSessionRef.current!.siteUrl).origin;
-
     try {
       await invoke('add_drive', {
         config: {
           site_url: cleanSiteUrl,
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
-          access_token_expires: tokens.expires_in,
-          refresh_token_expires: tokens.refresh_token_expires_in,
+          access_token_expires: tokens.access_token_expires,
+          refresh_token_expires: tokens.refresh_token_expires,
           drive_name: driveName,
           local_path: localPath,
-          remote_path: pkceSessionRef.current!.callbackData!.path,
-          user_id: pkceSessionRef.current!.callbackData!.user_id || "",
+          remote_path: remotePath,
+          user_id: userId,
           drive_id: isReauthorize ? driveId : undefined,
           sync_mode: isLinux ? syncMode : "full",
         }
@@ -386,36 +476,6 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
           py: 4,
         }}
       >
-        {/* Drag region with close button */}
-        <Box
-          data-tauri-drag-region
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 32,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            px: 0.5,
-            zIndex: 1,
-          }}
-        >
-          {needsCloseButton && (
-            <IconButton
-              size="small"
-              onClick={() => getCurrentWindow().close()}
-              sx={{
-                // Keep the button itself draggable-region-free so clicks work.
-                WebkitAppRegion: "no-drag",
-                appRegion: "no-drag",
-              }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Box>
         <Box
           sx={{
             p: 4,
@@ -742,6 +802,103 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
                   {t("addDrive.connect")}
                 </Button>
               </Box>
+
+              {!isReauthorize && (
+                <>
+                  <Divider sx={{ width: "100%", my: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t("addDrive.orSignIn")}
+                    </Typography>
+                  </Divider>
+                  {twoFactorSessionId ? (
+                    <Box
+                      component="form"
+                      onSubmit={handleTwoFactorSubmit}
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary" textAlign="center">
+                        {t("addDrive.otpDescription")}
+                      </Typography>
+                      <FilledTextField
+                        fullWidth
+                        autoComplete="one-time-code"
+                        label={t("addDrive.otp")}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        variant="filled"
+                        required
+                        slotProps={{ htmlInput: { inputMode: "numeric", maxLength: 12 } }}
+                      />
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        size="large"
+                        loading={passwordLoading}
+                        fullWidth
+                      >
+                        {t("addDrive.verify")}
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="large"
+                        fullWidth
+                        onClick={() => {
+                          setTwoFactorSessionId(null);
+                          setOtp("");
+                        }}
+                      >
+                        {t("addDrive.back")}
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box
+                      component="form"
+                      onSubmit={handlePasswordSubmit}
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                      }}
+                    >
+                      <FilledTextField
+                        fullWidth
+                        autoComplete="email"
+                        label={t("addDrive.email")}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        variant="filled"
+                        type="email"
+                        required
+                      />
+                      <FilledTextField
+                        fullWidth
+                        autoComplete="current-password"
+                        label={t("addDrive.password")}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        variant="filled"
+                        type="password"
+                        required
+                      />
+                      <Button
+                        type="submit"
+                        variant="outlined"
+                        size="large"
+                        loading={passwordLoading}
+                        fullWidth
+                      >
+                        {t("addDrive.signIn")}
+                      </Button>
+                    </Box>
+                  )}
+                </>
+              )}
             </>
           )}
         </Box>

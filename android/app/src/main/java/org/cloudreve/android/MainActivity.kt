@@ -1,12 +1,18 @@
 package org.cloudreve.android
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
@@ -148,6 +154,20 @@ fun App() {
     }
 
     CloudreveTheme {
+        // Android 13+ needs a runtime grant before sync/upload notifications
+        // can post; ask once the session is known to be signed in.
+        val notifPermission = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { }
+        LaunchedEffect(loggedIn) {
+            if (loggedIn == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
         val updateInfo by app.playUpdateAvailable.collectAsState()
         if (updateInfo != null) {
             AlertDialog(

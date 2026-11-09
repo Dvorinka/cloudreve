@@ -12,6 +12,17 @@ import kotlinx.coroutines.flow.map
 private val Context.sessionStore by preferencesDataStore(name = "session")
 
 /**
+ * Ensure a user-entered server address is a usable base URL: bare hosts like
+ * `drive.example.com` get `https://`, surrounding whitespace and trailing
+ * slashes are stripped.
+ */
+fun normalizeServerUrl(url: String): String {
+    val trimmed = url.trim().trimEnd('/')
+    if (trimmed.isEmpty() || trimmed.contains("://")) return trimmed
+    return "https://$trimmed"
+}
+
+/**
  * SessionManager persists the server base URL and token pair. It is the
  * single source of truth for "which account, on which server".
  */
@@ -45,7 +56,7 @@ class SessionManager(private val context: Context) {
         context.sessionStore.data.first()[Keys.accessExpiresAt] ?: 0L
 
     suspend fun saveServerUrl(url: String) {
-        context.sessionStore.edit { it[Keys.serverUrl] = url.trimEnd('/') }
+        context.sessionStore.edit { it[Keys.serverUrl] = normalizeServerUrl(url) }
     }
 
     suspend fun savePendingOAuth(verifier: String, state: String) {

@@ -13,7 +13,7 @@ export const applyThemeWithOverrides = (themeConfig: ThemeOptions): ThemeOptions
         styleOverrides: {
           body: {
             overscrollBehavior: "none",
-            backgroundColor: themeConfig.palette?.mode === "dark" ? "#121212" : "#fff",
+            backgroundColor: themeConfig.palette?.mode === "dark" ? "#121212" : "#fafafa",
           },
           img: {
             userSelect: "none",
@@ -122,9 +122,20 @@ export const applyThemeWithOverrides = (themeConfig: ThemeOptions): ThemeOptions
 };
 
 export const createAppTheme = (mode: "light" | "dark" = "light") => {
+  const isDark = mode === "dark";
   const themeConfig: ThemeOptions = {
     palette: {
       mode,
+      // Explicit surfaces keep text readable in both modes instead of
+      // relying on MUI's mode-derived greys, which wash out on dark.
+      background: {
+        default: isDark ? "#121212" : "#fafafa",
+        paper: isDark ? "#1e1e1e" : "#ffffff",
+      },
+      text: {
+        primary: isDark ? "#e8e8e8" : "#1c1c1c",
+        secondary: isDark ? "#a3a3a3" : "#616161",
+      },
     },
   };
 
