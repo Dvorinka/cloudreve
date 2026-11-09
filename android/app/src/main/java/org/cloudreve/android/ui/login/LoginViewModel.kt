@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import org.cloudreve.android.api.ApiClient
 import org.cloudreve.android.api.LoginResponse
@@ -67,7 +66,7 @@ class LoginViewModel(
                             ?: throw Exception("Server requested 2FA without a session id")
                         _state.value = _state.value.copy(loading = false, twoFactorSessionId = sessionId, otp = "")
                     }
-                    0 -> completeLogin(Json.decodeFromJsonElement(LoginResponse.serializer(), body.data))
+                    0 -> completeLogin(api.json.decodeFromJsonElement(LoginResponse.serializer(), body.data))
                     else -> throw Exception(body.msg.ifBlank { "Login failed" })
                 }
             } catch (e: Exception) {
