@@ -41,9 +41,21 @@ PR_NUM_RE = re.compile(r"(?:PR|pr)\s*#(\d+)")
 
 
 def gh(*args: str) -> str:
-    return subprocess.run(
-        ["gh", *args], check=True, capture_output=True, text=True
-    ).stdout
+    proc = subprocess.run(
+        ["gh", *args], check=False, capture_output=True, text=True
+    )
+    if proc.returncode != 0:
+        # Surface gh's stderr — CalledProcessError alone hid the API error
+        # behind two consecutive silent CI failures. Callers catch
+        # CalledProcessError, so print first, then raise the same type.
+        detail = (proc.stderr or proc.stdout or "").strip()
+        if detail:
+            print(f"gh {' '.join(args[:2])}… failed: {detail}", file=sys.stderr)
+        raise subprocess.CalledProcessError(
+            proc.returncode, proc.args,
+            output=proc.stdout, stderr=proc.stderr,
+        )
+    return proc.stdout
 
 
 def gh_json(*args: str):
@@ -290,11 +302,15 @@ def main() -> int:
 
     if number is None:
         gh("issue", "create", "--repo", SELF_REPO, "--title", TRACKING_TITLE,
-           "--label", TRACKING_LABEL, "--body", report)
+           "--label", TRACKING_LABEL, "--body-file", "upstream-report.md")
         print("created tracking issue")
         return 0
 
-    gh("issue", "edit", str(number), "--repo", SELF_REPO, "--body", report)
+    # --body-file, not --body: the ~18KB report as a single argv failed
+    # twice on the runner with no visible error; a file path cannot hit
+    # argument-size or encoding edges.
+    gh("issue", "edit", str(number), "--repo", SELF_REPO,
+       "--body-file", "upstream-report.md")
 
     if new_items:
         lines = ["New untriaged upstream items:", ""]
