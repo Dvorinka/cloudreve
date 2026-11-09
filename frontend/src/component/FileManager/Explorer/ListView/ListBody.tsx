@@ -5,10 +5,9 @@ import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
 import { setSelected } from "../../../../redux/fileManagerSlice.ts";
 import DndWrappedFile from "../../Dnd/DndWrappedFile.tsx";
 import { FmIndexContext } from "../../FmIndexContext.tsx";
-import { FmFile, loadingPlaceHolderNumb } from "../GridView/GridView.tsx";
+import { FmFile, loadingPlaceHolderNumb, loadingPlaceholderPath } from "../GridView/GridView.tsx";
 import { ListViewColumn } from "./Column.tsx";
 import Row from "./Row.tsx";
-import { CrUriPrefix } from "../../../../util/uri.ts";
 
 export interface ListBodyProps {
   columns: ListViewColumn[];
@@ -39,7 +38,7 @@ const ListBody = ({ columns }: ListBodyProps) => {
         const id = `loadingPlaceholder-${pagination.next_token}-${i}`;
         list.push({
           ...files[0],
-          path: `${CrUriPrefix}${id}`,
+          path: loadingPlaceholderPath(id),
           id: id,
           first: i == 0,
           placeholder: true,
