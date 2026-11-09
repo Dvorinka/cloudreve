@@ -258,7 +258,7 @@ class FilesViewModel(
     suspend fun shareLink(file: FileObject): String = repo.createShare(file.path)
 
     suspend fun thumbUrl(file: FileObject): String? =
-        if (file.thumbnail == true) repo.thumbUrl(file.path) else null
+        if (file.mayHaveThumbnail) repo.thumbUrl(file.path) else null
 
     fun consumeSnackbar() {
         _state.value = _state.value.copy(snackbar = null)
