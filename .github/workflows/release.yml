@@ -153,7 +153,9 @@ jobs:
           tmp="$RUNNER_TEMP/tauri-cli"
           mkdir -p "$tmp/bin"
           curl -fsSL "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.4/$asset" -o "$tmp/$asset"
-          tar -xf "$tmp/$asset" -C "$tmp"
+          # bsdtar reads a leading drive letter as a remote host (host:path)
+          # unless --force-local is given.
+          tar --force-local -xf "$tmp/$asset" -C "$tmp"
           mv "$tmp/cargo-tauri.exe" "$tmp/bin/"
           echo "$tmp/bin" >> "$GITHUB_PATH"
 
