@@ -26,27 +26,6 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew :app:testDebugUnitTest
 Gradle 8.11 cannot create the test task under JDK 24 ("Type T not
 present"); building works on 24, running tests needs 17 or 21.
 
-## Development backend
-
-`dev/devserver.py` (stdlib Python) builds the server from this checkout,
-runs it on `127.0.0.1:5212` and fills a dev account with sample data so
-the app can be exercised without touching a real deployment. The emulator
-reaches it at `http://10.0.2.2:5212`; sign in as `dev@example.com` /
-`cloudreve-dev`.
-
-```bash
-dev/devserver.py all     # build + start + seed + push sample files to the emulator
-dev/devserver.py login   # install the debug APK and sign in on the emulator via adb
-dev/devserver.py status  # pid, API health, credentials
-dev/devserver.py reset   # wipe the database and start over
-```
-
-Sample data: photos (Lorem Picsum), generated multi-page PDFs, Big Buck
-Bunny clips, generated WAVs, a zip, source files, two large blobs for
-transfer-progress testing, deep folders, long and non-ASCII names. State
-lives in `dev/.data/` (gitignored). Install `ffmpeg`, `vips` or LibreOffice
-before the first start to get video, PDF and document thumbnails.
-
 ## What's implemented
 
 - `api/v4` auth: password login → access/refresh tokens, single-flight
@@ -76,7 +55,6 @@ before the first start to get video, PDF and document thumbnails.
   watermark; once a day the run checks every UPLOADED row is still on the
   server and flags the rest as MISSING for the user to re-upload. Network
   errors retry the run; only verdicts about one file mark it REJECTED.
-  `dev/gallery.py` seeds a bulk gallery on the emulator to exercise it.
 - Offline favorites: "Keep offline" in a file's menu downloads to
   `filesDir/offline/` and registers the entry (DataStore JSON);
   star icon in the top bar opens the offline list — open via
