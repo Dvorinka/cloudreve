@@ -85,11 +85,14 @@ jobs:
       # them into $INSTDIR when present. Same step as desktop-release.yml.
       - name: Build signed sparse identity package
         if: runner.os == 'Windows'
-        shell: pwsh
+        # KERN's host executor has no pwsh shell — run the script through
+        # powershell.exe from a bash step instead.
+        shell: bash
         env:
           SPARSE_SIGNING_PFX_BASE64: ${{ secrets.SPARSE_SIGNING_PFX_BASE64 }}
           SPARSE_SIGNING_PFX_PASSWORD: ${{ secrets.SPARSE_SIGNING_PFX_PASSWORD }}
         run: |
+          cat > sparse-identity.ps1 <<'PS1EOF'
           $ErrorActionPreference = 'Stop'
           $ver = (Select-String -Path desktop/src-tauri/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
           if ($ver.Split('.').Count -eq 3) { $ver = "$ver.0" }
@@ -111,11 +114,46 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
 
           Copy-Item "$env:RUNNER_TEMP\Cloudreve-Identity.msix" desktop/package/Cloudreve-Identity.msix -Force
+          PS1EOF
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File sparse-identity.ps1
 
-      - name: Install tauri-cli
-        uses: taiki-e/install-action@v2
-        with:
-          tool: tauri-cli@2
+      # taiki-e/install-action is a composite action; KERN's composite runner
+      # only accepts bare interpreter paths for `shell:`, so fetch the pinned
+      # cargo-tauri binary directly instead.
+      - name: Install tauri-cli (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$RUNNER_OS" in
+            Linux) asset="cargo-tauri-x86_64-unknown-linux-gnu.tgz" ;;
+            macOS) asset="cargo-tauri-x86_64-apple-darwin.zip" ;;
+            *) echo "unsupported OS: $RUNNER_OS" >&2; exit 1 ;;
+          esac
+          tmp="$RUNNER_TEMP/tauri-cli"
+          mkdir -p "$tmp/bin"
+          curl -fsSL "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.4/$asset" -o "$tmp/$asset"
+          case "$asset" in
+            *.tgz) tar -xzf "$tmp/$asset" -C "$tmp" ;;
+            *.zip) unzip -o "$tmp/$asset" -d "$tmp" ;;
+          esac
+          mv "$tmp/cargo-tauri" "$tmp/bin/"
+          echo "$tmp/bin" >> "$GITHUB_PATH"
+
+      # Windows has no unzip; bsdtar handles the zip. bash is used because
+      # KERN's host executor has no pwsh support.
+      - name: Install tauri-cli (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset="cargo-tauri-x86_64-pc-windows-msvc.zip"
+          tmp="$RUNNER_TEMP/tauri-cli"
+          mkdir -p "$tmp/bin"
+          curl -fsSL "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.4/$asset" -o "$tmp/$asset"
+          tar -xf "$tmp/$asset" -C "$tmp"
+          mv "$tmp/cargo-tauri.exe" "$tmp/bin/"
+          echo "$tmp/bin" >> "$GITHUB_PATH"
 
       - name: Build desktop bundles
         working-directory: desktop
