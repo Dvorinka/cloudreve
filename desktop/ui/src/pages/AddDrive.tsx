@@ -3,12 +3,14 @@ import { openUrl, openPath } from "@tauri-apps/plugin-opener";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { invoke } from '@tauri-apps/api/core';
 import confetti from "canvas-confetti";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
-import defaultLogo from "../assets/cloudreve.svg";
+import logoDark from "../assets/logo.svg";
+import logoLight from "../assets/logo_light.svg";
 import { FilledTextField } from "../common/StyledComponent";
 import { useIsWindows10 } from "../hooks/useIsWindows10";
+import { useTheme } from "@mui/material/styles";
 import { fetchSiteIcon, isValidUrl } from "../utils/manifest";
 import { generatePKCEPair, randomCryptoString } from "../utils/pkce";
 import {
@@ -99,6 +101,11 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const theme = useTheme();
+  const defaultLogo = useMemo(
+    () => (theme.palette.mode === "dark" ? logoLight : logoDark),
+    [theme.palette.mode]
+  );
   const [logo, setLogo] = useState(defaultLogo);
   const [authorizeUrl, setAuthorizeUrl] = useState<string | null>(null);
   const [pageState, setPageState] = useState<PageState>(isReauthorize ? "url_input" : "url_input");
@@ -196,7 +203,7 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
       lastFetchedUrl.current = "";
       currentIconUrl.current = undefined;
     }
-  }, [siteUrl]);
+  }, [siteUrl, defaultLogo]);
 
   // Shared authorization logic
   const startAuthorization = useCallback(async (urlToAuthorize: string) => {
