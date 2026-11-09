@@ -14,6 +14,15 @@ rust-version = "1.77.2"
 name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# build.rs embeds an MSIX-identity manifest into every binary of this
+# package, so the test harness cargo builds for src/main.rs cannot execute
+# on Windows ("The process has no package identity", os error 15700). The
+# bin has no tests; skip compiling it in test mode.
+[[bin]]
+name = "cloudreve-desktop"
+path = "src/main.rs"
+test = false
+
 [build-dependencies]
 tauri-build = { version = "2.5.3", features = [] }
 
