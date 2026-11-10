@@ -41,7 +41,10 @@ jobs:
   server:
     runs-on: [self-hosted, linux, x64]
     steps:
+      # Full fetch so retag-floating.sh can compare against every v* tag.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -85,6 +88,11 @@ jobs:
           # cap package parallelism and give the GC a soft limit.
           GOFLAGS: "-p=4"
           GOMEMLIMIT: "4GiB"
+      # Floating tags (latest, v4, slim) moved out of goreleaser's
+      # docker_manifests so a re-release of an old tag can't regress them.
+      # The script no-ops unless the released tag is the newest v* tag.
+      - name: Re-point floating GHCR tags
+        run: ./.build/retag-floating.sh "${{ github.ref_name }}"
       # Leave the host clean for the next job — built image layers and
       # buildkit cache are dead weight once pushed to GHCR.
       - name: Reclaim docker disk
