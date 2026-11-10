@@ -20,6 +20,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Create the GitHub release up front: the server job (GoReleaser + qemu
+  # image builds) is by far the slowest, so every other job's publish step
+  # would otherwise poll `gh release view` for ~30min and fail
+  # `release not found`. GoReleaser uploads into an existing release.
+  prepare:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -e
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --generate-notes \
+              --title "Cloudreve $TAG"
+          fi
+
   server:
     runs-on: [self-hosted, linux, x64]
     steps:
@@ -41,6 +59,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
+      # The Dockerfile's apk layer floats (unpinned packages), so every
+      # release writes ~GBs of fresh buildkit layers on the shared runner
+      # daemon. Reclaim before building or the daemon hits ENOSPC mid-apk.
+      - name: Reclaim docker disk
+        run: |
+          docker system df || true
+          for b in $(docker buildx ls --format '{{.Name}}'); do
+            docker buildx prune --builder "$b" -af || true
+          done
+          docker builder prune -af || true
+          docker container prune -f || true
+          docker image prune -f || true
+          docker system df || true
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -54,6 +85,16 @@ jobs:
           # cap package parallelism and give the GC a soft limit.
           GOFLAGS: "-p=4"
           GOMEMLIMIT: "4GiB"
+      # Leave the host clean for the next job — built image layers and
+      # buildkit cache are dead weight once pushed to GHCR.
+      - name: Reclaim docker disk
+        if: always()
+        run: |
+          for b in $(docker buildx ls --format '{{.Name}}'); do
+            docker buildx prune --builder "$b" -af || true
+          done
+          docker builder prune -af || true
+          docker image prune -f || true
 
   desktop:
     strategy:
@@ -182,7 +223,10 @@ jobs:
             gh release view "$TAG" >/dev/null 2>&1 && break
             sleep 20
           done
-          gh release view "$TAG" >/dev/null
+          # The prepare job normally created this already; create as a
+          # fallback so a prepare failure doesn't cascade into every leg.
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --verify-tag --generate-notes --title "Cloudreve $TAG"
           FILES=$(find desktop/target/release/bundle -type f \
             \( -name '*.deb' -o -name '*.AppImage' \
                -o -name '*.exe' -o -name '*.dmg' \
@@ -252,7 +296,8 @@ jobs:
             gh release view "$TAG" >/dev/null 2>&1 && break
             sleep 20
           done
-          gh release view "$TAG" >/dev/null
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --verify-tag --generate-notes --title "Cloudreve $TAG"
           APK=$(find app/build/outputs/apk/release -name 'app-release*.apk' | head -1)
           AAB=$(find app/build/outputs/bundle/release -name 'app-release*.aab' | head -1)
           cp "$APK" "cloudreve-android-${TAG}.apk"
