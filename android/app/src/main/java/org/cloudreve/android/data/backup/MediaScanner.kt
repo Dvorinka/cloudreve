@@ -39,9 +39,19 @@ class MediaScanner(private val context: Context) {
             DATE_TAKEN,
             MediaStore.Files.FileColumns.DATE_MODIFIED,
             MediaStore.Files.FileColumns.MIME_TYPE,
+            @Suppress("DEPRECATION")
+            MediaStore.Files.FileColumns.DATA,
         )
         val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (${types.joinToString(",") { "?" }})"
         val rows = mutableListOf<Row>()
+        // MediaStore's indexer honours .nomedia, but only on its own schedule:
+        // a marker dropped after indexing leaves rows visible until the next
+        // scan, so directories are re-checked on disk here (once per parent).
+        val nomediaDirs = HashMap<String, Boolean>()
+        fun hasNomedia(data: String?): Boolean {
+            val parent = data?.let { java.io.File(it).parent } ?: return false
+            return nomediaDirs.getOrPut(parent) { java.io.File(parent, ".nomedia").exists() }
+        }
         context.contentResolver.query(
             collection, projection, selection, types.map { it.toString() }.toTypedArray(), null,
         )?.use { c ->
@@ -51,7 +61,9 @@ class MediaScanner(private val context: Context) {
             val taken = c.getColumnIndexOrThrow(DATE_TAKEN)
             val modified = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_MODIFIED)
             val mime = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE)
+            val data = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
             while (c.moveToNext()) {
+                if (hasNomedia(if (c.isNull(data)) null else c.getString(data))) continue
                 val rowId = c.getLong(id)
                 rows += Row(
                     id = rowId,

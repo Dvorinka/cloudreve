@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.ui.files.transfers.PhotoBackupCard
 import org.cloudreve.android.util.CrUri
+import org.cloudreve.android.work.BackgroundSync
 
 /**
  * Landing page modelled on the system Files app: a search field, a Recent
@@ -97,6 +98,7 @@ fun HomeScreen(
             PhotoBackupCard(
                 stats = stats,
                 running = state.backupRunning,
+                live = state.backgroundSyncs.firstOrNull { it.kind == BackgroundSync.Kind.CAMERA },
                 onSyncNow = onBackUpNow,
                 onRetryFailed = onRetryFailedBackups,
                 onOpenFolder = { onOpenFolder(stats.remoteFolder) },
