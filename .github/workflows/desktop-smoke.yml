@@ -37,6 +37,8 @@ jobs:
           yarn build
       - name: Build desktop binary
         run: cargo build --locked
+      - name: Install screenshot tool
+        run: sudo apt-get install -y scrot
       - name: Launch under Xvfb and capture screenshot
         run: |
           xvfb-run -a sh -c '

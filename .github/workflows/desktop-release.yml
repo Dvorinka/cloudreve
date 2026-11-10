@@ -69,6 +69,18 @@ jobs:
 
           $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
           $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+          if (-not $makeappx -or -not $signtool) {
+            Write-Host "Windows SDK tools missing; attempting winget install"
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+              winget install --id Microsoft.WindowsSDK.10.0.22621 -e --silent --accept-package-agreements --accept-source-agreements
+              $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+              $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
+            }
+          }
+          if (-not $makeappx -or -not $signtool) {
+            Write-Host "::warning::Windows SDK makeappx/signtool unavailable; skipping sparse identity package (Explorer shell integration will be degraded)"
+            exit 0
+          }
           & $makeappx.FullName pack /o /d $stage /nv /p "$env:RUNNER_TEMP\Cloudreve-Identity.msix"
           if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
 
