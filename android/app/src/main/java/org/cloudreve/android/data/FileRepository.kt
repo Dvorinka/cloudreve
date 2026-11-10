@@ -73,10 +73,33 @@ class FileRepository(private val api: ApiClient) {
     /** Signed URL served inline (no attachment disposition), for streaming previews. */
     suspend fun contentUrl(uri: String): String = signedUrl(uri, download = false)
 
-    private suspend fun signedUrl(uri: String, download: Boolean): String =
-        api.service().fileUrls(FileUrlRequest(listOf(uri), download = download))
+    private suspend fun signedUrl(uri: String, download: Boolean): String {
+        val url = api.service().fileUrls(FileUrlRequest(listOf(uri), download = download))
             .unwrap().urls.firstOrNull()?.url
             ?: throw ApiException(-1, "No URL returned for $uri")
+        return reachableUrl(url)
+    }
+
+    /**
+     * The server builds signed URLs from its `siteURL` setting. A siteURL of
+     * `localhost` (the out-of-box default) is unreachable from any remote
+     * client, so loopback URLs get their scheme+host rewritten to the address
+     * the user actually connected to. Any other host is trusted — it may be a
+     * CDN or a LAN-only name the client can legitimately reach.
+     */
+    private suspend fun reachableUrl(url: String): String {
+        val parsed = runCatching { java.net.URI(url) }.getOrNull() ?: return url
+        val loopback = parsed.host == null ||
+            parsed.host.equals("localhost", true) ||
+            parsed.host.startsWith("127.") ||
+            parsed.host == "::1" || parsed.host == "0.0.0.0"
+        if (!loopback) return url
+        val base = runCatching { java.net.URI(api.serverBase()) }.getOrNull() ?: return url
+        return java.net.URI(
+            base.scheme, parsed.userInfo, base.host, base.port,
+            parsed.path, parsed.query, parsed.fragment,
+        ).toString()
+    }
 
     suspend fun download(url: String) = api.service().download(url)
 
