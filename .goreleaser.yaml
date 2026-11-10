@@ -127,23 +127,16 @@ dockers:
     image_templates:
       - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-slim-arm64"
 
+# Floating tags (latest, v4, slim) are deliberately NOT manifests here.
+# GoReleaser re-points them on every run, so re-releasing an old tag drags
+# `latest` backwards (2026-11-10: a v4.23.8 re-release overwrote latest
+# with 4.23.8 while v4.23.12 was current). .build/retag-floating.sh owns
+# them and only moves them when the released tag is the newest v* tag.
 docker_manifests:
-  - name_template: "ghcr.io/dvorinka/cloudreve:latest"
-    image_templates:
-      - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-amd64"
-      - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-arm64"
-  - name_template: "ghcr.io/dvorinka/cloudreve:v4"
-    image_templates:
-      - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-amd64"
-      - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-arm64"
   - name_template: "ghcr.io/dvorinka/cloudreve:{{ .Tag }}"
     image_templates:
       - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-amd64"
       - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-arm64"
-  - name_template: "ghcr.io/dvorinka/cloudreve:slim"
-    image_templates:
-      - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-slim-amd64"
-      - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-slim-arm64"
   - name_template: "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-slim"
     image_templates:
       - "ghcr.io/dvorinka/cloudreve:{{ .Tag }}-slim-amd64"

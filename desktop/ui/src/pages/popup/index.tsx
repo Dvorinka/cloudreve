@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import {
   Close as CloseIcon,
+  DeleteOutline as TrashIcon,
   Folder as FolderIcon,
   CheckCircle as CheckCircleIcon,
   Refresh as RefreshIcon,
@@ -128,6 +129,14 @@ export default function Popup() {
     }
   };
 
+  const handleTrash = async () => {
+    try {
+      await invoke("show_trash_window");
+    } catch (error) {
+      console.error("Failed to open trash window:", error);
+    }
+  };
+
   const handleResolveAll = async (action: "keep_remote" | "overwrite_remote") => {
     try {
       await invoke("resolve_all_conflicts", {
@@ -182,6 +191,13 @@ export default function Popup() {
             <CloudreveLogo height={28} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center" }}>
+            <IconButton
+              size="small"
+              onClick={handleTrash}
+              aria-label={t("trash.title", "Trash")}
+            >
+              <TrashIcon fontSize="small" />
+            </IconButton>
             <IconButton size="small" onClick={handleSettings}>
               <Settings fontSize="small" />
             </IconButton>
