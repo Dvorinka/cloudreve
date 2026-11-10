@@ -197,6 +197,14 @@ fun FilesScreen(
         preview = siblings to siblings.indexOfFirst { it.path == file.path }.coerceAtLeast(0)
     }
 
+    // A cloudreve:// link resolved to a file: open it in the same viewer a tap would.
+    LaunchedEffect(state.pendingOpen) {
+        state.pendingOpen?.let {
+            openFile(it)
+            viewModel.consumePendingOpen()
+        }
+    }
+
     var shareTarget by remember { mutableStateOf<FileObject?>(null) }
     var detailsTarget by remember { mutableStateOf<FileObject?>(null) }
     fun shareLink(file: FileObject) { shareTarget = file }
