@@ -237,13 +237,56 @@ jobs:
           java -version
           echo "JAVA_HOME=$(cd "$(dirname "$(command -v java)")/.." && pwd)" >> "$GITHUB_ENV"
 
-      - name: Ensure Gradle home is writable
-        # KERN's shared /kern/cache/gradle can be root-owned; setup-gradle
-        # writes init.d scripts into GRADLE_USER_HOME and dies on EACCES.
+      - name: Configure Gradle home
+        # KERN exports GRADLE_USER_HOME=/kern/cache/gradle, but on some
+        # runner hosts that tree is root-owned and uid-1000 jobs get EACCES
+        # when setup-gradle writes init.d. Use a writable per-job home,
+        # seed the same fleet mirror init script, and keep the warm
+        # dependency cache read-only via GRADLE_RO_DEP_CACHE when present.
         run: |
-          gh="${GRADLE_USER_HOME:-$HOME/.gradle}"
-          chmod -R a+rwX "$gh" 2>/dev/null || sudo -n chmod -R a+rwX "$gh" || true
+          set -e
+          gh="$RUNNER_TEMP/gradle-home"
           mkdir -p "$gh/init.d"
+          cat > "$gh/init.d/kern-mirror.init.gradle" <<'GRADLE_INIT_EOF'
+          // KERN-managed: fleet Maven Central mirror. Do not edit — the runner
+          // rewrites this file on every job.
+          // Inserted FIRST everywhere Gradle resolves artifacts so repo.maven.apache.org
+          // becomes the fallback, not the default. Nothing is removed.
+          // KERN_MAVEN_MIRROR overrides the URL (e.g. a LAN pull-through cache).
+          def mirrorUrl = System.getenv('KERN_MAVEN_MIRROR') ?: 'https://maven-central.storage-download.googleapis.com/maven2/'
+          def addMirror
+          addMirror = { repos ->
+              if (repos.findByName('kern-central-mirror') == null) {
+                  // allowInsecureProtocol: the fleet LAN pull-through mirror is
+                  // plain http on the trusted segment; Gradle >= 7 refuses http
+                  // repos without the opt-in or every resolve fails outright.
+                  repos.maven { url mirrorUrl; name 'kern-central-mirror'; allowInsecureProtocol = true }
+                  def repo = repos.findByName('kern-central-mirror')
+                  repos.remove(repo)
+                  repos.add(0, repo)
+              }
+          }
+          gradle.settingsEvaluated { settings ->
+              try { addMirror(settings.pluginManagement.repositories) } catch (Throwable ignored) {}
+              try { addMirror(settings.dependencyResolutionManagement.repositories) } catch (Throwable ignored) {}
+              def mode = ''
+              try { mode = settings.dependencyResolutionManagement.repositoriesMode.get().name() } catch (Throwable ignored) {}
+              if (mode != 'FAIL_ON_PROJECT_REPOS') {
+                  settings.gradle.projectsLoaded {
+                      settings.gradle.rootProject { root ->
+                          root.allprojects { p ->
+                              addMirror(p.buildscript.repositories)
+                              addMirror(p.repositories)
+                          }
+                      }
+                  }
+              }
+          }
+          GRADLE_INIT_EOF
+          echo "GRADLE_USER_HOME=$gh" >> "$GITHUB_ENV"
+          if [ -d /kern/cache/gradle/caches/modules-2 ]; then
+            echo "GRADLE_RO_DEP_CACHE=/kern/cache/gradle/caches/modules-2" >> "$GITHUB_ENV"
+          fi
 
       - uses: gradle/actions/setup-gradle@v4
 
