@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.ui.files.formatDate
 import org.cloudreve.android.util.CrUri
+import org.cloudreve.android.work.BackgroundSync
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -43,6 +44,8 @@ fun PhotoBackupCard(
     stats: BackupStats.Stats,
     running: Boolean,
     onSyncNow: () -> Unit,
+    /** Live per-item progress from the worker; the ledger stats lag until a recompute. */
+    live: BackgroundSync.Status? = null,
     onRetryFailed: () -> Unit,
     onOpenFolder: () -> Unit,
     modifier: Modifier = Modifier,
@@ -75,14 +78,14 @@ fun PhotoBackupCard(
             }
 
             LinearProgressIndicator(
-                progress = { stats.fraction },
+                progress = { live?.fraction ?: stats.fraction },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 14.dp, end = 8.dp),
             )
 
             Text(
-                statusLine(stats, running),
+                live?.let { "Uploading ${it.name} • ${it.index + 1} of ${it.total}" } ?: statusLine(stats, running),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 10.dp),
