@@ -216,10 +216,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
+      - name: Set up JDK
+        # KERN runners each ship a single Temurin (17 on some hosts, 21 on
+        # others) and the egress proxy 403s setup-java's remote version
+        # lookup, so any pinned java-version fails on the runner that lacks
+        # it. Use the JDK already installed on the host; AGP 8.9 / Gradle
+        # 8.11 run on both 17 and 21.
+        run: |
+          set -e
+          if ! command -v java >/dev/null 2>&1; then
+            for bindir in /usr/lib/jvm/*/bin /usr/java/*/bin; do
+              if [ -x "$bindir/java" ]; then export PATH="$bindir:$PATH"; break; fi
+            done
+          fi
+          java -version
+          echo "JAVA_HOME=$(cd "$(dirname "$(command -v java)")/.." && pwd)" >> "$GITHUB_ENV"
 
       - uses: gradle/actions/setup-gradle@v4
 
