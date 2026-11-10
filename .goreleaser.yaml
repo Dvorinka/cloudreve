@@ -75,7 +75,10 @@ changelog:
 release:
   draft: false
   prerelease: auto
-  target_commitish: "{{ .Commit }}"
+  # Do not pin a SHA: GitHub's releases API 403s app/integration tokens
+  # when target_commitish is a commit SHA (KERN's GITHUB_TOKEN). The tag
+  # exists before this runs, so the release attaches to it regardless.
+  target_commitish: "{{ .Tag }}"
   name_template: "{{.Version}}"
 
 dockers:
