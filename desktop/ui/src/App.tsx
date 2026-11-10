@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { Routes, Route, HashRouter } from "react-router-dom";
 import Update from "./pages/Update";
+import Trash from "./pages/Trash";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -51,6 +52,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/share" element={<Share />} />
             <Route path="/update" element={<Update />} />
+            <Route path="/trash" element={<Trash />} />
           </Routes>
         </HashRouter>
       </ThemeProvider>

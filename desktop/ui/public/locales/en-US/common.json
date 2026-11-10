@@ -222,6 +222,12 @@
     "histF_price_points": "price",
     "histF_listed_publicly": "public listing"
   },
+  "trash": {
+    "title": "Trash",
+    "empty": "Trash is empty",
+    "restore": "Restore",
+    "deleteForever": "Delete permanently"
+  },
   "update": {
     "title": "Software Update",
     "available": "Version {{version}} is available (you have {{current}}).",

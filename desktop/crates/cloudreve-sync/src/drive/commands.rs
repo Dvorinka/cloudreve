@@ -24,7 +24,7 @@ use cloudreve_api::{
     models::{
         explorer::{
             DeleteFileService, FileResponse, FileURLService, GetFileInfoService,
-            MoveFileService, RenameFileService, metadata,
+            ListFileService, ListResponse, MoveFileService, RenameFileService, metadata,
         },
         share::ShareCreateService,
         uri::CrUri,
@@ -552,6 +552,49 @@ impl Mount {
     pub async fn delete_share(&self, id: &str) -> Result<()> {
         self.cr_client.delete_share(id).await?;
         Ok(())
+    }
+
+    /// List files currently in the drive's trash.
+    pub async fn list_trash(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> Result<ListResponse> {
+        Ok(self
+            .cr_client
+            .list_files(&ListFileService {
+                uri: "cloudreve://trash".to_string(),
+                page: Some(page),
+                page_size: Some(page_size),
+                order_by: None,
+                order_direction: None,
+                next_page_token: None,
+            })
+            .await?)
+    }
+
+    /// Restore trashed files to their original locations.
+    pub async fn restore_files(&self, uris: Vec<String>) -> Result<()> {
+        Ok(self
+            .cr_client
+            .restore_files(&DeleteFileService {
+                uris,
+                unlink: None,
+                skip_soft_delete: Some(true),
+            })
+            .await?)
+    }
+
+    /// Permanently delete files, bypassing the trash.
+    pub async fn delete_files_permanently(&self, uris: Vec<String>) -> Result<()> {
+        Ok(self
+            .cr_client
+            .delete_files(&DeleteFileService {
+                uris,
+                unlink: None,
+                skip_soft_delete: Some(true),
+            })
+            .await?)
     }
 
     pub async fn rename_completed(&self, source: PathBuf, destination: PathBuf) -> Result<()> {
