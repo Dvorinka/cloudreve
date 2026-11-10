@@ -290,7 +290,13 @@ fun FilesScreen(
                 enter = scaleIn() + fadeIn(),
                 exit = scaleOut() + fadeOut(),
             ) {
-                FloatingActionButton(onClick = { addSheetOpen = true }) {
+                // Brand primary, not M3's default tertiaryContainer purple —
+                // matches the web app's primary action colour.
+                FloatingActionButton(
+                    onClick = { addSheetOpen = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
                     Icon(Icons.Default.Add, contentDescription = "Add")
                 }
             }
