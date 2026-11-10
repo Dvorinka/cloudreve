@@ -86,8 +86,12 @@ data class FileObject(
     val mayHaveThumbnail: Boolean
         get() = !isFolder && metadata?.containsKey(METADATA_THUMB_DISABLED) != true
 
+    /** Where a trashed file came from; only set on items listed under cloudreve://trash. */
+    val restoreUri: String? get() = metadata?.get(METADATA_RESTORE_URI)
+
     companion object {
         const val METADATA_THUMB_DISABLED = "thumb:disabled"
+        const val METADATA_RESTORE_URI = "sys:restore_uri"
     }
 }
 
@@ -143,10 +147,22 @@ data class RenameFileRequest(
 )
 
 @Serializable
+data class MoveFileRequest(
+    val uris: List<String>,
+    val dst: String,
+    val copy: Boolean = false,
+)
+
+@Serializable
 data class DeleteFileRequest(
     val uris: List<String>,
     val unlink: Boolean = false,
+    /** Bypass the trash and remove right away (used from the trash view). */
+    @SerialName("skip_soft_delete") val skipSoftDelete: Boolean = false,
 )
+
+@Serializable
+data class RestoreFileRequest(val uris: List<String>)
 
 @Serializable
 data class CreateUploadSessionRequest(
@@ -157,6 +173,9 @@ data class CreateUploadSessionRequest(
     @SerialName("policy_id") val policyId: String = "",
     @SerialName("entity_type") val entityType: String = "",
     val previous: String = "",
+    /** Client-computed SHA-256 hex. Servers with upload_dedup link identical bytes
+     *  already in the account instead of receiving them (rapid_uploaded). */
+    val hash: String = "",
 )
 
 @Serializable
@@ -192,18 +211,6 @@ data class ShareCreateRequest(
     @SerialName("allow_edit") val allowEdit: Boolean = false,
     @SerialName("preview_only") val previewOnly: Boolean = false,
     @SerialName("upload_only") val uploadOnly: Boolean = false,
-)
-
-@Serializable
-data class SearchHit(
-    val file: FileObject = FileObject(),
-    val content: String = "",
-)
-
-@Serializable
-data class SearchResponse(
-    val hits: List<SearchHit> = emptyList(),
-    val total: Long = 0,
 )
 
 @Serializable

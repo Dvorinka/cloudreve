@@ -13,8 +13,8 @@ android {
         applicationId = "com.tdvorak.cloudreve"
         minSdk = 28
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.2.1"
+        versionCode = 5
+        versionName = "1.3.1"
     }
 
     signingConfigs {
@@ -60,6 +60,10 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -94,6 +98,15 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-video:2.7.0")
+
+    // In-app video/audio preview. 1.11 needs Kotlin 2.2; stay on 1.10 until the Kotlin plugin moves.
+    implementation("androidx.media3:media3-exoplayer:1.10.1")
+    implementation("androidx.media3:media3-ui:1.10.1")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 
     // Play in-app updates — no-op on sideloaded/non-Play installs
     implementation("com.google.android.play:app-update-ktx:2.1.0")

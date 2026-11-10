@@ -8,6 +8,8 @@ import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import org.cloudreve.android.BuildConfig
 import org.cloudreve.android.data.SessionManager
@@ -15,9 +17,13 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
 /**
- * ApiClient owns the OkHttp/Retrofit wiring for one server. Auth requests
- * carry `Authorization: Bearer <access>`; a 401 triggers a single-flight
- * refresh and one retry, mirroring the desktop client's behavior.
+ * ApiClient owns the OkHttp/Retrofit wiring for one server. Requests to the
+ * API host carry `Authorization: Bearer <access>`.
+ *
+ * Token refresh is single-flight and happens in two places: proactively when
+ * the access token is about to expire, and reactively when the server answers
+ * `{"code":401}`. Cloudreve reports "login required" inside a 200 body, so an
+ * OkHttp `Authenticator` (HTTP 401 only) would never fire.
  */
 class ApiClient(private val session: SessionManager) {
 
@@ -53,53 +59,24 @@ class ApiClient(private val session: SessionManager) {
         // Authorization header ("only one auth mechanism allowed", HTTP 400), so attaching
         // the token there breaks every direct upload and download.
         val apiHost = runCatching { java.net.URI(baseUrl).host }.getOrNull()
-        val authInterceptor = Interceptor { chain ->
-            val token = runBlocking { session.accessTokenNow() }
-            val sameHost = chain.request().url.host.equals(apiHost, ignoreCase = true)
-            val request = if (token.isNotEmpty() && sameHost) {
-                chain.request().newBuilder()
-                    .header("Authorization", "Bearer $token")
-                    .build()
-            } else {
-                chain.request()
+
+        val sessionInterceptor = Interceptor { chain ->
+            val original = chain.request()
+            val sameHost = original.url.host.equals(apiHost, ignoreCase = true)
+            if (!sameHost || original.header(NO_AUTH_HEADER) != null) {
+                return@Interceptor chain.proceed(original.newBuilder().removeHeader(NO_AUTH_HEADER).build())
             }
-            chain.proceed(request)
-        }
 
-        val refreshAuthenticator = okhttp3.Authenticator { _, response ->
-            // Give up after a couple of retries or when there is no session.
-            if (response.request.header("X-Retry-Count")?.toIntOrNull() ?: 0 >= 1) return@Authenticator null
-            val refreshToken = runBlocking { session.refreshTokenNow() }
-            if (refreshToken.isEmpty()) return@Authenticator null
-
-            val newTokens = runBlocking {
-                refreshMutex.withLock {
-                    // Another request may already have refreshed while we queued.
-                    val current = session.accessTokenNow()
-                    if (current.isNotEmpty() && current != response.request.header("Authorization")
-                        ?.removePrefix("Bearer ")
-                    ) {
-                        return@withLock current
-                    }
-                    val refreshed = kotlin.runCatching {
-                        buildService(cachedBaseUrl ?: return@withLock null)
-                            .refreshToken(RefreshTokenRequest(refreshToken))
-                    }.getOrNull()
-                    val body = refreshed?.body()?.data
-                    if (refreshed?.isSuccessful == true && body != null) {
-                        val expiresAt = parseExpiresAt(body.accessExpires)
-                        session.saveTokens(body.accessToken, body.refreshToken, expiresAt)
-                        body.accessToken
-                    } else {
-                        null
-                    }
+            val token = runBlocking { freshAccessToken(baseUrl) }
+            var response = chain.proceed(original.withBearer(token))
+            if (token.isNotEmpty() && response.isLoginRequired()) {
+                val renewed = runBlocking { refresh(baseUrl, staleToken = token) }
+                if (renewed != null) {
+                    response.close()
+                    response = chain.proceed(original.withBearer(renewed))
                 }
-            } ?: return@Authenticator null
-
-            response.request.newBuilder()
-                .header("Authorization", "Bearer $newTokens")
-                .header("X-Retry-Count", "1")
-                .build()
+            }
+            response
         }
 
         val logging = HttpLoggingInterceptor().apply {
@@ -111,9 +88,8 @@ class ApiClient(private val session: SessionManager) {
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
-            .addInterceptor(authInterceptor)
+            .addInterceptor(sessionInterceptor)
             .addInterceptor(logging)
-            .authenticator(refreshAuthenticator)
             .build()
 
         return Retrofit.Builder()
@@ -124,7 +100,68 @@ class ApiClient(private val session: SessionManager) {
             .create(ApiService::class.java)
     }
 
+    /** Current access token, refreshed first if it expires within [REFRESH_MARGIN_MS]. */
+    private suspend fun freshAccessToken(baseUrl: String): String {
+        val token = session.accessTokenNow()
+        if (token.isEmpty()) return token
+        val expiresAt = session.accessExpiresAtNow()
+        if (expiresAt > 0 && expiresAt - System.currentTimeMillis() < REFRESH_MARGIN_MS) {
+            return refresh(baseUrl, staleToken = token) ?: token
+        }
+        return token
+    }
+
+    /**
+     * Exchanges the refresh token for a new pair. Single-flight: concurrent
+     * callers that queued behind a successful refresh reuse its result instead
+     * of spending the (now consumed) refresh token again. Returns null when the
+     * session cannot be renewed; callers then surface the login-required error.
+     */
+    private suspend fun refresh(baseUrl: String, staleToken: String): String? = refreshMutex.withLock {
+        val current = session.accessTokenNow()
+        if (current.isNotEmpty() && current != staleToken) return@withLock current
+        val refreshToken = session.refreshTokenNow()
+        if (refreshToken.isEmpty()) return@withLock null
+
+        val resp = runCatching {
+            bareService(baseUrl).refreshToken(RefreshTokenRequest(refreshToken))
+        }.getOrNull()
+        val body = resp?.body()
+        if (resp?.isSuccessful != true || body == null || body.code != 0 || body.data == null) {
+            return@withLock null
+        }
+        val tokens = body.data
+        session.saveTokens(tokens.accessToken, tokens.refreshToken, parseExpiresAt(tokens.accessExpires))
+        tokens.accessToken
+    }
+
+    /** Retrofit without the session interceptor, for the refresh call itself. */
+    private fun bareService(baseUrl: String): ApiService =
+        Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).build())
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(ApiService::class.java)
+
+    private fun Request.withBearer(token: String): Request =
+        if (token.isEmpty()) this else newBuilder().header("Authorization", "Bearer $token").build()
+
+    /** True for a JSON envelope carrying Cloudreve's "login required" code. */
+    private fun Response.isLoginRequired(): Boolean {
+        if (!isSuccessful) return code == 401
+        val type = header("Content-Type") ?: return false
+        if (!type.startsWith("application/json")) return false
+        val head = peekBody(256).string()
+        return LOGIN_REQUIRED.containsMatchIn(head)
+    }
+
     companion object {
+        /** Set on a request to skip the bearer token (stripped before sending). */
+        const val NO_AUTH_HEADER = "X-Cloudreve-No-Auth"
+        private const val REFRESH_MARGIN_MS = 60_000L
+        private val LOGIN_REQUIRED = Regex(""""code"\s*:\s*401\b""")
+
         // OffsetDateTime parses both "…Z" and "+02:00" offsets; unknown → refresh early.
         fun parseExpiresAt(iso: String): Long = runCatching {
             java.time.OffsetDateTime.parse(iso).toInstant().toEpochMilli()

@@ -17,6 +17,11 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +44,7 @@ import org.cloudreve.android.ui.files.FilesScreen
 import org.cloudreve.android.ui.files.FilesViewModel
 import org.cloudreve.android.ui.login.LoginScreen
 import org.cloudreve.android.ui.login.LoginViewModel
+import org.cloudreve.android.ui.settings.SettingsScreen
 import org.cloudreve.android.ui.theme.CloudreveTheme
 import org.cloudreve.android.util.CrUri
 import org.cloudreve.android.work.UploadWorker
@@ -129,7 +135,16 @@ private class AppViewModelFactory(private val app: CloudreveApp) : ViewModelProv
         modelClass.isAssignableFrom(LoginViewModel::class.java) ->
             LoginViewModel(app.sessionManager, app.apiClient) as T
         modelClass.isAssignableFrom(FilesViewModel::class.java) ->
-            FilesViewModel(app.fileRepository, app.favoritesStore) as T
+            FilesViewModel(
+                app.fileRepository,
+                app.favoritesStore,
+                app.viewSettings,
+                androidx.work.WorkManager.getInstance(app),
+                app.backupStats,
+                app.cameraUploadSettings,
+                app.backupLedger,
+                onSessionExpired = { app.sessionManager.clear() },
+            ) as T
         else -> throw IllegalArgumentException("Unknown ViewModel ${modelClass.name}")
     }
 }
@@ -201,6 +216,18 @@ fun App() {
                 composable("files") {
                     FilesScreen(
                         viewModel = viewModel(factory = factory),
+                        onOpenSettings = { nav.navigate("settings") },
+                    )
+                }
+                composable(
+                    "settings",
+                    enterTransition = { slideInHorizontally(tween(260)) { it / 3 } + fadeIn(tween(200)) },
+                    exitTransition = { fadeOut(tween(160)) },
+                    popEnterTransition = { fadeIn(tween(200)) },
+                    popExitTransition = { slideOutHorizontally(tween(220)) { it / 3 } + fadeOut(tween(160)) },
+                ) {
+                    SettingsScreen(
+                        onBack = { nav.popBackStack() },
                         onSignOut = signOut,
                     )
                 }

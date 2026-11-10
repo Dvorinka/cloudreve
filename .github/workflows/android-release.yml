@@ -27,10 +27,77 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
+      - name: Set up JDK
+        # KERN runners each ship a single Temurin (17 on some hosts, 21 on
+        # others) and the egress proxy 403s setup-java's remote version
+        # lookup, so any pinned java-version fails on the runner that lacks
+        # it. Use the JDK already installed on the host; AGP 8.9 / Gradle
+        # 8.11 run on both 17 and 21.
+        run: |
+          set -e
+          if ! command -v java >/dev/null 2>&1; then
+            for bindir in /usr/lib/jvm/*/bin /usr/java/*/bin \
+                "$RUNNER_TOOL_CACHE"/*/*/x64/bin "$RUNNER_TOOL_CACHE"/*/*/bin; do
+              if [ -x "$bindir/java" ]; then
+                export PATH="$bindir:$PATH"
+                echo "$bindir" >> "$GITHUB_PATH"
+                break
+              fi
+            done
+          fi
+          java -version
+          echo "JAVA_HOME=$(cd "$(dirname "$(command -v java)")/.." && pwd)" >> "$GITHUB_ENV"
+
+      - name: Configure Gradle home
+        # KERN exports GRADLE_USER_HOME=/kern/cache/gradle, but on some
+        # runner hosts that tree is root-owned and uid-1000 jobs get EACCES
+        # when setup-gradle writes init.d. Use a writable per-job home,
+        # seed the same fleet mirror init script, and keep the warm
+        # dependency cache read-only via GRADLE_RO_DEP_CACHE when present.
+        run: |
+          set -e
+          gh="$RUNNER_TEMP/gradle-home"
+          mkdir -p "$gh/init.d"
+          cat > "$gh/init.d/kern-mirror.init.gradle" <<'GRADLE_INIT_EOF'
+          // KERN-managed: fleet Maven Central mirror. Do not edit — the runner
+          // rewrites this file on every job.
+          // Inserted FIRST everywhere Gradle resolves artifacts so repo.maven.apache.org
+          // becomes the fallback, not the default. Nothing is removed.
+          // KERN_MAVEN_MIRROR overrides the URL (e.g. a LAN pull-through cache).
+          def mirrorUrl = System.getenv('KERN_MAVEN_MIRROR') ?: 'https://maven-central.storage-download.googleapis.com/maven2/'
+          def addMirror
+          addMirror = { repos ->
+              if (repos.findByName('kern-central-mirror') == null) {
+                  // allowInsecureProtocol: the fleet LAN pull-through mirror is
+                  // plain http on the trusted segment; Gradle >= 7 refuses http
+                  // repos without the opt-in or every resolve fails outright.
+                  repos.maven { url mirrorUrl; name 'kern-central-mirror'; allowInsecureProtocol = true }
+                  def repo = repos.findByName('kern-central-mirror')
+                  repos.remove(repo)
+                  repos.add(0, repo)
+              }
+          }
+          gradle.settingsEvaluated { settings ->
+              try { addMirror(settings.pluginManagement.repositories) } catch (Throwable ignored) {}
+              try { addMirror(settings.dependencyResolutionManagement.repositories) } catch (Throwable ignored) {}
+              def mode = ''
+              try { mode = settings.dependencyResolutionManagement.repositoriesMode.get().name() } catch (Throwable ignored) {}
+              if (mode != 'FAIL_ON_PROJECT_REPOS') {
+                  settings.gradle.projectsLoaded {
+                      settings.gradle.rootProject { root ->
+                          root.allprojects { p ->
+                              addMirror(p.buildscript.repositories)
+                              addMirror(p.repositories)
+                          }
+                      }
+                  }
+              }
+          }
+          GRADLE_INIT_EOF
+          echo "GRADLE_USER_HOME=$gh" >> "$GITHUB_ENV"
+          if [ -d /kern/cache/gradle/caches/modules-2 ]; then
+            echo "GRADLE_RO_DEP_CACHE=/kern/cache/gradle/caches/modules-2" >> "$GITHUB_ENV"
+          fi
 
       - uses: gradle/actions/setup-gradle@v4
 

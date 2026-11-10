@@ -51,10 +51,10 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
         val ensuredDirs = mutableSetOf<String>()
         var uploaded = 0
 
-        walk(root, "").forEach { entry ->
-            if (uploaded >= MAX_PER_RUN) return@forEach
-            if (entry.signature in synced) return@forEach
-
+        // Resolve the pending set first so progress can say "x of y".
+        val pending = walk(root, "").filter { it.signature !in synced }.take(MAX_PER_RUN)
+        pending.forEachIndexed { i, entry ->
+            setProgress(BackgroundSync.progress(BackgroundSync.Kind.FOLDER, entry.name, i, pending.size))
             setForeground(progressInfo(entry.name, uploaded))
             try {
                 ensureRemoteDirs(app, cfg.remoteFolder, entry.relativeDir, ensuredDirs)
@@ -172,6 +172,7 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
         fun apply(context: Context, wifiOnly: Boolean) {
             val wm = WorkManager.getInstance(context)
             val periodic = PeriodicWorkRequestBuilder<SyncFolderWorker>(15, TimeUnit.MINUTES)
+                .addTag(BackgroundSync.TAG)
                 .setConstraints(constraints(wifiOnly))
                 .build()
             wm.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, periodic)
@@ -179,6 +180,7 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
                 WORK_ONCE,
                 ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<SyncFolderWorker>()
+                .addTag(BackgroundSync.TAG)
                     .setConstraints(constraints(wifiOnly))
                     .build(),
             )
@@ -195,6 +197,7 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
                 WORK_ONCE,
                 ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<SyncFolderWorker>()
+                .addTag(BackgroundSync.TAG)
                     .setConstraints(constraints(wifiOnly))
                     .build(),
             )

@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -15,10 +14,9 @@ import org.cloudreve.android.util.CrUri
 private val Context.cameraUploadStore by preferencesDataStore(name = "camera_upload")
 
 /**
- * Camera auto-upload preferences plus the incremental-sync bookkeeping
- * (which MediaStore items were already uploaded or permanently failed).
- * ID sets are bounded so storage stays small; evicted entries may rarely
- * cause a duplicate upload of an old item.
+ * Camera auto-upload preferences and run timestamps. What has been uploaded
+ * lives in [org.cloudreve.android.data.backup.BackupLedger], keyed by content,
+ * not here: a preferences store is the wrong place for per-photo state.
  */
 class CameraUploadSettings(private val context: Context) {
 
@@ -27,18 +25,18 @@ class CameraUploadSettings(private val context: Context) {
         val remoteFolder = stringPreferencesKey("remote_folder")
         val wifiOnly = booleanPreferencesKey("wifi_only")
         val includeVideos = booleanPreferencesKey("include_videos")
-        val syncedIds = stringSetPreferencesKey("synced_ids")
-        val failedIds = stringSetPreferencesKey("failed_ids")
-        val lastSyncTs = longPreferencesKey("last_sync_ts")
         val lastSyncAt = longPreferencesKey("last_sync_at")
+        val lastReconcileAt = longPreferencesKey("last_reconcile_at")
     }
 
     data class Snapshot(
         val enabled: Boolean = false,
+        /** Root folder; photos go to `root/yyyy/MM` by capture date. */
         val remoteFolder: String = DEFAULT_FOLDER,
         val wifiOnly: Boolean = true,
         val includeVideos: Boolean = true,
         val lastSyncAt: Long = 0L,
+        val lastReconcileAt: Long = 0L,
     )
 
     val snapshot: Flow<Snapshot> = context.cameraUploadStore.data.map {
@@ -48,6 +46,7 @@ class CameraUploadSettings(private val context: Context) {
             wifiOnly = it[Keys.wifiOnly] ?: true,
             includeVideos = it[Keys.includeVideos] ?: true,
             lastSyncAt = it[Keys.lastSyncAt] ?: 0L,
+            lastReconcileAt = it[Keys.lastReconcileAt] ?: 0L,
         )
     }
 
@@ -69,40 +68,16 @@ class CameraUploadSettings(private val context: Context) {
         context.cameraUploadStore.edit { it[Keys.includeVideos] = include }
     }
 
-    suspend fun syncedIdsNow(): Set<String> =
-        context.cameraUploadStore.data.first()[Keys.syncedIds] ?: emptySet()
-
-    suspend fun failedIdsNow(): Set<String> =
-        context.cameraUploadStore.data.first()[Keys.failedIds] ?: emptySet()
-
-    suspend fun lastSyncTsNow(): Long =
-        context.cameraUploadStore.data.first()[Keys.lastSyncTs] ?: 0L
-
-    suspend fun markSynced(id: String, dateAddedSec: Long) {
-        context.cameraUploadStore.edit { prefs ->
-            val synced = (prefs[Keys.syncedIds] ?: emptySet()).toMutableSet()
-            synced.add(id)
-            prefs[Keys.syncedIds] = synced.bounded()
-            if (dateAddedSec > (prefs[Keys.lastSyncTs] ?: 0L)) {
-                prefs[Keys.lastSyncTs] = dateAddedSec
-            }
-            prefs[Keys.lastSyncAt] = System.currentTimeMillis()
-        }
+    /** A run finished (even with nothing to do); the stats card shows this as "Last run". */
+    suspend fun markRun() {
+        context.cameraUploadStore.edit { it[Keys.lastSyncAt] = System.currentTimeMillis() }
     }
 
-    suspend fun markFailed(id: String) {
-        context.cameraUploadStore.edit { prefs ->
-            val failed = (prefs[Keys.failedIds] ?: emptySet()).toMutableSet()
-            failed.add(id)
-            prefs[Keys.failedIds] = failed.bounded()
-        }
+    suspend fun markReconciled() {
+        context.cameraUploadStore.edit { it[Keys.lastReconcileAt] = System.currentTimeMillis() }
     }
-
-    private fun Set<String>.bounded(): Set<String> =
-        if (size <= MAX_TRACKED_IDS) this else this.drop(size - MAX_TRACKED_IDS).toSet()
 
     companion object {
         const val DEFAULT_FOLDER = "${CrUri.MY_PREFIX}/Photos"
-        private const val MAX_TRACKED_IDS = 2000
     }
 }

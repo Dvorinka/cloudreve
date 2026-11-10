@@ -1,7 +1,6 @@
 package org.cloudreve.android.data
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.cloudreve.android.api.ApiClient
 import org.cloudreve.android.api.CreateFileRequest
 import org.cloudreve.android.api.CreateUploadSessionRequest
@@ -9,15 +8,31 @@ import org.cloudreve.android.api.DeleteFileRequest
 import org.cloudreve.android.api.FileObject
 import org.cloudreve.android.api.FileUrlRequest
 import org.cloudreve.android.api.ListFileResponse
+import org.cloudreve.android.api.MoveFileRequest
 import org.cloudreve.android.api.RenameFileRequest
-import org.cloudreve.android.api.SearchResponse
+import org.cloudreve.android.api.RestoreFileRequest
 import org.cloudreve.android.api.ShareCreateRequest
 import org.cloudreve.android.api.UploadSessionResponse
 import org.cloudreve.android.util.CrUri
+import kotlinx.coroutines.ensureActive
 import retrofit2.Response
 import java.io.File
 
-class ApiException(val code: Int, message: String) : Exception(message)
+class ApiException(val code: Int, message: String) : Exception(message) {
+    companion object {
+        /** Server envelope code for "login required" (session expired or revoked). */
+        const val CODE_LOGIN_REQUIRED = 401
+        /** A file or folder with that name is already there (pkg/serializer/error.go). */
+        const val CODE_OBJECT_EXISTS = 40004
+        /** No file or folder at that URI (CodeParentNotExist, "Path not exist"). */
+        const val CODE_PATH_NOT_EXIST = 40016
+    }
+
+    /** Server trouble or an expired session, as opposed to a verdict on one request. */
+    val isTransient: Boolean get() = code in 500..599 || code == 429 || code == CODE_LOGIN_REQUIRED
+}
+
+private const val CODE_OBJECT_EXISTS = ApiException.CODE_OBJECT_EXISTS
 
 class FileRepository(private val api: ApiClient) {
 
@@ -38,29 +53,85 @@ class FileRepository(private val api: ApiClient) {
         }
     }
 
-    suspend fun list(uri: String, pageToken: String? = null): ListFileResponse =
-        api.service().listFiles(uri = uri, nextPageToken = pageToken).unwrap()
+    suspend fun list(
+        uri: String,
+        pageToken: String? = null,
+        orderBy: String? = null,
+        orderDirection: String? = null,
+        pageSize: Int = 50,
+    ): ListFileResponse =
+        api.service().listFiles(
+            uri = uri,
+            pageSize = pageSize,
+            nextPageToken = pageToken,
+            orderBy = orderBy,
+            orderDirection = orderDirection,
+        ).unwrap()
 
-    suspend fun downloadUrl(uri: String): String =
-        api.service().fileUrls(FileUrlRequest(listOf(uri), download = true))
+    suspend fun downloadUrl(uri: String): String = signedUrl(uri, download = true)
+
+    /** Signed URL served inline (no attachment disposition), for streaming previews. */
+    suspend fun contentUrl(uri: String): String = signedUrl(uri, download = false)
+
+    private suspend fun signedUrl(uri: String, download: Boolean): String =
+        api.service().fileUrls(FileUrlRequest(listOf(uri), download = download))
             .unwrap().urls.firstOrNull()?.url
-            ?: throw ApiException(-1, "No download URL returned")
+            ?: throw ApiException(-1, "No URL returned for $uri")
 
     suspend fun download(url: String) = api.service().download(url)
+
+    /**
+     * Streams [url] into [dest] through a `.part` sibling, reporting
+     * (bytes, total) as it goes; total is -1 when the server sends no length.
+     * Cooperative with coroutine cancellation between buffers.
+     */
+    suspend fun downloadToFile(url: String, dest: File, onProgress: (Long, Long) -> Unit = { _, _ -> }) {
+        val resp = api.service().download(url)
+        if (!resp.isSuccessful) throw ApiException(resp.code(), "Download failed: HTTP ${resp.code()}")
+        val body = resp.body() ?: throw ApiException(-1, "Empty download")
+        val total = body.contentLength()
+        dest.parentFile?.mkdirs()
+        val part = File(dest.path + ".part")
+        try {
+            body.byteStream().use { input ->
+                java.io.FileOutputStream(part).use { out ->
+                    val buffer = ByteArray(256 * 1024)
+                    var copied = 0L
+                    while (true) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                        val n = input.read(buffer)
+                        if (n < 0) break
+                        out.write(buffer, 0, n)
+                        copied += n
+                        onProgress(copied, total)
+                    }
+                }
+            }
+            if (!part.renameTo(dest)) throw ApiException(-1, "Could not save ${dest.name}")
+        } finally {
+            part.delete()
+        }
+    }
 
     /** Resolves a thumbnail URL for the file, or null when none exists. */
     suspend fun thumbUrl(uri: String): String? =
         runCatching { api.service().thumb(uri).unwrap().url }.getOrNull()
 
-    /** Creates a public share link and returns its absolute URL. */
-    suspend fun createShare(uri: String): String {
-        val id = api.service().createShare(ShareCreateRequest(uri = uri)).unwrap()
-        val base = api.serverBase()
-        return "$base/s/$id"
+    /**
+     * Creates a share link. [expireSeconds] 0 = never; [password] empty = public.
+     * Mirrors the web app's link format: the password rides along as a path
+     * segment so the recipient does not have to type it.
+     */
+    suspend fun createShare(uri: String, password: String = "", expireSeconds: Int = 0, downloads: Int = 0): String {
+        val link = api.service().createShare(
+            ShareCreateRequest(uri = uri, password = password, expire = expireSeconds, downloads = downloads, isPrivate = password.isNotEmpty())
+        ).unwrap()
+        // PUT /share answers with the complete URL (`…/s/<id>[/<password>]`); older
+        // builds of this client assumed a bare id and produced a doubled URL.
+        if (link.startsWith("http")) return link
+        val base = api.serverBase().trimEnd('/')
+        return if (password.isEmpty()) "$base/s/$link" else "$base/s/$link/$password"
     }
-
-    suspend fun search(query: String, offset: Int = 0): SearchResponse =
-        api.service().searchFiles(query = query, offset = offset).unwrap()
 
     suspend fun mkdir(uri: String) {
         api.service().createFile(CreateFileRequest(uri = uri, type = "folder")).unwrapEmpty()
@@ -70,8 +141,22 @@ class FileRepository(private val api: ApiClient) {
         api.service().renameFile(RenameFileRequest(uri = uri, newName = newName)).unwrapEmpty()
     }
 
-    suspend fun delete(uris: List<String>) {
-        api.service().deleteFiles(DeleteFileRequest(uris = uris)).unwrapEmpty()
+    /** Moves (or copies) [uris] into the folder [dst]. */
+    suspend fun move(uris: List<String>, dst: String, copy: Boolean) {
+        api.service().moveFiles(MoveFileRequest(uris = uris, dst = dst, copy = copy)).unwrapEmpty()
+    }
+
+    /** Subfolders of [uri] only, for the destination picker. */
+    suspend fun listFolders(uri: String): List<FileObject> =
+        list(uri, orderBy = "name", orderDirection = "asc").files.filter { it.isFolder }
+
+    suspend fun delete(uris: List<String>, permanently: Boolean = false) {
+        api.service().deleteFiles(DeleteFileRequest(uris = uris, skipSoftDelete = permanently)).unwrapEmpty()
+    }
+
+    /** Puts trashed items (cloudreve://trash/… URIs) back where they came from. */
+    suspend fun restore(uris: List<String>) {
+        api.service().restoreFiles(RestoreFileRequest(uris)).unwrapEmpty()
     }
 
     suspend fun createUploadSession(
@@ -79,6 +164,8 @@ class FileRepository(private val api: ApiClient) {
         size: Long,
         lastModified: Long,
         mimeType: String,
+        overwrite: Boolean = false,
+        hash: String = "",
     ): UploadSessionResponse =
         api.service().createUploadSession(
             CreateUploadSessionRequest(
@@ -86,8 +173,53 @@ class FileRepository(private val api: ApiClient) {
                 size = size,
                 lastModified = lastModified,
                 mimeType = mimeType,
+                // "version" tells the server to add a new version to the existing
+                // file instead of failing with 40004; it is what the web uploader sends.
+                entityType = if (overwrite) "version" else "",
+                hash = hash,
             )
         ).unwrap()
+
+    /** Creates [uri] and any missing ancestors; folders that already exist are fine. */
+    suspend fun mkdirs(uri: String) {
+        if (CrUri.isRoot(uri)) return
+        mkdirs(CrUri.parent(uri))
+        try {
+            mkdir(uri)
+        } catch (e: ApiException) {
+            if (e.code != CODE_OBJECT_EXISTS) throw e
+        }
+    }
+
+    /**
+     * The file at exactly [uri], or null when there is none. One request to
+     * `/file/info`; the listing API's `name` filter is a case-insensitive substring
+     * match, so it is not a substitute for an exact lookup.
+     */
+    suspend fun stat(uri: String): FileObject? {
+        val response = api.service().fileInfo(uri)
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null && body.code == ApiException.CODE_PATH_NOT_EXIST) return null
+        }
+        return response.unwrap().takeUnless { it.isFolder }
+    }
+
+    /**
+     * Every file under [rootUri], recursively, as `canonical uri -> size`. The `type=file`
+     * search walks the whole subtree server-side, so this is one request per 500
+     * files rather than one per folder.
+     */
+    suspend fun indexFiles(rootUri: String): Map<String, Long> {
+        val out = HashMap<String, Long>()
+        var token: String? = null
+        do {
+            val page = list("$rootUri?type=file", pageToken = token, pageSize = 500)
+            for (f in page.files) if (!f.isFolder && f.path.isNotEmpty()) out[CrUri.canonical(f.path)] = f.size
+            token = page.pagination.nextToken
+        } while (!token.isNullOrEmpty())
+        return out
+    }
 
     /**
      * Streams a local file through the upload-session flow: create session,
@@ -97,16 +229,22 @@ class FileRepository(private val api: ApiClient) {
     suspend fun uploadFile(
         localFile: File,
         remoteParentUri: String,
+        remoteName: String = localFile.name,
+        overwrite: Boolean = false,
+        hash: String = "",
+        lastModified: Long = localFile.lastModified(),
         onProgress: (sent: Long, total: Long) -> Unit = { _, _ -> },
     ): UploadSessionResponse {
-        val targetUri = CrUri.join(remoteParentUri, localFile.name)
-        val mime = java.net.URLConnection.guessContentTypeFromName(localFile.name)
+        val targetUri = CrUri.join(remoteParentUri, remoteName)
+        val mime = java.net.URLConnection.guessContentTypeFromName(remoteName)
             ?: "application/octet-stream"
         val session = createUploadSession(
             uri = targetUri,
             size = localFile.length(),
-            lastModified = localFile.lastModified(),
+            lastModified = lastModified,
             mimeType = mime,
+            overwrite = overwrite,
+            hash = hash,
         )
 
         if (session.rapidUploaded) return session
@@ -123,7 +261,7 @@ class FileRepository(private val api: ApiClient) {
         localFile.inputStream().buffered().use { input ->
             val buffer = ByteArray(chunkSize.coerceAtMost(64L * 1024 * 1024).toInt())
             for (index in 0 until totalChunks) {
-                val read = input.readNBytes(buffer, 0, buffer.size)
+                val read = input.readFully(buffer)
                 if (index == 0 && read == 0 && localFile.length() > 0) break
                 val target = if (conventional) {
                     session_serverBase() + "/api/v4/file/upload/${session.sessionId}/$index"
@@ -131,8 +269,10 @@ class FileRepository(private val api: ApiClient) {
                     if (index >= urls!!.size) break
                     resolveUrl(urls[index])
                 }
-                val body = buffer.copyOf(read)
-                    .toRequestBody(mime.toMediaTypeOrNull())
+                val chunkStart = sent
+                val body = ProgressRequestBody(buffer, read, mime.toMediaTypeOrNull()) { written ->
+                    onProgress(chunkStart + written, localFile.length())
+                }
                 val resp = if (target.contains("/file/upload/")) {
                     svc.uploadChunk(target, body)
                 } else {
@@ -157,6 +297,45 @@ class FileRepository(private val api: ApiClient) {
             resp.body()?.close()
         }
         return session
+    }
+
+    /** Fills [buffer] as far as the stream allows; `InputStream.readNBytes` needs API 33. */
+    private fun java.io.InputStream.readFully(buffer: ByteArray): Int {
+        var filled = 0
+        while (filled < buffer.size) {
+            val n = read(buffer, filled, buffer.size - filled)
+            if (n < 0) break
+            filled += n
+        }
+        return filled
+    }
+
+    /**
+     * Request body over a byte range that reports bytes written as OkHttp
+     * drains it, so a single large chunk still yields smooth progress.
+     * Reports on every [STEP] bytes to keep callbacks cheap.
+     */
+    private class ProgressRequestBody(
+        private val bytes: ByteArray,
+        private val length: Int,
+        private val mediaType: okhttp3.MediaType?,
+        private val onWritten: (Long) -> Unit,
+    ) : okhttp3.RequestBody() {
+        override fun contentType() = mediaType
+        override fun contentLength(): Long = length.toLong()
+        override fun writeTo(sink: okio.BufferedSink) {
+            var offset = 0
+            while (offset < length) {
+                val n = minOf(STEP, length - offset)
+                sink.write(bytes, offset, n)
+                offset += n
+                onWritten(offset.toLong())
+            }
+        }
+
+        private companion object {
+            const val STEP = 256 * 1024
+        }
     }
 
     private suspend fun resolveUrl(url: String): String {

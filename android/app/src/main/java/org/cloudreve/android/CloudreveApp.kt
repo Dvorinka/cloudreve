@@ -4,12 +4,15 @@ import android.app.Application
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.cloudreve.android.api.ApiClient
+import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.data.CameraUploadSettings
+import org.cloudreve.android.data.backup.BackupLedger
 import org.cloudreve.android.data.FavoritesStore
 import org.cloudreve.android.data.FileRepository
 import org.cloudreve.android.data.SessionManager
 import org.cloudreve.android.data.TaskNotifySettings
 import org.cloudreve.android.data.SyncFolderSettings
+import org.cloudreve.android.data.ViewSettings
 
 class CloudreveApp : Application() {
 
@@ -32,6 +35,12 @@ class CloudreveApp : Application() {
     lateinit var taskNotifySettings: TaskNotifySettings
     lateinit var syncFolderSettings: SyncFolderSettings
         private set
+    lateinit var viewSettings: ViewSettings
+        private set
+    lateinit var backupLedger: BackupLedger
+        private set
+    lateinit var backupStats: BackupStats
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -42,5 +51,8 @@ class CloudreveApp : Application() {
         favoritesStore = FavoritesStore(this)
         taskNotifySettings = TaskNotifySettings(this)
         syncFolderSettings = SyncFolderSettings(this)
+        viewSettings = ViewSettings(this)
+        backupLedger = BackupLedger(this)
+        backupStats = BackupStats(this, cameraUploadSettings, backupLedger)
     }
 }

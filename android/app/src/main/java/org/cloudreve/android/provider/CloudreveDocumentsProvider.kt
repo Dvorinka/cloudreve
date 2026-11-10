@@ -96,15 +96,14 @@ class CloudreveDocumentsProvider : DocumentsProvider() {
         return cursor
     }
 
-    override fun querySearchDocuments(
-        rootId: String,
-        query: String,
-        projection: Array<out String>?,
-    ): Cursor {
+    override fun querySearchDocuments(rootId: String, query: String, projection: Array<out String>?): Cursor {
         val cursor = MatrixCursor(projection ?: DEFAULT_DOC_COLUMNS)
-        runBlocking(ioScope) {
-            repo.search(query).hits.forEach { cursor.addFileRow(it.file) }
+        // Name filter on the listing API; the full-text endpoint is off on stock servers.
+        val encoded = java.net.URLEncoder.encode(query, "UTF-8").replace("+", "%20")
+        val files = runBlocking(ioScope) {
+            runCatching { repo.list("${CrUri.MY_PREFIX}?name=$encoded&case_folding").files }.getOrDefault(emptyList())
         }
+        files.forEach { cursor.addFileRow(it) }
         return cursor
     }
 

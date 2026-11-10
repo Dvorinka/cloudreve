@@ -57,7 +57,13 @@ interface ApiService {
         @Query("uri") uri: String,
         @Query("page_size") pageSize: Int = 50,
         @Query("next_page_token") nextPageToken: String? = null,
+        @Query("order_by") orderBy: String? = null,
+        @Query("order_direction") orderDirection: String? = null,
     ): Response<ApiResponse<ListFileResponse>>
+
+    /** One file or folder by exact URI; the envelope carries 40016 when the path does not exist. */
+    @GET("api/v4/file/info")
+    suspend fun fileInfo(@Query("uri") uri: String): Response<ApiResponse<FileObject>>
 
     @POST("api/v4/file/url")
     suspend fun fileUrls(@Body request: FileUrlRequest): Response<ApiResponse<FileUrlResponse>>
@@ -67,6 +73,12 @@ interface ApiService {
 
     @POST("api/v4/file/rename")
     suspend fun renameFile(@Body request: RenameFileRequest): Response<ApiResponse<Unit>>
+
+    @POST("api/v4/file/restore")
+    suspend fun restoreFiles(@Body request: RestoreFileRequest): Response<ApiResponse<Unit>>
+
+    @POST("api/v4/file/move")
+    suspend fun moveFiles(@Body request: MoveFileRequest): Response<ApiResponse<Unit>>
 
     @HTTP(method = "DELETE", path = "api/v4/file", hasBody = true)
     suspend fun deleteFiles(@Body request: DeleteFileRequest): Response<ApiResponse<Unit>>
@@ -90,12 +102,6 @@ interface ApiService {
 
     @GET("api/v4/file/thumb")
     suspend fun thumb(@Query("uri") uri: String): Response<ApiResponse<ThumbResponse>>
-
-    @GET("api/v4/file/search")
-    suspend fun searchFiles(
-        @Query("query") query: String,
-        @Query("offset") offset: Int = 0,
-    ): Response<ApiResponse<SearchResponse>>
 
     @GET("api/v4/workflow")
     suspend fun listTasks(
