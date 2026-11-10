@@ -145,7 +145,7 @@ fun HomeScreen(
         SectionHeader("Storage")
         Surface(
             onClick = onOpenMyFiles,
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceContainer,
             modifier = Modifier
                 .fillMaxWidth()
@@ -177,7 +177,7 @@ fun HomeScreen(
 @Composable
 private fun ActivityCard(state: FilesUiState, onOpenUploads: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier
             .fillMaxWidth()
@@ -277,7 +277,7 @@ private fun RecentCard(file: FileObject, thumbUrl: String?, onClick: () -> Unit,
         Box(
             Modifier
                 .size(132.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .clickable(onClick = onClick),
         ) {
             FileThumb(file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = 16.dp, iconSize = 44.dp)
@@ -315,7 +315,7 @@ private fun RecentCard(file: FileObject, thumbUrl: String?, onClick: () -> Unit,
 private fun CollectionTile(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier.height(84.dp),
     ) {
@@ -334,7 +334,7 @@ private fun CollectionTile(title: String, subtitle: String, icon: ImageVector, m
 private fun CategoryTile(category: Category, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier.height(84.dp),
     ) {

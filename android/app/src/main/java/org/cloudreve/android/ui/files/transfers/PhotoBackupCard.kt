@@ -52,7 +52,7 @@ fun PhotoBackupCard(
 ) {
     Surface(
         onClick = onOpenFolder,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier.fillMaxWidth(),
     ) {

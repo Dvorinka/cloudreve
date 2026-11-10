@@ -130,7 +130,7 @@ fun FileListItem(
     downloadProgress: Float? = null,
     subtitle: String = subtitleFor(file.size, file.updatedAt, file.isFolder),
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(12.dp)
     val background by animateColorAsState(
         if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
         animationSpec = tween(160), label = "rowBg",
@@ -153,14 +153,14 @@ fun FileListItem(
         ) {
             Text(
                 file.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (subtitle.isNotEmpty()) {
                 Text(
                     subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -199,7 +199,7 @@ fun FileGridItem(
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
             FileThumb(
-                file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = if (gallery) 6.dp else 14.dp, iconSize = 44.dp,
+                file, thumbUrl, size = null, modifier = Modifier.fillMaxSize(), corner = if (gallery) 6.dp else 12.dp, iconSize = 44.dp,
                 downloading = downloading, downloadProgress = downloadProgress,
             )
             if (FileKind.of(file) == FileKind.VIDEO) {
