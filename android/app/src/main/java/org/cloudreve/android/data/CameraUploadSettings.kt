@@ -22,6 +22,7 @@ class CameraUploadSettings(private val context: Context) {
 
     private object Keys {
         val enabled = booleanPreferencesKey("enabled")
+        val paused = booleanPreferencesKey("paused")
         val remoteFolder = stringPreferencesKey("remote_folder")
         val wifiOnly = booleanPreferencesKey("wifi_only")
         val includeVideos = booleanPreferencesKey("include_videos")
@@ -31,6 +32,8 @@ class CameraUploadSettings(private val context: Context) {
 
     data class Snapshot(
         val enabled: Boolean = false,
+        /** Halted from the notification; work stays armed but every run exits. */
+        val paused: Boolean = false,
         /** Root folder; photos go to `root/yyyy/MM` by capture date. */
         val remoteFolder: String = DEFAULT_FOLDER,
         val wifiOnly: Boolean = true,
@@ -42,6 +45,7 @@ class CameraUploadSettings(private val context: Context) {
     val snapshot: Flow<Snapshot> = context.cameraUploadStore.data.map {
         Snapshot(
             enabled = it[Keys.enabled] ?: false,
+            paused = it[Keys.paused] ?: false,
             remoteFolder = it[Keys.remoteFolder] ?: DEFAULT_FOLDER,
             wifiOnly = it[Keys.wifiOnly] ?: true,
             includeVideos = it[Keys.includeVideos] ?: true,
@@ -53,7 +57,15 @@ class CameraUploadSettings(private val context: Context) {
     suspend fun snapshotNow(): Snapshot = snapshot.first()
 
     suspend fun setEnabled(enabled: Boolean) {
-        context.cameraUploadStore.edit { it[Keys.enabled] = enabled }
+        context.cameraUploadStore.edit {
+            it[Keys.enabled] = enabled
+            // Disabling is the stronger action; re-enabling starts unpaused.
+            if (!enabled) it[Keys.paused] = false
+        }
+    }
+
+    suspend fun setPaused(paused: Boolean) {
+        context.cameraUploadStore.edit { it[Keys.paused] = paused }
     }
 
     suspend fun setRemoteFolder(folder: String) {

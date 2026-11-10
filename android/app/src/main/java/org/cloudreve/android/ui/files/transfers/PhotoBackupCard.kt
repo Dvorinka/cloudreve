@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.WifiOff
@@ -104,14 +105,17 @@ fun PhotoBackupCard(
                     }
                 }
                 TextButton(onClick = onSyncNow, enabled = !running) {
-                    if (stats.waitingForWifi) {
-                        Icon(Icons.Default.WifiOff, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                    } else {
-                        Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                    }
-                    Text(if (running) "Backing up…" else "Back up now")
+                    Icon(
+                        when {
+                            stats.paused -> Icons.Default.PlayArrow
+                            stats.waitingForWifi -> Icons.Default.WifiOff
+                            else -> Icons.Default.Sync
+                        },
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (running) "Backing up…" else if (stats.paused) "Resume" else "Back up now")
                 }
             }
         }
@@ -120,6 +124,7 @@ fun PhotoBackupCard(
 
 private fun statusLine(s: BackupStats.Stats, running: Boolean): String {
     val parts = mutableListOf<String>()
+    if (s.paused && !running) parts += "Backup paused"
     when {
         running -> parts += "Backing up now"
         s.pending > 0 && s.waitingForWifi -> parts += "${"%,d".format(s.pending)} waiting for Wi-Fi"

@@ -2,7 +2,9 @@ package org.cloudreve.android.work
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.SystemClock
@@ -68,18 +70,19 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
 
     override suspend fun doWork(): Result {
         val cfg = settings.snapshotNow()
-        if (!cfg.enabled) return Result.success()
+        if (!cfg.enabled || cfg.paused) return Result.success()
         // The periodic job and "back up now" can overlap; the second would stage and
         // upload the same photo. Let it leave, the first drains the backlog.
         if (!runLock.tryLock()) return Result.success()
 
         try {
-            createChannel()
+            ensureChannel(applicationContext)
             val started = SystemClock.elapsedRealtime()
             var backlog = -1
             var done = 0
 
             while (!isStopped) {
+                if (settings.snapshotNow().paused) return Result.success()
                 val pending = pendingRows(cfg)
                 if (backlog < 0) backlog = pending.size
                 if (pending.isEmpty()) break
@@ -149,6 +152,8 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
         // next scan sees the finished file as new and uploads it.
         val staged = try {
             stage(row)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e // pause/stop must not look like an unreadable file
         } catch (e: Exception) {
             android.util.Log.w(TAG, "cannot read ${row.name}", e)
             ledger.upsert(
@@ -324,11 +329,18 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
     }
 
     private fun progressInfo(text: String, index: Int, total: Int): ForegroundInfo {
+        val pause = PendingIntent.getBroadcast(
+            applicationContext, 0,
+            Intent(applicationContext, CameraUploadActionReceiver::class.java)
+                .setAction(CameraUploadActionReceiver.ACTION_PAUSE),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setContentTitle("Cloudreve camera backup")
             .setContentText("$text (${index + 1}/$total)")
             .setOngoing(true)
+            .addAction(0, "Pause", pause)
             .build()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ForegroundInfo(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -337,21 +349,16 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
         }
     }
 
-    private fun createChannel() {
-        val manager =
-            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Camera backup", NotificationManager.IMPORTANCE_LOW)
-        )
-    }
-
     companion object {
         private const val TAG = "CameraUpload"
         private const val WORK_NAME = "camera_upload_periodic"
         private const val WORK_ONCE = "camera_upload_once"
         private const val WORK_CONTINUE = "camera_upload_continue"
-        private const val CHANNEL_ID = "camera_upload"
+        internal const val CHANNEL_ID = "camera_upload"
         private const val NOTIF_ID = 42
+        /** The "paused" notification the action receiver posts; distinct so cancelling
+         *  it never touches the foreground-service notification above. */
+        internal const val PAUSED_NOTIF_ID = 43
         /** Rows taken per scan; the run loops until a scan finds nothing pending. */
         private const val BATCH = 200
         /** After this a run hands over to a continuation rather than keep its foreground
@@ -385,6 +392,32 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
             wm.cancelUniqueWork(WORK_NAME)
             wm.cancelUniqueWork(WORK_ONCE)
             wm.cancelUniqueWork(WORK_CONTINUE)
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .cancel(PAUSED_NOTIF_ID)
+        }
+
+        /** The notification's Pause button (and any caller that means the same). */
+        suspend fun pause(context: Context) {
+            (context.applicationContext as CloudreveApp).cameraUploadSettings.setPaused(true)
+            cancel(context)
+        }
+
+        /** Clears the paused flag and re-arms the schedule plus an immediate run —
+         *  pause cancelled the periodic work, so [syncNow] alone is not enough. */
+        suspend fun resume(context: Context) {
+            val app = context.applicationContext as CloudreveApp
+            app.cameraUploadSettings.setPaused(false)
+            (app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .cancel(PAUSED_NOTIF_ID)
+            apply(context, app.cameraUploadSettings.snapshotNow().wifiOnly)
+        }
+
+        internal fun ensureChannel(context: Context) {
+            val manager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "Camera backup", NotificationManager.IMPORTANCE_LOW)
+            )
         }
 
         /** Manual "sync now" — the periodic schedule is untouched. */
