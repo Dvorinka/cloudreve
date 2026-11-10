@@ -91,6 +91,8 @@ data class FilesUiState(
     val searchLoadingMore: Boolean = false,
     val searchError: String? = null,
     val favorites: List<FavoriteEntry> = emptyList(),
+    /** File a deep link resolved to; the screen opens it once and clears. */
+    val pendingOpen: FileObject? = null,
 ) {
     val favoritePaths: Set<String> get() = favorites.map { it.path }.toSet()
     val selecting: Boolean get() = selected.isNotEmpty()
@@ -286,6 +288,36 @@ class FilesViewModel(
         loadBackupStats()
     }
 
+    /**
+     * `cloudreve://` link tapped outside the app. `my/...` names a file or
+     * folder; stat answers which (folders list, files open in the viewer),
+     * `trash` opens the Trash category. A dead link lands on the folder's
+     * usual error listing.
+     */
+    fun openDeepLink(raw: String) {
+        val uri = raw.trimEnd('/')
+        if (uri == Category.TRASH.uri) {
+            openCategory(Category.TRASH)
+            return
+        }
+        if (!uri.startsWith(CrUri.MY_PREFIX)) return
+        viewModelScope.launch {
+            val file = runCatching { repo.stat(uri) }.getOrNull()
+            if (file != null) {
+                _state.value = _state.value.copy(
+                    home = false, currentUri = CrUri.parent(uri), pendingOpen = file,
+                )
+                refresh()
+            } else {
+                openFolder(uri)
+            }
+        }
+    }
+
+    fun consumePendingOpen() {
+        _state.value = _state.value.copy(pendingOpen = null)
+    }
+
     /** Jump straight to a folder by URI (used by the backup card). */
     fun openFolder(uri: String) {
         _state.value = _state.value.copy(home = false, currentUri = uri)
@@ -316,13 +348,20 @@ class FilesViewModel(
                 backupLedger.forget(BackupLedger.State.REJECTED)
                 backupLedger.forget(BackupLedger.State.MISSING)
             }
-            CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly)
+            kickBackup(context)
             loadBackupStats()
         }
     }
 
     fun backUpNow(context: Context) {
-        viewModelScope.launch { CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly) }
+        viewModelScope.launch { kickBackup(context) }
+    }
+
+    /** A manual run while paused is the user's resume gesture. */
+    private suspend fun kickBackup(context: Context) {
+        val snap = cameraSettings.snapshotNow()
+        if (snap.paused) CameraUploadWorker.resume(context)
+        else CameraUploadWorker.syncNow(context, snap.wifiOnly)
     }
 
     /** Newest files across the drive for the home page's Recent strip. */

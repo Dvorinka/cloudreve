@@ -141,14 +141,18 @@ fun SettingsScreen(
                 PhotoBackupCard(
                     stats = it,
                     running = false,
-                    onSyncNow = { CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true) },
+                    onSyncNow = {
+                        if (cameraSnap?.paused == true) scope.launch { CameraUploadWorker.resume(context) }
+                        else CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
+                    },
                     onRetryFailed = {
                         scope.launch {
                             withContext(Dispatchers.IO) {
                                 app.backupLedger.forget(BackupLedger.State.REJECTED)
                                 app.backupLedger.forget(BackupLedger.State.MISSING)
                             }
-                            CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
+                            if (cameraSnap?.paused == true) CameraUploadWorker.resume(context)
+                            else CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
                         }
                     },
                     onOpenFolder = {},
@@ -221,7 +225,8 @@ fun SettingsScreen(
             Button(
                 onClick = {
                     persistFolders()
-                    CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
+                    if (cameraSnap?.paused == true) scope.launch { CameraUploadWorker.resume(context) }
+                    else CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
                     if (syncSnap?.enabled == true) SyncFolderWorker.syncNow(context, syncSnap?.wifiOnly ?: true)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

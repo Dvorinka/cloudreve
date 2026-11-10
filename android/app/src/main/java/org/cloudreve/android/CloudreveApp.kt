@@ -23,6 +23,10 @@ class CloudreveApp : Application() {
     /** Pending Play in-app update, set by MainActivity's update check. */
     val playUpdateAvailable = MutableStateFlow<AppUpdateInfo?>(null)
 
+    /** `cloudreve://` link arriving via ACTION_VIEW (not the OAuth `mount` one);
+     *  consumed by the files screen once signed in. */
+    val deepLink = MutableStateFlow<String?>(null)
+
     lateinit var sessionManager: SessionManager
         private set
     lateinit var apiClient: ApiClient
