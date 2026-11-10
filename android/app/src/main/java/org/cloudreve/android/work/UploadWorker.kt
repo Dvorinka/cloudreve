@@ -19,6 +19,7 @@ import androidx.work.workDataOf
 import kotlinx.coroutines.CancellationException
 import org.cloudreve.android.CloudreveApp
 import org.cloudreve.android.data.ApiException
+import org.cloudreve.android.data.backup.BackupPlan
 import java.io.File
 import java.io.FileOutputStream
 
@@ -51,9 +52,9 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
                 val name = names?.getOrNull(i) ?: resolveDisplayName(uri)
                 report(name, i, uris.size, sent = 0, size = 0, parentUri = parentUri, force = true)
                 try {
-                    val tmp = stageToCache(uri, name)
+                    val (tmp, sha) = stageToCache(uri, name)
                     try {
-                        app.fileRepository.uploadFile(tmp, parentUri, remoteName = name, overwrite = overwrite) { sent, total ->
+                        app.fileRepository.uploadFile(tmp, parentUri, remoteName = name, overwrite = overwrite, hash = sha) { sent, total ->
                             report(name, i, uris.size, sent, total, parentUri)
                         }
                     } finally {
@@ -119,13 +120,18 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         return uri.lastPathSegment?.substringAfterLast('/') ?: "upload.bin"
     }
 
-    private fun stageToCache(uri: Uri, name: String): File {
+    /**
+     * Copies the picked document into cache, hashing on the way so the upload
+     * session can carry the SHA-256 and the server can dedup identical bytes
+     * it already holds (upload_dedup / rapid upload).
+     */
+    private fun stageToCache(uri: Uri, name: String): Pair<File, String> {
         val dir = File(applicationContext.cacheDir, "upload_staging").apply { mkdirs() }
         val tmp = File(dir, name)
-        applicationContext.contentResolver.openInputStream(uri)!!.use { input ->
-            FileOutputStream(tmp).use { input.copyTo(it) }
+        val sha = applicationContext.contentResolver.openInputStream(uri)!!.use { input ->
+            FileOutputStream(tmp).use { out -> BackupPlan.copyAndHash(input, out) }
         }
-        return tmp
+        return tmp to sha
     }
 
     private fun foregroundInfo(name: String, index: Int, total: Int, sent: Long, size: Long): ForegroundInfo {
