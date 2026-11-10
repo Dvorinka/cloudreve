@@ -316,13 +316,20 @@ class FilesViewModel(
                 backupLedger.forget(BackupLedger.State.REJECTED)
                 backupLedger.forget(BackupLedger.State.MISSING)
             }
-            CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly)
+            kickBackup(context)
             loadBackupStats()
         }
     }
 
     fun backUpNow(context: Context) {
-        viewModelScope.launch { CameraUploadWorker.syncNow(context, cameraSettings.snapshotNow().wifiOnly) }
+        viewModelScope.launch { kickBackup(context) }
+    }
+
+    /** A manual run while paused is the user's resume gesture. */
+    private suspend fun kickBackup(context: Context) {
+        val snap = cameraSettings.snapshotNow()
+        if (snap.paused) CameraUploadWorker.resume(context)
+        else CameraUploadWorker.syncNow(context, snap.wifiOnly)
     }
 
     /** Newest files across the drive for the home page's Recent strip. */

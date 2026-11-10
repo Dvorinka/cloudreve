@@ -40,6 +40,8 @@ class BackupStats(
         val remoteFolder: String,
         /** Backup is Wi-Fi only and the device is on a metered connection right now. */
         val waitingForWifi: Boolean,
+        /** Paused from the backup notification; runs exit until resumed. */
+        val paused: Boolean,
     ) {
         val fraction: Float get() = if (total > 0) uploaded.toFloat() / total else 1f
         val done: Boolean get() = pending == 0 && failed == 0 && missing == 0
@@ -74,6 +76,7 @@ class BackupStats(
             lastRunAt = snap.lastSyncAt,
             remoteFolder = snap.remoteFolder,
             waitingForWifi = snap.wifiOnly && pending > 0 && isMetered(),
+            paused = snap.paused,
         )
     }
 
