@@ -49,6 +49,11 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # KERN runners OOM-killed parallel `go build` compiles
+          # (signal: killed) when goreleaser builds all 11 targets;
+          # cap package parallelism and give the GC a soft limit.
+          GOFLAGS: "-p=4"
+          GOMEMLIMIT: "4GiB"
 
   desktop:
     strategy:
