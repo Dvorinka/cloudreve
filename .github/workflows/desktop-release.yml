@@ -52,11 +52,14 @@ jobs:
       # hook (installer-hooks.nsh) files them into $INSTDIR when present.
       - name: Build signed sparse identity package
         if: runner.os == 'Windows'
-        shell: pwsh
+        # KERN's host executor has no pwsh shell — run the script through
+        # powershell.exe from a bash step instead (same pattern as release.yml).
+        shell: bash
         env:
           SPARSE_SIGNING_PFX_BASE64: ${{ secrets.SPARSE_SIGNING_PFX_BASE64 }}
           SPARSE_SIGNING_PFX_PASSWORD: ${{ secrets.SPARSE_SIGNING_PFX_PASSWORD }}
         run: |
+          cat > sparse-identity.ps1 <<'PS1EOF'
           $ErrorActionPreference = 'Stop'
           $ver = (Select-String -Path desktop/src-tauri/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
           if ($ver.Split('.').Count -eq 3) { $ver = "$ver.0" }
@@ -72,7 +75,7 @@ jobs:
           if (-not $makeappx -or -not $signtool) {
             Write-Host "Windows SDK tools missing; attempting winget install"
             if (Get-Command winget -ErrorAction SilentlyContinue) {
-              winget install --id Microsoft.WindowsSDK.10.0.22621 -e --silent --accept-package-agreements --accept-source-agreements
+              winget install --id Microsoft.WindowsSDK.10.0.22621 -e --silent --accept-package-agreements --accept-source-agreements | Out-Null
               $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
               $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object { $_.FullName } | Select-Object -Last 1
             }
@@ -90,24 +93,100 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
 
           Copy-Item "$env:RUNNER_TEMP\Cloudreve-Identity.msix" desktop/package/Cloudreve-Identity.msix -Force
+          PS1EOF
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File sparse-identity.ps1
 
-      # tauri-action runs `tauri build` (which triggers beforeBuildCommand ->
-      # the UI build), produces the platform bundles and attaches them to the
-      # GitHub release for the pushed tag. Bundle targets are pinned in
-      # tauri.conf.json:
-      #   Windows -> .exe (NSIS), macOS -> .dmg + .app.tar.gz,
-      #   Linux -> .deb + .AppImage
-      - uses: tauri-apps/tauri-action@v0
+      # tauri-action is not used: it shells out to `npm install -g
+      # @tauri-apps/cli`, and KERN's bundled node runtime on the Linux
+      # runner is missing lib/node_modules (ENOENT). Mirror release.yml's
+      # proven path instead — fetch the pinned cargo-tauri binary, run
+      # `cargo tauri build`, upload bundles with gh.
+      - name: Install tauri-cli (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$RUNNER_OS" in
+            Linux) asset="cargo-tauri-x86_64-unknown-linux-gnu.tgz" ;;
+            macOS) asset="cargo-tauri-x86_64-apple-darwin.zip" ;;
+            *) echo "unsupported OS: $RUNNER_OS" >&2; exit 1 ;;
+          esac
+          tmp="$RUNNER_TEMP/tauri-cli"
+          mkdir -p "$tmp/bin"
+          curl -fsSL "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.4/$asset" -o "$tmp/$asset"
+          case "$asset" in
+            *.tgz) tar -xzf "$tmp/$asset" -C "$tmp" ;;
+            *.zip) unzip -o "$tmp/$asset" -d "$tmp" ;;
+          esac
+          mv "$tmp/cargo-tauri" "$tmp/bin/"
+          echo "$tmp/bin" >> "$GITHUB_PATH"
+
+      # Windows has no unzip; bsdtar handles the zip.
+      - name: Install tauri-cli (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset="cargo-tauri-x86_64-pc-windows-msvc.zip"
+          tmp="$RUNNER_TEMP/tauri-cli"
+          mkdir -p "$tmp/bin"
+          curl -fsSL "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.4/$asset" -o "$tmp/$asset"
+          tar -xf "$tmp/$asset" -C "$tmp"
+          mv "$tmp/cargo-tauri.exe" "$tmp/bin/"
+          echo "$tmp/bin" >> "$GITHUB_PATH"
+
+      # `cargo tauri build` triggers beforeBuildCommand -> the UI build and
+      # signs updater artifacts when TAURI_SIGNING_PRIVATE_KEY is set.
+      # macOS builds `--bundles app` only: bundle_dmg.sh's Finder AppleScript
+      # cannot run in KERN's headless SSH session on the iMac (-10810), while
+      # the .app + .app.tar.gz targets work fine.
+      - name: Build desktop bundles
+        working-directory: desktop
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # With the signing key set, tauri-action signs updater artifacts and
-          # publishes latest.json on the release — the in-app updater feed.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          projectPath: desktop
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Cloudreve Desktop ${{ github.ref_name }}'
-          releaseBody: 'Cloudreve Desktop for Linux, macOS, and Windows.'
-          releaseDraft: false
-          prerelease: false
+        shell: bash
+        run: |
+          set -e
+          args=""
+          if [ "$RUNNER_OS" = "macOS" ]; then args="--bundles app"; fi
+          cargo tauri build $args
+
+      - name: Publish bundles to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -e
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --title "Cloudreve Desktop $TAG" \
+              --notes "Cloudreve Desktop for Linux, macOS, and Windows."
+          FILES=$(find desktop/target/release/bundle -type f \
+            \( -name '*.deb' -o -name '*.AppImage' \
+               -o -name '*.exe' -o -name '*.dmg' \
+               -o -name '*.app.tar.gz' -o -name '*.sig' \))
+          [ -n "$FILES" ]
+          echo "$FILES" | while read -r f; do
+            name="cloudreve-desktop-$(basename "$f")"
+            cp "$f" "$name"
+            gh release upload "$TAG" "$name" --clobber
+          done
+
+  updater-manifest:
+    needs: bundle
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and publish latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -e
+          mkdir -p sigs
+          gh release download "$TAG" -p '*.sig' -D sigs --clobber
+          python3 desktop/scripts/gen_latest_json.py "$TAG" sigs latest.json
+          gh release upload "$TAG" latest.json --clobber
