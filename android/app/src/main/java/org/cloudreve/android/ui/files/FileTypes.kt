@@ -22,18 +22,21 @@ import org.cloudreve.android.api.FileObject
  * the server ships in `site/config/explorer.icons`, hardcoded so the list
  * renders before (or without) that call.
  */
+// Tints track the saturated per-type accents the web file manager ships in its
+// icon set rather than M3's muted defaults — the tiles carry colour via an 18%
+// alpha wash, so the glyph hue has to stay vivid or rows read as flat grey.
 enum class FileKind(val icon: ImageVector, val tint: Color) {
-    FOLDER(Icons.Default.Folder, Color(0xFF8FB3E0)),
-    IMAGE(Icons.Default.Image, Color(0xFFE08F8F)),
-    VIDEO(Icons.Default.Videocam, Color(0xFFD98BB6)),
-    AUDIO(Icons.Default.MusicNote, Color(0xFFB39DDB)),
-    PDF(Icons.Default.PictureAsPdf, Color(0xFFE59A7A)),
-    DOCUMENT(Icons.Default.Description, Color(0xFF8FB3E0)),
-    SPREADSHEET(Icons.Default.TableChart, Color(0xFF8FCB9B)),
-    PRESENTATION(Icons.Default.Slideshow, Color(0xFFE5B86A)),
-    ARCHIVE(Icons.Default.FolderZip, Color(0xFFC4A77D)),
-    CODE(Icons.Default.Code, Color(0xFF8ECFD6)),
-    APK(Icons.Default.Android, Color(0xFF9CCC65)),
+    FOLDER(Icons.Default.Folder, Color(0xFF4F9CF5)),
+    IMAGE(Icons.Default.Image, Color(0xFFF06C8A)),
+    VIDEO(Icons.Default.Videocam, Color(0xFFD062B8)),
+    AUDIO(Icons.Default.MusicNote, Color(0xFF9B7EDE)),
+    PDF(Icons.Default.PictureAsPdf, Color(0xFFF26D4F)),
+    DOCUMENT(Icons.Default.Description, Color(0xFF5B8DEF)),
+    SPREADSHEET(Icons.Default.TableChart, Color(0xFF4CAF7D)),
+    PRESENTATION(Icons.Default.Slideshow, Color(0xFFF0A03C)),
+    ARCHIVE(Icons.Default.FolderZip, Color(0xFFC09A66)),
+    CODE(Icons.Default.Code, Color(0xFF39B8C7)),
+    APK(Icons.Default.Android, Color(0xFF66BB6A)),
     OTHER(Icons.AutoMirrored.Filled.InsertDriveFile, Color(0xFFA6ADB7));
 
     companion object {

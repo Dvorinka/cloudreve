@@ -1,19 +1,15 @@
 package org.cloudreve.android.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
 // Every overridden surface sets its matching `on*` colour. Overriding `surface` alone
 // leaves Material's defaults for text, which were tuned for a different surface and
@@ -45,19 +41,15 @@ private val DarkColors = darkColorScheme(
 )
 
 /**
- * Material You: follow the wallpaper palette like the system Files app on
- * Android 12+, fall back to the Cloudreve brand palette below that.
+ * Always the Cloudreve brand palette — the product should look like Cloudreve
+ * on every device, not like the wallpaper-tinted system Files app. Material You
+ * dynamic colours would replace the brand azure with whatever the wallpaper
+ * dictates, which is how the app drifted into an anonymous grey look.
  */
 @Composable
 fun CloudreveTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
-    val context = LocalContext.current
-    val scheme = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        dark -> DarkColors
-        else -> LightColors
-    }
+    val scheme = if (dark) DarkColors else LightColors
     // Edge-to-edge draws under the status bar, so its icons must follow our
     // surface, not the wallpaper: dark icons on the light theme and vice versa.
     val view = LocalView.current
