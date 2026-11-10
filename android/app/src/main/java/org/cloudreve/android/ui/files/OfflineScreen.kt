@@ -86,17 +86,12 @@ fun OfflineScreen(
             },
         ) { padding ->
             if (favorites.isEmpty()) {
-                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-                        Icon(Icons.Outlined.OfflinePin, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(64.dp))
-                        Text("No offline files", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
-                        Text(
-                            "Open a file's menu and choose Keep offline to have it here without a connection.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
+                Box(Modifier.fillMaxSize().padding(padding)) {
+                    EmptyState(
+                        icon = Icons.Outlined.OfflinePin,
+                        title = "No offline files",
+                        detail = "Open a file's menu and choose Keep offline to have it here without a connection.",
+                    )
                 }
             } else {
                 LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -118,7 +113,7 @@ private fun OfflineRow(entry: FavoriteEntry, onOpen: () -> Unit, onRefresh: () -
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onOpen)
             .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

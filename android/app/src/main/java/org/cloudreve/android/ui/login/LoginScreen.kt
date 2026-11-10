@@ -193,7 +193,7 @@ private fun PasswordStep(state: LoginUiState, viewModel: LoginViewModel) {
                 }
             },
             enabled = !state.loading,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -251,7 +251,7 @@ private fun TwoFactorStep(state: LoginUiState, viewModel: LoginViewModel) {
 @Composable
 private fun FormCard(content: @Composable () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -284,10 +284,12 @@ private fun SoftField(
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         visualTransformation = visualTransformation,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
+            // Unfocused fields sit flush with the card (quieter, like the web's
+            // filled inputs on paper); focus lifts them to the highest tier.
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = Color.Transparent,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
@@ -302,7 +304,7 @@ private fun PrimaryButton(text: String, loading: Boolean, onClick: () -> Unit, e
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp),
@@ -316,7 +318,7 @@ private fun PrimaryButton(text: String, loading: Boolean, onClick: () -> Unit, e
 private fun ErrorNote(message: String?) {
     AnimatedVisibility(visible = message != null, enter = fadeIn(tween(180)), exit = fadeOut(tween(120))) {
         Surface(
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.errorContainer,
             modifier = Modifier
                 .fillMaxWidth()
