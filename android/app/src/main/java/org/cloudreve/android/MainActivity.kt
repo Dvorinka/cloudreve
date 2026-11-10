@@ -110,6 +110,8 @@ class MainActivity : ComponentActivity() {
                     (application as CloudreveApp).oauthCallback.value =
                         CloudreveApp.OAuthCallback(code, state)
                 }
+            } else if (data?.scheme == "cloudreve") {
+                (application as CloudreveApp).deepLink.value = data.toString()
             }
             return
         }
@@ -214,8 +216,17 @@ fun App() {
             }
             true -> NavHost(navController = nav, startDestination = "files") {
                 composable("files") {
+                    val vm: FilesViewModel = viewModel(factory = factory)
+                    LaunchedEffect(Unit) {
+                        app.deepLink.collect { uri ->
+                            if (uri != null) {
+                                vm.openDeepLink(uri)
+                                app.deepLink.value = null
+                            }
+                        }
+                    }
                     FilesScreen(
-                        viewModel = viewModel(factory = factory),
+                        viewModel = vm,
                         onOpenSettings = { nav.navigate("settings") },
                     )
                 }
