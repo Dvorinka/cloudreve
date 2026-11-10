@@ -120,7 +120,8 @@ jobs:
         run: |
           set -e
           if ! command -v java >/dev/null 2>&1; then
-            for bindir in /usr/lib/jvm/*/bin /usr/java/*/bin; do
+            for bindir in /usr/lib/jvm/*/bin /usr/java/*/bin \
+                "$RUNNER_TOOL_CACHE"/*/*/x64/bin "$RUNNER_TOOL_CACHE"/*/*/bin; do
               if [ -x "$bindir/java" ]; then export PATH="$bindir:$PATH"; break; fi
             done
           fi
