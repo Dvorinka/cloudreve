@@ -61,6 +61,10 @@ interface ApiService {
         @Query("order_direction") orderDirection: String? = null,
     ): Response<ApiResponse<ListFileResponse>>
 
+    /** One file or folder by exact URI; the envelope carries 40016 when the path does not exist. */
+    @GET("api/v4/file/info")
+    suspend fun fileInfo(@Query("uri") uri: String): Response<ApiResponse<FileObject>>
+
     @POST("api/v4/file/url")
     suspend fun fileUrls(@Body request: FileUrlRequest): Response<ApiResponse<FileUrlResponse>>
 

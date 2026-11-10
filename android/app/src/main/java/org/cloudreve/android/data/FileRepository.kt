@@ -24,6 +24,8 @@ class ApiException(val code: Int, message: String) : Exception(message) {
         const val CODE_LOGIN_REQUIRED = 401
         /** A file or folder with that name is already there (pkg/serializer/error.go). */
         const val CODE_OBJECT_EXISTS = 40004
+        /** No file or folder at that URI (CodeParentNotExist, "Path not exist"). */
+        const val CODE_PATH_NOT_EXIST = 40016
     }
 
     /** Server trouble or an expired session, as opposed to a verdict on one request. */
@@ -189,17 +191,18 @@ class FileRepository(private val api: ApiClient) {
         }
     }
 
-    /** The file at exactly [uri], or null. One name-filtered listing of the parent. */
+    /**
+     * The file at exactly [uri], or null when there is none. One request to
+     * `/file/info`; the listing API's `name` filter is a case-insensitive substring
+     * match, so it is not a substitute for an exact lookup.
+     */
     suspend fun stat(uri: String): FileObject? {
-        val parent = CrUri.parent(uri)
-        val name = CrUri.fileName(uri)
-        var token: String? = null
-        do {
-            val page = list("$parent?name=${java.net.URLEncoder.encode(name, "UTF-8")}", pageToken = token, pageSize = 200)
-            page.files.firstOrNull { it.name == name && !it.isFolder }?.let { return it }
-            token = page.pagination.nextToken
-        } while (!token.isNullOrEmpty())
-        return null
+        val response = api.service().fileInfo(uri)
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null && body.code == ApiException.CODE_PATH_NOT_EXIST) return null
+        }
+        return response.unwrap().takeUnless { it.isFolder }
     }
 
     /**

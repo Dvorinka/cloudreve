@@ -141,8 +141,12 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
 
     private suspend fun backUp(cfg: CameraUploadSettings.Snapshot, row: MediaScanner.Row): Outcome {
         // Staging reads the phone's own storage: a failure here is about this row (gone
-        // since the scan, unreadable) and must not look like a network problem, or the
-        // run would retry forever on one broken photo.
+        // since the scan, unreadable, still being written) and must not look like a
+        // network problem, or the run would retry forever on one broken photo. This catch
+        // takes every exception from stage(), including the IOExceptions it throws itself;
+        // the network catch below only sees what happens after staging. A row rejected
+        // because its size changed mid-read is keyed by the stale (size, mtime), so the
+        // next scan sees the finished file as new and uploads it.
         val staged = try {
             stage(row)
         } catch (e: Exception) {
