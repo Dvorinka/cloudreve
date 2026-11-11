@@ -219,13 +219,13 @@ jobs:
         working-directory: cli
     steps:
       - uses: actions/checkout@v4
-      - name: Identify job container for E2E
-        run: |
-          CID=$(docker ps -q --filter "name=kern-job-$(basename "$GITHUB_WORKSPACE")")
-          test -n "$CID" || { echo "Job container not found on docker daemon"; exit 1; }
-          echo "$CID" > .e2e-job-container
       - uses: jdx/mise-action@v2
       - run: mise install
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun x playwright install chromium
-      - run: CR_JOB_CONTAINER=$(cat .e2e-job-container) mise run test:e2e
+      - name: Run Community E2E
+        run: |
+          CID=$(docker ps -q --filter "name=kern-job-$(basename "$GITHUB_WORKSPACE")")
+          test -n "$CID" || { echo "Job container not found on docker daemon"; exit 1; }
+          echo "e2e job container: $CID"
+          CR_JOB_CONTAINER=$CID mise run test:e2e
