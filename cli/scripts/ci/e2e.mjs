@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile, copyFile, writeFile, mkdir, mkdtemp, rm } from "node:fs/promises";
-import { readFileSync, writeFileSync, renameSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, readFileSync, writeFileSync, renameSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
@@ -54,7 +54,41 @@ function applyTestkitDriverShim() {
   renameSync(tmp, file);
 }
 
-if (process.env.CR_JOB_CONTAINER) {
+// KERN names job containers kern-job-<workspace-uuid>-N; inside a container
+// the job's own id is discoverable through the workspace basename. Env-based
+// plumbing proved unreliable on the runner, so resolve it here directly.
+function resolveJobContainer() {
+  if (process.env.CR_JOB_CONTAINER) {
+    return process.env.CR_JOB_CONTAINER;
+  }
+
+  if (!existsSync("/.dockerenv") && !existsSync("/run/.containerenv")) {
+    return undefined;
+  }
+
+  const workspace = basename(process.env.GITHUB_WORKSPACE ?? "");
+
+  if (!workspace || workspace === "/" || workspace === ".") {
+    return undefined;
+  }
+
+  try {
+    return (
+      execFileSync("docker", ["ps", "-q", "--filter", `name=kern-job-${workspace}`], {
+        encoding: "utf8",
+      }).trim() || undefined
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+const jobContainer = resolveJobContainer();
+
+console.log("e2e job container:", jobContainer ?? "unresolved");
+
+if (jobContainer) {
+  process.env.CR_JOB_CONTAINER = jobContainer;
   applyTestkitDriverShim();
 }
 
