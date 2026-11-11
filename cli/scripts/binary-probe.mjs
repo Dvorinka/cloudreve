@@ -130,36 +130,52 @@ export async function verifyBinary(executable, version) {
     await command(["auth", "logout", ...flags]);
     assert(requests.some(([method]) => method === "DELETE"));
 
-    // Missing entries exercise the embedded native addon and private self-dispatch without writing a vault.
-    const worker = spawn(executable, ["--cloudreve-native-vault"], {
-      cwd: directory,
-      env,
-      stdio: ["ignore", "ignore", "pipe", "ipc"],
-      timeout: 20000,
-    });
+    // Missing entries exercise the embedded native addon and private self-dispatch.
+    const probe = async (input) => {
+      const worker = spawn(executable, ["--cloudreve-native-vault"], {
+        cwd: directory,
+        env,
+        stdio: ["ignore", "ignore", "pipe", "ipc"],
+        timeout: 20000,
+      });
 
-    const reply = once(worker, "message");
+      const reply = once(worker, "message");
 
-    const exit = once(worker, "exit").then(([code, signal]) => {
-      throw new Error(`Native helper exited before replying: ${code ?? signal}`);
-    });
+      const exit = once(worker, "exit").then(([code, signal]) => {
+        throw new Error(`Native helper exited before replying: ${code ?? signal}`);
+      });
 
-    worker.send({ service: "org.cloudreve.cli:" + randomUUID(), key: "missing-binary-probe" });
+      worker.send(input);
+
+      try {
+        return (await Promise.race([reply, exit]))[0];
+      } finally {
+        worker.kill("SIGKILL");
+      }
+    };
+
+    const service = "org.cloudreve.cli:" + randomUUID();
+    const missing = await probe({ service, key: "missing-binary-probe" });
 
     let vaultAvailable;
 
-    try {
-      const result = (await Promise.race([reply, exit]))[0];
+    if (process.platform === "linux" && !missing.ok) {
+      assert.deepEqual(missing, { ok: false, bindingLoaded: true });
+      vaultAvailable = false;
+    } else {
+      assert.deepEqual(missing, { ok: true, value: null });
 
-      vaultAvailable = result.ok;
+      // A locked vault answers missing-entry reads cleanly but rejects writes;
+      // availability means the set/get/delete cycle a login performs works.
+      const write = await probe({ service, key: "binary-probe", value: "probe-value" });
+      const read = await probe({ service, key: "binary-probe" });
+      const cleanup = await probe({ service, key: "binary-probe", value: null });
 
-      if (process.platform === "linux" && !vaultAvailable) {
-        assert.deepEqual(result, { ok: false, bindingLoaded: true });
-      } else {
-        assert.deepEqual(result, { ok: true, value: null });
-      }
-    } finally {
-      worker.kill("SIGKILL");
+      vaultAvailable =
+        write.ok === true &&
+        read.ok === true &&
+        read.value === "probe-value" &&
+        cleanup.ok === true;
     }
 
     const nativeLogin = [

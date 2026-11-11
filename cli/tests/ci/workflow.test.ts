@@ -6,6 +6,7 @@ it("keeps development and hosted workflows independent of act", () => {
 
   expect(tasks).toMatch(/\[tasks\.check\]\s+run = "bun run check"/);
   expect(tasks.split("[settings]")[0]).not.toMatch(/^act\s*=/m);
+
   const hook = readFileSync("lefthook.yml", "utf8");
 
   expect(hook).toContain('glob: "cli/**"');
