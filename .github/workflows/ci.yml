@@ -223,9 +223,9 @@ jobs:
         run: |
           CID=$(docker ps -q --filter "name=kern-job-$(basename "$GITHUB_WORKSPACE")")
           test -n "$CID" || { echo "Job container not found on docker daemon"; exit 1; }
-          echo "CR_JOB_CONTAINER=$CID" >> "$GITHUB_ENV"
+          echo "$CID" > .e2e-job-container
       - uses: jdx/mise-action@v2
       - run: mise install
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun x playwright install chromium
-      - run: mise run test:e2e
+      - run: CR_JOB_CONTAINER=$(cat .e2e-job-container) mise run test:e2e
