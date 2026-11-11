@@ -20,6 +20,7 @@ jobs:
       frontend: ${{ steps.f.outputs.frontend }}
       desktop: ${{ steps.f.outputs.desktop }}
       android: ${{ steps.f.outputs.android }}
+      cli: ${{ steps.f.outputs.cli }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +43,9 @@ jobs:
               - '.github/workflows/ci.yml'
             android:
               - 'android/**'
+              - '.github/workflows/ci.yml'
+            cli:
+              - 'cli/**'
               - '.github/workflows/ci.yml'
 
   backend:
@@ -186,3 +190,20 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :app:assembleDebug --console=plain
+
+  # Vendored cloudreve/cli: toolchain (node/bun + ruff/shfmt/taplo/shellcheck)
+  # comes from cli/mise.toml, so the job runs the same `check` gate a
+  # contributor's lefthook pre-commit does.
+  cli:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise install
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run check

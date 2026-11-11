@@ -30,13 +30,9 @@ Fixtures have ownership labels and are removed after each run; no personal serve
 # Linux amd64 with Docker
 mise run test:e2e
 CR_CI_VERSION=4.17.0 mise run test:e2e
-
-# Run the actual GitHub Actions jobs locally, including on Docker Desktop
-mise run ci:local -- --job validate
-mise run ci:local -- --job community
 ```
 
-`act` uses the pinned Linux image in `.actrc`. Sanitized receipts and coverage are generated
+Sanitized receipts and coverage are generated
 under ignored `.artifacts/` and `coverage/`; fixture state stays under ignored `.runtime/`.
 
 ## Releases

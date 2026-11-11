@@ -44,10 +44,6 @@ run = "bun run test:mutation"
 [tasks."test:credentials:native"]
 run = "bun run build && node scripts/package-check.mjs --native"
 
-[tasks."ci:local"]
-description = "Optionally test GitHub Actions locally with act"
-run = "bash scripts/ci/act.sh"
-
 [tasks."lint:fix"]
 run = "bun run lint:fix"
 
