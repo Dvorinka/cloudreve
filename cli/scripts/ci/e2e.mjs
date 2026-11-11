@@ -1,22 +1,54 @@
 import assert from "node:assert/strict";
 import { readFile, copyFile, writeFile, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { readFileSync, writeFileSync, renameSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { pathToFileURL } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
 import { startCommunity, communityIO } from "@cloudreve/testkit/community";
 import { metadataFixture } from "@cloudreve/testkit/metadata-fixture";
 import { guestArchiveFixture } from "@cloudreve/testkit/guest-archive-fixture";
 import { Authentication, tokensFromPassword, validateServerVersion } from "@cloudreve/sdk/session";
 import { createClient } from "@cloudreve/sdk";
-import { docker, linuxDockerDriver } from "./docker-fixture.mjs";
 import { requireLinux } from "./require-linux.mjs";
 import { commands } from "./commands.mjs";
 import { services } from "./services.mjs";
 
 requireLinux();
 assert.equal(process.arch, "x64", "The pinned matrix certifies Linux amd64 only");
+
+// Some CI runners (KERN) launch job containers with an explicit --hostname,
+// so os.hostname() cannot resolve the job's own docker container and
+// linuxDockerDriver() asserts. CR_JOB_CONTAINER supplies the id instead; the
+// shim below teaches the installed driver to honour it before it is imported.
+// Written via rename so bun's hardlinked install cache is never mutated.
+function applyTestkitDriverShim() {
+  const file = fileURLToPath(
+    new URL("../../node_modules/@cloudreve/testkit/dist/linux-docker.js", import.meta.url),
+  );
+  const source = readFileSync(file, "utf8");
+  if (source.includes("CR_JOB_CONTAINER")) return;
+  const lookup = 'inspect("container", hostname())';
+  const check = "runner?.Id.startsWith(hostname())";
+  assert(
+    source.includes(lookup) && source.includes(check),
+    "Testkit driver layout changed; update the CR_JOB_CONTAINER shim",
+  );
+  const tmp = `${file}.${process.pid}.tmp`;
+  writeFileSync(
+    tmp,
+    source
+      .replace(lookup, 'inspect("container", process.env.CR_JOB_CONTAINER || hostname())')
+      .replace(check, "runner?.Id.startsWith(process.env.CR_JOB_CONTAINER || hostname())"),
+  );
+  renameSync(tmp, file);
+}
+
+if (process.env.CR_JOB_CONTAINER) {
+  applyTestkitDriverShim();
+}
+const { docker, linuxDockerDriver } = await import("./docker-fixture.mjs");
 
 const matrix = JSON.parse(
   await readFile(new URL("../../docs/compatibility-matrix.json", import.meta.url), "utf8"),
