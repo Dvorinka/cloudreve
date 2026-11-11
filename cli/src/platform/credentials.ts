@@ -253,7 +253,13 @@ export class Credentials {
       worker.once("message", (message: { ok: boolean; value?: string | null }) =>
         message.ok
           ? finish(undefined, message.value ?? null)
-          : finish(new CliError("credentials", "Native credential vault unavailable or locked", 1)),
+          : finish(
+              new CliError(
+                "credentials",
+                "Native credential vault unavailable or locked; use --credential-store file to store credentials in the private config dir",
+                1,
+              ),
+            ),
       );
 
       worker.once("error", () =>
