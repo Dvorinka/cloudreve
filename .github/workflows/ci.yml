@@ -219,6 +219,13 @@ jobs:
         working-directory: cli
     steps:
       - uses: actions/checkout@v4
+      - name: Probe docker/container environment
+        run: |
+          hostname
+          ls -la /.dockerenv /run/.containerenv 2>/dev/null || true
+          docker context ls 2>&1 | head -5 || true
+          docker ps --format '{{.ID}} {{.Names}}' 2>&1 | head -10 || true
+          docker inspect "$(hostname)" --format '{{.Id}}' 2>&1 | head -3 || true
       - uses: jdx/mise-action@v2
       - run: mise install
       - run: bun install --frozen-lockfile --ignore-scripts
