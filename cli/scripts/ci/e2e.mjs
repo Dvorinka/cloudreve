@@ -27,27 +27,37 @@ function applyTestkitDriverShim() {
   const file = fileURLToPath(
     new URL("../../node_modules/@cloudreve/testkit/dist/linux-docker.js", import.meta.url),
   );
+
   const source = readFileSync(file, "utf8");
-  if (source.includes("CR_JOB_CONTAINER")) return;
+
+  if (source.includes("CR_JOB_CONTAINER")) {
+    return;
+  }
+
   const lookup = 'inspect("container", hostname())';
   const check = "runner?.Id.startsWith(hostname())";
+
   assert(
     source.includes(lookup) && source.includes(check),
     "Testkit driver layout changed; update the CR_JOB_CONTAINER shim",
   );
+
   const tmp = `${file}.${process.pid}.tmp`;
+
   writeFileSync(
     tmp,
     source
       .replace(lookup, 'inspect("container", process.env.CR_JOB_CONTAINER || hostname())')
       .replace(check, "runner?.Id.startsWith(process.env.CR_JOB_CONTAINER || hostname())"),
   );
+
   renameSync(tmp, file);
 }
 
 if (process.env.CR_JOB_CONTAINER) {
   applyTestkitDriverShim();
 }
+
 const { docker, linuxDockerDriver } = await import("./docker-fixture.mjs");
 
 const matrix = JSON.parse(
