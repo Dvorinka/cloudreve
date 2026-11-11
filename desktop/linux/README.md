@@ -1,5 +1,9 @@
 # Linux file-manager integration
 
+The `.deb` and AppImage bundles ship a copy of this `linux/` directory inside
+the app's resource directory, so the helpers below are also available after a
+packaged install — no need to clone the repo.
+
 ## Application menu entry
 
 The `.deb` package ships its own desktop entry. For AppImage or manual

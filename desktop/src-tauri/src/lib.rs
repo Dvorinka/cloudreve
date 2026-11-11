@@ -416,8 +416,11 @@ fn build_tray_menu<R: tauri::Runtime>(manager: &impl Manager<R>) -> anyhow::Resu
 
 /// Rebuild the tray context menu using the current locale.
 pub fn rebuild_tray_menu<R: tauri::Runtime>(app: &AppHandle<R>) -> anyhow::Result<()> {
+    // Tray can be absent on Linux sessions without a status-icon host.
+    let Some(tray) = app.try_state::<TrayIcon<R>>() else {
+        return Ok(());
+    };
     let menu = build_tray_menu(app)?;
-    let tray = app.state::<TrayIcon<R>>();
     tray.set_menu(Some(menu))?;
     Ok(())
 }
@@ -426,8 +429,10 @@ pub fn rebuild_tray_menu<R: tauri::Runtime>(app: &AppHandle<R>) -> anyhow::Resul
 fn setup_tray(app: &tauri::App) -> anyhow::Result<()> {
     let menu = build_tray_menu(app)?;
 
-    // Build tray icon
-    let tray = TrayIconBuilder::new()
+    // Build tray icon. On Linux this needs a status-icon host (AppIndicator /
+    // StatusNotifierItem watcher); sessions without one must still run, just
+    // trayless — the single-instance relaunch path then surfaces the popup.
+    let tray = match TrayIconBuilder::new()
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
         .show_menu_on_left_click(false)
@@ -458,7 +463,23 @@ fn setup_tray(app: &tauri::App) -> anyhow::Result<()> {
                 show_main_window(app);
             }
         })
-        .build(app)?;
+        .build(app)
+    {
+        Ok(tray) => tray,
+        Err(err) => {
+            #[cfg(target_os = "linux")]
+            {
+                tracing::warn!(
+                    target: "main",
+                    error = %err,
+                    "No system tray available; continuing without tray icon"
+                );
+                return Ok(());
+            }
+            #[cfg(not(target_os = "linux"))]
+            return Err(err.into());
+        }
+    };
 
     // Honour the hide-tray-icon setting (TrayIconBuilder has no visibility
     // option, so it is applied right after construction).
@@ -503,12 +524,19 @@ pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             tracing::info!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
-            if argv.len() > 1 && argv[1].starts_with("cloudreve://") {
-                handle_deeplink_url(app, &argv[1]);
-            } else {
-                // A plain relaunch (desktop icon, `cloudreve` with no URI) should
-                // surface the status popup even when the tray icon is hidden or
-                // unsupported by the session.
+            // `%U` in the desktop entry can pass several cloudreve:// URIs
+            // (e.g. a multi-file share selection); route each one. A plain
+            // relaunch (desktop icon, `cloudreve` with no URI) should surface
+            // the status popup even when the tray icon is hidden or
+            // unsupported by the session.
+            let mut routed = false;
+            for arg in argv.iter().skip(1) {
+                if arg.starts_with("cloudreve://") {
+                    handle_deeplink_url(app, arg);
+                    routed = true;
+                }
+            }
+            if !routed {
                 show_main_window(app);
             }
             // when defining deep link schemes at runtime, you must also check `argv` here
