@@ -29,6 +29,7 @@ const activeLease = new AsyncLocalStorage<AbortSignal>();
 
 export class State {
   readonly directory: string;
+  private readonly transactionDeadlineMs: number;
   private prepared?: { identity: string; verified: Promise<void> };
   private verified = new Set<string>();
 
@@ -36,8 +37,9 @@ export class State {
     return activeLease.getStore();
   }
 
-  constructor(directory: string) {
+  constructor(directory: string, transactionDeadlineMs = 15000) {
     this.directory = resolve(directory);
+    this.transactionDeadlineMs = transactionDeadlineMs;
   }
 
   private path(name: string): string {
@@ -163,7 +165,7 @@ export class State {
       ...(signal ? [signal] : []),
     ]);
 
-    const deadline = performance.now() + 15000;
+    const deadline = performance.now() + this.transactionDeadlineMs;
     let release: (() => Promise<void>) | undefined;
 
     while (!release) {
