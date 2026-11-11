@@ -207,3 +207,20 @@ jobs:
       - run: mise install
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run check
+
+  # Real-backend E2E (Community in Docker). Separate from `cli` so a runner
+  # without Docker fails here alone, not the required check gate.
+  cli-e2e:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise install
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun x playwright install chromium
+      - run: mise run test:e2e

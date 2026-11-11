@@ -23,6 +23,11 @@ it("keeps development and hosted workflows independent of act", () => {
   expect(workflow).toContain("working-directory: cli");
   expect(workflow).toContain("bun run check");
 
+  const release = readFileSync("../.github/workflows/cli-release.yml", "utf8");
+
+  expect(release).toContain("tags: ['cli-v*']");
+  expect(release).toContain("mise run release:build");
+
   expect(workflow).not.toMatch(/\bact\b/);
   expect(existsSync("scripts/ci/act.sh")).toBe(false);
   expect(existsSync("scripts/ci/check.sh")).toBe(false);

@@ -14,6 +14,22 @@ import { randomUUID } from "node:crypto";
 export async function files(c) {
   const call = async (path, args = [], options) => (await c.run(path, args, options)).data;
 
+  // Backend metadata workers hold the file lock briefly after writes; these
+  // calls retry a surfaced Lock conflict rather than racing the worker.
+  const callSettled = async (path, args = [], options, attempts = 40) => {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await call(path, args, options);
+      } catch (error) {
+        if (attempt >= attempts || !String(error?.message).includes("Lock conflict")) {
+          throw error;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+  };
+
   const prove = (path, detail, variant = "default") => c.prove(path, variant, detail);
 
   const path = (name = "") => c.path("files" + (name ? "/" + name : ""));
@@ -294,11 +310,11 @@ export async function files(c) {
 
   assert(versions.some((v) => v.id === old) && versions.some((v) => v.id === newer));
   prove("version list", "Both independently captured version IDs are listed");
-  await call("version promote", [path("versions.txt"), old]);
+  await callSettled("version promote", [path("versions.txt"), old]);
   assert.equal((await info("versions.txt")).primary_entity, old);
   assert.equal((await bytes("versions.txt")).toString(), "version one");
   prove("version promote", "Captured old entity is current and serves its original bytes");
-  await call("version delete", [path("versions.txt"), newer, "--yes"]);
+  await callSettled("version delete", [path("versions.txt"), newer, "--yes"]);
   assert(!(await info("versions.txt")).extended_info.entities.some((v) => v.id === newer));
   assert.equal((await bytes("versions.txt")).toString(), "version one");
   prove("version delete", "Deleted entity disappears; current bytes are retained");
