@@ -746,7 +746,7 @@ fn show_drive_window_internal(app: &AppHandle, title: &str, url_path: &str) {
         .inner_size(470.0, 630.0)
         .resizable(false)
         .visible(false)
-        .decorations(false)
+        .decorations(cfg!(target_os = "linux"))
         .minimizable(false);
 
     #[cfg(not(windows))]
@@ -839,7 +839,7 @@ pub fn show_settings_window_impl(app: &AppHandle) {
     .min_inner_size(600.0, 400.0)
     .visible(false)
     .resizable(true)
-    .decorations(false)
+    .decorations(cfg!(target_os = "linux"))
     .minimizable(true);
 
     #[cfg(not(windows))]
@@ -925,7 +925,7 @@ pub fn show_share_window_impl(
         .inner_size(480.0, 640.0)
         .resizable(false)
         .visible(false)
-        .decorations(false)
+        .decorations(cfg!(target_os = "linux"))
         .minimizable(false);
 
     #[cfg(not(windows))]
@@ -1268,7 +1268,8 @@ fn linux_desktop_exec_quote(value: &str) -> String {
         .replace('$', "\\$")
         .replace('`', "\\`")
         .replace('\n', "")
-        .replace('\r', "");
+        .replace('\r', "")
+        .replace('%', "%%");
     format!("\"{}\"", escaped)
 }
 
@@ -1285,6 +1286,7 @@ fn linux_autostart_entry() -> CommandResult<String> {
          Name=Cloudreve\n\
          Comment=Cloudreve Desktop Sync Client\n\
          Exec={}\n\
+         Icon=cloudreve\n\
          Terminal=false\n\
          X-GNOME-Autostart-enabled=true\n\
          Hidden=false\n",
@@ -1535,13 +1537,26 @@ pub async fn set_auto_start(enabled: bool) -> CommandResult<bool> {
 
 #[cfg(all(test, target_os = "linux"))]
 mod linux_autostart_tests {
-    use super::linux_desktop_exec_quote;
+    use super::{linux_autostart_entry, linux_desktop_exec_quote};
+
+    #[test]
+    fn autostart_entry_is_a_valid_desktop_entry() {
+        let entry = linux_autostart_entry().unwrap();
+        assert!(entry.contains("Type=Application"));
+        assert!(entry.contains("Icon=cloudreve"));
+        assert!(entry.contains("X-GNOME-Autostart-enabled=true"));
+        assert!(entry.contains("Exec=\""));
+    }
 
     #[test]
     fn quotes_exec_paths_for_desktop_entries() {
         assert_eq!(
             linux_desktop_exec_quote("/opt/Cloudreve Desktop/cloudreve"),
             "\"/opt/Cloudreve Desktop/cloudreve\""
+        );
+        assert_eq!(
+            linux_desktop_exec_quote("/opt/100%/Cloudreve Desktop/cloudreve"),
+            "\"/opt/100%%/Cloudreve Desktop/cloudreve\""
         );
     }
 
@@ -1695,7 +1710,7 @@ pub async fn open_log_folder() -> CommandResult<()> {
         std::fs::create_dir_all(&log_dir).map_err(|e| e.to_string())?;
     }
 
-    showfile::show_path_in_file_manager(format!("{}\\", log_dir.display()));
+    showfile::show_path_in_file_manager(log_dir.display().to_string());
     Ok(())
 }
 
@@ -1810,7 +1825,7 @@ pub fn show_update_window_impl(app: &AppHandle, auto_download: bool) {
         .inner_size(460.0, 380.0)
         .resizable(false)
         .visible(false)
-        .decorations(false)
+        .decorations(cfg!(target_os = "linux"))
         .minimizable(false);
 
     #[cfg(not(windows))]
@@ -1956,7 +1971,7 @@ pub fn show_trash_window_impl(app: &AppHandle) {
         .inner_size(560.0, 480.0)
         .resizable(true)
         .visible(false)
-        .decorations(false)
+        .decorations(cfg!(target_os = "linux"))
         .minimizable(true);
 
     #[cfg(not(windows))]

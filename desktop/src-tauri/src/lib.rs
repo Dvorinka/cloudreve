@@ -503,8 +503,13 @@ pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             tracing::info!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
-            if argv.len() > 1 {
+            if argv.len() > 1 && argv[1].starts_with("cloudreve://") {
                 handle_deeplink_url(app, &argv[1]);
+            } else {
+                // A plain relaunch (desktop icon, `cloudreve` with no URI) should
+                // surface the status popup even when the tray icon is hidden or
+                // unsupported by the session.
+                show_main_window(app);
             }
             // when defining deep link schemes at runtime, you must also check `argv` here
         }))
