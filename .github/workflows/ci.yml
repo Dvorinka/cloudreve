@@ -135,6 +135,19 @@ jobs:
               fi
             done
           fi
+          if ! command -v java >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+            # Fresh runner with a cold toolcache: KERN's self-heal guesses
+            # `apt-get install java`, which is not a real package name.
+            SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+            $SUDO apt-get update -qq && { $SUDO apt-get install -y -qq openjdk-21-jdk-headless || $SUDO apt-get install -y -qq default-jdk-headless; } || true
+            for bindir in /usr/lib/jvm/*/bin; do
+              if [ -x "$bindir/java" ]; then
+                export PATH="$bindir:$PATH"
+                echo "$bindir" >> "$GITHUB_PATH"
+                break
+              fi
+            done
+          fi
           java -version
           echo "JAVA_HOME=$(cd "$(dirname "$(command -v java)")/.." && pwd)" >> "$GITHUB_ENV"
       - name: Configure Gradle home
