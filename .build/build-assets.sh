@@ -18,3 +18,7 @@ cp -r frontend/build assets/build
 zip -r - assets/build >assets.zip
 rm -rf assets
 mv assets.zip application/statics
+
+# `yarn version` rewrites the tracked manifest; restore it so GoReleaser's
+# dirty-tree check passes.
+git checkout -- frontend/package.json
