@@ -2025,3 +2025,105 @@ pub async fn show_trash_window(app: AppHandle) -> CommandResult<()> {
     show_trash_window_impl(&app);
     Ok(())
 }
+
+/// Cancel queued or running transfer tasks for a path on a drive.
+#[tauri::command]
+pub async fn cancel_transfer(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+    path: String,
+) -> CommandResult<usize> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount
+        .task_queue()
+        .cancel_by_path(std::path::Path::new(&path))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Show or create the transfers window.
+pub fn show_transfers_window_impl(app: &AppHandle) {
+    // One transfers window at a time — refocus instead of stacking.
+    if let Some(window) = app.get_webview_window("transfers") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let url_path = get_url_with_lang("index.html#/transfers");
+
+    #[cfg(windows)]
+    let effects = WindowEffectsConfig {
+        effects: vec![WindowEffect::Mica, WindowEffect::Acrylic],
+        ..Default::default()
+    };
+
+    let builder = WebviewWindowBuilder::new(app, "transfers", WebviewUrl::App(url_path.into()))
+        .title("Transfers")
+        .inner_size(640.0, 520.0)
+        .resizable(true)
+        .visible(false)
+        .decorations(cfg!(target_os = "linux"))
+        .minimizable(true);
+
+    #[cfg(not(windows))]
+    let builder = builder.background_color(Color(255, 255, 255, 255));
+
+    #[cfg(windows)]
+    let builder = builder.transparent(true);
+
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(TitleBarStyle::Overlay)
+        .hidden_title(true);
+
+    let Some(builder) = apply_default_window_icon(builder, app, "transfers") else {
+        return;
+    };
+
+    match builder.build() {
+        Ok(window) => {
+            #[cfg(target_os = "macos")]
+            update_dock_on_window_close(&window);
+
+            #[cfg(windows)]
+            {
+                let _ = window.set_effects(effects);
+            }
+
+            move_window_safely(&window, Position::Center, "transfers");
+            // See the add-drive window: Linux relies on native decorations.
+            #[cfg(target_os = "linux")]
+            {
+                let _ = window.set_decorations(true);
+                let _ = window.set_minimizable(true);
+            }
+            #[cfg(windows)]
+            let _ = window.create_overlay_titlebar();
+            let _ = window.show();
+            let _ = window.set_focus();
+            #[cfg(target_os = "macos")]
+            crate::update_dock_visibility(app);
+        }
+        Err(e) => {
+            tracing::error!(target: "main", error = %e, "Failed to create transfers window");
+        }
+    }
+}
+
+/// Open the transfers window (popup transfers button).
+#[tauri::command]
+pub async fn show_transfers_window(app: AppHandle) -> CommandResult<()> {
+    show_transfers_window_impl(&app);
+    Ok(())
+}
