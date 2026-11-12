@@ -43,7 +43,8 @@
       "../package/AppxManifest.xml": "AppxManifest.xml",
       "../package/AppxManifest.sparse.xml": "AppxManifest.sparse.xml",
       "../package/Images/": "Images/",
-      "../register-identity.ps1": "register-identity.ps1"
+      "../register-identity.ps1": "register-identity.ps1",
+      "../linux/": "linux/"
     },
     "windows": {
       "nsis": {
@@ -77,7 +78,7 @@
     },
     "updater": {
       "endpoints": [
-        "https://github.com/Dvorinka/cloudreve/releases/latest/download/latest.json"
+        "https://github.com/Dvorinka/cloudreve/releases/download/desktop-updater/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFDRTBFRkIzQjBDNTNDQjEKUldTeFBNV3dzKy9nckxQYmxsTmJqT0xOeHFJdzQxUHljQ2ZHbGZ2ejdKZjVwRFdiR0VOMElwK3oK",
       "windows": {
