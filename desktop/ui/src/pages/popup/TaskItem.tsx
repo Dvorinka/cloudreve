@@ -16,6 +16,7 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import TimeAgo from "react-timeago";
 import { useTranslation } from "react-i18next";
+import type { ReactNode } from "react";
 import type { TaskWithProgress, TaskRecord } from "./types";
 import { formatBytes, getFileName, getParentFolderName } from "./utils";
 import FileIcon from "./FileIcon";
@@ -23,9 +24,10 @@ import FileIcon from "./FileIcon";
 interface TaskItemProps {
   task: TaskWithProgress | TaskRecord;
   isActive?: boolean;
+  action?: ReactNode;
 }
 
-export default function TaskItem({ task, isActive = false }: TaskItemProps) {
+export default function TaskItem({ task, isActive = false, action }: TaskItemProps) {
   const { t } = useTranslation();
   const activeTask = task as TaskWithProgress;
   const liveProgress = activeTask.live_progress;
@@ -92,6 +94,7 @@ export default function TaskItem({ task, isActive = false }: TaskItemProps) {
 
   return (
     <ListItem
+      secondaryAction={action}
       sx={{
         px: 2,
         py: 1,

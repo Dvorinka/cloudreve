@@ -13,6 +13,7 @@ import {
   Folder as FolderIcon,
   CheckCircle as CheckCircleIcon,
   Refresh as RefreshIcon,
+  SyncAlt as SyncAltIcon,
 } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -137,6 +138,14 @@ export default function Popup() {
     }
   };
 
+  const handleTransfers = async () => {
+    try {
+      await invoke("show_transfers_window");
+    } catch (error) {
+      console.error("Failed to open transfers window:", error);
+    }
+  };
+
   const handleResolveAll = async (action: "keep_remote" | "overwrite_remote") => {
     try {
       await invoke("resolve_all_conflicts", {
@@ -191,6 +200,13 @@ export default function Popup() {
             <CloudreveLogo height={28} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center" }}>
+            <IconButton
+              size="small"
+              onClick={handleTransfers}
+              aria-label={t("transfers.title", "Transfers")}
+            >
+              <SyncAltIcon fontSize="small" />
+            </IconButton>
             <IconButton
               size="small"
               onClick={handleTrash}

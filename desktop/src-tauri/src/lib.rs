@@ -624,6 +624,8 @@ pub fn run() {
             commands::restore_files,
             commands::delete_files_permanently,
             commands::show_trash_window,
+            commands::cancel_transfer,
+            commands::show_transfers_window,
             commands::check_update,
             commands::install_update,
             commands::restart_app,
