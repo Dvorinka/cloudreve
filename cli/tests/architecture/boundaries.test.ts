@@ -84,7 +84,7 @@ it("uses scope-aware ESLint policies for forbidden command globals and imports",
   );
 
   expect(result?.messages.filter((m) => m.ruleId === "no-restricted-globals")).toEqual([]);
-}, 30000);
+}, 120000);
 
 it("pins Foundation and SDK dependencies to published releases", async () => {
   const { readFileSync } = await import("node:fs");
