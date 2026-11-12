@@ -1,0 +1,15 @@
+# KDE Dolphin service menu — right-click > Cloudreve > Preview
+# Install: copy to ~/.local/share/kio/servicemenus/ (Dolphin ≥ 22) or
+# ~/.local/share/kservices5/ServiceMenus/ (older), then restart Dolphin.
+# Requires `cloudreve-preview` on PATH (see desktop/linux/cloudreve-preview).
+
+[Desktop Entry]
+Type=Service
+MimeType=all/all
+Actions=cloudrevePreview
+X-KDE-Submenu=Cloudreve
+
+[Desktop Action cloudrevePreview]
+Name=Preview
+Icon=document-preview
+Exec=cloudreve-preview %f

@@ -1,0 +1,15 @@
+#!/bin/sh
+# cloudreve-preview — open the Cloudreve preview window for a local file.
+# macOS counterpart of desktop/linux/cloudreve-preview; usable from Terminal:
+#   cloudreve-preview ~/Cloudreve/report.pdf
+# or from a Finder Quick Action (see README.md in this directory).
+#
+# Works whether the app is running or not — the app bundle registers the
+# cloudreve:// scheme and processes preview deep links passed at cold start.
+
+set -eu
+
+for f in "$@"; do
+    encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "$f")
+    open "cloudreve://preview/$encoded"
+done

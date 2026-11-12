@@ -2127,3 +2127,107 @@ pub async fn show_transfers_window(app: AppHandle) -> CommandResult<()> {
     show_transfers_window_impl(&app);
     Ok(())
 }
+
+/// Read up to `max_bytes` of a file for the preview window's text view.
+#[tauri::command]
+pub async fn read_text_file(path: String, max_bytes: usize) -> CommandResult<String> {
+    use tokio::io::AsyncReadExt;
+
+    let file = tokio::fs::File::open(&path)
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut buf = Vec::new();
+    file.take(max_bytes as u64)
+        .read_to_end(&mut buf)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(String::from_utf8_lossy(&buf).into_owned())
+}
+
+/// Show or create the preview window for a local file. The target can
+/// change between invocations, so a stale window is rebuilt each time.
+pub fn show_preview_window_impl(app: &AppHandle, path: &std::path::Path) {
+    let Ok(meta) = std::fs::metadata(path) else {
+        tracing::warn!(target: "main", path = %path.display(), "Preview requested for missing path");
+        return;
+    };
+    if meta.is_dir() {
+        tracing::info!(target: "main", path = %path.display(), "Preview requested for directory; ignoring");
+        return;
+    }
+
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.display().to_string());
+    let url_path = format!(
+        "index.html#/preview?path={}&name={}&size={}",
+        urlencoding::encode(path.to_string_lossy().as_ref()),
+        urlencoding::encode(&name),
+        meta.len(),
+    );
+    let url_path = get_url_with_lang(&url_path);
+
+    // A stale window could belong to a different file; rebuild it each time.
+    if let Some(window) = app.get_webview_window("preview") {
+        let _ = window.destroy();
+    }
+
+    #[cfg(windows)]
+    let effects = WindowEffectsConfig {
+        effects: vec![WindowEffect::Mica, WindowEffect::Acrylic],
+        ..Default::default()
+    };
+
+    let builder = WebviewWindowBuilder::new(app, "preview", WebviewUrl::App(url_path.into()))
+        .title(&name)
+        .inner_size(960.0, 680.0)
+        .resizable(true)
+        .visible(false)
+        .decorations(cfg!(target_os = "linux"))
+        .minimizable(true);
+
+    #[cfg(not(windows))]
+    let builder = builder.background_color(Color(255, 255, 255, 255));
+
+    #[cfg(windows)]
+    let builder = builder.transparent(true);
+
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(TitleBarStyle::Overlay)
+        .hidden_title(true);
+
+    let Some(builder) = apply_default_window_icon(builder, app, "preview") else {
+        return;
+    };
+
+    match builder.build() {
+        Ok(window) => {
+            #[cfg(target_os = "macos")]
+            update_dock_on_window_close(&window);
+
+            #[cfg(windows)]
+            {
+                let _ = window.set_effects(effects);
+            }
+
+            move_window_safely(&window, Position::Center, "preview");
+            // See the add-drive window: Linux relies on native decorations.
+            #[cfg(target_os = "linux")]
+            {
+                let _ = window.set_decorations(true);
+                let _ = window.set_minimizable(true);
+            }
+            #[cfg(windows)]
+            let _ = window.create_overlay_titlebar();
+            let _ = window.show();
+            let _ = window.set_focus();
+            #[cfg(target_os = "macos")]
+            crate::update_dock_visibility(app);
+        }
+        Err(e) => {
+            tracing::error!(target: "main", error = %e, "Failed to create preview window");
+        }
+    }
+}

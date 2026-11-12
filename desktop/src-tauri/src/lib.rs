@@ -322,6 +322,19 @@ fn handle_deeplink_url(app: &AppHandle, url: &str) {
         return;
     }
 
+    // Preview needs no drive-manager resolution — the window reads the
+    // local file through the asset protocol, so it works even while the
+    // sync service is still initializing.
+    if let Some(encoded_path) = url.strip_prefix("cloudreve://preview/") {
+        match urlencoding::decode(encoded_path) {
+            Ok(decoded) => {
+                commands::show_preview_window_impl(app, std::path::Path::new(decoded.as_ref()))
+            }
+            Err(_) => tracing::warn!(target: "main", url = %url, "Malformed preview deep link"),
+        }
+        return;
+    }
+
     let _ = app.emit("deeplink", url.to_string());
     show_add_drive_window_impl(app);
 }
@@ -626,6 +639,7 @@ pub fn run() {
             commands::show_trash_window,
             commands::cancel_transfer,
             commands::show_transfers_window,
+            commands::read_text_file,
             commands::check_update,
             commands::install_update,
             commands::restart_app,

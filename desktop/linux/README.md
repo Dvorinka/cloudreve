@@ -27,32 +27,40 @@ is only needed once per install. Adjust `Exec=` if the binary is not on
 `cloudreve://share/<path>` deep link — the same dialog the Windows Explorer
 context menu opens. Works whether the app is running or not.
 
+## `cloudreve-preview`
+
+`cloudreve-preview` opens the preview window for a local file via the
+`cloudreve://preview/<path>` deep link — images, video, audio, PDF, and text
+render in-app; other types show an "open externally" card. Works whether the
+app is running or not.
+
 ## Helper
 
 ```sh
-cp cloudreve-share ~/.local/bin/
-chmod +x ~/.local/bin/cloudreve-share
+cp cloudreve-share cloudreve-preview ~/.local/bin/
+chmod +x ~/.local/bin/cloudreve-share ~/.local/bin/cloudreve-preview
 cloudreve-share ~/Cloudreve/report.pdf
+cloudreve-preview ~/Cloudreve/report.pdf
 ```
 
 ## GNOME / Nautilus
 
 ```sh
 mkdir -p ~/.local/share/nautilus/scripts
-cp "nautilus/scripts/Cloudreve Share" ~/.local/share/nautilus/scripts/
-chmod +x ~/.local/share/nautilus/scripts/"Cloudreve Share"
+cp "nautilus/scripts/Cloudreve Share" "nautilus/scripts/Cloudreve Preview" ~/.local/share/nautilus/scripts/
+chmod +x ~/.local/share/nautilus/scripts/"Cloudreve Share" ~/.local/share/nautilus/scripts/"Cloudreve Preview"
 ```
 
-Right-click a file → **Scripts** → **Cloudreve Share**.
+Right-click a file → **Scripts** → **Cloudreve Share** or **Cloudreve Preview**.
 
 ## KDE / Dolphin
 
 ```sh
 mkdir -p ~/.local/share/kio/servicemenus   # Dolphin ≥ 22
-cp kde/cloudreve-share.desktop ~/.local/share/kio/servicemenus/
+cp kde/cloudreve-share.desktop kde/cloudreve-preview.desktop ~/.local/share/kio/servicemenus/
 ```
 
-Right-click a file → **Cloudreve** → **Share link…**. Restart Dolphin if the
-entry does not appear.
+Right-click a file → **Cloudreve** → **Share link…** or **Preview**. Restart
+Dolphin if the entries do not appear.
 
 Requires `python3` and `xdg-open` (both standard on desktop Linux).

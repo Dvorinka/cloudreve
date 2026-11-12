@@ -9,6 +9,7 @@ import { Routes, Route, HashRouter } from "react-router-dom";
 import Update from "./pages/Update";
 import Trash from "./pages/Trash";
 import Transfers from "./pages/Transfers";
+import Preview from "./pages/Preview";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -55,6 +56,7 @@ function App() {
             <Route path="/update" element={<Update />} />
             <Route path="/trash" element={<Trash />} />
             <Route path="/transfers" element={<Transfers />} />
+            <Route path="/preview" element={<Preview />} />
           </Routes>
         </HashRouter>
       </ThemeProvider>
