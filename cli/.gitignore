@@ -16,3 +16,8 @@ mise.local.toml
 /docs/paths.md
 /docs/terminal-output.md
 /docs/validation.md
+
+# Root .gitignore's bare `output/` rule targets Go build dirs; the CLI's
+# source and test folders of the same name must stay tracked.
+!/src/output/
+!/tests/output/

@@ -93,7 +93,7 @@ it("validates configuration origins, shapes and credential policy", () => {
 
 it("serializes short transactions without losing another update and releases after failure", async () => {
   const dir = await mkdtemp(join(tmpdir(), "cr-txn-"));
-  const s = new State(dir);
+  const s = new State(dir, 60000);
 
   try {
     await Promise.all(

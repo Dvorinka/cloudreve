@@ -3,48 +3,44 @@ import { readFileSync } from "node:fs";
 import { resolveConfig } from "prettier";
 import { expect, it } from "vitest";
 
-it(
-  "checks typed promise safety and modern syntax without narrowing to application folders",
-  async () => {
-    const eslint = new ESLint();
+it("checks typed promise safety and modern syntax without narrowing to application folders", async () => {
+  const eslint = new ESLint();
 
-    const [typed] = await eslint.lintText(
-      `export async function example() {
+  const [typed] = await eslint.lintText(
+    `export async function example() {
       Promise.resolve(1);
       setTimeout(async () => { await Promise.resolve(); }, 0);
       await 1;
     }`,
-      { filePath: "src/compatibility.ts" },
-    );
+    { filePath: "src/compatibility.ts" },
+  );
 
-    expect(typed!.messages.map((message) => message.ruleId)).toEqual(
-      expect.arrayContaining([
-        "@typescript-eslint/no-floating-promises",
-        "@typescript-eslint/no-misused-promises",
-        "@typescript-eslint/await-thenable",
-      ]),
-    );
+  expect(typed!.messages.map((message) => message.ruleId)).toEqual(
+    expect.arrayContaining([
+      "@typescript-eslint/no-floating-promises",
+      "@typescript-eslint/no-misused-promises",
+      "@typescript-eslint/await-thenable",
+    ]),
+  );
 
-    const [config] = await eslint.lintText('var value = 1; if (value == "1") console.log(value);', {
-      filePath: "stryker.config.mjs",
-    });
+  const [config] = await eslint.lintText('var value = 1; if (value == "1") console.log(value);', {
+    filePath: "stryker.config.mjs",
+  });
 
-    expect(config!.messages.map((message) => message.ruleId)).toEqual(
-      expect.arrayContaining(["no-var", "eqeqeq", "curly"]),
-    );
+  expect(config!.messages.map((message) => message.ruleId)).toEqual(
+    expect.arrayContaining(["no-var", "eqeqeq", "curly"]),
+  );
 
-    expect(await resolveConfig("src/main.ts")).toMatchObject({ printWidth: 100, endOfLine: "lf" });
+  expect(await resolveConfig("src/main.ts")).toMatchObject({ printWidth: 100, endOfLine: "lf" });
 
-    const { scripts } = JSON.parse(readFileSync("package.json", "utf8"));
+  const { scripts } = JSON.parse(readFileSync("package.json", "utf8"));
 
-    expect(scripts.format).toContain("prettier --write .");
-    expect(scripts.lint).toContain("eslint . --max-warnings 0");
-    expect(scripts["format:check"]).toContain("ruff format --check .");
-    expect(scripts["lint:shell"]).toContain("shellcheck");
-    expect(scripts["lint:toml"]).toContain("taplo lint");
-  },
-  process.platform === "win32" ? 30000 : 15000,
-);
+  expect(scripts.format).toContain("prettier --write .");
+  expect(scripts.lint).toContain("eslint . --max-warnings 0");
+  expect(scripts["format:check"]).toContain("ruff format --check .");
+  expect(scripts["lint:shell"]).toContain("shellcheck");
+  expect(scripts["lint:toml"]).toContain("taplo lint");
+}, 30000);
 
 it("separates structural boundaries while keeping related short declarations together", async () => {
   const source = `import { join } from "node:path";

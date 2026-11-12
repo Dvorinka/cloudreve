@@ -30,19 +30,15 @@ Fixtures have ownership labels and are removed after each run; no personal serve
 # Linux amd64 with Docker
 mise run test:e2e
 CR_CI_VERSION=4.17.0 mise run test:e2e
-
-# Run the actual GitHub Actions jobs locally, including on Docker Desktop
-mise run ci:local -- --job validate
-mise run ci:local -- --job community
 ```
 
-`act` uses the pinned Linux image in `.actrc`. Sanitized receipts and coverage are generated
+Sanitized receipts and coverage are generated
 under ignored `.artifacts/` and `coverage/`; fixture state stays under ignored `.runtime/`.
 
 ## Releases
 
 `mise run release:build` compiles a standalone executable with Bun, embeds the native credential binding, and verifies both command names from an extracted archive without a JavaScript runtime on PATH.
 
-The release workflow accepts an explicit stable version or a semantic version increment. Build, unit, binary and Community E2E checks run against the exact release commit. Publication occurs only after validation succeeds; existing release versions are never overwritten.
+Pushing a `cli-v<version>` tag matching `cli/package.json` runs that build on the Linux, macOS and Windows release matrix and publishes the archives and SHA-256 checksums to a GitHub release. Existing release versions are never overwritten.
 
 Release archives include Linux, macOS, and Windows binaries plus SHA-256 checksums. Registry publication is separate from GitHub releases.

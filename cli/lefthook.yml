@@ -1,4 +1,5 @@
 pre-commit:
   commands:
     check:
-      run: mise run check
+      glob: "cli/**"
+      run: mise -C cli run check

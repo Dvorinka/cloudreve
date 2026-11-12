@@ -20,6 +20,7 @@ jobs:
       frontend: ${{ steps.f.outputs.frontend }}
       desktop: ${{ steps.f.outputs.desktop }}
       android: ${{ steps.f.outputs.android }}
+      cli: ${{ steps.f.outputs.cli }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +43,9 @@ jobs:
               - '.github/workflows/ci.yml'
             android:
               - 'android/**'
+              - '.github/workflows/ci.yml'
+            cli:
+              - 'cli/**'
               - '.github/workflows/ci.yml'
 
   backend:
@@ -131,6 +135,19 @@ jobs:
               fi
             done
           fi
+          if ! command -v java >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+            # Fresh runner with a cold toolcache: KERN's self-heal guesses
+            # `apt-get install java`, which is not a real package name.
+            SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+            $SUDO apt-get update -qq && { $SUDO apt-get install -y -qq openjdk-21-jdk-headless || $SUDO apt-get install -y -qq default-jdk-headless; } || true
+            for bindir in /usr/lib/jvm/*/bin; do
+              if [ -x "$bindir/java" ]; then
+                export PATH="$bindir:$PATH"
+                echo "$bindir" >> "$GITHUB_PATH"
+                break
+              fi
+            done
+          fi
           java -version
           echo "JAVA_HOME=$(cd "$(dirname "$(command -v java)")/.." && pwd)" >> "$GITHUB_ENV"
       - name: Configure Gradle home
@@ -186,3 +203,37 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :app:assembleDebug --console=plain
+
+  # Vendored cloudreve/cli: toolchain (node/bun + ruff/shfmt/taplo/shellcheck)
+  # comes from cli/mise.toml, so the job runs the same `check` gate a
+  # contributor's lefthook pre-commit does.
+  cli:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise install
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run check
+
+  # Real-backend E2E (Community in Docker). Separate from `cli` so a runner
+  # without Docker fails here alone, not the required check gate.
+  cli-e2e:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise install
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun x playwright install chromium
+      - run: mise run test:e2e

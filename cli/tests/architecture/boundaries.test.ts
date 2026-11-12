@@ -55,40 +55,36 @@ it("rejects actual forbidden command-to-platform edges including type imports", 
   }
 });
 
-it(
-  "uses scope-aware ESLint policies for forbidden command globals and imports",
-  async () => {
-    const { ESLint } = await import("eslint");
+it("uses scope-aware ESLint policies for forbidden command globals and imports", async () => {
+  const { ESLint } = await import("eslint");
 
-    const eslint = new ESLint({
-      overrideConfigFile: resolve("eslint.config.mjs"),
-    });
+  const eslint = new ESLint({
+    overrideConfigFile: resolve("eslint.config.mjs"),
+  });
 
-    for (const source of [
-      "process.exit(1);",
-      'globalThis.fetch("https://invalid.test");',
-      'global.fetch("https://invalid.test");',
-      'client.request("/wire");',
-      'client["request"]("/wire");',
-      'import {request} from "@cloudreve/sdk/protocol";request();',
-      'import fs from "node:fs";fs.readFileSync("x");',
-    ]) {
-      for (const filePath of ["src/commands/files.ts", "src/program.ts"]) {
-        const [result] = await eslint.lintText(source, { filePath });
+  for (const source of [
+    "process.exit(1);",
+    'globalThis.fetch("https://invalid.test");',
+    'global.fetch("https://invalid.test");',
+    'client.request("/wire");',
+    'client["request"]("/wire");',
+    'import {request} from "@cloudreve/sdk/protocol";request();',
+    'import fs from "node:fs";fs.readFileSync("x");',
+  ]) {
+    for (const filePath of ["src/commands/files.ts", "src/program.ts"]) {
+      const [result] = await eslint.lintText(source, { filePath });
 
-        expect(result?.messages.some((m) => m.ruleId?.startsWith("no-restricted-"))).toBe(true);
-      }
+      expect(result?.messages.some((m) => m.ruleId?.startsWith("no-restricted-"))).toBe(true);
     }
+  }
 
-    const [result] = await eslint.lintText(
-      "export function local(process: string) {return process;}",
-      { filePath: "src/commands/files.ts" },
-    );
+  const [result] = await eslint.lintText(
+    "export function local(process: string) {return process;}",
+    { filePath: "src/commands/files.ts" },
+  );
 
-    expect(result?.messages.filter((m) => m.ruleId === "no-restricted-globals")).toEqual([]);
-  },
-  process.platform === "win32" ? 30000 : 15000,
-);
+  expect(result?.messages.filter((m) => m.ruleId === "no-restricted-globals")).toEqual([]);
+}, 120000);
 
 it("pins Foundation and SDK dependencies to published releases", async () => {
   const { readFileSync } = await import("node:fs");

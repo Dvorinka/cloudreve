@@ -1,0 +1,58 @@
+name: CLI Release
+
+# Tag `cli-v*` builds and publishes the standalone `cr`/`cloudreve-cli`
+# binaries for Linux, macOS and Windows. Server releases stay on the `v*`
+# tags handled by release.yml; the tag must match cli/package.json, so a
+# release is always preceded by a version bump on master.
+on:
+  push:
+    tags: ['cli-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never cancel an in-flight release — a canceled run can leave the
+# GitHub release half-populated. Re-tags queue instead.
+concurrency:
+  group: cli-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        ro: [[self-hosted, linux, x64], [self-hosted, windows, x64], [self-hosted, macos, x64]]
+    runs-on: ${{ matrix.ro }}
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: mise install
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          [ "${GITHUB_REF_NAME#cli-v}" = "$pkg" ] || {
+            echo "tag $GITHUB_REF_NAME must be cli-v$pkg (bump cli/package.json first)"
+            exit 1
+          }
+      - run: mise run release:build
+      - name: Publish binaries to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -e
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --title "Cloudreve CLI $TAG" \
+              --notes "Cloudreve CLI (cr) standalone binaries for Linux, macOS, and Windows."
+          for f in .artifacts/release/*.tar.gz .artifacts/release/*.tar.gz.sha256; do
+            gh release upload "$TAG" "$f" --clobber
+          done

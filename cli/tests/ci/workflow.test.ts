@@ -6,21 +6,29 @@ it("keeps development and hosted workflows independent of act", () => {
 
   expect(tasks).toMatch(/\[tasks\.check\]\s+run = "bun run check"/);
   expect(tasks.split("[settings]")[0]).not.toMatch(/^act\s*=/m);
-  expect(readFileSync("lefthook.yml", "utf8")).toContain("run: mise run check");
 
-  const workflow = readFileSync(".github/workflows/check.yml", "utf8");
+  const hook = readFileSync("lefthook.yml", "utf8");
 
-  expect(workflow).toContain("os: [ubuntu-latest, macos-latest, windows-latest]");
-  expect(workflow).toContain("runs-on: ubuntu-latest");
-  expect(workflow).toContain("name: cli-binary-Linux");
+  expect(hook).toContain('glob: "cli/**"');
+  expect(hook).toContain("run: mise -C cli run check");
 
-  for (const version of ["4.19.1", "4.19.0", "4.18.0"]) {
-    expect(workflow).toContain(`version: ${version}`);
-  }
+  // Vendored into the monorepo: the standalone-repo .github tree is stripped
+  // and hosted coverage lives in the root CI workflow instead.
+  expect(existsSync(".github")).toBe(false);
 
-  expect(workflow).not.toMatch(/^\s*container:/m);
+  const workflow = readFileSync("../.github/workflows/ci.yml", "utf8");
+
+  expect(workflow).toMatch(/cli:\s*\n\s*- 'cli\/\*\*'/);
+  expect(workflow).toMatch(/^ {2}cli:$/m);
+  expect(workflow).toContain("working-directory: cli");
+  expect(workflow).toContain("bun run check");
+
+  const release = readFileSync("../.github/workflows/cli-release.yml", "utf8");
+
+  expect(release).toContain("tags: ['cli-v*']");
+  expect(release).toContain("mise run release:build");
+
   expect(workflow).not.toMatch(/\bact\b/);
-  expect(readFileSync(".actrc", "utf8")).toContain("-P ubuntu-latest=");
-  expect(existsSync(".github/workflows/maintenance.yml")).toBe(false);
+  expect(existsSync("scripts/ci/act.sh")).toBe(false);
   expect(existsSync("scripts/ci/check.sh")).toBe(false);
 });
