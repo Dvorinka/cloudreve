@@ -29,7 +29,7 @@ async fn stub_server() -> String {
 
     let app = Router::new()
         .route(
-            "/api/v3/file/url",
+            "/api/v4/file/url",
             post(move || {
                 let download = download.clone();
                 async move {
@@ -60,6 +60,9 @@ fn dir_names(path: &Path) -> Vec<OsString> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn fuse_mount_lists_and_hydrates_virtual_files() {
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .try_init();
     let base = stub_server().await;
 
     let tmp = tempfile::tempdir().unwrap();
@@ -95,12 +98,18 @@ async fn fuse_mount_lists_and_hydrates_virtual_files() {
     let (command_tx, mut command_rx) = mpsc::unbounded_channel::<MountCommand>();
     tokio::spawn(async move { while command_rx.recv().await.is_some() {} });
 
+    let cr_client = Client::new(ClientConfig::new(&base));
+    // The stub ignores credentials; the client just refuses tokenless calls.
+    cr_client
+        .set_tokens("test-access".to_string(), "test-refresh".to_string())
+        .await;
+
     let ctx = Arc::new(fuse_fs::FuseContext {
         data_root: store.clone(),
         remote_base: "cloudreve://my/".to_string(),
         drive_id,
         inventory: inventory.clone(),
-        cr_client: Arc::new(Client::new(ClientConfig::new(&base))),
+        cr_client: Arc::new(cr_client),
         command_tx,
         runtime: tokio::runtime::Handle::current(),
     });

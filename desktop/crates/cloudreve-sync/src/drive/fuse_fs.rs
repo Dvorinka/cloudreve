@@ -981,13 +981,47 @@ fn statvfs(path: &Path) -> Option<libc::statvfs> {
 /// Spawn the FUSE session in the background. The returned session unmounts on
 /// drop; callers must keep it alive for the mount's lifetime.
 pub fn spawn(fs: CloudreveFs, mountpoint: &Path) -> io::Result<fuser::BackgroundSession> {
+    // AutoUnmount stays off: fuser 0.18 rejects it with the default
+    // SessionACL::Owner, and allow_other would require user_allow_other in
+    // /etc/fuse.conf. Lazily unmount a stale mount left by a crashed run
+    // instead, so the mountpoint is never blocked.
+    if is_fuse_mountpoint(mountpoint) {
+        for tool in ["fusermount3", "fusermount"] {
+            let unmounted = std::process::Command::new(tool)
+                .args(["-u", "-z"])
+                .arg(mountpoint)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+                .map(|s| s.success())
+                .unwrap_or(false);
+            if unmounted {
+                break;
+            }
+        }
+    }
     let mut config = fuser::Config::default();
-    config.mount_options = vec![
-        fuser::MountOption::FSName("cloudreve".to_string()),
-        fuser::MountOption::AutoUnmount,
-    ];
+    config.mount_options = vec![fuser::MountOption::FSName("cloudreve".to_string())];
     config.n_threads = Some(4);
     fuser::spawn_mount(fs, mountpoint, &config)
+}
+
+/// True when `path` is the root of a FUSE filesystem — i.e. a stale mount
+/// left behind by a crashed run. Only FUSE mounts are swept; a foreign
+/// non-FUSE mount (separate disk, bind mount) is left alone and the mount
+/// fails loudly instead of detaching the user's filesystem.
+fn is_fuse_mountpoint(path: &Path) -> bool {
+    const FUSE_SUPER_MAGIC: i64 = 0x6573_5546; // "FUSE" little-endian
+    use std::os::unix::ffi::OsStrExt;
+    let Ok(c_path) = std::ffi::CString::new(path.as_os_str().as_bytes()) else {
+        return false;
+    };
+    let mut stat: libc::statfs = unsafe { std::mem::zeroed() };
+    if unsafe { libc::statfs(c_path.as_ptr(), &mut stat) } != 0 {
+        return false;
+    }
+    stat.f_type == FUSE_SUPER_MAGIC
 }
 
 #[cfg(test)]
