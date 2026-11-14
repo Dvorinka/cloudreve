@@ -4,18 +4,19 @@ mod types;
 
 pub use types::*;
 
-use crate::EventBroadcaster;
+use crate::config::{tighten_private, write_private};
 use crate::drive::commands::ManagerCommand;
 use crate::drive::mounts::{Credentials, DriveConfig, Mount};
 use crate::inventory::InventoryDb;
 use crate::tasks::TaskProgress;
+use crate::EventBroadcaster;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use std::{fs, thread};
-use tokio::sync::{Mutex, RwLock, mpsc};
+use tokio::sync::{mpsc, Mutex, RwLock};
 
 pub struct DriveManager {
     pub(super) drives: Arc<RwLock<HashMap<String, Arc<Mount>>>>,
@@ -85,6 +86,7 @@ impl DriveManager {
 
         let content =
             fs::read_to_string(&config_file).context("Failed to read drive config file")?;
+        let _ = tighten_private(&config_file);
 
         let state: DriveState =
             serde_json::from_str(&content).context("Failed to parse drive config")?;
@@ -181,7 +183,8 @@ impl DriveManager {
 
         let content =
             serde_json::to_string_pretty(&new_state).context("Failed to serialize drive state")?;
-        fs::write(&config_file, content).context("Failed to write drive config file")?;
+        write_private(&config_file, content.as_bytes())
+            .context("Failed to write drive config file")?;
 
         tracing::info!(target: "drive", count = new_state.drives.len(), "Persisted drive(s) to config");
 
@@ -194,12 +197,10 @@ impl DriveManager {
     where
         F: Fn() + Send + 'static,
     {
-        thread::spawn(move || {
-            loop {
-                thread::sleep(Duration::from_secs(30));
-                tracing::trace!(target: "drive::manager", "Register_on_status_ui_changed: Invoking status UI changed callback");
-                fnc();
-            }
+        thread::spawn(move || loop {
+            thread::sleep(Duration::from_secs(30));
+            tracing::trace!(target: "drive::manager", "Register_on_status_ui_changed: Invoking status UI changed callback");
+            fnc();
         });
         Ok(())
     }

@@ -1,11 +1,40 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
 
 /// Global config manager instance
 static CONFIG_MANAGER: OnceLock<ConfigManager> = OnceLock::new();
+
+/// Writes a credential-bearing file with owner-only permissions.
+/// On Unix the file is created/kept at 0600; on Windows the profile-dir
+/// ACL already restricts it to the user.
+pub(crate) fn write_private(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    // An existing file keeps its old mode — tighten it explicitly.
+    tighten_private(path)?;
+    std::io::Write::write_all(&mut file, contents)
+}
+
+/// Best-effort 0600 on an existing credential file (Unix no-op-safe).
+pub(crate) fn tighten_private(path: &Path) -> std::io::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
+    }
+    #[cfg(not(unix))]
+    let _ = path;
+    Ok(())
+}
 
 /// Log level configuration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -138,6 +167,7 @@ impl ConfigManager {
         }
 
         let content = fs::read_to_string(path).context("Failed to read config file")?;
+        let _ = tighten_private(path);
 
         // serde's #[serde(default)] handles missing fields automatically
         let config: AppConfig =
@@ -165,7 +195,8 @@ impl ConfigManager {
         let content =
             serde_json::to_string_pretty(&*config).context("Failed to serialize config")?;
 
-        fs::write(&self.config_path, content).context("Failed to write config file")?;
+        write_private(&self.config_path, content.as_bytes())
+            .context("Failed to write config file")?;
 
         tracing::debug!(target: "config", path = %self.config_path.display(), "Configuration saved");
 
