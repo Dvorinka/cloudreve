@@ -446,6 +446,10 @@ impl DriveManager {
         config.name = name;
         config.instance_url = instance_url.clone();
         config.credentials = credentials.clone();
+        config.credentials.refresh_token = crate::credentials::protect_refresh_token(
+            &config.id,
+            &credentials.refresh_token,
+        );
 
         // Clear icon paths - will be re-fetched
         config.icon_path = None;
