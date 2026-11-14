@@ -484,18 +484,15 @@ impl Mount {
     pub async fn start(&mut self) -> Result<()> {
         #[cfg(not(windows))]
         {
-            let (sync_path, data_root, ondemand) = {
+            let (sync_path, data_root) = {
                 let config = self.config.read().await;
-                (
-                    config.sync_path.clone(),
-                    config.data_root(),
-                    config.is_ondemand(),
-                )
+                (config.sync_path.clone(), config.data_root())
             };
             std::fs::create_dir_all(&data_root).context("failed to create sync store directory")?;
 
             #[cfg(target_os = "linux")]
             {
+                let ondemand = self.config.read().await.is_ondemand();
                 if ondemand {
                     // Sweep interrupted hydration leftovers from a previous run.
                     let tmp_dir = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&data_root, &self.id);
@@ -528,19 +525,18 @@ impl Mount {
                         "FUSE on-demand mount started"
                     );
                 }
+            }
 
-                // Pin sync_path in GTK file-manager sidebars for both sync
-                // modes — the Linux analogue of the Explorer nav-pane pin.
-                // Best-effort: a missing bookmark must never fail a mount.
-                let drive_name = self.config.read().await.name.clone();
-                if let Err(e) = crate::drive::fuse_fs::add_sidebar_bookmark(&sync_path, &drive_name)
-                {
-                    tracing::warn!(
-                        target: "drive::mounts",
-                        error = %e,
-                        "Failed to add file-manager sidebar bookmark"
-                    );
-                }
+            // Pin sync_path in the file-manager sidebar (GTK bookmarks on
+            // Linux, Finder Favorites on macOS) — the analogue of the
+            // Explorer nav-pane pin. Best-effort: it must never fail a mount.
+            let drive_name = self.config.read().await.name.clone();
+            if let Err(e) = crate::drive::sidebar::pin(&sync_path, &drive_name) {
+                tracing::warn!(
+                    target: "drive::mounts",
+                    error = %e,
+                    "Failed to add file-manager sidebar entry"
+                );
             }
 
             self.start_fs_watcher().await?;
@@ -940,8 +936,13 @@ impl Mount {
                     }
                 }
             }
-            if let Err(e) = crate::drive::fuse_fs::remove_sidebar_bookmark(&config.sync_path) {
-                tracing::warn!(target: "drive::mounts", id=%self.id, error=%e, "Failed to remove file-manager sidebar bookmark");
+        }
+
+        #[cfg(not(windows))]
+        {
+            let sync_path = self.config.read().await.sync_path.clone();
+            if let Err(e) = crate::drive::sidebar::unpin(&sync_path) {
+                tracing::warn!(target: "drive::mounts", id=%self.id, error=%e, "Failed to remove file-manager sidebar entry");
             }
         }
 
@@ -970,11 +971,11 @@ impl Mount {
             tracing::debug!(target: "drive::mounts", id=%self.id, "Unmounting FUSE session");
             let mountpoint = self.config.read().await.sync_path.clone();
             drop(session);
-            if let Err(e) = crate::drive::fuse_fs::remove_sidebar_bookmark(&mountpoint) {
+            if let Err(e) = crate::drive::sidebar::unpin(&mountpoint) {
                 tracing::warn!(
                     target: "drive::mounts",
                     error = %e,
-                    "Failed to remove file-manager sidebar bookmark"
+                    "Failed to remove file-manager sidebar entry"
                 );
             }
         }

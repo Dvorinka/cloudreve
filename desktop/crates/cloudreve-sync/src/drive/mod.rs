@@ -15,5 +15,7 @@ pub mod placeholder;
 #[path = "placeholder_non_windows.rs"]
 pub mod placeholder;
 pub mod remote_events;
+#[cfg(not(windows))]
+pub mod sidebar;
 pub mod sync;
 pub mod utils;
