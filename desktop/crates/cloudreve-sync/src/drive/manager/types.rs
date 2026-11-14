@@ -139,6 +139,8 @@ pub enum DriveInfoStatus {
     Active,
     // Event push subscription is lost
     EventPushLost,
+    /// File-manager integration pin (nav pane / sidebar) failed to apply
+    ShellIntegrationDegraded,
     /// Credentials have expired
     CredentialExpired,
 }

@@ -193,6 +193,7 @@ export default function DrivesSection() {
       case "active":
         return "#4caf50"; // green
       case "event_push_lost":
+      case "shell_integration_degraded":
         return "#ff9800"; // orange
       case "credential_expired":
         return "#f44336"; // red
@@ -212,6 +213,8 @@ export default function DrivesSection() {
         return t("settings.driveStatus.active");
       case "event_push_lost":
         return t("settings.driveStatus.eventPushLost");
+      case "shell_integration_degraded":
+        return t("settings.driveStatus.shellIntegrationDegraded");
       case "credential_expired":
         return t("settings.driveStatus.credentialExpired");
       default:

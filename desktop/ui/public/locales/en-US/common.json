@@ -125,6 +125,7 @@
     "driveStatus": {
       "active": "Active",
       "eventPushLost": "Real time event push lost",
+      "shellIntegrationDegraded": "File manager integration degraded",
       "credentialExpired": "Credential Expired"
     }
   },

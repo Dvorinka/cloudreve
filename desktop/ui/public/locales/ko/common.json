@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "활성",
       "eventPushLost": "실시간 이벤트 푸시 연결 끊김",
+      "shellIntegrationDegraded": "파일 관리자 통합 저하됨",
       "credentialExpired": "자격 증명 만료됨"
     }
   },

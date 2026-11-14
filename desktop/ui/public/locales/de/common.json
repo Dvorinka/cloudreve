@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "Aktiv",
       "eventPushLost": "Echtzeit-Event-Push unterbrochen",
+      "shellIntegrationDegraded": "Dateimanager-Integration beeinträchtigt",
       "credentialExpired": "Anmeldedaten abgelaufen"
     }
   },

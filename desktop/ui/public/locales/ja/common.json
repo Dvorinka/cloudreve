@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "アクティブ",
       "eventPushLost": "リアルタイムイベントプッシュが切断",
+      "shellIntegrationDegraded": "ファイルマネージャー連携が低下",
       "credentialExpired": "認証期限切れ"
     }
   },

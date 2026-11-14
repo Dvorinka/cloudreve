@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "Attivo",
       "eventPushLost": "Connessione push eventi in tempo reale persa",
+      "shellIntegrationDegraded": "Integrazione con il file manager degradata",
       "credentialExpired": "Credenziali scadute"
     }
   },

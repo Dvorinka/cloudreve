@@ -693,12 +693,12 @@ impl DriveManager {
             // Determine drive status
             let status = if drive_state.is_credential_expired() {
                 DriveInfoStatus::CredentialExpired
+            } else if !drive_state.is_event_push_subscribed() {
+                DriveInfoStatus::EventPushLost
+            } else if drive_state.is_shell_integration_degraded() {
+                DriveInfoStatus::ShellIntegrationDegraded
             } else {
-                if !drive_state.is_event_push_subscribed() {
-                    DriveInfoStatus::EventPushLost
-                } else {
-                    DriveInfoStatus::Active
-                }
+                DriveInfoStatus::Active
             };
 
             drives_info.push(DriveInfo {

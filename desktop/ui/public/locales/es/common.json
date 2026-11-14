@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "Activo",
       "eventPushLost": "Pérdida de notificaciones en tiempo real",
+      "shellIntegrationDegraded": "Integración con el gestor de archivos degradada",
       "credentialExpired": "Credenciales expiradas"
     }
   },
