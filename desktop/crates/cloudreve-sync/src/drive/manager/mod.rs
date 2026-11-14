@@ -207,6 +207,14 @@ impl DriveManager {
 
     /// Add a new drive
     pub async fn add_drive(&self, mut config: DriveConfig) -> Result<String> {
+        // Move the refresh token into the OS credential store when available.
+        // Covers newly-added drives and migrates plaintext tokens read from
+        // drives.json on load in one place.
+        config.credentials.refresh_token = crate::credentials::protect_refresh_token(
+            &config.id,
+            &config.credentials.refresh_token,
+        );
+
         // Fetch favicon if icon_path is not set or doesn't exist
         if config.icon_path.is_none()
             || !config
@@ -331,6 +339,7 @@ impl DriveManager {
 
         // Delete the mount (unregister sync root, cleanup, etc.)
         mount.delete().await.context("Failed to delete mount")?;
+        crate::credentials::delete_refresh_token(id);
 
         // Broadcast no_drive event if no drives remain
         if self.drives.read().await.is_empty() {
@@ -437,6 +446,10 @@ impl DriveManager {
         config.name = name;
         config.instance_url = instance_url.clone();
         config.credentials = credentials.clone();
+        config.credentials.refresh_token = crate::credentials::protect_refresh_token(
+            &config.id,
+            &credentials.refresh_token,
+        );
 
         // Clear icon paths - will be re-fetched
         config.icon_path = None;
