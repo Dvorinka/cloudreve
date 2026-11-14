@@ -178,7 +178,7 @@ jobs:
 
   updater-manifest:
     needs: bundle
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref_name, 'desktop-v')
     runs-on: [self-hosted, linux, x64]
     steps:
       - uses: actions/checkout@v4
