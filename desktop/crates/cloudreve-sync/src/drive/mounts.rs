@@ -495,32 +495,43 @@ impl Mount {
             std::fs::create_dir_all(&data_root).context("failed to create sync store directory")?;
 
             #[cfg(target_os = "linux")]
-            if ondemand {
-                // Sweep interrupted hydration leftovers from a previous run.
-                let tmp_dir = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&data_root, &self.id);
-                let _ = std::fs::remove_dir_all(&tmp_dir);
-                std::fs::create_dir_all(&sync_path).context("failed to create FUSE mountpoint")?;
-                let (remote_base, drive_id) = {
-                    let config = self.config.read().await;
-                    (config.remote_path.clone(), config.id.clone())
-                };
-                let fs = crate::drive::fuse_fs::CloudreveFs::new(Arc::new(
-                    crate::drive::fuse_fs::FuseContext {
-                        data_root: data_root.clone(),
-                        remote_base,
-                        drive_id,
-                        inventory: self.inventory.clone(),
-                        cr_client: self.cr_client.clone(),
-                        command_tx: self.command_tx.clone(),
-                        runtime: tokio::runtime::Handle::current(),
-                    },
-                ));
-                let session = crate::drive::fuse_fs::spawn(fs, &sync_path)
-                    .context("failed to mount FUSE filesystem")?;
-                *self.fuse_session.lock().await = Some(session);
-                // Pin the mountpoint in GTK file-manager sidebars — the Linux
-                // analogue of the Explorer nav-pane pin. Best-effort: a missing
-                // bookmark must never fail a mount.
+            {
+                if ondemand {
+                    // Sweep interrupted hydration leftovers from a previous run.
+                    let tmp_dir = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&data_root, &self.id);
+                    let _ = std::fs::remove_dir_all(&tmp_dir);
+                    std::fs::create_dir_all(&sync_path)
+                        .context("failed to create FUSE mountpoint")?;
+                    let (remote_base, drive_id) = {
+                        let config = self.config.read().await;
+                        (config.remote_path.clone(), config.id.clone())
+                    };
+                    let fs = crate::drive::fuse_fs::CloudreveFs::new(Arc::new(
+                        crate::drive::fuse_fs::FuseContext {
+                            data_root: data_root.clone(),
+                            remote_base,
+                            drive_id,
+                            inventory: self.inventory.clone(),
+                            cr_client: self.cr_client.clone(),
+                            command_tx: self.command_tx.clone(),
+                            runtime: tokio::runtime::Handle::current(),
+                        },
+                    ));
+                    let session = crate::drive::fuse_fs::spawn(fs, &sync_path)
+                        .context("failed to mount FUSE filesystem")?;
+                    *self.fuse_session.lock().await = Some(session);
+                    tracing::info!(
+                        target: "drive::mounts",
+                        id = %self.id,
+                        mount = %sync_path.display(),
+                        store = %data_root.display(),
+                        "FUSE on-demand mount started"
+                    );
+                }
+
+                // Pin sync_path in GTK file-manager sidebars for both sync
+                // modes — the Linux analogue of the Explorer nav-pane pin.
+                // Best-effort: a missing bookmark must never fail a mount.
                 let drive_name = self.config.read().await.name.clone();
                 if let Err(e) = crate::drive::fuse_fs::add_sidebar_bookmark(&sync_path, &drive_name)
                 {
@@ -530,13 +541,6 @@ impl Mount {
                         "Failed to add file-manager sidebar bookmark"
                     );
                 }
-                tracing::info!(
-                    target: "drive::mounts",
-                    id = %self.id,
-                    mount = %sync_path.display(),
-                    store = %data_root.display(),
-                    "FUSE on-demand mount started"
-                );
             }
 
             self.start_fs_watcher().await?;
@@ -928,7 +932,6 @@ impl Mount {
             if config.is_ondemand() {
                 let store = config.data_root();
                 let tmp = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&store, &config.id);
-                drop(config);
                 for dir in [store, tmp] {
                     if let Err(e) = std::fs::remove_dir_all(&dir)
                         && e.kind() != std::io::ErrorKind::NotFound
@@ -936,6 +939,9 @@ impl Mount {
                         tracing::warn!(target: "drive::mounts", id=%self.id, path=%dir.display(), error=%e, "Failed to remove FUSE store directory");
                     }
                 }
+            }
+            if let Err(e) = crate::drive::fuse_fs::remove_sidebar_bookmark(&config.sync_path) {
+                tracing::warn!(target: "drive::mounts", id=%self.id, error=%e, "Failed to remove file-manager sidebar bookmark");
             }
         }
 
