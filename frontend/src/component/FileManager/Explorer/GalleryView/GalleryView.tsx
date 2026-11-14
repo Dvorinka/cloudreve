@@ -2,6 +2,7 @@ import { Box, ImageList } from "@mui/material";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
+import { useFilteredFiles } from "../../../../hooks/useFilteredFiles.ts";
 import { mergeRefs } from "../../../../util";
 import DndWrappedFile from "../../Dnd/DndWrappedFile.tsx";
 import { FmIndexContext } from "../../FmIndexContext.tsx";
@@ -24,7 +25,7 @@ const GalleryView = React.forwardRef(
     const [boxHeight, setBoxHeight] = useState(0);
     const [col, setCol] = useState(0);
 
-    const files = useAppSelector((state) => state.fileManager[fmIndex].list?.files);
+    const files = useFilteredFiles(fmIndex);
     const pagination = useAppSelector((state) => state.fileManager[fmIndex].list?.pagination);
     const search_params = useAppSelector((state) => state.fileManager[fmIndex]?.search_params);
     const galleryWidth = useAppSelector((state) => state.fileManager[fmIndex].galleryWidth);

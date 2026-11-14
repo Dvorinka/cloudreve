@@ -3,6 +3,7 @@ import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { FileResponse, FileType } from "../../../../api/explorer.ts";
 import { useAppSelector } from "../../../../redux/hooks.ts";
+import { useFilteredFiles } from "../../../../hooks/useFilteredFiles.ts";
 import DndWrappedFile from "../../Dnd/DndWrappedFile.tsx";
 import { FmIndexContext } from "../../FmIndexContext.tsx";
 import GridFile from "./GridFile.tsx";
@@ -50,7 +51,7 @@ export const loadingPlaceholderPath = (id: string) => `${CrUriPrefix}placeholder
 const GridView = React.forwardRef(({ ...rest }: GridViewProps, ref) => {
   const { t } = useTranslation("application");
   const fmIndex = useContext(FmIndexContext);
-  const files = useAppSelector((state) => state.fileManager[fmIndex].list?.files);
+  const files = useFilteredFiles(fmIndex);
   const mixedType = useAppSelector((state) => state.fileManager[fmIndex].list?.mixed_type);
   const pagination = useAppSelector((state) => state.fileManager[fmIndex].list?.pagination);
   const showThumb = useAppSelector((state) => state.fileManager[fmIndex].showThumb);

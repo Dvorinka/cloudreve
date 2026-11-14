@@ -26,6 +26,7 @@ export interface SingleManager {
   error?: Response<any>;
   loading: boolean;
   list?: ListResponse;
+  filter?: string;
   tree: {
     [key: string]: FmTreeItem;
   };
@@ -144,6 +145,7 @@ export const fileManagerSlice = createSlice({
       state[action.payload].showError = false;
       state[action.payload].error = undefined;
       state[action.payload].list = undefined;
+      state[action.payload].filter = undefined;
       state[action.payload].selected = {};
       state[action.payload].contextMenuOpen = false;
       state[action.payload].deleteFileModalOpen = state[action.payload].deleteFileModalOpen ? false : undefined;
@@ -164,6 +166,9 @@ export const fileManagerSlice = createSlice({
     },
     setFmLoading: (state, action: PayloadAction<FileManagerArgsBase<boolean>>) => {
       state[action.payload.index].loading = action.payload.value;
+    },
+    setListFilter: (state, action: PayloadAction<FileManagerArgsBase<string | undefined>>) => {
+      state[action.payload.index].filter = action.payload.value || undefined;
     },
     applyListResponse: (state, action: PayloadAction<FileManagerArgsBase<ListResponse>>) => {
       state[action.payload.index].list = action.payload.value;
@@ -244,6 +249,7 @@ export const fileManagerSlice = createSlice({
     ) => {
       if (state[action.payload.index].path != action.payload.value.path) {
         state[action.payload.index].previous_path = state[action.payload.index].path;
+        state[action.payload.index].filter = undefined;
       }
       state[action.payload.index].path = action.payload.value.path;
       state[action.payload.index].path_elements = action.payload.value.path_elements;
@@ -531,6 +537,7 @@ export const {
   appendTreeCache,
   appendListResponse,
   applyListResponse,
+  setListFilter,
   setFmError,
   setFmLoading,
   setLayout,

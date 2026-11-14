@@ -4,6 +4,7 @@ import TopActions from "./TopActions.tsx";
 import { RadiusFrame } from "../../Frame/RadiusFrame.tsx";
 import TopActionsSecondary from "./TopActionsSecondary.tsx";
 import { SearchIndicator } from "../Search/SearchIndicator.tsx";
+import ListFilter from "./ListFilter.tsx";
 
 const NavHeader = () => {
   const theme = useTheme();
@@ -27,6 +28,7 @@ const NavHeader = () => {
       >
         <Breadcrumb />
         <SearchIndicator />
+        <ListFilter />
       </RadiusFrame>
       {!isMobile && (
         <RadiusFrame>

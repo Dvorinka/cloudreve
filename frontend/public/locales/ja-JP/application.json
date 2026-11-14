@@ -515,7 +515,9 @@
     "relocateStart": "再配置",
     "policySaved": "ストレージポリシーを更新しました",
     "policyInherit": "継承（親またはグループの既定値を使用）",
-    "policyGroupDefault": "グループの既定値"
+    "policyGroupDefault": "グループの既定値",
+    "filterList": "ファイルを絞り込み",
+    "clearFilter": "絞り込みをクリア"
   },
   "modals": {
     "includePasswordInShareLink": "共有リンクにパスワードを含める",

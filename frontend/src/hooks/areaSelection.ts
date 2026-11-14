@@ -5,6 +5,7 @@ import { FileManagerIndex } from "../component/FileManager/FileManager.tsx";
 import { FmIndexContext } from "../component/FileManager/FmIndexContext.tsx";
 import { clearSelected } from "../redux/fileManagerSlice.ts";
 import { useAppDispatch, useAppSelector } from "../redux/hooks.ts";
+import { useFilteredFiles } from "./useFilteredFiles.ts";
 import { selectionFromDragBox } from "../redux/thunks/file.ts";
 
 const dataRectId = "data-rect-id";
@@ -61,7 +62,7 @@ export function useAreaSelection(container: React.RefObject<HTMLElement>, explor
   const fmIndex = useContext(FmIndexContext);
   const dispatch = useAppDispatch();
   const boxRef = useRef<HTMLDivElement>(boxNode);
-  const fileList = useAppSelector((state) => state.fileManager[explorerIndex]?.list?.files);
+  const fileList = useFilteredFiles(explorerIndex);
 
   const [mouseDown, setMouseDown] = React.useState<boolean>(false);
   const mouseMoving = useRef(false);
