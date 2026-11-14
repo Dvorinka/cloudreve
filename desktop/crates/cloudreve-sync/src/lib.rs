@@ -4,6 +4,7 @@ pub mod cfapi;
 #[path = "cfapi/non_windows.rs"]
 pub mod cfapi;
 pub mod config;
+pub mod credentials;
 pub mod drive;
 pub mod events;
 pub mod inventory;

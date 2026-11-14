@@ -275,7 +275,10 @@ impl Mount {
         let _ = cr_client
             .set_tokens_with_expiry(&Token {
                 access_token: config.credentials.access_token.clone().unwrap_or_default(),
-                refresh_token: config.credentials.refresh_token.clone(),
+                refresh_token: crate::credentials::resolve_refresh_token(
+                    &config.id,
+                    &config.credentials.refresh_token,
+                ),
                 access_expires: config
                     .credentials
                     .access_expires
@@ -843,7 +846,10 @@ impl Mount {
                 MountCommand::RefreshCredentials { credentials } => {
                     let mut config = s.config.write().await;
                     config.credentials.access_token = Some(credentials.access_token);
-                    config.credentials.refresh_token = credentials.refresh_token;
+                    config.credentials.refresh_token = crate::credentials::protect_refresh_token(
+                        &config.id,
+                        &credentials.refresh_token,
+                    );
                     config.credentials.refresh_expires = credentials.refresh_expires;
                     config.credentials.access_expires = Some(credentials.access_expires);
 
