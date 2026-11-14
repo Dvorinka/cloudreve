@@ -515,6 +515,7 @@
     "policyInherit": "Inherit (use parent or group default)",
     "policyGroupDefault": "Group default",
     "filterList": "Filter files",
+    "filterListHint": "Type to filter this page — / to focus, Enter to search all files",
     "clearFilter": "Clear filter"
   },
   "modals": {

@@ -517,6 +517,7 @@
     "policyInherit": "継承（親またはグループの既定値を使用）",
     "policyGroupDefault": "グループの既定値",
     "filterList": "ファイルを絞り込み",
+    "filterListHint": "入力してこのページを絞り込み — / でフォーカス、Enter で全体を検索",
     "clearFilter": "絞り込みをクリア"
   },
   "modals": {
