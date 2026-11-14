@@ -513,7 +513,9 @@
     "relocateStart": "Relocate",
     "policySaved": "Storage policy updated",
     "policyInherit": "Inherit (use parent or group default)",
-    "policyGroupDefault": "Group default"
+    "policyGroupDefault": "Group default",
+    "filterList": "Filter files",
+    "clearFilter": "Clear filter"
   },
   "modals": {
     "paidShare": "Paid share",

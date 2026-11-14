@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { useCallback, useContext, useMemo } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
+import { useFilteredFiles } from "../../../../hooks/useFilteredFiles.ts";
 import { setSelected } from "../../../../redux/fileManagerSlice.ts";
 import DndWrappedFile from "../../Dnd/DndWrappedFile.tsx";
 import { FmIndexContext } from "../../FmIndexContext.tsx";
@@ -16,7 +17,7 @@ export interface ListBodyProps {
 const ListBody = ({ columns }: ListBodyProps) => {
   const fmIndex = useContext(FmIndexContext);
   const dispatch = useAppDispatch();
-  const files = useAppSelector((state) => state.fileManager[fmIndex].list?.files);
+  const files = useFilteredFiles(fmIndex);
   const mixedType = useAppSelector((state) => state.fileManager[fmIndex].list?.mixed_type);
   const pagination = useAppSelector((state) => state.fileManager[fmIndex].list?.pagination);
   const showThumb = useAppSelector((state) => state.fileManager[fmIndex].showThumb);
