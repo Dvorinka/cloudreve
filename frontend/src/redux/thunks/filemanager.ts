@@ -11,6 +11,7 @@ import { SelectType } from "../../component/Uploader/core";
 import { Task } from "../../component/Uploader/core/types.ts";
 import { uploadPromisePool } from "../../component/Uploader/core/uploader/base.ts";
 import { defaultPath } from "../../hooks/useNavigation.tsx";
+import { filterFilesByName } from "../../hooks/useFilteredFiles.ts";
 import { router } from "../../router";
 import SessionManager, { UserSettings } from "../../session";
 import { getFileLinkedUri, sleep } from "../../util";
@@ -668,7 +669,7 @@ export function clearSearch(index: number): AppThunk {
 export function selectAll(index: number): AppThunk {
   return async (dispatch, getState) => {
     const fm = getState().fileManager[index];
-    const files = fm.list?.files;
+    const files = filterFilesByName(fm.list?.files, fm.filter);
     if (!files) {
       return;
     }
@@ -689,7 +690,7 @@ export function shortCutDelete(index: number): AppThunk {
 export function inverseSelection(index: number): AppThunk {
   return async (dispatch, getState) => {
     const fm = getState().fileManager[index];
-    const files = fm.list?.files;
+    const files = filterFilesByName(fm.list?.files, fm.filter);
     if (!files) {
       return;
     }

@@ -294,6 +294,7 @@ export interface GlobalStateSlice {
 
   // Search popup
   searchPopupOpen?: boolean;
+  searchPopupKeyword?: string;
 
   // Advance search
   advanceSearchOpen?: boolean;
@@ -427,6 +428,12 @@ export const globalStateSlice = createSlice({
     },
     setSearchPopup: (state, action: PayloadAction<boolean>) => {
       state.searchPopupOpen = action.payload;
+      if (!action.payload) {
+        state.searchPopupKeyword = undefined;
+      }
+    },
+    setSearchPopupKeyword: (state, action: PayloadAction<string | undefined>) => {
+      state.searchPopupKeyword = action.payload;
     },
     setRemoteDownloadDialog: (state, action: PayloadAction<{ open: boolean; file?: FileResponse }>) => {
       state.remoteDownloadDialogOpen = action.payload.open;
@@ -1037,6 +1044,7 @@ export const {
   resetDialogs,
   setPolicyOptionCache,
   setSearchPopup,
+  setSearchPopupKeyword,
   setExcalidrawViewer,
   closeExcalidrawViewer,
   setDirectLinkManagementDialog,
