@@ -1,5 +1,5 @@
 import { FilterListOutlined } from "@mui/icons-material";
-import { IconButton, InputAdornment, useMediaQuery, useTheme } from "@mui/material";
+import { IconButton, InputAdornment, Tooltip, useMediaQuery, useTheme } from "@mui/material";
 import { useContext, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { setListFilter } from "../../../redux/fileManagerSlice.ts";
@@ -33,50 +33,52 @@ const ListFilter = () => {
   }, []);
 
   return (
-    <OutlineIconTextField
-      inputRef={inputRef}
-      variant="outlined"
-      size="small"
-      icon={<FilterListOutlined fontSize="small" />}
-      placeholder={t("application:fileManager.filterList")}
-      value={filter ?? ""}
-      onChange={(e) => dispatch(setListFilter({ index: fmIndex, value: e.target.value }))}
-      onKeyDown={(e) => {
-        if (e.key == "Escape") {
-          if (filter) {
-            e.stopPropagation();
-            dispatch(setListFilter({ index: fmIndex, value: undefined }));
-          } else {
-            inputRef.current?.blur();
+    <Tooltip title={t("application:fileManager.filterListHint")} placement="bottom" enterDelay={400}>
+      <OutlineIconTextField
+        inputRef={inputRef}
+        variant="outlined"
+        size="small"
+        icon={<FilterListOutlined fontSize="small" />}
+        placeholder={t("application:fileManager.filterList")}
+        value={filter ?? ""}
+        onChange={(e) => dispatch(setListFilter({ index: fmIndex, value: e.target.value }))}
+        onKeyDown={(e) => {
+          if (e.key == "Escape") {
+            if (filter) {
+              e.stopPropagation();
+              dispatch(setListFilter({ index: fmIndex, value: undefined }));
+            } else {
+              inputRef.current?.blur();
+            }
+          } else if (e.key == "Enter" && filter) {
+            // Escalate to full search — the inline filter is page-local.
+            dispatch(setSearchPopupKeyword(filter));
+            dispatch(setSearchPopup(true));
           }
-        } else if (e.key == "Enter" && filter) {
-          // Escalate to full search — the inline filter is page-local.
-          dispatch(setSearchPopupKeyword(filter));
-          dispatch(setSearchPopup(true));
-        }
-      }}
-      InputProps={{
-        endAdornment: filter ? (
-          <InputAdornment position="end">
-            <IconButton
-              size="small"
-              edge="end"
-              aria-label={t("application:fileManager.clearFilter")}
-              onClick={() => dispatch(setListFilter({ index: fmIndex, value: undefined }))}
-            >
-              <Dismiss fontSize="small" />
-            </IconButton>
-          </InputAdornment>
-        ) : undefined,
-        sx: { fontSize: theme.typography.body2.fontSize },
-      }}
-      sx={{
-        my: "auto",
-        ml: "auto",
-        width: isMobile ? 110 : 160,
-        "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-      }}
-    />
+        }}
+        InputProps={{
+          endAdornment: filter ? (
+            <InputAdornment position="end">
+              <IconButton
+                size="small"
+                edge="end"
+                aria-label={t("application:fileManager.clearFilter")}
+                onClick={() => dispatch(setListFilter({ index: fmIndex, value: undefined }))}
+              >
+                <Dismiss fontSize="small" />
+              </IconButton>
+            </InputAdornment>
+          ) : undefined,
+          sx: { fontSize: theme.typography.body2.fontSize },
+        }}
+        sx={{
+          my: "auto",
+          ml: "auto",
+          width: isMobile ? 110 : 160,
+          "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+        }}
+      />
+    </Tooltip>
   );
 };
 
