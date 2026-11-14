@@ -245,5 +245,12 @@
     "close": "Close",
     "checkNow": "Check for updates",
     "downloadManually": "Download manually"
+  },
+  "preview": {
+    "openExternal": "Open externally",
+    "close": "Close",
+    "missingFile": "No file specified",
+    "unsupported": "No preview available for this file",
+    "truncated": "Showing the first {{size}} of the file"
   }
 }

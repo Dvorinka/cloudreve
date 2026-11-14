@@ -8,7 +8,10 @@
     "main_popup",
     "settings",
     "update",
-    "share"
+    "share",
+    "trash",
+    "transfers",
+    "preview"
   ],
   "permissions": [
     "core:default",
