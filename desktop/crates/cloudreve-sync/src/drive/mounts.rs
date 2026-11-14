@@ -497,13 +497,9 @@ impl Mount {
             #[cfg(target_os = "linux")]
             if ondemand {
                 // Sweep interrupted hydration leftovers from a previous run.
-                let tmp_dir = crate::drive::fuse_fs::CloudreveFs::tmp_dir(
-                    &data_root,
-                    &self.id,
-                );
+                let tmp_dir = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&data_root, &self.id);
                 let _ = std::fs::remove_dir_all(&tmp_dir);
-                std::fs::create_dir_all(&sync_path)
-                    .context("failed to create FUSE mountpoint")?;
+                std::fs::create_dir_all(&sync_path).context("failed to create FUSE mountpoint")?;
                 let (remote_base, drive_id) = {
                     let config = self.config.read().await;
                     (config.remote_path.clone(), config.id.clone())
@@ -522,6 +518,18 @@ impl Mount {
                 let session = crate::drive::fuse_fs::spawn(fs, &sync_path)
                     .context("failed to mount FUSE filesystem")?;
                 *self.fuse_session.lock().await = Some(session);
+                // Pin the mountpoint in GTK file-manager sidebars — the Linux
+                // analogue of the Explorer nav-pane pin. Best-effort: a missing
+                // bookmark must never fail a mount.
+                let drive_name = self.config.read().await.name.clone();
+                if let Err(e) = crate::drive::fuse_fs::add_sidebar_bookmark(&sync_path, &drive_name)
+                {
+                    tracing::warn!(
+                        target: "drive::mounts",
+                        error = %e,
+                        "Failed to add file-manager sidebar bookmark"
+                    );
+                }
                 tracing::info!(
                     target: "drive::mounts",
                     id = %self.id,
@@ -628,6 +636,36 @@ impl Mount {
                 .context("failed to connect to sync root")?;
 
             self.connection = Some(connection);
+
+            // Explorer caches the nav-pane entry per session; a tombstoned
+            // pin (from a package reinstall or an unregister+register cycle)
+            // hides it even when the registry is fully written. Re-pin the
+            // namespace on every mount so the entry self-heals live.
+            {
+                let heal_id = sync_root_id.to_os_string();
+                let heal_name = config.name.clone();
+                let heal_icon = config.icon_path.as_ref().map(|p| format!("{},0", p));
+                let heal_path = config.sync_path.clone();
+                tokio::task::spawn_blocking(move || {
+                    match crate::drive::nav_pane::ensure_nav_pane_entry(
+                        &heal_id,
+                        &heal_name,
+                        heal_icon.as_deref(),
+                        &heal_path,
+                    ) {
+                        Ok(true) => {
+                            tracing::info!(target: "drive::mounts",
+                                "Explorer navigation pane entry repaired");
+                        }
+                        Ok(false) => {}
+                        Err(e) => {
+                            tracing::warn!(target: "drive::mounts",
+                                error = %e,
+                                "Failed to repair Explorer navigation pane entry");
+                        }
+                    }
+                });
+            }
 
             if packaged && just_registered {
                 drop(config);
@@ -825,9 +863,7 @@ impl Mount {
                     spawn(async move {
                         // Restart the event listener so it retries immediately
                         // instead of sitting in the long-retry sleep.
-                        if let Some(handle) =
-                            s_clone.remote_event_handle.lock().await.take()
-                        {
+                        if let Some(handle) = s_clone.remote_event_handle.lock().await.take() {
                             handle.abort();
                             let _ = handle.await;
                         }
@@ -926,7 +962,15 @@ impl Mount {
         #[cfg(target_os = "linux")]
         if let Some(session) = self.fuse_session.lock().await.take() {
             tracing::debug!(target: "drive::mounts", id=%self.id, "Unmounting FUSE session");
+            let mountpoint = self.config.read().await.sync_path.clone();
             drop(session);
+            if let Err(e) = crate::drive::fuse_fs::remove_sidebar_bookmark(&mountpoint) {
+                tracing::warn!(
+                    target: "drive::mounts",
+                    error = %e,
+                    "Failed to remove file-manager sidebar bookmark"
+                );
+            }
         }
 
         // Close the command channel to signal the processor task to stop
@@ -1238,7 +1282,10 @@ mod tests {
     fn tmp_dir_is_store_sibling() {
         let store = PathBuf::from("/home/u/.cloudreve/fuse-store/drive-1");
         let tmp = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&store, "drive-1");
-        assert_eq!(tmp, PathBuf::from("/home/u/.cloudreve/fuse-store/.tmp-drive-1"));
+        assert_eq!(
+            tmp,
+            PathBuf::from("/home/u/.cloudreve/fuse-store/.tmp-drive-1")
+        );
         // Same parent directory => same filesystem => atomic rename works.
         assert_eq!(tmp.parent(), store.parent());
     }

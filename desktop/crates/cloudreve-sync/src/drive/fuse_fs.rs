@@ -37,12 +37,12 @@ use anyhow::{Context, Result};
 use cloudreve_api::{Client, api::ExplorerApi};
 use dashmap::DashMap;
 use fuser::{
-    AccessFlags, Errno, FopenFlags, FileAttr, FileHandle, FileType, Filesystem, Generation,
+    AccessFlags, Errno, FileAttr, FileHandle, FileType, Filesystem, FopenFlags, Generation,
     INodeNo, LockOwner, OpenAccMode, OpenFlags, ReplyAttr, ReplyCreate, ReplyData, ReplyDirectory,
     ReplyEmpty, ReplyEntry, ReplyOpen, ReplyStatfs, ReplyWrite, Request, TimeOrNow, WriteFlags,
 };
-use notify_debouncer_full::{DebouncedEvent, notify::event::RemoveKind, notify::Event};
 use notify_debouncer_full::notify::EventKind;
+use notify_debouncer_full::{DebouncedEvent, notify::Event, notify::event::RemoveKind};
 use tokio::sync::mpsc;
 
 use crate::{
@@ -179,8 +179,7 @@ impl CloudreveFs {
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_else(|| "file".to_string());
-        Self::tmp_dir(&self.ctx.data_root, &self.ctx.drive_id)
-            .join(format!("{seq}-{name}.part"))
+        Self::tmp_dir(&self.ctx.data_root, &self.ctx.drive_id).join(format!("{seq}-{name}.part"))
     }
 
     /// Absolute store path for a mount-relative path.
@@ -236,7 +235,11 @@ impl CloudreveFs {
             ctime: Self::ts(meta.updated_at),
             crtime: Self::ts(meta.created_at),
             kind,
-            perm: if kind == FileType::Directory { 0o755 } else { 0o644 },
+            perm: if kind == FileType::Directory {
+                0o755
+            } else {
+                0o644
+            },
             nlink: if kind == FileType::Directory { 2 } else { 1 },
             uid: req.uid(),
             gid: req.gid(),
@@ -319,7 +322,10 @@ impl CloudreveFs {
 
         // Refresh the local snapshot so the next sync diff does not treat the
         // freshly hydrated bytes as a local modification.
-        if let Ok(Some(mut meta)) = self.ctx.inventory.query_by_path(&self.store_path_str(rel).unwrap_or_default())
+        if let Ok(Some(mut meta)) = self
+            .ctx
+            .inventory
+            .query_by_path(&self.store_path_str(rel).unwrap_or_default())
             && let Ok(fresh) = std::fs::metadata(&store)
             && let Ok(mtime) = fresh.modified()
             && let Ok(dur) = mtime.duration_since(UNIX_EPOCH)
@@ -344,10 +350,7 @@ impl CloudreveFs {
 
         let mut request = cloudreve_api::models::explorer::FileURLService::default();
         request.uris.push(uri.to_string());
-        if let Some(meta) = self
-            .ctx
-            .inventory
-            .query_by_path(&store.to_string_lossy())?
+        if let Some(meta) = self.ctx.inventory.query_by_path(&store.to_string_lossy())?
             && !meta.etag.is_empty()
         {
             request.entity = Some(meta.etag);
@@ -489,7 +492,8 @@ impl Filesystem for CloudreveFs {
                 reply.error(Errno::from(e));
                 return;
             }
-            let res = match fh.and_then(|fh| self.open_files.get(&fh.0).map(|f| f.file.try_clone())) {
+            let res = match fh.and_then(|fh| self.open_files.get(&fh.0).map(|f| f.file.try_clone()))
+            {
                 Some(Ok(file)) => file.set_len(new_size),
                 _ => std::fs::File::options()
                     .write(true)
@@ -816,7 +820,14 @@ impl Filesystem for CloudreveFs {
         reply.opened(FileHandle(0), FopenFlags::empty());
     }
 
-    fn readdir(&self, _req: &Request, ino: INodeNo, _fh: FileHandle, offset: u64, mut reply: ReplyDirectory) {
+    fn readdir(
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        _fh: FileHandle,
+        offset: u64,
+        mut reply: ReplyDirectory,
+    ) {
         let Some(rel) = self.inodes.path(ino.0) else {
             reply.error(Errno::ENOENT);
             return;
@@ -845,7 +856,10 @@ impl Filesystem for CloudreveFs {
         }
 
         if let Some(store_str) = store.to_str()
-            && let Ok(children) = self.ctx.inventory.query_children(&self.ctx.drive_id, store_str)
+            && let Ok(children) = self
+                .ctx
+                .inventory
+                .query_children(&self.ctx.drive_id, store_str)
         {
             for child in children {
                 let child_path = PathBuf::from(&child.local_path);
@@ -864,14 +878,19 @@ impl Filesystem for CloudreveFs {
         entries.sort_by(|a, b| a.0.cmp(&b.0));
 
         let parent_rel = rel.parent().map(|p| p.to_path_buf()).unwrap_or_default();
-        let all: Vec<(u64, FileType, OsString)> = std::iter::once((ino.0, FileType::Directory, OsString::from(".")))
-            .chain(std::iter::once((
-                self.inodes.intern(parent_rel),
-                FileType::Directory,
-                OsString::from(".."),
-            )))
-            .chain(entries.into_iter().map(|(name, kind, child_ino)| (child_ino, kind, name)))
-            .collect();
+        let all: Vec<(u64, FileType, OsString)> =
+            std::iter::once((ino.0, FileType::Directory, OsString::from(".")))
+                .chain(std::iter::once((
+                    self.inodes.intern(parent_rel),
+                    FileType::Directory,
+                    OsString::from(".."),
+                )))
+                .chain(
+                    entries
+                        .into_iter()
+                        .map(|(name, kind, child_ino)| (child_ino, kind, name)),
+                )
+                .collect();
 
         for (i, (entry_ino, kind, name)) in all.iter().enumerate().skip(offset as usize) {
             if reply.add(INodeNo(*entry_ino), (i + 1) as u64, *kind, name) {
@@ -959,7 +978,9 @@ impl Filesystem for CloudreveFs {
                 let ino = self.inodes.intern(rel.clone());
                 let fh = self.register_file(rel.clone(), file);
                 match self.attr_for(ino, &rel, req) {
-                    Some(attr) => reply.created(&TTL, &attr, Generation(GENERATION), fh, FopenFlags::empty()),
+                    Some(attr) => {
+                        reply.created(&TTL, &attr, Generation(GENERATION), fh, FopenFlags::empty())
+                    }
                     None => reply.error(Errno::EIO),
                 }
             }
@@ -976,6 +997,55 @@ fn statvfs(path: &Path) -> Option<libc::statvfs> {
     let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
     let rc = unsafe { libc::statvfs(c_path.as_ptr(), &mut stat) };
     if rc == 0 { Some(stat) } else { None }
+}
+
+/// Percent-encodes a path into a `file://` URI for the GTK bookmark format.
+fn bookmark_uri(path: &Path) -> String {
+    const SAFE: &[u8] = b"-._~/";
+    let mut uri = String::from("file://");
+    for &b in path.as_os_str().as_encoded_bytes() {
+        if b.is_ascii_alphanumeric() || SAFE.contains(&b) {
+            uri.push(b as char);
+        } else {
+            uri.push_str(&format!("%{b:02X}"));
+        }
+    }
+    uri
+}
+
+/// Rewrites `~/.config/gtk-3.0/bookmarks` (Nautilus, Nemo, Caja, GTK file
+/// chooser) — the Linux analogue of Explorer's navigation-pane pin.
+fn rewrite_bookmarks(uri: &str, name: Option<&str>) -> io::Result<()> {
+    let Some(dir) = dirs::config_dir() else {
+        return Ok(());
+    };
+    let path = dir.join("gtk-3.0").join("bookmarks");
+    let existing = std::fs::read_to_string(&path).unwrap_or_default();
+    let mut lines: Vec<String> = existing
+        .lines()
+        .filter(|l| l.split_whitespace().next() != Some(uri))
+        .map(str::to_owned)
+        .collect();
+    if let Some(name) = name {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        lines.push(format!("{uri} {name}"));
+    }
+    if lines.is_empty() {
+        return std::fs::write(&path, "");
+    }
+    std::fs::write(&path, lines.join("\n") + "\n")
+}
+
+/// Pins the mountpoint in GTK file-manager sidebars. Idempotent — rewrites
+/// the entry when the drive name changes.
+pub fn add_sidebar_bookmark(mountpoint: &Path, name: &str) -> io::Result<()> {
+    rewrite_bookmarks(&bookmark_uri(mountpoint), Some(name))
+}
+
+pub fn remove_sidebar_bookmark(mountpoint: &Path) -> io::Result<()> {
+    rewrite_bookmarks(&bookmark_uri(mountpoint), None)
 }
 
 /// Spawn the FUSE session in the background. The returned session unmounts on

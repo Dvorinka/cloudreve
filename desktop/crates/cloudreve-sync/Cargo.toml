@@ -81,6 +81,7 @@ features = [
     "Foundation_Collections",
     "Win32_Security_Authorization",
     "Win32_System_Search",
+    "Win32_System_Registry",
     "Storage_Streams",
     "Win32_System_Ioctl",
     "ApplicationModel_Core",
