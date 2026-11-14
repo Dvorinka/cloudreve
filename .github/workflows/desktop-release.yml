@@ -151,10 +151,14 @@ jobs:
         run: |
           set -e
           if [ "$RUNNER_OS" = "Windows" ]; then
-            # KERN injects CARGO_HOME=work\_cache\cargo whose bin/ has no
-            # cargo; dtolnay then prepends that empty dir to PATH and
-            # cargo-tauri cannot spawn `cargo metadata`. Put the runner's
-            # real cargo shims first.
+            # KERN's rust cache restores dead shim links into
+            # work\_cache\cargo\bin (cargo.exe -> missing rustup.exe). Git
+            # Bash skips non-executable entries and finds the real cargo,
+            # but cargo-tauri spawns `cargo` via CreateProcess which stops
+            # at the first name match and dies on the dead link (os error
+            # 2). Point CARGO at the real shim directly and keep it first
+            # on PATH.
+            export CARGO="$(cygpath -w "$USERPROFILE")\\.cargo\\bin\\cargo.exe"
             export PATH="$(cygpath -u "$USERPROFILE")/.cargo/bin:$PATH"
           fi
           args=""
