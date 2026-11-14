@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "Активен",
       "eventPushLost": "Потеряна связь с push-событиями",
+      "shellIntegrationDegraded": "Интеграция с файловым менеджером нарушена",
       "credentialExpired": "Учётные данные истекли"
     }
   },

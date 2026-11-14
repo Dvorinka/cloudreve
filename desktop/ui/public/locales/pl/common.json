@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "Aktywny",
       "eventPushLost": "Utracono połączenie z powiadomieniami w czasie rzeczywistym",
+      "shellIntegrationDegraded": "Integracja z menedżerem plików ograniczona",
       "credentialExpired": "Dane uwierzytelniające wygasły"
     }
   },

@@ -999,64 +999,6 @@ fn statvfs(path: &Path) -> Option<libc::statvfs> {
     if rc == 0 { Some(stat) } else { None }
 }
 
-/// Percent-encodes a path into a `file://` URI for the GTK bookmark format.
-fn bookmark_uri(path: &Path) -> String {
-    const SAFE: &[u8] = b"-._~/";
-    let mut uri = String::from("file://");
-    for &b in path.as_os_str().as_encoded_bytes() {
-        if b.is_ascii_alphanumeric() || SAFE.contains(&b) {
-            uri.push(b as char);
-        } else {
-            uri.push_str(&format!("%{b:02X}"));
-        }
-    }
-    uri
-}
-
-/// Pure core of [`rewrite_bookmarks`]: drop entries for `uri`, then append
-/// `uri name` when `name` is given.
-fn rewrite_bookmark_lines(existing: &str, uri: &str, name: Option<&str>) -> String {
-    let mut lines: Vec<String> = existing
-        .lines()
-        .filter(|l| l.split_whitespace().next() != Some(uri))
-        .map(str::to_owned)
-        .collect();
-    if let Some(name) = name {
-        lines.push(format!("{uri} {name}"));
-    }
-    if lines.is_empty() {
-        return String::new();
-    }
-    lines.join("\n") + "\n"
-}
-
-/// Rewrites `~/.config/gtk-3.0/bookmarks` (Nautilus, Nemo, Caja, GTK file
-/// chooser) — the Linux analogue of Explorer's navigation-pane pin.
-fn rewrite_bookmarks(uri: &str, name: Option<&str>) -> io::Result<()> {
-    let Some(dir) = dirs::config_dir() else {
-        return Ok(());
-    };
-    let path = dir.join("gtk-3.0").join("bookmarks");
-    let existing = std::fs::read_to_string(&path).unwrap_or_default();
-    let rewritten = rewrite_bookmark_lines(&existing, uri, name);
-    if name.is_some() {
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-    }
-    std::fs::write(&path, rewritten)
-}
-
-/// Pins the mountpoint in GTK file-manager sidebars. Idempotent — rewrites
-/// the entry when the drive name changes.
-pub fn add_sidebar_bookmark(mountpoint: &Path, name: &str) -> io::Result<()> {
-    rewrite_bookmarks(&bookmark_uri(mountpoint), Some(name))
-}
-
-pub fn remove_sidebar_bookmark(mountpoint: &Path) -> io::Result<()> {
-    rewrite_bookmarks(&bookmark_uri(mountpoint), None)
-}
-
 /// Spawn the FUSE session in the background. The returned session unmounts on
 /// drop; callers must keep it alive for the mount's lifetime.
 pub fn spawn(fs: CloudreveFs, mountpoint: &Path) -> io::Result<fuser::BackgroundSession> {
@@ -1129,57 +1071,5 @@ mod tests {
     fn tmp_dir_sits_next_to_data_root() {
         let tmp = CloudreveFs::tmp_dir(Path::new("/x/fuse-store/d1"), "d1");
         assert_eq!(tmp, PathBuf::from("/x/fuse-store/.tmp-d1"));
-    }
-
-    #[test]
-    fn bookmark_uri_percent_encodes_unsafe_bytes() {
-        assert_eq!(
-            bookmark_uri(Path::new("/home/user/My Files")),
-            "file:///home/user/My%20Files"
-        );
-        assert_eq!(
-            bookmark_uri(Path::new("/home/u/Clöud#x")),
-            "file:///home/u/Cl%C3%B6ud%23x"
-        );
-        assert_eq!(
-            bookmark_uri(Path::new("/plain/path.txt")),
-            "file:///plain/path.txt"
-        );
-    }
-
-    #[test]
-    fn rewrite_bookmark_lines_adds_dedupes_and_removes() {
-        let uri = "file:///mnt/cloudreve";
-
-        // Add to a file that has other entries.
-        let out = rewrite_bookmark_lines("file:///a A\nfile:///b B\n", uri, Some("My Files"));
-        assert_eq!(
-            out,
-            "file:///a A\nfile:///b B\nfile:///mnt/cloudreve My Files\n"
-        );
-
-        // Same URI with a new label replaces the old entry, never duplicates.
-        let out = rewrite_bookmark_lines(&out, uri, Some("Renamed"));
-        assert_eq!(
-            out,
-            "file:///a A\nfile:///b B\nfile:///mnt/cloudreve Renamed\n"
-        );
-
-        // A URI appearing with and without a label both count as ours.
-        let out = rewrite_bookmark_lines("file:///mnt/cloudreve\nfile:///a A\n", uri, Some("N"));
-        assert_eq!(out, "file:///a A\nfile:///mnt/cloudreve N\n");
-
-        // Removing the only entry yields an empty file.
-        assert_eq!(rewrite_bookmark_lines(&out, uri, None), "file:///a A\n");
-        assert_eq!(
-            rewrite_bookmark_lines("file:///mnt/cloudreve M\n", uri, None),
-            ""
-        );
-
-        // Removing a URI that was never present leaves content untouched.
-        assert_eq!(
-            rewrite_bookmark_lines("file:///a A\n", uri, None),
-            "file:///a A\n"
-        );
     }
 }

@@ -166,6 +166,7 @@ pub struct MountStatusFlags(u8);
 impl MountStatusFlags {
     const CREDENTIAL_EXPIRED: u8 = 1 << 0;
     const EVENT_PUSH_SUBSCRIBED: u8 = 1 << 1;
+    const SHELL_INTEGRATION_DEGRADED: u8 = 1 << 2;
 
     /// Create a new MountStatusFlags with all flags cleared
     pub fn new() -> Self {
@@ -197,6 +198,21 @@ impl MountStatusFlags {
             self.0 |= Self::EVENT_PUSH_SUBSCRIBED;
         } else {
             self.0 &= !Self::EVENT_PUSH_SUBSCRIBED;
+        }
+    }
+
+    /// Check whether the shell-integration pin (Explorer nav pane,
+    /// sidebar bookmark) last failed to apply
+    pub fn is_shell_integration_degraded(&self) -> bool {
+        self.0 & Self::SHELL_INTEGRATION_DEGRADED != 0
+    }
+
+    /// Set the shell integration degraded flag
+    pub fn set_shell_integration_degraded(&mut self, degraded: bool) {
+        if degraded {
+            self.0 |= Self::SHELL_INTEGRATION_DEGRADED;
+        } else {
+            self.0 &= !Self::SHELL_INTEGRATION_DEGRADED;
         }
     }
 
@@ -233,7 +249,7 @@ pub struct Mount {
     /// Compiled glob matcher for ignore patterns
     pub ignore_matcher: RwLock<IgnoreMatcher>,
     /// Status flags for the mount (credential expired, event push subscribed, etc.)
-    status_flags: Mutex<MountStatusFlags>,
+    status_flags: Arc<Mutex<MountStatusFlags>>,
     /// Live FUSE session for on-demand drives. Dropping it unmounts.
     #[cfg(target_os = "linux")]
     fuse_session: Mutex<Option<fuser::BackgroundSession>>,
@@ -347,7 +363,7 @@ impl Mount {
             sync_lock: Mutex::new(()),
             event_blocker: EventBlocker::new(),
             ignore_matcher: RwLock::new(ignore_matcher),
-            status_flags: Mutex::new(MountStatusFlags::new()),
+            status_flags: Arc::new(Mutex::new(MountStatusFlags::new())),
             #[cfg(target_os = "linux")]
             fuse_session: Mutex::new(None),
         }
@@ -463,6 +479,16 @@ impl Mount {
             .set_event_push_subscribed(subscribed);
     }
 
+    /// Set the shell integration degraded flag. Set when the
+    /// sidebar/nav-pane pin fails; cleared when a pin succeeds so the
+    /// status self-heals on the next successful mount.
+    pub async fn set_shell_integration_degraded(&self, degraded: bool) {
+        self.status_flags
+            .lock()
+            .await
+            .set_shell_integration_degraded(degraded);
+    }
+
     /// Store the handle for the background initial sync task so it can be
     /// cancelled and awaited during shutdown.
     pub async fn set_initial_sync_handle(&self, handle: JoinHandle<()>) {
@@ -484,18 +510,15 @@ impl Mount {
     pub async fn start(&mut self) -> Result<()> {
         #[cfg(not(windows))]
         {
-            let (sync_path, data_root, ondemand) = {
+            let (sync_path, data_root) = {
                 let config = self.config.read().await;
-                (
-                    config.sync_path.clone(),
-                    config.data_root(),
-                    config.is_ondemand(),
-                )
+                (config.sync_path.clone(), config.data_root())
             };
             std::fs::create_dir_all(&data_root).context("failed to create sync store directory")?;
 
             #[cfg(target_os = "linux")]
             {
+                let ondemand = self.config.read().await.is_ondemand();
                 if ondemand {
                     // Sweep interrupted hydration leftovers from a previous run.
                     let tmp_dir = crate::drive::fuse_fs::CloudreveFs::tmp_dir(&data_root, &self.id);
@@ -528,20 +551,24 @@ impl Mount {
                         "FUSE on-demand mount started"
                     );
                 }
+            }
 
-                // Pin sync_path in GTK file-manager sidebars for both sync
-                // modes — the Linux analogue of the Explorer nav-pane pin.
-                // Best-effort: a missing bookmark must never fail a mount.
-                let drive_name = self.config.read().await.name.clone();
-                if let Err(e) = crate::drive::fuse_fs::add_sidebar_bookmark(&sync_path, &drive_name)
-                {
+            // Pin sync_path in the file-manager sidebar (GTK bookmarks on
+            // Linux, Finder Favorites on macOS) — the analogue of the
+            // Explorer nav-pane pin. Best-effort: it must never fail a mount.
+            let drive_name = self.config.read().await.name.clone();
+            let degraded = match crate::drive::sidebar::pin(&sync_path, &drive_name) {
+                Ok(()) => false,
+                Err(e) => {
                     tracing::warn!(
                         target: "drive::mounts",
                         error = %e,
-                        "Failed to add file-manager sidebar bookmark"
+                        "Failed to add file-manager sidebar entry"
                     );
+                    true
                 }
-            }
+            };
+            self.set_shell_integration_degraded(degraded).await;
 
             self.start_fs_watcher().await?;
             return Ok(());
@@ -650,8 +677,9 @@ impl Mount {
                 let heal_name = config.name.clone();
                 let heal_icon = config.icon_path.as_ref().map(|p| format!("{},0", p));
                 let heal_path = config.sync_path.clone();
+                let heal_flags = Arc::clone(&self.status_flags);
                 tokio::task::spawn_blocking(move || {
-                    match crate::drive::nav_pane::ensure_nav_pane_entry(
+                    let degraded = match crate::drive::nav_pane::ensure_nav_pane_entry(
                         &heal_id,
                         &heal_name,
                         heal_icon.as_deref(),
@@ -660,14 +688,19 @@ impl Mount {
                         Ok(true) => {
                             tracing::info!(target: "drive::mounts",
                                 "Explorer navigation pane entry repaired");
+                            false
                         }
-                        Ok(false) => {}
+                        Ok(false) => false,
                         Err(e) => {
                             tracing::warn!(target: "drive::mounts",
                                 error = %e,
                                 "Failed to repair Explorer navigation pane entry");
+                            true
                         }
-                    }
+                    };
+                    heal_flags
+                        .blocking_lock()
+                        .set_shell_integration_degraded(degraded);
                 });
             }
 
@@ -940,8 +973,13 @@ impl Mount {
                     }
                 }
             }
-            if let Err(e) = crate::drive::fuse_fs::remove_sidebar_bookmark(&config.sync_path) {
-                tracing::warn!(target: "drive::mounts", id=%self.id, error=%e, "Failed to remove file-manager sidebar bookmark");
+        }
+
+        #[cfg(not(windows))]
+        {
+            let sync_path = self.config.read().await.sync_path.clone();
+            if let Err(e) = crate::drive::sidebar::unpin(&sync_path) {
+                tracing::warn!(target: "drive::mounts", id=%self.id, error=%e, "Failed to remove file-manager sidebar entry");
             }
         }
 
@@ -970,11 +1008,11 @@ impl Mount {
             tracing::debug!(target: "drive::mounts", id=%self.id, "Unmounting FUSE session");
             let mountpoint = self.config.read().await.sync_path.clone();
             drop(session);
-            if let Err(e) = crate::drive::fuse_fs::remove_sidebar_bookmark(&mountpoint) {
+            if let Err(e) = crate::drive::sidebar::unpin(&mountpoint) {
                 tracing::warn!(
                     target: "drive::mounts",
                     error = %e,
-                    "Failed to remove file-manager sidebar bookmark"
+                    "Failed to remove file-manager sidebar entry"
                 );
             }
         }

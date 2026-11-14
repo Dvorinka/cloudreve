@@ -118,6 +118,7 @@
     "driveStatus": {
       "active": "活跃",
       "eventPushLost": "实时事件推送丢失",
+      "shellIntegrationDegraded": "文件管理器集成降级",
       "credentialExpired": "凭证已过期"
     }
   },
