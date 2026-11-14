@@ -150,6 +150,13 @@ jobs:
         shell: bash
         run: |
           set -e
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            # KERN injects CARGO_HOME=work\_cache\cargo whose bin/ has no
+            # cargo; dtolnay then prepends that empty dir to PATH and
+            # cargo-tauri cannot spawn `cargo metadata`. Put the runner's
+            # real cargo shims first.
+            export PATH="$(cygpath -u "$USERPROFILE")/.cargo/bin:$PATH"
+          fi
           args=""
           if [ "$RUNNER_OS" = "macOS" ]; then args="--bundles app"; fi
           cargo tauri build $args
