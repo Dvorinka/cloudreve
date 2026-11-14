@@ -95,6 +95,13 @@ jobs:
     defaults:
       run:
         working-directory: desktop
+    env:
+      # Full-workspace check+test produces a ~9G target dir; keep headroom
+      # above the runner's work-root disk budget.
+      KERN_JOB_DISK: 16G
+      # One-shot CI builds gain little from incremental artifacts, which are
+      # the bulk of target-dir growth.
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
