@@ -5,8 +5,9 @@ import { useTranslation } from "react-i18next";
 import { useGeneratedTheme } from "../../../App.tsx";
 import { setSelected } from "../../../redux/fileManagerSlice.ts";
 import { ImageViewerState } from "../../../redux/globalStateSlice.ts";
-import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
+import { useAppDispatch } from "../../../redux/hooks.ts";
 import { onImageViewerIndexChange } from "../../../redux/thunks/viewer.ts";
+import { useFilteredFiles } from "../../../hooks/useFilteredFiles.ts";
 import { fileExtension } from "../../../util";
 import { FileManagerIndex } from "../../FileManager/FileManager.tsx";
 import { usePaginationState } from "../../FileManager/Pagination/PaginationFooter.tsx";
@@ -29,7 +30,7 @@ const Lightbox = ({ viewer, onClose }: LightboxProps) => {
   const [open, setOpen] = useState(true);
   const [current, setCurrent] = useState(viewer?.index ?? 0);
   const indexChanged = useRef(false);
-  const files = useAppSelector((state) => state.fileManager[FileManagerIndex.main].list?.files ?? []);
+  const files = useFilteredFiles(FileManagerIndex.main) ?? [];
   const paginationState = usePaginationState(FileManagerIndex.main);
 
   const viewerFiles = useMemo(() => {
