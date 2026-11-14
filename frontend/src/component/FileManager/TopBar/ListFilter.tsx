@@ -3,6 +3,7 @@ import { IconButton, InputAdornment, useMediaQuery, useTheme } from "@mui/materi
 import { useContext, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { setListFilter } from "../../../redux/fileManagerSlice.ts";
+import { setSearchPopup, setSearchPopupKeyword } from "../../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { OutlineIconTextField } from "../../Common/Form/OutlineIconTextField.tsx";
 import Dismiss from "../../Icons/Dismiss.tsx";
@@ -48,6 +49,10 @@ const ListFilter = () => {
           } else {
             inputRef.current?.blur();
           }
+        } else if (e.key == "Enter" && filter) {
+          // Escalate to full search — the inline filter is page-local.
+          dispatch(setSearchPopupKeyword(filter));
+          dispatch(setSearchPopup(true));
         }
       }}
       InputProps={{

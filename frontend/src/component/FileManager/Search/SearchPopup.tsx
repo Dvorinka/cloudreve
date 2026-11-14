@@ -23,7 +23,7 @@ import {
   FullTextSearchResult as FullTextSearchResultType,
 } from "../../../api/explorer.ts";
 import { defaultPath } from "../../../hooks/useNavigation.tsx";
-import { setSearchPopup } from "../../../redux/globalStateSlice.ts";
+import { setSearchPopup, setSearchPopupKeyword } from "../../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { openAdvancedSearch, quickSearch } from "../../../redux/thunks/filemanager.ts";
 import SessionManager from "../../../session";
@@ -85,6 +85,15 @@ const SearchPopup = () => {
   };
 
   const open = useAppSelector((state) => state.globalState.searchPopupOpen);
+  const popupKeyword = useAppSelector((state) => state.globalState.searchPopupKeyword);
+
+  // Seed the keyword handed over by the inline list filter (Enter key).
+  useEffect(() => {
+    if (open && popupKeyword) {
+      setKeywords(popupKeyword);
+      dispatch(setSearchPopupKeyword(undefined));
+    }
+  }, [open, popupKeyword, dispatch]);
   const tree = useAppSelector((state) => state.fileManager[FileManagerIndex.main]?.tree);
   const path = useAppSelector((state) => state.fileManager[FileManagerIndex.main]?.path);
   const single_file_view = useAppSelector((state) => state.fileManager[FileManagerIndex.main]?.list?.single_file_view);
