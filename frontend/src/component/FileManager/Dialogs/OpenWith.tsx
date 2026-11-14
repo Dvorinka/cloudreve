@@ -132,7 +132,10 @@ const OpenWith = () => {
     if (always) {
       const viewerId = viewer?.id ?? selectedViewer?.id;
       SessionManager.set(UserSettings.OpenWithPrefix + ext, viewerId);
-      const user = SessionManager.currentUser();
+      // Sync to the account only for real logins — currentUser() also returns
+      // the anonymous share-session user, and an unauthenticated PATCH here
+      // 401s into a login prompt. Anonymous "Always" still persists locally.
+      const user = SessionManager.currentLoginOrNull()?.user;
       if (user && viewerId) {
         const merged = { ...(user.preferred_viewers ?? {}), [ext]: viewerId };
         dispatch(sendUpdateUserSetting({ preferred_viewers: merged }))
