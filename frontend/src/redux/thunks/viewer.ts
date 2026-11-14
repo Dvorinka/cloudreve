@@ -78,7 +78,7 @@ export function openViewers(
     // localStorage copy so the choice follows the user across devices. A
     // stale server entry (viewer removed site-wide) falls back to local.
     if (!ignorePreference) {
-      const serverPreference = SessionManager.currentUser()?.preferred_viewers?.[ext];
+      const serverPreference = SessionManager.currentLoginOrNull()?.user?.preferred_viewers?.[ext];
       const localPreference = SessionManager.get(UserSettings.OpenWithPrefix + ext);
       const userPreference = [serverPreference, localPreference].find((id) => id && ViewersByID[id]);
       if (userPreference) {
