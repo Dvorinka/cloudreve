@@ -155,6 +155,22 @@ jobs:
               fi
             done
           fi
+          # Gradle 8.11 rejects JDK 23+; newer runner images ship JDK 25 as
+          # the default `java`. When the resolved JVM is too new, fall back
+          # to an installed 17-21 JDK.
+          v=$(java -version 2>&1 | sed -n 's/.*version "\([0-9][0-9]*\).*/\1/p' | head -1)
+          if [ -n "$v" ] && [ "$v" -gt 21 ]; then
+            for bindir in /usr/lib/jvm/*/bin /usr/java/*/bin \
+                "$RUNNER_TOOL_CACHE"/*/*/x64/bin "$RUNNER_TOOL_CACHE"/*/*/bin; do
+              [ -x "$bindir/java" ] || continue
+              jv=$("$bindir/java" -version 2>&1 | sed -n 's/.*version "\([0-9][0-9]*\).*/\1/p' | head -1)
+              if [ -n "$jv" ] && [ "$jv" -ge 17 ] && [ "$jv" -le 21 ]; then
+                export PATH="$bindir:$PATH"
+                echo "$bindir" >> "$GITHUB_PATH"
+                break
+              fi
+            done
+          fi
           java -version
           echo "JAVA_HOME=$(cd "$(dirname "$(command -v java)")/.." && pwd)" >> "$GITHUB_ENV"
       - name: Configure Gradle home
