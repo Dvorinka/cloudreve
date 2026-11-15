@@ -707,9 +707,16 @@ impl Mount {
                 });
             }
 
-            if packaged && just_registered {
+            if just_registered {
                 drop(config);
-                self.config.write().await.package_identity_registered = true;
+                // Record which context registered: an unpackaged
+                // registration gets no Explorer verb binding, so a later
+                // packaged mount must re-register it under identity. Only
+                // a packaged registration may claim the flag - a stale
+                // `true` left by a re-register while unpackaged would
+                // never heal (observed after an update removed the
+                // identity package and the next launch ran unpackaged).
+                self.config.write().await.package_identity_registered = packaged;
                 if let Err(e) = self.manager_command_tx.send(ManagerCommand::PersistConfig) {
                     tracing::error!(target: "drive::mounts", id = %self.id, error = %e,
                         "Failed to send PersistConfig command");
