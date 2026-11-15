@@ -30,12 +30,6 @@ pub trait FileExt: AsRawHandle + Sealed {
     fn background_dehydrate<T: RangeBounds<u64>>(&self, range: T) -> core::Result<()> {
         dehydrate(self.as_raw_handle(), range, true)
     }
-
-    /// Returns whether or not the handle is inside of a sync root.
-    fn in_sync_root() -> core::Result<bool> {
-        // TODO: this should use the uwp apis
-        todo!()
-    }
 }
 
 // TODO: is `CfDehydratePlaceholder` deprecated?

@@ -41,7 +41,9 @@ export default function ConflictItem({
   const handleShowInExplorer = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    invoke("show_file_in_explorer", { path: conflict.local_path });
+    invoke("show_file_in_explorer", { path: conflict.local_path }).catch(
+      console.error,
+    );
   };
 
   const handleResolve = async (action: ConflictAction) => {

@@ -17,6 +17,7 @@ enum class SortBy(val apiName: String) {
     NAME("name"),
     SIZE("size"),
     UPDATED("updated_at"),
+    CREATED("created_at"),
 }
 
 data class SortOrder(val by: SortBy = SortBy.NAME, val ascending: Boolean = true) {

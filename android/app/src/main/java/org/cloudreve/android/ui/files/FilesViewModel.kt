@@ -1,6 +1,10 @@
 package org.cloudreve.android.ui.files
 
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
@@ -8,6 +12,8 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +38,7 @@ import org.cloudreve.android.work.CameraUploadWorker
 import org.cloudreve.android.work.UploadStatus
 import org.cloudreve.android.work.UploadWorker
 import java.io.File
-import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /** Files-app style categories, each a server-side search over the whole drive. */
@@ -50,6 +56,9 @@ enum class Category(val uri: String, val label: String, val filter: String? = nu
         fun fromUri(uri: String): Category? = entries.firstOrNull { it.uri == uri }
     }
 }
+
+/** Signed thumbnail URLs are refetched after this; servers typically sign for ~1 h. */
+internal const val THUMB_TTL_MS = 50L * 60 * 1000
 
 /** One-off message for the snackbar, optionally with an action such as Undo. */
 data class UiMessage(val text: String, val actionLabel: String? = null, val action: (() -> Unit)? = null)
@@ -139,14 +148,18 @@ class FilesViewModel(
     private val _state = MutableStateFlow(FilesUiState())
     val state: StateFlow<FilesUiState> = _state
 
-    /** Resolved thumbnail URLs by file id, shared across list/grid recompositions. */
-    private val thumbCache = ConcurrentHashMap<String, String>()
+    /** Resolved thumbnail URLs by file id with fetch time, shared across list/grid recompositions. */
+    private val thumbCache = ConcurrentHashMap<String, Pair<String, Long>>()
     private val noThumb = ConcurrentHashMap.newKeySet<String>()
+    /** Last progress emission per path; download callbacks fire every 256 KB. */
+    private val lastProgressAt = ConcurrentHashMap<String, Long>()
 
     private companion object {
         const val RECENT_COUNT = 12
         const val PREFETCH_THUMBS = 40
         const val PREFETCH_PARALLELISM = 6
+        const val PROGRESS_INTERVAL_MS = 200L
+        const val UNDO_MAX_PAGES = 10
     }
 
     private val downloadJobs = ConcurrentHashMap<String, Job>()
@@ -190,6 +203,7 @@ class FilesViewModel(
             files = cached?.files ?: emptyList(),
             nextToken = cached?.nextToken,
             selected = emptySet(),
+            loadingMore = false,
         )
         viewModelScope.launch {
             try {
@@ -223,20 +237,25 @@ class FilesViewModel(
     fun loadMore() {
         val s = _state.value
         val token = s.nextToken ?: return
+        val uri = s.currentUri
         if (s.loadingMore) return
         _state.value = s.copy(loadingMore = true)
         viewModelScope.launch {
             try {
-                val res = list(s.currentUri, token)
+                val res = list(uri, token)
+                // The user may have navigated away; the page belongs to the old folder.
+                if (_state.value.currentUri != uri) return@launch
                 val files = sortFiles(_state.value.files + res.files)
-                listingCache[s.currentUri] = Listing(files, res.pagination.nextToken, _state.value.view.sort)
+                listingCache[uri] = Listing(files, res.pagination.nextToken, _state.value.view.sort)
                 _state.value = _state.value.copy(
                     loadingMore = false,
                     files = files,
                     nextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
-                _state.value = _state.value.copy(loadingMore = false, snackbar = (e.message).toMessage())
+                if (_state.value.currentUri == uri) {
+                    _state.value = _state.value.copy(loadingMore = false, snackbar = (e.message).toMessage())
+                }
             }
         }
     }
@@ -451,18 +470,126 @@ class FilesViewModel(
                 _state.value = _state.value.copy(snackbar = (e.message ?: "Download failed").toMessage())
             } finally {
                 downloadJobs.remove(file.path)
-                _state.value = _state.value.copy(downloading = _state.value.downloading - file.path)
+                clearDownloading(file.path)
             }
         }
         downloadJobs[file.path] = job
     }
 
     private fun setDownloading(path: String, fraction: Float?) {
+        // Progress callbacks arrive every 256 KB; emitting each one recomposes
+        // the whole file list. Throttle to ~5 updates a second; null (start)
+        // and 1.0 (done) always pass through.
+        val now = System.currentTimeMillis()
+        val last = lastProgressAt[path] ?: 0L
+        if (fraction != null && fraction < 1f && now - last < PROGRESS_INTERVAL_MS) return
+        lastProgressAt[path] = now
         _state.value = _state.value.copy(downloading = _state.value.downloading + (path to fraction))
+    }
+
+    private fun clearDownloading(path: String) {
+        lastProgressAt.remove(path)
+        _state.value = _state.value.copy(downloading = _state.value.downloading - path)
     }
 
     private fun cacheFileFor(context: Context, file: FileObject): File =
         File(File(context.cacheDir, "downloads"), file.id).resolve(file.name)
+
+    /**
+     * Downloads [file] somewhere the user can actually find it: the MediaStore
+     * Downloads collection on API 29+, the app's external files dir below that.
+     * Folders come down as a server-built zip named "<folder>.zip". Progress
+     * shows in [FilesUiState.downloading]; the snackbar reports the saved name.
+     */
+    fun saveToDevice(context: Context, file: FileObject) {
+        val key = "save:${file.path}"
+        downloadJobs.remove(key)?.cancel()
+        setDownloading(file.path, null)
+        val job = viewModelScope.launch {
+            try {
+                val savedName = withContext(Dispatchers.IO) { saveToDeviceIo(context, file) }
+                _state.value = _state.value.copy(snackbar = UiMessage("Saved $savedName"))
+            } catch (_: CancellationException) {
+                // user cancelled; nothing to say
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(snackbar = (e.message ?: "Download failed").toMessage())
+            } finally {
+                downloadJobs.remove(key)
+                clearDownloading(file.path)
+            }
+        }
+        downloadJobs[key] = job
+    }
+
+    private suspend fun saveToDeviceIo(context: Context, file: FileObject): String {
+        val archive = file.isFolder
+        val url = repo.downloadUrl(file.path, archive = archive)
+        val displayName = if (archive) "${file.name}.zip" else file.name
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = context.contentResolver
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, displayName)
+                put(
+                    MediaStore.Downloads.MIME_TYPE,
+                    if (archive) "application/zip"
+                    else java.net.URLConnection.guessContentTypeFromName(displayName)
+                        ?: "application/octet-stream",
+                )
+                put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Cloudreve")
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw ApiException(-1, "Could not create download")
+            try {
+                resolver.openOutputStream(uri)!!.use { out -> streamTo(url, out, file.path) }
+            } catch (e: Exception) {
+                resolver.delete(uri, null, null)
+                throw e
+            }
+            resolver.update(
+                uri,
+                ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) },
+                null, null,
+            )
+            return displayName
+        }
+        // API 28: no MediaStore Downloads collection; the app-specific external
+        // dir needs no permission and survives cache eviction.
+        val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            ?: File(context.filesDir, "downloads")
+        var dest = File(dir, displayName)
+        var n = 1
+        while (dest.exists()) {
+            dest = File(dir, "${file.name} ($n)${if (archive) ".zip" else ""}")
+            n++
+        }
+        repo.downloadToFile(url, dest) { done, total ->
+            setDownloading(file.path, if (total > 0) done.toFloat() / total else null)
+        }
+        return dest.name
+    }
+
+    /** Streams a download [url] into [out] with throttled progress for [path]. */
+    private suspend fun streamTo(url: String, out: OutputStream, path: String) {
+        val resp = repo.download(url)
+        if (!resp.isSuccessful) throw ApiException(resp.code(), "Download failed: HTTP ${resp.code()}")
+        val body = resp.body() ?: throw ApiException(-1, "Empty download")
+        val total = body.contentLength()
+        var done = 0L
+        val buffer = ByteArray(256 * 1024)
+        body.byteStream().use { input ->
+            out.use { output ->
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    output.write(buffer, 0, read)
+                    done += read
+                    setDownloading(path, if (total > 0) done.toFloat() / total else null)
+                }
+            }
+        }
+    }
 
     /** Signed inline URL for streaming a preview (image, video, audio). */
     suspend fun previewUrl(file: FileObject): String = repo.contentUrl(file.path)
@@ -598,10 +725,10 @@ class FilesViewModel(
         searchJob?.cancel()
         val uri = searchUri()
         if (uri == null) {
-            _state.value = _state.value.copy(searchResults = emptyList(), searchNextToken = null, searchLoading = false, searchError = null)
+            _state.value = _state.value.copy(searchResults = emptyList(), searchNextToken = null, searchLoading = false, searchLoadingMore = false, searchError = null)
             return
         }
-        _state.value = _state.value.copy(searchLoading = true, searchError = null)
+        _state.value = _state.value.copy(searchLoading = true, searchError = null, searchLoadingMore = false)
         searchJob = viewModelScope.launch {
             if (debounceMs > 0) kotlinx.coroutines.delay(debounceMs)
             try {
@@ -628,13 +755,17 @@ class FilesViewModel(
         viewModelScope.launch {
             try {
                 val res = repo.list(uri, pageToken = token, orderBy = "updated_at", orderDirection = "desc")
+                // A newer query replaced this one while the page was in flight.
+                if (searchUri() != uri) return@launch
                 _state.value = _state.value.copy(
                     searchLoadingMore = false,
                     searchResults = _state.value.searchResults + res.files,
                     searchNextToken = res.pagination.nextToken,
                 )
             } catch (e: Exception) {
-                _state.value = _state.value.copy(searchLoadingMore = false, snackbar = (e.message).toMessage())
+                if (searchUri() == uri) {
+                    _state.value = _state.value.copy(searchLoadingMore = false, snackbar = (e.message).toMessage())
+                }
             }
         }
     }
@@ -705,8 +836,20 @@ class FilesViewModel(
         viewModelScope.launch {
             runCatching {
                 val wanted = originalPaths.toSet()
-                val trashed = repo.list(Category.TRASH.uri, orderBy = "updated_at", orderDirection = "desc", pageSize = 200)
-                    .files.filter { it.restoreUri in wanted }.map { it.path }
+                // The just-deleted items sit at the top of the trash; page
+                // through in case the trash already held more than one page.
+                val trashed = mutableListOf<String>()
+                var token: String? = null
+                var pages = 0
+                do {
+                    val page = repo.list(
+                        Category.TRASH.uri, pageToken = token,
+                        orderBy = "updated_at", orderDirection = "desc", pageSize = 200,
+                    )
+                    trashed += page.files.filter { it.restoreUri in wanted }.map { it.path }
+                    token = page.pagination.nextToken
+                    pages++
+                } while (trashed.size < wanted.size && !token.isNullOrEmpty() && pages < UNDO_MAX_PAGES)
                 if (trashed.isEmpty()) error("Couldn't find the items in the trash")
                 repo.restore(trashed)
             }
@@ -750,7 +893,7 @@ class FilesViewModel(
             }
                 .onSuccess { _state.value = _state.value.copy(snackbar = UiMessage("${file.name} available offline")) }
                 .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
-            _state.value = _state.value.copy(downloading = _state.value.downloading - file.path)
+            clearDownloading(file.path)
         }
     }
 
@@ -759,12 +902,8 @@ class FilesViewModel(
         viewModelScope.launch {
             runCatching {
                 val url = repo.downloadUrl(entry.path)
-                val resp = repo.download(url)
-                if (!resp.isSuccessful) throw Exception("Download failed: HTTP ${resp.code()}")
-                val out = File(entry.localFile)
-                resp.body()!!.byteStream().use { input ->
-                    FileOutputStream(out).use { input.copyTo(it) }
-                }
+                // .part-then-rename keeps the previous copy intact if this fails.
+                repo.downloadToFile(url, File(entry.localFile)) { _, _ -> }
                 favorites.put(entry.copy(savedAt = System.currentTimeMillis()))
             }
                 .onFailure { _state.value = _state.value.copy(snackbar = it.message.toMessage()) }
@@ -778,8 +917,12 @@ class FilesViewModel(
         }
     }
 
-    suspend fun shareLink(file: FileObject, password: String = "", expireSeconds: Int = 0): String =
-        repo.createShare(file.path, password = password, expireSeconds = expireSeconds)
+    suspend fun shareLink(
+        file: FileObject,
+        password: String = "",
+        expireSeconds: Int = 0,
+        downloads: Int = 0,
+    ): String = repo.createShare(file.path, password = password, expireSeconds = expireSeconds, downloads = downloads)
 
     /** Trash: put items back where they were. */
     fun restore(paths: List<String>) {
@@ -831,9 +974,12 @@ class FilesViewModel(
 
     suspend fun thumbUrl(file: FileObject): String? {
         if (!file.mayHaveThumbnail || file.id in noThumb) return null
-        thumbCache[file.id]?.let { return it }
+        thumbCache[file.id]?.let { (url, fetchedAt) ->
+            if (System.currentTimeMillis() - fetchedAt < THUMB_TTL_MS) return url
+        }
         val url = repo.thumbUrl(file.path)
-        if (url == null) noThumb.add(file.id) else thumbCache[file.id] = url
+        if (url == null) noThumb.add(file.id)
+        else thumbCache[file.id] = url to System.currentTimeMillis()
         return url
     }
 

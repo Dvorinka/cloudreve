@@ -106,8 +106,8 @@ fun FileActionSheet(
         SheetAction(Icons.AutoMirrored.Filled.OpenInNew, if (file.isFolder) "Open folder" else "Open", onOpen)
         onShowInFolder?.let { SheetAction(Icons.Default.FolderOpen, "Show in folder", it) }
         SheetAction(Icons.Default.Link, "Share link", onShare)
+        SheetAction(Icons.Default.Download, if (file.isFolder) "Download as ZIP" else "Download", onDownload)
         if (!file.isFolder) {
-            SheetAction(Icons.Default.Download, "Download", onDownload)
             SheetAction(
                 if (isFavorite) Icons.Default.OfflinePin else Icons.Outlined.OfflinePin,
                 if (isFavorite) "Remove offline copy" else "Keep offline",

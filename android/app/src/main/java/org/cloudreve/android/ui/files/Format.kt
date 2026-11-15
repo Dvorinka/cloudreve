@@ -14,8 +14,12 @@ fun formatSize(size: Long): String {
     return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, group.toDouble())) + " " + units[group]
 }
 
-// Built per call so a locale change while the app is running is honoured.
-private fun pattern(p: String) = DateTimeFormatter.ofPattern(p, Locale.getDefault())
+// Cached per locale: formatters are allocated per row bind otherwise, and a
+// locale change rebuilds them on next access anyway.
+private val formatters = java.util.concurrent.ConcurrentHashMap<String, DateTimeFormatter>()
+
+private fun pattern(p: String) =
+    formatters.getOrPut("${Locale.getDefault()}|$p") { DateTimeFormatter.ofPattern(p, Locale.getDefault()) }
 
 /**
  * Short, Files-app-style timestamp: time of day for today, day and month

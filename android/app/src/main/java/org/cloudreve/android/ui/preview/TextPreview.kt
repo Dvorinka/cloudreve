@@ -23,9 +23,9 @@ import java.io.File
 /** Plain text and source files: monospace, selectable, scrolls both ways. */
 @Composable
 fun TextPreview(file: FileObject, viewModel: FilesViewModel) {
-    val (local, progress) = rememberLocalCopy(file, viewModel)
+    val (local, progress, error) = rememberLocalCopy(file, viewModel)
     if (local == null) {
-        LoadingOverlay(progress)
+        if (error != null) FullWidthError(error) else LoadingOverlay(progress)
         return
     }
     val text by produceState<String?>(initialValue = null, local) {

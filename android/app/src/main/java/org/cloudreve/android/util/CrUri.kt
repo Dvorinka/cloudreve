@@ -16,8 +16,6 @@ object CrUri {
         return if (parent.endsWith('/')) parent + encoded else "$parent/$encoded"
     }
 
-    fun child(parent: String, name: String): String = join(parent, name)
-
     fun parent(uri: String): String {
         val trimmed = uri.trimEnd('/')
         val idx = trimmed.lastIndexOf('/')

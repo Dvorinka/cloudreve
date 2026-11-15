@@ -227,7 +227,9 @@
     "title": "Trash",
     "empty": "Trash is empty",
     "restore": "Restore",
-    "deleteForever": "Delete permanently"
+    "deleteForever": "Delete permanently",
+    "deleteForeverConfirm": "Permanently delete \"{{name}}\"? This cannot be undone.",
+    "close": "Close"
   },
   "transfers": {
     "title": "Transfers",

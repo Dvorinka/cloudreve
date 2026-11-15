@@ -30,6 +30,8 @@ class TaskPollWorker(context: Context, params: WorkerParameters) :
         val app = applicationContext as CloudreveApp
         val settings = app.taskNotifySettings
         if (!settings.enabledNow()) return Result.success()
+        // Signed out: polling would only collect 401s.
+        if (app.sessionManager.refreshTokenNow().isEmpty()) return Result.success()
 
         createChannel()
 

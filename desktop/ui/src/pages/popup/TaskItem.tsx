@@ -52,7 +52,9 @@ export default function TaskItem({ task, isActive = false, action }: TaskItemPro
   const handleShowInExplorer = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    invoke("show_file_in_explorer", { path: task.local_path });
+    invoke("show_file_in_explorer", { path: task.local_path }).catch(
+      console.error,
+    );
   };
 
   const getStatusBadge = () => {

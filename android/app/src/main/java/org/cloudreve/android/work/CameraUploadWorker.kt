@@ -71,6 +71,8 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
     override suspend fun doWork(): Result {
         val cfg = settings.snapshotNow()
         if (!cfg.enabled || cfg.paused) return Result.success()
+        // Signed out: every upload would 401 and retry on backoff.
+        if (app.sessionManager.refreshTokenNow().isEmpty()) return Result.success()
         // The periodic job and "back up now" can overlap; the second would stage and
         // upload the same photo. Let it leave, the first drains the backlog.
         if (!runLock.tryLock()) return Result.success()
@@ -80,6 +82,7 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
             val started = SystemClock.elapsedRealtime()
             var backlog = -1
             var done = 0
+            var lastForeground = 0L
 
             while (!isStopped) {
                 if (settings.snapshotNow().paused) return Result.success()
@@ -108,7 +111,12 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
                     }
                     val total = maxOf(backlog, done + 1)
                     setProgress(BackgroundSync.progress(BackgroundSync.Kind.CAMERA, row.name, done, total))
-                    setForeground(progressInfo("Backing up ${row.name}", done, total))
+                    // Notification updates are throttled; setProgress stays per-file.
+                    val now = SystemClock.elapsedRealtime()
+                    if (now - lastForeground >= FOREGROUND_INTERVAL_MS) {
+                        lastForeground = now
+                        setForeground(progressInfo("Backing up ${row.name}", done, total))
+                    }
                     when (backUp(cfg, row)) {
                         Outcome.DONE -> done++
                         Outcome.SKIPPED -> Unit
@@ -365,6 +373,7 @@ class CameraUploadWorker(context: Context, params: WorkerParameters) :
          *  service alive: Android 14+ allows dataSync services about 6 h per day. */
         private const val RUN_BUDGET_MS = 30L * 60 * 1000
         private const val RECONCILE_EVERY_MS = 24L * 60 * 60 * 1000
+        private const val FOREGROUND_INTERVAL_MS = 500L
 
         private val runLock = Mutex()
 

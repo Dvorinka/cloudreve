@@ -1,11 +1,15 @@
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
+  FormControl,
   IconButton,
   List,
   ListItem,
   ListItemText,
+  MenuItem,
+  Select,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -16,6 +20,7 @@ import {
   Restore as RestoreIcon,
 } from "@mui/icons-material";
 import { invoke } from "@tauri-apps/api/core";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -48,10 +53,12 @@ function formatSize(size: number): string {
 export default function Trash() {
   const { t } = useTranslation();
   const [drive, setDrive] = useState<DriveConfig | null>(null);
+  const [drives, setDrives] = useState<DriveConfig[]>([]);
   const [files, setFiles] = useState<TrashFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [emptying, setEmptying] = useState(false);
 
   const refresh = useCallback(async (d: DriveConfig) => {
     setLoading(true);
@@ -73,8 +80,9 @@ export default function Trash() {
   useEffect(() => {
     (async () => {
       try {
-        const drives = await invoke<DriveConfig[]>("list_drives");
-        const first = drives[0] ?? null;
+        const all = await invoke<DriveConfig[]>("list_drives");
+        setDrives(all);
+        const first = all[0] ?? null;
         setDrive(first);
         if (first) {
           await refresh(first);
@@ -88,9 +96,50 @@ export default function Trash() {
     })();
   }, [refresh]);
 
+  const selectDrive = useCallback(
+    (id: string) => {
+      const next = drives.find((d) => d.id === id) ?? null;
+      setDrive(next);
+      if (next) {
+        refresh(next);
+      }
+    },
+    [drives, refresh],
+  );
+
+  const emptyTrash = useCallback(async () => {
+    if (!drive) return;
+    const confirmed = await ask(
+      t("trash.emptyConfirm", {
+        defaultValue: "Permanently delete every item in the trash? This cannot be undone.",
+      }),
+      { title: t("trash.emptyTrash"), kind: "warning" },
+    );
+    if (!confirmed) return;
+    setEmptying(true);
+    try {
+      await invoke("empty_trash", { driveId: drive.id });
+      setFiles([]);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setEmptying(false);
+    }
+  }, [drive, t]);
+
   const act = useCallback(
     async (file: TrashFile, command: "restore_files" | "delete_files_permanently") => {
       if (!drive) return;
+      if (command === "delete_files_permanently") {
+        const confirmed = await ask(
+          t("trash.deleteForeverConfirm", {
+            name: file.name,
+            defaultValue: `Permanently delete "${file.name}"? This cannot be undone.`,
+          }),
+          { title: t("trash.deleteForever"), kind: "warning" },
+        );
+        if (!confirmed) return;
+      }
       setBusy(file.id);
       try {
         await invoke(command, { driveId: drive.id, uris: [file.path] });
@@ -101,7 +150,7 @@ export default function Trash() {
         setBusy(null);
       }
     },
-    [drive],
+    [drive, t],
   );
 
   return (
@@ -115,12 +164,41 @@ export default function Trash() {
         overflow: "hidden",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-        <TrashIcon sx={{ mr: 1, color: "text.secondary" }} />
+      <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
+        <TrashIcon sx={{ color: "text.secondary" }} />
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           {t("trash.title")}
         </Typography>
-        <IconButton size="small" onClick={() => getCurrentWindow().close()}>
+        {drives.length > 1 && drive && (
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <Select
+              value={drive.id}
+              onChange={(e) => selectDrive(e.target.value)}
+              aria-label={t("trash.drive", "Drive")}
+            >
+              {drives.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+        {files.length > 0 && (
+          <Button
+            size="small"
+            color="error"
+            disabled={emptying}
+            onClick={emptyTrash}
+          >
+            {t("trash.emptyTrash", "Empty trash")}
+          </Button>
+        )}
+        <IconButton
+          size="small"
+          onClick={() => getCurrentWindow().close()}
+          aria-label={t("trash.close", "Close")}
+        >
           <CloseIcon />
         </IconButton>
       </Box>

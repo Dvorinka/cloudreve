@@ -18,6 +18,13 @@ from datetime import datetime, timezone
 # (Linux) and the .app.tar.gz bundle (macOS). tauri names the macOS bundle
 # "<product>.app.tar.gz" without an arch infix, and macos-latest runners are
 # aarch64 — the only app.tar.gz this pipeline produces.
+#
+# The updater plugin probes "<os>-<arch>-<installer>" before "<os>-<arch>",
+# where <installer> is the bundle type patched into the running binary
+# (appimage/deb/...). Linux ships both AppImage and deb, so each needs its
+# own entry: a deb install that falls back to the bare linux-* AppImage URL
+# fails install_deb's package magic check with "invalid updater binary
+# format". Bare linux-* stays pointed at the AppImage as the fallback.
 PLATFORM_MAP = [
     ("_x64-setup.exe", "windows-x86_64"),
     ("_arm64-setup.exe", "windows-aarch64"),
@@ -26,6 +33,8 @@ PLATFORM_MAP = [
     ("Cloudreve.app.tar.gz", "darwin-aarch64"),
     ("amd64.AppImage", "linux-x86_64"),
     ("aarch64.AppImage", "linux-aarch64"),
+    ("amd64.deb", "linux-x86_64-deb"),
+    ("aarch64.deb", "linux-aarch64-deb"),
 ]
 
 REPO = "Dvorinka/cloudreve"

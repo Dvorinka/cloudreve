@@ -148,6 +148,7 @@ internal fun FolderTopBar(
                                         SortBy.NAME -> "Name"
                                         SortBy.SIZE -> "Size"
                                         SortBy.UPDATED -> "Date modified"
+                                        SortBy.CREATED -> "Date created"
                                     },
                                 )
                             },

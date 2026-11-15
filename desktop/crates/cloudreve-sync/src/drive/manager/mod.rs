@@ -524,18 +524,6 @@ impl DriveManager {
         Err(anyhow::anyhow!("Not implemented"))
     }
 
-    /// Placeholder: Get sync status for a drive
-    pub async fn get_sync_status(&self, id: &str) -> Result<serde_json::Value> {
-        // TODO: Implement actual status retrieval
-        tracing::debug!(target: "drive::sync", drive_id = %id, "Getting sync status");
-        Ok(serde_json::json!({
-            "drive_id": id,
-            "status": "idle",
-            "last_sync": null,
-            "files_synced": 0,
-        }))
-    }
-
     /// Get a summary of the current status including all drives and recent tasks.
     ///
     /// # Arguments
