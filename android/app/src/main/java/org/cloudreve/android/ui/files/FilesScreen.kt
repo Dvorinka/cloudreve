@@ -118,7 +118,6 @@ fun FilesScreen(
     val searchFocus = remember { FocusRequester() }
 
     val inSearch = state.searchQuery != null
-    val searchOpen = inSearch
 
     var pendingUpload by remember { mutableStateOf<PendingUpload?>(null) }
     val haptics = LocalHapticFeedback.current
@@ -225,10 +224,10 @@ fun FilesScreen(
         onMore = { sheetTarget = file },
     )
 
-    BackHandler(enabled = state.selecting || inSearch || searchOpen || !state.home) {
+    BackHandler(enabled = state.selecting || inSearch || !state.home) {
         when {
             state.selecting -> viewModel.clearSelection()
-            inSearch || searchOpen -> closeSearch()
+            inSearch -> closeSearch()
             else -> viewModel.navigateUp()
         }
     }
@@ -292,9 +291,9 @@ fun FilesScreen(
             } }
         },
         floatingActionButton = {
-            val scrollingDown = rememberScrollingDown(listState, gridState)
+            val scrollingDown = rememberScrollingDown(state.effectiveMode == ViewMode.GRID, listState, gridState)
             AnimatedVisibility(
-                visible = !state.home && !state.virtual && !state.selecting && !inSearch && !searchOpen && !scrollingDown,
+                visible = !state.home && !state.virtual && !state.selecting && !inSearch && !scrollingDown,
                 enter = scaleIn() + fadeIn(),
                 exit = scaleOut() + fadeOut(),
             ) {
@@ -625,15 +624,16 @@ fun FilesScreen(
  * back or at rest near the top.
  */
 @Composable
-private fun rememberScrollingDown(listState: LazyListState, gridState: androidx.compose.foundation.lazy.grid.LazyGridState): Boolean {
+private fun rememberScrollingDown(useGrid: Boolean, listState: LazyListState, gridState: androidx.compose.foundation.lazy.grid.LazyGridState): Boolean {
     var down by remember { mutableStateOf(false) }
-    LaunchedEffect(listState, gridState) {
+    // Both states persist for the screen's lifetime; key on the active mode or
+    // grid mode would keep watching the dead list state after one list view.
+    LaunchedEffect(useGrid) {
         var lastIndex = 0
         var lastOffset = 0
         snapshotFlow {
-            val l = listState.layoutInfo.totalItemsCount > 0
-            if (l) listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-            else gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+            if (useGrid) gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+            else listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
         }.collect { (index, offset) ->
             val movingDown = index > lastIndex || (index == lastIndex && offset > lastOffset + 4)
             val movingUp = index < lastIndex || (index == lastIndex && offset < lastOffset - 4)

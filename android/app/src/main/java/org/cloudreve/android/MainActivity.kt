@@ -145,7 +145,7 @@ private class AppViewModelFactory(private val app: CloudreveApp) : ViewModelProv
                 app.backupStats,
                 app.cameraUploadSettings,
                 app.backupLedger,
-                onSessionExpired = { app.sessionManager.clear() },
+                onSessionExpired = { app.sessionManager.clearSession() },
             ) as T
         else -> throw IllegalArgumentException("Unknown ViewModel ${modelClass.name}")
     }
@@ -214,19 +214,22 @@ fun App() {
                     )
                 }
             }
-            true -> NavHost(navController = nav, startDestination = "files") {
+            true -> {
+                // Activity-scoped so Settings can drive the same files view
+                // (e.g. the backup card's "open folder").
+                val filesVm: FilesViewModel = viewModel(factory = factory)
+                NavHost(navController = nav, startDestination = "files") {
                 composable("files") {
-                    val vm: FilesViewModel = viewModel(factory = factory)
                     LaunchedEffect(Unit) {
                         app.deepLink.collect { uri ->
                             if (uri != null) {
-                                vm.openDeepLink(uri)
+                                filesVm.openDeepLink(uri)
                                 app.deepLink.value = null
                             }
                         }
                     }
                     FilesScreen(
-                        viewModel = vm,
+                        viewModel = filesVm,
                         onOpenSettings = { nav.navigate("settings") },
                     )
                 }
@@ -240,8 +243,13 @@ fun App() {
                     SettingsScreen(
                         onBack = { nav.popBackStack() },
                         onSignOut = signOut,
+                        onOpenRemoteFolder = { uri ->
+                            nav.popBackStack("files", inclusive = false)
+                            filesVm.openFolder(uri)
+                        },
                     )
                 }
+            }
             }
         }
     }

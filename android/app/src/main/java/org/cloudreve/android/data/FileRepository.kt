@@ -33,6 +33,7 @@ class ApiException(val code: Int, message: String) : Exception(message) {
 }
 
 private const val CODE_OBJECT_EXISTS = ApiException.CODE_OBJECT_EXISTS
+private const val MAX_CHUNK_BYTES = 64L * 1024 * 1024
 
 class FileRepository(private val api: ApiClient) {
 
@@ -170,8 +171,16 @@ class FileRepository(private val api: ApiClient) {
     }
 
     /** Subfolders of [uri] only, for the destination picker. */
-    suspend fun listFolders(uri: String): List<FileObject> =
-        list(uri, orderBy = "name", orderDirection = "asc").files.filter { it.isFolder }
+    suspend fun listFolders(uri: String): List<FileObject> {
+        val out = mutableListOf<FileObject>()
+        var token: String? = null
+        do {
+            val page = list(uri, pageToken = token, orderBy = "name", orderDirection = "asc")
+            out += page.files.filter { it.isFolder }
+            token = page.pagination.nextToken
+        } while (!token.isNullOrEmpty())
+        return out
+    }
 
     suspend fun delete(uris: List<String>, permanently: Boolean = false) {
         api.service().deleteFiles(DeleteFileRequest(uris = uris, skipSoftDelete = permanently)).unwrapEmpty()
@@ -278,6 +287,11 @@ class FileRepository(private val api: ApiClient) {
         // the server completes the session once every chunk has landed.
         val conventional = urls.isNullOrEmpty()
         val chunkSize = if (session.chunkSize > 0) session.chunkSize else localFile.length().coerceAtLeast(1)
+        // The read buffer below is capped at 64 MB; a larger advertised chunk
+        // size would send truncated chunks the server rejects.
+        if (chunkSize > MAX_CHUNK_BYTES) {
+            throw ApiException(-1, "Unsupported upload chunk size: $chunkSize")
+        }
         val totalChunks = ((localFile.length() + chunkSize - 1) / chunkSize).toInt().coerceAtLeast(1)
         val svc = api.service()
         var sent = 0L

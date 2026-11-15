@@ -127,7 +127,9 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
      */
     private fun stageToCache(uri: Uri, name: String): Pair<File, String> {
         val dir = File(applicationContext.cacheDir, "upload_staging").apply { mkdirs() }
-        val tmp = File(dir, name)
+        // The worker id keeps the staging path unique across parallel uploads
+        // of same-named files.
+        val tmp = File(dir, "$id-$name")
         val sha = applicationContext.contentResolver.openInputStream(uri)!!.use { input ->
             FileOutputStream(tmp).use { out -> BackupPlan.copyAndHash(input, out) }
         }

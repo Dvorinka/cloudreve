@@ -27,8 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,7 +52,10 @@ data class FileActions(
 
 @Composable
 fun rememberThumbUrl(viewModel: FilesViewModel, file: FileObject): String? {
-    val url by produceState<String?>(initialValue = null, file.id) {
+    // Signed URLs expire; re-key on a coarse time bucket so any recomposition
+    // past the TTL refetches instead of sticking for the VM's lifetime.
+    val bucket = System.currentTimeMillis() / THUMB_TTL_MS
+    val url by produceState<String?>(initialValue = null, file.id, bucket) {
         value = viewModel.thumbUrl(file)
     }
     return url
@@ -168,9 +172,9 @@ fun FileListItem(
             }
         }
         if (selecting) {
-            SelectionMark(selected, Modifier.padding(12.dp))
+            SelectionMark(selected, file.name, Modifier.padding(12.dp))
         } else {
-            FileMenuButton(actions)
+            FileMenuButton(actions, label = "More options for ${file.name}")
         }
     }
 }
@@ -194,6 +198,8 @@ fun FileGridItem(
         Modifier
             .clip(shape)
             .background(background)
+            // Gallery tiles render no text; give TalkBack the file name.
+            .then(if (gallery) Modifier.semantics { contentDescription = file.name } else Modifier)
             .combinedClickable(onClick = actions.onOpen, onLongClick = actions.onLongPress)
             .padding(if (gallery) 0.dp else 6.dp),
     ) {
@@ -215,7 +221,7 @@ fun FileGridItem(
             }
             // Menu and selection mark sit on the tile so the caption keeps its full width.
             if (selecting) {
-                SelectionMark(selected, Modifier.align(Alignment.TopEnd).padding(6.dp))
+                SelectionMark(selected, file.name, Modifier.align(Alignment.TopEnd).padding(6.dp))
             } else if (!gallery) {
                 Box(
                     Modifier
@@ -224,7 +230,7 @@ fun FileGridItem(
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)),
                 ) {
-                    FileMenuButton(actions, compact = true)
+                    FileMenuButton(actions, compact = true, label = "More options for ${file.name}")
                 }
             }
         }
@@ -250,18 +256,18 @@ fun FileGridItem(
 }
 
 @Composable
-private fun SelectionMark(selected: Boolean, modifier: Modifier = Modifier) {
+private fun SelectionMark(selected: Boolean, fileName: String, modifier: Modifier = Modifier) {
     if (selected) {
         Icon(
             Icons.Default.CheckCircle,
-            contentDescription = "Selected",
+            contentDescription = "Selected $fileName",
             tint = MaterialTheme.colorScheme.primary,
             modifier = modifier.size(24.dp),
         )
     } else {
         Icon(
             Icons.Outlined.CheckBoxOutlineBlank,
-            contentDescription = "Not selected",
+            contentDescription = "Not selected $fileName",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = modifier.size(24.dp),
         )
@@ -269,9 +275,9 @@ private fun SelectionMark(selected: Boolean, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun FileMenuButton(actions: FileActions, compact: Boolean = false) {
+private fun FileMenuButton(actions: FileActions, compact: Boolean = false, label: String = "More") {
     val onMore = actions.onMore ?: return
     IconButton(onClick = onMore, modifier = if (compact) Modifier.size(36.dp) else Modifier) {
-        Icon(Icons.Default.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(Icons.Default.MoreVert, contentDescription = label, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -18,6 +18,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CancellationException
 import org.cloudreve.android.CloudreveApp
 import org.cloudreve.android.util.CrUri
 import java.io.File
@@ -41,6 +42,8 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
         val cfg = settings.snapshotNow()
         val treeUri = cfg.treeUri?.let { Uri.parse(it) }
         if (!cfg.enabled || treeUri == null) return Result.success()
+        // Signed out: scanning and staging would only fail on 401s.
+        if (app.sessionManager.refreshTokenNow().isEmpty()) return Result.success()
 
         val root = DocumentFile.fromTreeUri(applicationContext, treeUri)
             ?: return Result.failure()
@@ -50,12 +53,18 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
         val synced = settings.syncedNow()
         val ensuredDirs = mutableSetOf<String>()
         var uploaded = 0
+        var lastForeground = 0L
 
         // Resolve the pending set first so progress can say "x of y".
         val pending = walk(root, "").filter { it.signature !in synced }.take(MAX_PER_RUN)
         pending.forEachIndexed { i, entry ->
             setProgress(BackgroundSync.progress(BackgroundSync.Kind.FOLDER, entry.name, i, pending.size))
-            setForeground(progressInfo(entry.name, uploaded))
+            // Notification updates are throttled; setProgress above stays per-file.
+            val now = System.currentTimeMillis()
+            if (now - lastForeground >= FOREGROUND_INTERVAL_MS) {
+                lastForeground = now
+                setForeground(progressInfo(entry.name, uploaded))
+            }
             try {
                 ensureRemoteDirs(app, cfg.remoteFolder, entry.relativeDir, ensuredDirs)
                 val remoteParent = CrUri.join(cfg.remoteFolder, entry.relativeDir)
@@ -67,6 +76,8 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
                 } finally {
                     tmp.delete()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 // Skipped for this run — no failure set here, so a transient
                 // failure simply retries on the next pass.
@@ -125,7 +136,8 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
 
     private fun stageToCache(entry: Entry): File {
         val dir = File(applicationContext.cacheDir, "sync_staging").apply { mkdirs() }
-        val tmp = File(dir, "sync-${entry.signature.hashCode()}-${entry.name}")
+        // The worker id keeps staging paths unique across overlapping runs.
+        val tmp = File(dir, "sync-$id-${entry.signature.hashCode()}-${entry.name}")
         applicationContext.contentResolver.openInputStream(entry.doc.uri)!!.use { input ->
             FileOutputStream(tmp).use { input.copyTo(it) }
         }
@@ -158,8 +170,9 @@ class SyncFolderWorker(context: Context, params: WorkerParameters) :
         private const val WORK_NAME = "sync_folder_periodic"
         private const val WORK_ONCE = "sync_folder_once"
         private const val CHANNEL_ID = "sync_folder"
-        private const val NOTIF_ID = 43
+        private const val NOTIF_ID = 44
         private const val MAX_PER_RUN = 100
+        private const val FOREGROUND_INTERVAL_MS = 500L
 
         private fun constraints(wifiOnly: Boolean): Constraints =
             Constraints.Builder()

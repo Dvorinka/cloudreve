@@ -38,8 +38,10 @@ import org.cloudreve.android.ui.files.rememberThumbUrl
 @Composable
 fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit, onDismiss: () -> Unit = {}) {
     val thumb = rememberThumbUrl(viewModel, file)
+    var fullFailed by remember(file.id) { mutableStateOf(false) }
     val fullUrl by produceState<String?>(initialValue = null, file.id) {
         value = runCatching { viewModel.previewUrl(file) }.getOrNull()
+        fullFailed = value == null
     }
 
     var scale by remember(file.id) { mutableFloatStateOf(1f) }
@@ -105,6 +107,8 @@ fun ImagePreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit,
                 loading = { LoadingOverlay(null) },
                 error = { FullWidthError("Couldn't load image") },
             )
+        } else if (fullFailed) {
+            FullWidthError("Couldn't load image")
         } else {
             LoadingOverlay(null)
         }

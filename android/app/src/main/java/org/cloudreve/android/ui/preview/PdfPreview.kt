@@ -48,9 +48,9 @@ import java.io.File
  */
 @Composable
 fun PdfPreview(file: FileObject, viewModel: FilesViewModel, onTap: () -> Unit) {
-    val (local, progress) = rememberLocalCopy(file, viewModel)
+    val (local, progress, error) = rememberLocalCopy(file, viewModel)
     if (local == null) {
-        LoadingOverlay(progress)
+        if (error != null) FullWidthError(error) else LoadingOverlay(progress)
         return
     }
     PdfPages(local, onTap)

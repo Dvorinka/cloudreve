@@ -212,15 +212,17 @@ internal fun LoadingOverlay(progress: Float?, modifier: Modifier = Modifier) {
 
 /** Load a file's local copy, reporting progress; null until ready. */
 @Composable
-internal fun rememberLocalCopy(file: FileObject, viewModel: FilesViewModel): Pair<File?, Float?> {
+internal fun rememberLocalCopy(file: FileObject, viewModel: FilesViewModel): Triple<File?, Float?, String?> {
     val context = LocalContext.current
     var local by remember(file.id) { mutableStateOf<File?>(null) }
     var progress by remember(file.id) { mutableStateOf<Float?>(null) }
+    var error by remember(file.id) { mutableStateOf<String?>(null) }
     LaunchedEffect(file.id) {
         runCatching { viewModel.localCopy(context, file) { progress = it } }
             .onSuccess { local = it }
+            .onFailure { error = it.message ?: "Download failed" }
     }
-    return local to progress
+    return Triple(local, progress, error)
 }
 
 @Composable

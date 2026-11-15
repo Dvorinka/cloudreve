@@ -106,4 +106,20 @@ class SessionManager(private val context: Context) {
     suspend fun clear() {
         context.sessionStore.edit { it.clear() }
     }
+
+    /**
+     * Session expiry (401 from the server): drops tokens and identity but keeps
+     * serverUrl/userEmail so re-login stays on the same server with the email
+     * prefilled. Full sign-out uses [clear] instead.
+     */
+    suspend fun clearSession() {
+        context.sessionStore.edit {
+            it.remove(Keys.accessToken)
+            it.remove(Keys.refreshToken)
+            it.remove(Keys.accessExpiresAt)
+            it.remove(Keys.userNick)
+            it.remove(Keys.pendingOauthVerifier)
+            it.remove(Keys.pendingOauthState)
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package org.cloudreve.android.ui.settings
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -26,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -64,6 +67,8 @@ import java.util.Date
 fun SettingsScreen(
     onBack: () -> Unit,
     onSignOut: () -> Unit,
+    /** Opens a remote folder (cloudreve:// URI) in the files view. */
+    onOpenRemoteFolder: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as CloudreveApp
@@ -115,6 +120,11 @@ fun SettingsScreen(
         sync.setRemoteFolder(syncFolder)
     }
 
+    // System back bypasses the TopAppBar button; persist there too.
+    BackHandler { persistFolders(); onBack() }
+
+    var confirmSignOut by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -137,9 +147,9 @@ fun SettingsScreen(
             val stats by produceState<BackupStats.Stats?>(initialValue = null, cameraSnap) {
                 value = runCatching { app.backupStats.compute() }.getOrNull()
             }
-            stats?.let {
+            stats?.let { s ->
                 PhotoBackupCard(
-                    stats = it,
+                    stats = s,
                     running = false,
                     onSyncNow = {
                         if (cameraSnap?.paused == true) scope.launch { CameraUploadWorker.resume(context) }
@@ -155,7 +165,7 @@ fun SettingsScreen(
                             else CameraUploadWorker.syncNow(context, cameraSnap?.wifiOnly ?: true)
                         }
                     },
-                    onOpenFolder = {},
+                    onOpenFolder = { onOpenRemoteFolder(s.remoteFolder) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
@@ -265,13 +275,29 @@ fun SettingsScreen(
                 leadingContent = { Icon(Icons.Default.Folder, contentDescription = null) },
             )
             ListItem(
-                modifier = Modifier.clickable(onClick = onSignOut),
+                modifier = Modifier.clickable { confirmSignOut = true },
                 headlineContent = { Text("Sign out", color = MaterialTheme.colorScheme.error) },
                 leadingContent = {
                     Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                 },
             )
         }
+    }
+
+    if (confirmSignOut) {
+        AlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            title = { Text("Sign out?") },
+            text = { Text("You will need to sign in again to sync your files.") },
+            confirmButton = {
+                TextButton(onClick = { confirmSignOut = false; onSignOut() }) {
+                    Text("Sign out", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

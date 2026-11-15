@@ -119,7 +119,7 @@ fun FolderPicker(
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.End,
                     ) {
-                        Button(onClick = { onPick(current) }, enabled = current !in excluded) {
+                        Button(onClick = { onPick(current) }, enabled = !isExcluded(current, excluded)) {
                             Text("$confirmLabel ${CrUri.displayName(current)}")
                         }
                     }
@@ -148,7 +148,7 @@ fun FolderPicker(
                         }
                         else -> LazyColumn {
                             items(list, key = { it.path }) { folder ->
-                                val disabled = folder.path in excluded
+                                val disabled = isExcluded(folder.path, excluded)
                                 ListItem(
                                     modifier = Modifier.clickable(enabled = !disabled) { current = folder.path },
                                     headlineContent = {
@@ -187,4 +187,11 @@ fun FolderPicker(
         )
     }
 }
+
+/**
+ * A moved folder's whole subtree is off-limits as a destination, not just the
+ * folder itself — dropping "a" into "a/b" would create a cycle.
+ */
+private fun isExcluded(path: String, excluded: Set<String>): Boolean =
+    excluded.any { path == it || path.startsWith("$it/") }
 

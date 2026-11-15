@@ -91,8 +91,6 @@ internal fun FileList(
                 actions = actionsFor(file),
                 subtitle = if (state.inTrash) {
                     "Deleted ${formatDate(file.updatedAt)} • from ${file.restoreUri?.let { CrUri.displayName(it) } ?: "unknown"}"
-                } else if (state.virtual) {
-                    "${subtitleFor(file.size, file.updatedAt, file.isFolder)} • ${CrUri.parentDisplayName(file.path)}"
                 } else {
                     subtitleFor(file.size, file.updatedAt, file.isFolder)
                 },
