@@ -2,6 +2,7 @@ package org.cloudreve.android.data
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.cloudreve.android.api.ApiClient
+import org.cloudreve.android.api.CapacityResponse
 import org.cloudreve.android.api.CreateFileRequest
 import org.cloudreve.android.api.CreateUploadSessionRequest
 import org.cloudreve.android.api.DeleteFileRequest
@@ -69,17 +70,21 @@ class FileRepository(private val api: ApiClient) {
             orderDirection = orderDirection,
         ).unwrap()
 
-    suspend fun downloadUrl(uri: String): String = signedUrl(uri, download = true)
+    suspend fun downloadUrl(uri: String, archive: Boolean = false): String = signedUrl(uri, download = true, archive = archive)
 
     /** Signed URL served inline (no attachment disposition), for streaming previews. */
     suspend fun contentUrl(uri: String): String = signedUrl(uri, download = false)
 
-    private suspend fun signedUrl(uri: String, download: Boolean): String {
-        val url = api.service().fileUrls(FileUrlRequest(listOf(uri), download = download))
+    private suspend fun signedUrl(uri: String, download: Boolean, archive: Boolean = false): String {
+        val url = api.service().fileUrls(FileUrlRequest(listOf(uri), download = download, archive = archive))
             .unwrap().urls.firstOrNull()?.url
             ?: throw ApiException(-1, "No URL returned for $uri")
         return reachableUrl(url)
     }
+
+    /** Account storage usage; null when the server does not report it. */
+    suspend fun capacity(): CapacityResponse? =
+        runCatching { api.service().capacity().unwrap() }.getOrNull()
 
     /**
      * The server builds signed URLs from its `siteURL` setting. A siteURL of
@@ -264,11 +269,13 @@ class FileRepository(private val api: ApiClient) {
         remoteName: String = localFile.name,
         overwrite: Boolean = false,
         hash: String = "",
+        mimeType: String? = null,
         lastModified: Long = localFile.lastModified(),
         onProgress: (sent: Long, total: Long) -> Unit = { _, _ -> },
     ): UploadSessionResponse {
         val targetUri = CrUri.join(remoteParentUri, remoteName)
-        val mime = java.net.URLConnection.guessContentTypeFromName(remoteName)
+        val mime = mimeType?.takeIf { it.isNotBlank() }
+            ?: java.net.URLConnection.guessContentTypeFromName(remoteName)
             ?: "application/octet-stream"
         val session = createUploadSession(
             uri = targetUri,

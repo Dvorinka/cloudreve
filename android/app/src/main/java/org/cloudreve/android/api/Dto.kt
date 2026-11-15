@@ -121,6 +121,14 @@ data class StoragePolicy(
 data class FileUrlRequest(
     val uris: List<String>,
     val download: Boolean = false,
+    /** Server-side zip of a folder; the returned URL points at the archive. */
+    val archive: Boolean = false,
+)
+
+@Serializable
+data class CapacityResponse(
+    val used: Long = 0,
+    val total: Long = 0,
 )
 
 @Serializable

@@ -436,7 +436,7 @@ fun FilesScreen(
             viewModel = viewModel,
             onClose = { preview = null },
             onShare = { shareLink(it) },
-            onDownload = { f -> viewModel.fetchForOpen(context, f) { scope.launch { snackbar.showSnackbar("Saved ${it.name}") } } },
+            onDownload = { f -> viewModel.saveToDevice(context, f) },
             onOpenWith = { openWithSystemApp(it) },
             onDelete = { preview = null; deleteTarget = it },
         )
@@ -474,7 +474,7 @@ fun FilesScreen(
         ShareLinkSheet(
             file = file,
             thumbUrl = rememberThumbUrl(viewModel, file),
-            createLink = { pw, exp -> viewModel.shareLink(file, pw, exp) },
+            createLink = { pw, exp, dl -> viewModel.shareLink(file, pw, exp, dl) },
             onDismiss = { shareTarget = null },
             onMessage = { msg -> scope.launch { snackbar.showSnackbar(msg) } },
         )
@@ -488,10 +488,7 @@ fun FilesScreen(
             onDismiss = { sheetTarget = null },
             onOpen = { sheetTarget = null; if (file.isFolder) viewModel.navigateTo(file) else openFile(file) },
             onShare = { sheetTarget = null; shareLink(file) },
-            onDownload = {
-                sheetTarget = null
-                viewModel.fetchForOpen(context, file) { scope.launch { snackbar.showSnackbar("Saved ${it.name}") } }
-            },
+            onDownload = { viewModel.saveToDevice(context, file) },
             onToggleFavorite = { sheetTarget = null; viewModel.toggleFavorite(context, file) },
             onRename = { sheetTarget = null; renameTarget = file },
             onDelete = { sheetTarget = null; deleteTarget = file },

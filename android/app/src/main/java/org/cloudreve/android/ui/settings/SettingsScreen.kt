@@ -22,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -46,9 +47,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.cloudreve.android.CloudreveApp
+import org.cloudreve.android.api.CapacityResponse
 import org.cloudreve.android.data.BackupStats
 import org.cloudreve.android.data.CameraUploadSettings
 import org.cloudreve.android.data.backup.BackupLedger
+import org.cloudreve.android.ui.files.formatSize
 import org.cloudreve.android.ui.files.transfers.PhotoBackupCard
 import org.cloudreve.android.data.SyncFolderSettings
 import org.cloudreve.android.work.CameraUploadWorker
@@ -146,6 +149,9 @@ fun SettingsScreen(
             SectionLabel("Photo backup")
             val stats by produceState<BackupStats.Stats?>(initialValue = null, cameraSnap) {
                 value = runCatching { app.backupStats.compute() }.getOrNull()
+            }
+            val capacity by produceState<CapacityResponse?>(initialValue = null) {
+                value = app.fileRepository.capacity()
             }
             stats?.let { s ->
                 PhotoBackupCard(
@@ -274,6 +280,24 @@ fun SettingsScreen(
                 supportingContent = { Text(serverUrl) },
                 leadingContent = { Icon(Icons.Default.Folder, contentDescription = null) },
             )
+            capacity?.let { cap ->
+                if (cap.total > 0) {
+                    val pct = (cap.used.toDouble() / cap.total * 100).toInt().coerceIn(0, 100)
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        Text("Storage", style = MaterialTheme.typography.labelLarge)
+                        LinearProgressIndicator(
+                            progress = { pct / 100f },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        )
+                        Text(
+                            "${formatSize(cap.used)} of ${formatSize(cap.total)} used",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
+            }
             ListItem(
                 modifier = Modifier.clickable { confirmSignOut = true },
                 headlineContent = { Text("Sign out", color = MaterialTheme.colorScheme.error) },

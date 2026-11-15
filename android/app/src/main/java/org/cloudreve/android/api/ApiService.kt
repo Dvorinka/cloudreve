@@ -49,6 +49,9 @@ interface ApiService {
     @DELETE("api/v4/session/token")
     suspend fun signOut(@Body request: RefreshTokenRequest): Response<ApiResponse<Unit>>
 
+    @GET("api/v4/user/capacity")
+    suspend fun capacity(): Response<ApiResponse<CapacityResponse>>
+
     @GET("api/v4/site/config/login")
     suspend fun siteConfig(): Response<ApiResponse<SiteConfig>>
 

@@ -1,6 +1,10 @@
 package org.cloudreve.android.ui.files
 
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
@@ -8,6 +12,8 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +38,7 @@ import org.cloudreve.android.work.CameraUploadWorker
 import org.cloudreve.android.work.UploadStatus
 import org.cloudreve.android.work.UploadWorker
 import java.io.File
+import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /** Files-app style categories, each a server-side search over the whole drive. */
@@ -488,6 +495,102 @@ class FilesViewModel(
     private fun cacheFileFor(context: Context, file: FileObject): File =
         File(File(context.cacheDir, "downloads"), file.id).resolve(file.name)
 
+    /**
+     * Downloads [file] somewhere the user can actually find it: the MediaStore
+     * Downloads collection on API 29+, the app's external files dir below that.
+     * Folders come down as a server-built zip named "<folder>.zip". Progress
+     * shows in [FilesUiState.downloading]; the snackbar reports the saved name.
+     */
+    fun saveToDevice(context: Context, file: FileObject) {
+        val key = "save:${file.path}"
+        downloadJobs.remove(key)?.cancel()
+        setDownloading(file.path, null)
+        val job = viewModelScope.launch {
+            try {
+                val savedName = withContext(Dispatchers.IO) { saveToDeviceIo(context, file) }
+                _state.value = _state.value.copy(snackbar = UiMessage("Saved $savedName"))
+            } catch (_: CancellationException) {
+                // user cancelled; nothing to say
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(snackbar = (e.message ?: "Download failed").toMessage())
+            } finally {
+                downloadJobs.remove(key)
+                clearDownloading(file.path)
+            }
+        }
+        downloadJobs[key] = job
+    }
+
+    private suspend fun saveToDeviceIo(context: Context, file: FileObject): String {
+        val archive = file.isFolder
+        val url = repo.downloadUrl(file.path, archive = archive)
+        val displayName = if (archive) "${file.name}.zip" else file.name
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = context.contentResolver
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, displayName)
+                put(
+                    MediaStore.Downloads.MIME_TYPE,
+                    if (archive) "application/zip"
+                    else java.net.URLConnection.guessContentTypeFromName(displayName)
+                        ?: "application/octet-stream",
+                )
+                put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Cloudreve")
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw ApiException(-1, "Could not create download")
+            try {
+                resolver.openOutputStream(uri)!!.use { out -> streamTo(url, out, file.path) }
+            } catch (e: Exception) {
+                resolver.delete(uri, null, null)
+                throw e
+            }
+            resolver.update(
+                uri,
+                ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) },
+                null, null,
+            )
+            return displayName
+        }
+        // API 28: no MediaStore Downloads collection; the app-specific external
+        // dir needs no permission and survives cache eviction.
+        val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            ?: File(context.filesDir, "downloads")
+        var dest = File(dir, displayName)
+        var n = 1
+        while (dest.exists()) {
+            dest = File(dir, "${file.name} ($n)${if (archive) ".zip" else ""}")
+            n++
+        }
+        repo.downloadToFile(url, dest) { done, total ->
+            setDownloading(file.path, if (total > 0) done.toFloat() / total else null)
+        }
+        return dest.name
+    }
+
+    /** Streams a download [url] into [out] with throttled progress for [path]. */
+    private suspend fun streamTo(url: String, out: OutputStream, path: String) {
+        val resp = repo.download(url)
+        if (!resp.isSuccessful) throw ApiException(resp.code(), "Download failed: HTTP ${resp.code()}")
+        val body = resp.body() ?: throw ApiException(-1, "Empty download")
+        val total = body.contentLength()
+        var done = 0L
+        val buffer = ByteArray(256 * 1024)
+        body.byteStream().use { input ->
+            out.use { output ->
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    output.write(buffer, 0, read)
+                    done += read
+                    setDownloading(path, if (total > 0) done.toFloat() / total else null)
+                }
+            }
+        }
+    }
+
     /** Signed inline URL for streaming a preview (image, video, audio). */
     suspend fun previewUrl(file: FileObject): String = repo.contentUrl(file.path)
 
@@ -814,8 +917,12 @@ class FilesViewModel(
         }
     }
 
-    suspend fun shareLink(file: FileObject, password: String = "", expireSeconds: Int = 0): String =
-        repo.createShare(file.path, password = password, expireSeconds = expireSeconds)
+    suspend fun shareLink(
+        file: FileObject,
+        password: String = "",
+        expireSeconds: Int = 0,
+        downloads: Int = 0,
+    ): String = repo.createShare(file.path, password = password, expireSeconds = expireSeconds, downloads = downloads)
 
     /** Trash: put items back where they were. */
     fun restore(paths: List<String>) {

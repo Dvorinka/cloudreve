@@ -53,6 +53,13 @@ private val EXPIRY_OPTIONS = listOf(
     "30 days" to 30 * 86_400,
 )
 
+private val DOWNLOAD_OPTIONS = listOf(
+    "Unlimited" to 0,
+    "5" to 5,
+    "25" to 25,
+    "100" to 100,
+)
+
 /**
  * Share-link flow in two steps on one sheet: choose how open the link is,
  * create it, then copy or hand it to the system share sheet. Creating a
@@ -63,7 +70,7 @@ private val EXPIRY_OPTIONS = listOf(
 fun ShareLinkSheet(
     file: FileObject,
     thumbUrl: String?,
-    createLink: suspend (password: String, expireSeconds: Int) -> String,
+    createLink: suspend (password: String, expireSeconds: Int, downloads: Int) -> String,
     onDismiss: () -> Unit,
     onMessage: (String) -> Unit,
 ) {
@@ -72,6 +79,7 @@ fun ShareLinkSheet(
     var usePassword by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var expiry by remember { mutableIntStateOf(0) }
+    var downloads by remember { mutableIntStateOf(0) }
     var creating by remember { mutableStateOf(false) }
     var link by remember { mutableStateOf<String?>(null) }
 
@@ -95,6 +103,12 @@ fun ShareLinkSheet(
             Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 EXPIRY_OPTIONS.forEach { (label, seconds) ->
                     FilterChip(selected = expiry == seconds, onClick = { expiry = seconds }, label = { Text(label) })
+                }
+            }
+            Text("Download limit", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp))
+            Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DOWNLOAD_OPTIONS.forEach { (label, count) ->
+                    FilterChip(selected = downloads == count, onClick = { downloads = count }, label = { Text(label) })
                 }
             }
             ListItem(
@@ -129,7 +143,7 @@ fun ShareLinkSheet(
                     onClick = {
                         creating = true
                         scope.launch {
-                            runCatching { createLink(if (usePassword) password.trim() else "", expiry) }
+                            runCatching { createLink(if (usePassword) password.trim() else "", expiry, downloads) }
                                 .onSuccess { link = it }
                                 .onFailure { onMessage(it.message ?: "Couldn't create the link") }
                             creating = false

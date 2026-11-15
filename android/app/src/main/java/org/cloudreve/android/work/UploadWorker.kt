@@ -54,7 +54,8 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
                 try {
                     val (tmp, sha) = stageToCache(uri, name)
                     try {
-                        app.fileRepository.uploadFile(tmp, parentUri, remoteName = name, overwrite = overwrite, hash = sha) { sent, total ->
+                        val mime = applicationContext.contentResolver.getType(uri)
+                        app.fileRepository.uploadFile(tmp, parentUri, remoteName = name, overwrite = overwrite, hash = sha, mimeType = mime) { sent, total ->
                             report(name, i, uris.size, sent, total, parentUri)
                         }
                     } finally {
