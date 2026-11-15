@@ -10,12 +10,14 @@ import {
 } from "@mui/material";
 import {
   Close as CloseIcon,
+  CloudSync as CloudSyncIcon,
   DeleteOutline as TrashIcon,
   Folder as FolderIcon,
   CheckCircle as CheckCircleIcon,
   Refresh as RefreshIcon,
   SyncAlt as SyncAltIcon,
 } from "@mui/icons-material";
+import { listen } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -33,6 +35,8 @@ export default function Popup() {
   const [selectedDrive, setSelectedDrive] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [connected, setConnected] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const isFetchingRef = useRef(false);
   const suppressBlurCloseUntilRef = useRef(0);
 
@@ -113,6 +117,36 @@ export default function Popup() {
       clearInterval(intervalId);
     };
   }, [fetchSummary]);
+
+  // Track server connectivity pushed by the sync service so the footer can
+  // say "offline" instead of implying everything is up to date.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<{ data?: { connected?: boolean } }>(
+      "ConnectionStatusChanged",
+      (event) => {
+        const payload = event.payload as {
+          data?: { connected?: boolean };
+        };
+        setConnected(payload?.data?.connected !== false);
+      },
+    ).then((fn) => {
+      unlisten = fn;
+    });
+    return () => unlisten?.();
+  }, []);
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      await invoke("sync_now");
+      fetchSummary();
+    } catch (error) {
+      console.error("Failed to sync now:", error);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleDriveSelect = (driveId: string | null) => {
     setSelectedDrive(driveId);
@@ -207,6 +241,14 @@ export default function Popup() {
             <CloudreveLogo height={28} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center" }}>
+            <IconButton
+              size="small"
+              onClick={handleSyncNow}
+              disabled={syncing}
+              aria-label={t("popup.syncNow", "Sync now")}
+            >
+              <CloudSyncIcon fontSize="small" />
+            </IconButton>
             <IconButton
               size="small"
               onClick={handleTransfers}
@@ -393,7 +435,9 @@ export default function Popup() {
           gap: 1,
         }}
       >
-        {hasActiveTasks ? (
+        {!connected ? (
+          <CloudSyncIcon sx={{ fontSize: 18, color: "warning.main" }} />
+        ) : hasActiveTasks ? (
           <RefreshIcon
             sx={{
               fontSize: 18,
@@ -412,8 +456,13 @@ export default function Popup() {
             sx={{ fontSize: 18, color: "success.main" }}
           />
         )}
-        <Typography variant="caption" color="text.secondary">
-          {hasActiveTasks
+        <Typography
+          variant="caption"
+          color={connected ? "text.secondary" : "warning.main"}
+        >
+          {!connected
+            ? t("popup.offline", "Offline — will sync when reconnected")
+            : hasActiveTasks
             ? t("popup.syncingStatus", "Syncing {{count}} file(s)...", {
                 count: summary?.active_tasks.length ?? 0,
               })

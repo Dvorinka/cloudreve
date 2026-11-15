@@ -149,6 +149,9 @@ pub trait ExplorerApi {
     /// Restore files from trash
     async fn restore_files(&self, request: &DeleteFileService) -> ApiResult<()>;
 
+    /// Empty the trash bin, hard-deleting every trashed item
+    async fn empty_trash(&self) -> ApiResult<()>;
+
     /// Patch file metadata
     async fn patch_metadata(&self, request: &PatchMetadataService) -> ApiResult<()>;
 
@@ -438,6 +441,11 @@ impl ExplorerApi for Client {
         };
 
         self.post("/file/restore", request, opts).await
+    }
+
+    async fn empty_trash(&self) -> ApiResult<()> {
+        self.delete("/file/trash", RequestOptions::new().with_purchase_ticket())
+            .await
     }
 
     async fn patch_metadata(&self, request: &PatchMetadataService) -> ApiResult<()> {

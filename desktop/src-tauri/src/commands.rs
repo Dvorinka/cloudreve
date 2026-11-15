@@ -1970,6 +1970,25 @@ pub async fn show_update_window(app: AppHandle) -> CommandResult<()> {
     Ok(())
 }
 
+/// Ask every enabled drive to run a sync pass now.
+#[tauri::command]
+pub async fn sync_now(state: State<'_, AppStateHandle>) -> CommandResult<()> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+    let sender = app_state.drive_manager.get_command_sender();
+    for drive in app_state.drive_manager.list_drives().await {
+        if !drive.enabled {
+            continue;
+        }
+        let _ = sender.send(cloudreve_sync::drive::commands::ManagerCommand::SyncNow {
+            paths: vec![drive.sync_path.clone()],
+            mode: cloudreve_sync::drive::sync::SyncMode::FullHierarchy,
+        });
+    }
+    Ok(())
+}
+
 /// List files currently in a drive's trash.
 #[tauri::command]
 pub async fn list_trash_files(
@@ -2035,6 +2054,25 @@ pub async fn delete_files_permanently(
         .delete_files_permanently(uris)
         .await
         .map_err(|e| e.to_string())
+}
+
+/// Permanently delete every item in a drive's trash bin.
+#[tauri::command]
+pub async fn empty_trash(
+    state: State<'_, AppStateHandle>,
+    drive_id: String,
+) -> CommandResult<()> {
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not initialized".to_string())?;
+
+    let mount = app_state
+        .drive_manager
+        .get_drive(&drive_id)
+        .await
+        .ok_or_else(|| "Drive not found".to_string())?;
+
+    mount.empty_trash().await.map_err(|e| e.to_string())
 }
 
 /// Show or create the trash window.

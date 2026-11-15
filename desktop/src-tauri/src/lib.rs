@@ -663,6 +663,8 @@ pub fn run() {
             commands::list_trash_files,
             commands::restore_files,
             commands::delete_files_permanently,
+            commands::empty_trash,
+            commands::sync_now,
             commands::show_trash_window,
             commands::cancel_transfer,
             commands::show_transfers_window,

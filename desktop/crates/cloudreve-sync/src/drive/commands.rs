@@ -597,6 +597,11 @@ impl Mount {
             .await?)
     }
 
+    /// Empty the trash bin, hard-deleting every trashed item.
+    pub async fn empty_trash(&self) -> Result<()> {
+        Ok(self.cr_client.empty_trash().await?)
+    }
+
     pub async fn rename_completed(&self, source: PathBuf, destination: PathBuf) -> Result<()> {
         // If source or destination is ignored, do nothing
         let matcher = self.ignore_matcher.read().await;
