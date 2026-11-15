@@ -187,6 +187,7 @@ async fn init_sync_service(app: AppHandle) -> anyhow::Result<()> {
     // initializing, then handle a `cloudreve://` URL passed on our own argv —
     // the cold-start case where the app was launched by the file manager.
     drain_pending_share_links();
+    drain_pending_preview_links(&app);
     for arg in std::env::args().skip(1) {
         if arg.starts_with("cloudreve://") {
             handle_deeplink_url(&app, &arg);
@@ -276,6 +277,23 @@ impl AppStateHandle {
 /// after init completes — the link is a user action and must not be dropped.
 static PENDING_SHARE_LINKS: Mutex<Vec<std::path::PathBuf>> = Mutex::new(Vec::new());
 
+/// Preview deep links that arrived before `APP_STATE` was ready — the path
+/// check needs the drive list, so they are drained once init completes.
+static PENDING_PREVIEW_LINKS: Mutex<Vec<std::path::PathBuf>> = Mutex::new(Vec::new());
+
+fn drain_pending_preview_links(app: &AppHandle) {
+    let pending: Vec<std::path::PathBuf> = PENDING_PREVIEW_LINKS
+        .lock()
+        .map(|mut q| std::mem::take(&mut *q))
+        .unwrap_or_default();
+    for path in pending {
+        let app = app.clone();
+        tauri::async_runtime::spawn(async move {
+            commands::show_preview_window_impl(&app, &path).await;
+        });
+    }
+}
+
 fn dispatch_share_link(path: std::path::PathBuf) {
     match APP_STATE.get() {
         Some(state) => {
@@ -322,13 +340,23 @@ fn handle_deeplink_url(app: &AppHandle, url: &str) {
         return;
     }
 
-    // Preview needs no drive-manager resolution — the window reads the
-    // local file through the asset protocol, so it works even while the
-    // sync service is still initializing.
+    // Preview needs the drive list for its path check, so links arriving
+    // before init completes are queued and drained once APP_STATE is set.
     if let Some(encoded_path) = url.strip_prefix("cloudreve://preview/") {
         match urlencoding::decode(encoded_path) {
             Ok(decoded) => {
-                commands::show_preview_window_impl(app, std::path::Path::new(decoded.as_ref()))
+                let path = std::path::PathBuf::from(decoded.as_ref());
+                if APP_STATE.get().is_some() {
+                    let app = app.clone();
+                    tauri::async_runtime::spawn(async move {
+                        commands::show_preview_window_impl(&app, &path).await;
+                    });
+                } else {
+                    PENDING_PREVIEW_LINKS
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner())
+                        .push(path);
+                }
             }
             Err(_) => tracing::warn!(target: "main", url = %url, "Malformed preview deep link"),
         }
@@ -617,7 +645,6 @@ pub fn run() {
             commands::reconnect_drive,
             commands::get_ignore_patterns,
             commands::set_ignore_patterns,
-            commands::get_sync_status,
             commands::get_status_summary,
             commands::resolve_conflict,
             commands::resolve_all_conflicts,

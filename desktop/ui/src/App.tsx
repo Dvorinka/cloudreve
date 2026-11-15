@@ -3,6 +3,7 @@ import {
   ThemeProvider,
   CssBaseline,
   Box,
+  CircularProgress,
   useMediaQuery,
 } from "@mui/material";
 import { Routes, Route, HashRouter } from "react-router-dom";
@@ -31,6 +32,7 @@ function LoadingFallback() {
         height:"80vh"
       }}
     >
+      <CircularProgress size={32} />
     </Box>
   );
 }

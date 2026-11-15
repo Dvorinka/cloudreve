@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   ButtonGroup,
@@ -31,6 +32,7 @@ export default function Popup() {
   const [summary, setSummary] = useState<StatusSummary | null>(null);
   const [selectedDrive, setSelectedDrive] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const isFetchingRef = useRef(false);
   const suppressBlurCloseUntilRef = useRef(0);
 
@@ -89,8 +91,10 @@ export default function Popup() {
         driveId: selectedDrive,
       });
       setSummary(result);
+      setLoadError(false);
     } catch (error) {
       console.error("Failed to fetch status summary:", error);
+      setLoadError(true);
     } finally {
       isFetchingRef.current = false;
       setLoading(false);
@@ -175,8 +179,11 @@ export default function Popup() {
         overflow: "hidden",
       }}
     >
-      {/* Header */}
+      {/* Header — deep drag region: the popup has no native decorations on
+          any platform, so this is the only way to move it. Buttons inside
+          stay clickable (Tauri excludes interactive elements from drag). */}
       <Box
+        data-tauri-drag-region="deep"
         sx={{
           px: 2,
           pt: 1.5,
@@ -251,6 +258,13 @@ export default function Popup() {
               {t("popup.loading", "Loading...")}
             </Typography>
           </Box>
+        ) : loadError && !summary ? (
+          <Alert severity="error" sx={{ m: 2 }}>
+            {t(
+              "popup.loadError",
+              "Couldn't load sync status. Retrying automatically...",
+            )}
+          </Alert>
         ) : !hasPendingConflicts && !hasActiveTasks && !hasFinishedTasks ? (
           <Box
             sx={{

@@ -35,3 +35,11 @@ Status: implemented.
   - Non-Windows remote file metadata commits update inventory without creating placeholder files.
   - Non-Windows remote folder metadata commits create local directories.
   - Linux autostart entries quote and escape executable paths correctly.
+
+## Update: FUSE On-Demand Sync
+
+Linux now supports an opt-in `ondemand` sync mode: the drive mounts a FUSE
+filesystem (`drive/fuse_fs.rs`, `drive/mounts.rs`) where remote files appear
+in the sync root and hydrate on open. It is selected per drive when adding
+it; `full` sync remains the default. Windows-style CFAPI placeholders remain
+Windows-only.

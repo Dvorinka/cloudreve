@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Typography,
   LinearProgress,
+  CircularProgress,
   Stack,
   TextField,
   Tooltip,
@@ -57,6 +58,7 @@ export default function DrivesSection() {
   const { t } = useTranslation();
   const [drives, setDrives] = useState<DriveInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
   const [editingDriveId, setEditingDriveId] = useState<string | null>(null);
   const [patternsText, setPatternsText] = useState("");
@@ -75,8 +77,9 @@ export default function DrivesSection() {
           status: drive.status as DriveInfo["status"],
         }))
       );
+      setError(null);
     } catch (error) {
-      console.error("Failed to fetch drives:", error);
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
       isFetchingRef.current = false;
       setLoading(false);
@@ -99,7 +102,7 @@ export default function DrivesSection() {
       await invoke("remove_drive", { driveId });
       await fetchDrives();
     } catch (error) {
-      console.error("Failed to delete drive:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -111,7 +114,7 @@ export default function DrivesSection() {
         driveName: drive.name,
       });
     } catch (error) {
-      console.error("Failed to open reauthorize window:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -120,7 +123,7 @@ export default function DrivesSection() {
       await invoke("reconnect_drive", { driveId: drive.id });
       fetchDrives();
     } catch (error) {
-      console.error("Failed to reconnect drive:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -128,7 +131,7 @@ export default function DrivesSection() {
     try {
       await invoke("show_file_in_explorer", { path });
     } catch (error) {
-      console.error("Failed to open folder:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -136,7 +139,7 @@ export default function DrivesSection() {
     try {
       await openUrl(url);
     } catch (error) {
-      console.error("Failed to open site:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -144,7 +147,7 @@ export default function DrivesSection() {
     try {
       await invoke("show_add_drive_window");
     } catch (error) {
-      console.error("Failed to open add drive window:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -155,7 +158,7 @@ export default function DrivesSection() {
       setPatternsError(null);
       setEditingDriveId(driveId);
     } catch (error) {
-      console.error("Failed to get ignore patterns:", error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -224,13 +227,19 @@ export default function DrivesSection() {
 
   if (loading) {
     return (
-      <Box>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+        <CircularProgress size={24} />
       </Box>
     );
   }
 
   return (
     <Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
       {drives.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           {t("settings.noDrives")}

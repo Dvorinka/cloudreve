@@ -373,7 +373,8 @@ export default function AddDrive({ mode = "add" }: AddDriveProps) {
       const empty = await invoke<boolean>('is_dir_empty', { path });
       setFolderNotEmpty(!empty);
     } catch {
-      setFolderNotEmpty(false);
+      // Unreadable directory: warn rather than silently treat as empty.
+      setFolderNotEmpty(true);
     }
   };
 

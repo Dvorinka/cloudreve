@@ -61,7 +61,7 @@ pub async fn is_dir_empty(path: String) -> CommandResult<bool> {
     }
     match std::fs::read_dir(p) {
         Ok(mut entries) => Ok(entries.next().is_none()),
-        Err(_) => Ok(true),
+        Err(e) => Err(format!("Failed to read directory {}: {e}", p.display())),
     }
 }
 
@@ -151,7 +151,12 @@ pub async fn add_drive(
     let drive_id = Uuid::new_v4().to_string();
 
     let sync_mode = match config.sync_mode.as_deref() {
-        Some("ondemand") => cloudreve_sync::drive::mounts::DriveSyncMode::OnDemand,
+        Some("ondemand") if cfg!(target_os = "linux") => {
+            cloudreve_sync::drive::mounts::DriveSyncMode::OnDemand
+        }
+        Some("ondemand") => {
+            return Err("On-demand sync is only supported on Linux".to_string())
+        }
         _ => cloudreve_sync::drive::mounts::DriveSyncMode::Full,
     };
 
@@ -278,22 +283,6 @@ pub async fn set_ignore_patterns(
         .map_err(|e| e.to_string())?;
 
     Ok(())
-}
-
-/// Get sync status for a drive
-#[tauri::command]
-pub async fn get_sync_status(
-    state: State<'_, AppStateHandle>,
-    drive_id: String,
-) -> CommandResult<serde_json::Value> {
-    let app_state = state
-        .get()
-        .ok_or_else(|| "App not yet initialized".to_string())?;
-    app_state
-        .drive_manager
-        .get_sync_status(&drive_id)
-        .await
-        .map_err(|e| e.to_string())
 }
 
 /// Get status summary including all drives and recent tasks
@@ -658,6 +647,12 @@ fn show_main_window_at_position(app: &AppHandle, position: Position) {
             });
 
             move_window_safely(&window, position, "main_popup");
+            // Windows keeps tray popups out of the taskbar; on Linux there is
+            // no universal tray-click convention and an undecorated window
+            // hidden from the taskbar/dash is a second-class window — let DEs
+            // show it normally so it behaves like a real window.
+            #[cfg(target_os = "linux")]
+            let _ = window.set_skip_taskbar(false);
             let _ = window.show();
             let _ = window.set_focus();
             #[cfg(target_os = "macos")]
@@ -2222,11 +2217,55 @@ pub async fn show_transfers_window(app: AppHandle) -> CommandResult<()> {
     Ok(())
 }
 
+/// Canonicalize when possible, else normalize `.`/`..` lexically so prefix
+/// checks cannot be bypassed with traversal segments.
+fn normalize_fs_path(path: &std::path::Path) -> std::path::PathBuf {
+    path.canonicalize()
+        .unwrap_or_else(|_| path.components().collect())
+}
+
+/// Roots the preview window and text reads may touch: each configured
+/// drive's sync root plus, on Linux on-demand drives, the private FUSE
+/// store holding the real bytes behind the mount.
+async fn allowed_content_roots(app_state: &crate::AppState) -> Vec<std::path::PathBuf> {
+    let mut roots = Vec::new();
+    for drive in app_state.drive_manager.list_drives().await {
+        for root in [drive.sync_path.clone(), drive.data_root()] {
+            roots.push(normalize_fs_path(&root));
+        }
+    }
+    roots
+}
+
+/// True when `path` resolves inside a configured drive's content roots.
+/// Preview windows and text reads must never escape synced drive content —
+/// the deep-link handler and IPC both reach arbitrary caller-supplied paths.
+async fn is_drive_content_path(app_state: &crate::AppState, path: &std::path::Path) -> bool {
+    let path = normalize_fs_path(path);
+    allowed_content_roots(app_state)
+        .await
+        .iter()
+        .any(|root| path.starts_with(root))
+}
+
 /// Read up to `max_bytes` of a file for the preview window's text view.
 #[tauri::command]
-pub async fn read_text_file(path: String, max_bytes: usize) -> CommandResult<String> {
+pub async fn read_text_file(
+    state: State<'_, AppStateHandle>,
+    path: String,
+    max_bytes: usize,
+) -> CommandResult<String> {
     use tokio::io::AsyncReadExt;
 
+    let app_state = state
+        .get()
+        .ok_or_else(|| "App not yet initialized".to_string())?;
+    if !is_drive_content_path(app_state, std::path::Path::new(&path)).await {
+        return Err("File is outside synced drives".to_string());
+    }
+
+    // Cap the read so a caller cannot pull an entire file into memory.
+    let max_bytes = max_bytes.min(4 * 1024 * 1024);
     let file = tokio::fs::File::open(&path)
         .await
         .map_err(|e| e.to_string())?;
@@ -2240,7 +2279,18 @@ pub async fn read_text_file(path: String, max_bytes: usize) -> CommandResult<Str
 
 /// Show or create the preview window for a local file. The target can
 /// change between invocations, so a stale window is rebuilt each time.
-pub fn show_preview_window_impl(app: &AppHandle, path: &std::path::Path) {
+/// Only files inside a configured drive's content roots are accepted —
+/// the window serves the path through the unrestricted asset protocol.
+pub async fn show_preview_window_impl(app: &AppHandle, path: &std::path::Path) {
+    let allowed = match crate::APP_STATE.get() {
+        Some(state) => is_drive_content_path(state, path).await,
+        None => false,
+    };
+    if !allowed {
+        tracing::warn!(target: "main", path = %path.display(), "Preview rejected: path is not inside a synced drive");
+        return;
+    }
+
     let Ok(meta) = std::fs::metadata(path) else {
         tracing::warn!(target: "main", path = %path.display(), "Preview requested for missing path");
         return;

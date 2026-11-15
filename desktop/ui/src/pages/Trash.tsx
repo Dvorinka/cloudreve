@@ -16,6 +16,7 @@ import {
   Restore as RestoreIcon,
 } from "@mui/icons-material";
 import { invoke } from "@tauri-apps/api/core";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -91,6 +92,16 @@ export default function Trash() {
   const act = useCallback(
     async (file: TrashFile, command: "restore_files" | "delete_files_permanently") => {
       if (!drive) return;
+      if (command === "delete_files_permanently") {
+        const confirmed = await ask(
+          t("trash.deleteForeverConfirm", {
+            name: file.name,
+            defaultValue: `Permanently delete "${file.name}"? This cannot be undone.`,
+          }),
+          { title: t("trash.deleteForever"), kind: "warning" },
+        );
+        if (!confirmed) return;
+      }
       setBusy(file.id);
       try {
         await invoke(command, { driveId: drive.id, uris: [file.path] });
@@ -101,7 +112,7 @@ export default function Trash() {
         setBusy(null);
       }
     },
-    [drive],
+    [drive, t],
   );
 
   return (
@@ -120,7 +131,11 @@ export default function Trash() {
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           {t("trash.title")}
         </Typography>
-        <IconButton size="small" onClick={() => getCurrentWindow().close()}>
+        <IconButton
+          size="small"
+          onClick={() => getCurrentWindow().close()}
+          aria-label={t("trash.close", "Close")}
+        >
           <CloseIcon />
         </IconButton>
       </Box>
