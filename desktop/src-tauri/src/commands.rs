@@ -1239,6 +1239,99 @@ pub async fn delete_share(
 /// The TaskId defined in AppxManifest.xml for the startup task
 #[cfg(windows)]
 const STARTUP_TASK_ID: &str = "cloudreve";
+
+/// Windows autostart fallback for installs without package identity.
+/// `StartupTask` only resolves when the app runs packaged; an unpackaged
+/// install (sparse package not registered) would otherwise lose autostart
+/// entirely, so we mirror the toggle into the HKCU Run key. Once a
+/// StartupTask call succeeds the stale entry is cleared again.
+#[cfg(windows)]
+mod run_key_autostart {
+    use windows::core::{w, PCWSTR};
+    use windows::Win32::Foundation::ERROR_SUCCESS;
+    use windows::Win32::System::Registry::{
+        RegCloseKey, RegCreateKeyExW, RegDeleteValueW, RegGetValueW, RegSetValueExW, HKEY,
+        HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, REG_OPTION_NON_VOLATILE, REG_SZ, RRF_RT_REG_SZ,
+    };
+
+    const RUN_KEY: PCWSTR = w!("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
+    const RUN_VALUE: PCWSTR = w!("Cloudreve");
+
+    struct Key(HKEY);
+    impl Key {
+        fn open() -> Option<Self> {
+            let mut key = HKEY::default();
+            unsafe {
+                RegCreateKeyExW(
+                    HKEY_CURRENT_USER,
+                    RUN_KEY,
+                    0,
+                    PCWSTR::null(),
+                    REG_OPTION_NON_VOLATILE,
+                    KEY_READ | KEY_WRITE,
+                    None,
+                    &mut key,
+                    None,
+                )
+                .ok()
+                .ok()?;
+            }
+            Some(Self(key))
+        }
+    }
+    impl Drop for Key {
+        fn drop(&mut self) {
+            unsafe {
+                let _ = RegCloseKey(self.0);
+            }
+        }
+    }
+
+    /// Whether a Run-key autostart entry exists for the current exe.
+    pub fn enabled() -> bool {
+        unsafe {
+            RegGetValueW(
+                HKEY_CURRENT_USER,
+                RUN_KEY,
+                RUN_VALUE,
+                RRF_RT_REG_SZ,
+                None,
+                None,
+                None,
+            ) == ERROR_SUCCESS
+        }
+    }
+
+    /// Write or remove the Run-key entry pointing at the current exe.
+    pub fn set(enabled: bool) -> Result<(), String> {
+        let key = Key::open().ok_or("failed to open Run key")?;
+        unsafe {
+            if enabled {
+                let exe =
+                    std::env::current_exe().map_err(|e| format!("current_exe failed: {e}"))?;
+                let cmd = format!("\"{}\"", exe.display());
+                let bytes: Vec<u8> = cmd
+                    .encode_utf16()
+                    .chain(std::iter::once(0))
+                    .flat_map(|c| c.to_le_bytes())
+                    .collect();
+                RegSetValueExW(key.0, RUN_VALUE, 0, REG_SZ, Some(&bytes))
+                    .ok()
+                    .map_err(|e| format!("RegSetValueExW failed: {e}"))?;
+            } else {
+                // A missing value is fine - the goal is no entry.
+                let _ = RegDeleteValueW(key.0, RUN_VALUE);
+            }
+        }
+        Ok(())
+    }
+
+    /// Resolve the declared StartupTask, if this process has package identity.
+    pub fn startup_task() -> Option<super::StartupTask> {
+        let task_id: windows::core::HSTRING = super::STARTUP_TASK_ID.into();
+        super::StartupTask::GetAsync(&task_id).ok()?.get().ok()
+    }
+}
 #[cfg(target_os = "linux")]
 const AUTOSTART_DESKTOP_FILE: &str = "cloudreve-desktop.desktop";
 #[cfg(target_os = "macos")]
@@ -1461,11 +1554,9 @@ pub async fn get_auto_start_enabled() -> CommandResult<bool> {
     #[cfg(windows)]
     {
         tokio::task::spawn_blocking(|| {
-            let task_id: windows::core::HSTRING = STARTUP_TASK_ID.into();
-            let task = StartupTask::GetAsync(&task_id)
-                .map_err(|e| format!("Failed to get startup task: {}", e))?
-                .get()
-                .map_err(|e| format!("Failed to get startup task: {}", e))?;
+            let Some(task) = run_key_autostart::startup_task() else {
+                return Ok(run_key_autostart::enabled());
+            };
 
             let state = task
                 .State()
@@ -1474,7 +1565,7 @@ pub async fn get_auto_start_enabled() -> CommandResult<bool> {
             Ok(matches!(
                 state,
                 StartupTaskState::Enabled | StartupTaskState::EnabledByPolicy
-            ))
+            ) || run_key_autostart::enabled())
         })
         .await
         .map_err(|e| format!("Task join error: {}", e))?
@@ -1506,11 +1597,14 @@ pub async fn set_auto_start(enabled: bool) -> CommandResult<bool> {
     #[cfg(windows)]
     {
         tokio::task::spawn_blocking(move || {
-            let task_id: windows::core::HSTRING = STARTUP_TASK_ID.into();
-            let task = StartupTask::GetAsync(&task_id)
-                .map_err(|e| format!("Failed to get startup task: {}", e))?
-                .get()
-                .map_err(|e| format!("Failed to get startup task: {}", e))?;
+            let Some(task) = run_key_autostart::startup_task() else {
+                run_key_autostart::set(enabled)?;
+                return Ok(enabled);
+            };
+
+            // Packaged path: clear a stale fallback entry so only the
+            // StartupTask fires.
+            let _ = run_key_autostart::set(false);
 
             if enabled {
                 // Request enable - may prompt user for consent

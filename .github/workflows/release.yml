@@ -136,9 +136,9 @@ jobs:
 
       # Build + sign the sparse identity package that gives the NSIS-installed
       # app package identity (Explorer context menu, packaged COM) without
-      # Developer Mode. The msix lands in package/ next to the committed
-      # cloudreve-identity.cer and the NSIS hook (installer-hooks.nsh) files
-      # them into $INSTDIR when present. Same step as desktop-release.yml.
+      # Developer Mode. The msix and its matching public .cer land in
+      # package/ and the NSIS hook (installer-hooks.nsh) files them into
+      # $INSTDIR when present. Same step as desktop-release.yml.
       - name: Build signed sparse identity package
         if: runner.os == 'Windows'
         # KERN's host executor has no pwsh shell — run the script through
@@ -168,6 +168,23 @@ jobs:
           [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SPARSE_SIGNING_PFX_BASE64))
           & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:SPARSE_SIGNING_PFX_PASSWORD "$env:RUNNER_TEMP\Cloudreve-Identity.msix"
           if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+
+          # The signing cert must be an end-entity code-signing cert. A CA
+          # certificate (basicConstraints CA:true) makes WinVerifyTrust return
+          # 0x80096019 and every Add-AppxPackage of this msix fails 0x87EA0003.
+          $signCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($pfx, $env:SPARSE_SIGNING_PFX_PASSWORD)
+          $bc = $signCert.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.19' }
+          if ($bc -and $bc.Format($false) -match 'Subject Type=CA') {
+            throw "sparse signing cert is a CA certificate; must be an end-entity code-signing cert"
+          }
+          $eku = $signCert.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.37' }
+          if (-not ($eku -and $eku.Format($false) -match '1\.3\.6\.1\.5\.5\.7\.3\.3')) {
+            throw "sparse signing cert lacks the codeSigning EKU"
+          }
+          # Export the public half of the same cert so the shipped .cer always
+          # matches the package signature (it previously went stale, which made
+          # trusted-store imports useless on end-user devices).
+          [IO.File]::WriteAllBytes("$PWD\desktop\package\cloudreve-identity.cer", $signCert.Export('Cert'))
 
           Copy-Item "$env:RUNNER_TEMP\Cloudreve-Identity.msix" desktop/package/Cloudreve-Identity.msix -Force
           PS1EOF
