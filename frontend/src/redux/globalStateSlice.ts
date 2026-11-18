@@ -10,7 +10,7 @@ import {
 } from "../api/explorer.ts";
 import { Response } from "../api/request.ts";
 import { AppRegistration, User } from "../api/user.ts";
-import { SelectType } from "../component/Uploader/core";
+import { SelectType } from "../component/Uploader/core/selectType.ts";
 import SessionManager, { UserSettings } from "../session";
 
 export interface BatchDownloadProgress {

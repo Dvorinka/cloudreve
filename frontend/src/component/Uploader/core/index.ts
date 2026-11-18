@@ -1,5 +1,5 @@
 import { PolicyType, StoragePolicy } from "../../../api/explorer.ts";
-import { defaultPath } from "../../../hooks/useNavigation.tsx";
+import { defaultPath } from "../../../util/uri.ts";
 import { UnknownPolicyError, UploaderError, UploaderErrorName } from "./errors";
 import Logger, { LogLevel } from "./logger";
 import { Task, TaskType } from "./types";
@@ -38,10 +38,7 @@ export interface Option {
   onProactiveFileAdded?: (uploaders: Base[]) => void;
 }
 
-export enum SelectType {
-  File,
-  Directory,
-}
+export { SelectType } from "./selectType.ts";
 
 export default class UploadManager {
   public logger: Logger;

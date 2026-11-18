@@ -9,7 +9,6 @@ import {
 } from "../../../../api/api.ts";
 import { UploadCredential, UploadSessionRequest } from "../../../../api/explorer.ts";
 import { AppError } from "../../../../api/request.ts";
-import { store } from "../../../../redux/store.ts";
 import {
   CreateUploadSessionError,
   DeleteUploadSessionError,
@@ -32,9 +31,14 @@ import { ChunkInfo, ChunkProgress } from "../uploader/chunk";
 import { EncryptedBlob } from "../uploader/encrypt/blob.ts";
 import { OBJtoXML, request } from "../utils";
 
+// Resolved lazily: a static edge to the redux store creates an
+// initialization cycle (store -> slices -> uploader core -> store).
+let storePromise: Promise<typeof import("../../../../redux/store.ts").store> | undefined;
+const getStore = () => (storePromise ??= import("../../../../redux/store.ts").then((m) => m.store));
+
 export async function createUploadSession(req: UploadSessionRequest, _cancel: CancelToken): Promise<UploadCredential> {
   try {
-    return await store.dispatch(sendCreateUploadSession(req));
+    return await (await getStore()).dispatch(sendCreateUploadSession(req));
   } catch (e) {
     if (e instanceof AppError) {
       throw new CreateUploadSessionError(e.response);
@@ -46,7 +50,7 @@ export async function createUploadSession(req: UploadSessionRequest, _cancel: Ca
 
 export async function deleteUploadSession(id: string, uri: string): Promise<any> {
   try {
-    return await store.dispatch(sendDeleteUploadSession({ id, uri }));
+    return await (await getStore()).dispatch(sendDeleteUploadSession({ id, uri }));
   } catch (e) {
     if (e instanceof AppError) {
       throw new DeleteUploadSessionError(e.response);
@@ -63,7 +67,7 @@ export async function localUploadChunk(
   cancel: CancelToken,
 ): Promise<any> {
   try {
-    return await store.dispatch(
+    return await (await getStore()).dispatch(
       sendUploadChunk(sessionID, chunk.chunk, chunk.index, cancel, (progressEvent) => {
         onProgress({
           loaded: progressEvent.loaded,
@@ -150,7 +154,7 @@ export async function oneDriveUploadChunk(
 
 export async function finishOneDriveUpload(sessionID: string, sessionKey: string): Promise<any> {
   try {
-    return await store.dispatch(sendOneDriveCompleteUpload(sessionID, sessionKey));
+    return await (await getStore()).dispatch(sendOneDriveCompleteUpload(sessionID, sessionKey));
   } catch (e) {
     if (e instanceof AppError) {
       throw new OneDriveFinishUploadError(e.response);
@@ -375,7 +379,7 @@ export async function upyunFormUploadChunk(
 
 export async function s3LikeUploadCallback(sessionID: string, sessionKey: string, policyType: string): Promise<any> {
   try {
-    return await store.dispatch(sendS3LikeCompleteUpload(policyType, sessionID, sessionKey));
+    return await (await getStore()).dispatch(sendS3LikeCompleteUpload(policyType, sessionID, sessionKey));
   } catch (e) {
     if (e instanceof AppError) {
       throw new S3LikeUploadCallbackError(e.response);
@@ -390,7 +394,7 @@ export async function s3LikeUploadCallback(sessionID: string, sessionKey: string
 // (cloudreve/frontend#344).
 export async function obsUploadCallback(sessionID: string, sessionKey: string): Promise<any> {
   try {
-    return await store.dispatch(sendObsCompleteUpload(sessionID, sessionKey));
+    return await (await getStore()).dispatch(sendObsCompleteUpload(sessionID, sessionKey));
   } catch (e) {
     if (e instanceof AppError) {
       throw new S3LikeUploadCallbackError(e.response);

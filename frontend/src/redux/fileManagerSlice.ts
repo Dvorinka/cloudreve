@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { FileResponse, FileThumbResponse, FileType, ListResponse } from "../api/explorer.ts";
 import { AppError, Response } from "../api/request.ts";
 import { Capacity } from "../api/user.ts";
-import { ListViewColumnSetting } from "../component/FileManager/Explorer/ListView/Column.tsx";
+import type { ListViewColumnSetting } from "../component/FileManager/Explorer/ListView/columnType.ts";
 import SessionManager, { UserSettings } from "../session";
 import { SearchParam } from "../util/uri.ts";
 

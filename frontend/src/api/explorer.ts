@@ -1,4 +1,4 @@
-import { ListViewColumnSetting } from "../component/FileManager/Explorer/ListView/Column.tsx";
+import type { ListViewColumnSetting } from "../component/FileManager/Explorer/ListView/columnType.ts";
 import { User } from "./user.ts";
 
 export interface PaginationArgs {

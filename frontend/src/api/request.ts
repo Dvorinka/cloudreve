@@ -1,10 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { enqueueSnackbar, SnackbarAction } from "notistack";
-import { DefaultCloseAction, ErrorListDetailAction } from "../component/Common/Snackbar/snackbar.tsx";
 import i18n from "../i18n.ts";
 import type { AppThunk } from "../redux/store.ts";
-import { openLockConflictDialog } from "../redux/thunks/dialog.ts";
-import { router } from "../router";
 import SessionManager from "../session";
 import { ErrNames } from "../session/errors.ts";
 import { sendRefreshToken } from "./api.ts";
@@ -220,6 +217,9 @@ export function send<T = any>(
           case Code.CodeLoginRequired:
             if (!signOutLock) {
               SessionManager.signOutCurrent();
+              // Imported lazily: the router pulls the whole page tree (and
+              // the store) — a static edge cycles back into api modules.
+              const { router } = await import("../router");
               router.navigate(
                 "/session?redirect=" + encodeURIComponent(window.location.pathname + window.location.search),
               );
@@ -237,6 +237,9 @@ export function send<T = any>(
         if (e instanceof AppError && e.code == Code.LockConflict && !opts.skipLockConflict) {
           let rejected = false;
           try {
+            // Imported lazily: a static edge here cycles back through
+            // the still-initializing store slices (request -> dialog thunk -> slices).
+            const { openLockConflictDialog } = await import("../redux/thunks/dialog.ts");
             await dispatch(openLockConflictDialog(e.response));
           } catch (e) {
             rejected = true;
@@ -250,6 +253,11 @@ export function send<T = any>(
           throw e;
         }
 
+        // Imported lazily: the snackbar module pulls redux slices — a
+        // static edge cycles back into api modules during store init.
+        const { DefaultCloseAction, ErrorListDetailAction } = await import(
+          "../component/Common/Snackbar/snackbar.tsx"
+        );
         let action: SnackbarAction = DefaultCloseAction;
         // Handle aggregated error
         if (e instanceof AppError && e.code == Code.BatchOperationNotFullyCompleted) {

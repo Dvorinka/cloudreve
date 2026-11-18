@@ -13,6 +13,10 @@ export const Filesystem = {
   trash: "trash",
 };
 
+export const defaultPath = "cloudreve://" + Filesystem.my;
+export const defaultTrashPath = "cloudreve://" + Filesystem.trash;
+export const defaultSharedWithMePath = "cloudreve://" + Filesystem.shared_with_me;
+
 export const UriQuery = {
   name: "name",
   name_op_or: "name_op_or",

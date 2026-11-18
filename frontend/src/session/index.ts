@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Group, LoginResponse, Token, User } from "../api/user.ts";
-import { ColumType } from "../component/FileManager/Explorer/ListView/Column.tsx";
+import { ColumType } from "../component/FileManager/Explorer/ListView/columnType.ts";
 import Boolset from "../util/boolset.ts";
 import {
   ErrAccessTokenExpired,

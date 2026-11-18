@@ -1,7 +1,6 @@
 // 所有 Uploader 的基类
 import axios, { CanceledError, CancelTokenSource } from "axios";
 import { EncryptionCipher, PolicyType } from "../../../../api/explorer.ts";
-import { store } from "../../../../redux/store.ts";
 import CrUri from "../../../../util/uri.ts";
 import { createUploadSession, deleteUploadSession } from "../api";
 import { UploaderError } from "../errors";
@@ -145,6 +144,9 @@ export default abstract class Base {
       // plaintext hash would never match — and storing it would leak content
       // identity.
       let hash: string | undefined;
+      // Imported lazily: a static edge to the redux store creates an
+      // initialization cycle (store -> slices -> uploader core -> store).
+      const { store } = await import("../../../../redux/store.ts");
       if (store.getState().siteConfig.basic.config.upload_dedup && !this.task.policy.encryption) {
         try {
           hash = await utils.sha256File(this.task.file);
