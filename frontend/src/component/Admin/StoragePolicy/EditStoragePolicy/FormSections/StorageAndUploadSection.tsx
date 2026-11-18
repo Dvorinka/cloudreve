@@ -304,7 +304,7 @@ const StorageAndUploadSection = () => {
               <Trans
                 i18nKey="policy.blobFolderNamingDes"
                 ns="dashboard"
-                components={[<Link href="#" onClick={handlePathMagicVarClick} />]}
+                components={[<Link key="0" href="#" onClick={handlePathMagicVarClick} />]}
               />
               {t("policy.nameRuleImmutable")}
             </NoMarginHelperText>
@@ -322,7 +322,7 @@ const StorageAndUploadSection = () => {
               <Trans
                 i18nKey="policy.blobNameDes"
                 ns="dashboard"
-                components={[<Link href="#" onClick={handleFileMagicVarClick} />]}
+                components={[<Link key="0" href="#" onClick={handleFileMagicVarClick} />]}
               />
               {t("policy.nameRuleImmutable")}
             </NoMarginHelperText>
@@ -492,7 +492,7 @@ const StorageAndUploadSection = () => {
                   i18nKey="policy.acceleratedDomainUploadDes"
                   ns="dashboard"
                   components={[
-                    <Link target="_blank" href="https://developer.qiniu.com/kodo/12656/transfer-acceleration" />,
+                    <Link key="0" target="_blank" href="https://developer.qiniu.com/kodo/12656/transfer-acceleration" />,
                   ]}
                 />
               </NoMarginHelperText>

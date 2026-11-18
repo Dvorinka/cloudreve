@@ -62,7 +62,7 @@ export const UserProfile = ({ user, open, displayOnly }: { user: User; open: boo
             <Trans
               i18nKey={"setting.accountCreatedAt"}
               ns={"application"}
-              components={[<TimeBadge variant={"inherit"} datetime={loadedUser.created_at} />]}
+              components={[<TimeBadge key="0" variant={"inherit"} datetime={loadedUser.created_at} />]}
             />
           </Typography>
         )}

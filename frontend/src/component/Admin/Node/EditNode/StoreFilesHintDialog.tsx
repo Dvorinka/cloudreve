@@ -24,7 +24,7 @@ const StoreFilesHintDialog = ({ open, onClose }: StoreFilesHintDialogProps) => {
           <Trans
             i18nKey="node.storeFilesHint"
             ns="dashboard"
-            components={[<Link component={RouterLink} to="/admin/policy" />]}
+            components={[<Link key="0" component={RouterLink} to="/admin/policy" />]}
           />
         </Typography>
       </DialogContent>

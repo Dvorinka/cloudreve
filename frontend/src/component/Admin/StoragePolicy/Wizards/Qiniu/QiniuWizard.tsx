@@ -91,7 +91,7 @@ const QiniuWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.enterQiniuBucket"
               ns="dashboard"
-              components={[<Link href="https://portal.qiniu.com/kodo/bucket" target="_blank" />]}
+              components={[<Link key="0" href="https://portal.qiniu.com/kodo/bucket" target="_blank" />]}
             />
           </NoMarginHelperText>
         </SettingForm>

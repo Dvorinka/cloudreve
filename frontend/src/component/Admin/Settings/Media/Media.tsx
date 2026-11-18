@@ -80,7 +80,7 @@ const Media = () => {
                     i18nKey="settings.notAppliedToNativeGenerator"
                     ns="dashboard"
                     values={{ prefix: t("settings.thumbPathDes") }}
-                    components={[<Link href="#" onClick={handleThumbMagicVarClick} />]}
+                    components={[<Link key="0" href="#" onClick={handleThumbMagicVarClick} />]}
                   />
                 </NoMarginHelperText>
               </FormControl>
@@ -168,7 +168,7 @@ const Media = () => {
                 <Trans
                   ns="dashboard"
                   i18nKey="settings.generatorProxyWarning"
-                  components={[<Link href="https://docs.cloudreve.org/usage/thumbnails" target="_blank" />]}
+                  components={[<Link key="0" href="https://docs.cloudreve.org/usage/thumbnails" target="_blank" />]}
                 />
               </Alert>
               <Generators values={values} setSetting={setSettings} />
@@ -185,7 +185,7 @@ const Media = () => {
                 <Trans
                   ns="dashboard"
                   i18nKey="settings.extractMediaMetaDes"
-                  components={[<Link href="https://docs.cloudreve.org/usage/media-meta" target="_blank" />]}
+                  components={[<Link key="0" href="https://docs.cloudreve.org/usage/media-meta" target="_blank" />]}
                 />
               </Alert>
               <Extractors values={values} setSetting={setSettings} />

@@ -192,7 +192,7 @@ const SingleFileView = forwardRef<HTMLDivElement>((_props, ref) => {
                 <Trans
                   i18nKey="application:share.sharedBy"
                   components={[
-                    <Link
+                    <Link key="0"
                       underline="hover"
                       color="inherit"
                       component={RouterLink}

@@ -150,7 +150,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
                 i18nKey={"settings.themeDes"}
                 ns={"dashboard"}
                 components={[
-                  <Link href={"https://mui.com/material-ui/customization/default-theme/"} target={"_blank"} />,
+                  <Link key="0" href={"https://mui.com/material-ui/customization/default-theme/"} target={"_blank"} />,
                 ]}
               />
             </Typography>

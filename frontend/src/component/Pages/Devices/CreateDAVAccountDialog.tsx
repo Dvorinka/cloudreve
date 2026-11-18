@@ -159,7 +159,7 @@ const CreateDAVAccountDialog = ({
                 <Trans
                   i18nKey="application:setting.blockSysFilesUploadTooltip"
                   ns="application"
-                  components={[<Code />]}
+                  components={[<Code key="0" />]}
                 />
               </Typography>
               {groupProxyEnabled && (

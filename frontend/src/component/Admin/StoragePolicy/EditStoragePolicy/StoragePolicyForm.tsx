@@ -24,7 +24,7 @@ const StoragePolicyForm = () => {
           <Trans
             i18nKey="policy.noBindedGroupWarning"
             ns="dashboard"
-            components={[<Link component={RouterLink} to="/admin/group" />]}
+            components={[<Link key="0" component={RouterLink} to="/admin/group" />]}
           />
         </Alert>
       )}

@@ -37,7 +37,7 @@ export const ShareExpires = ({ expires, remain_downloads }: ShareExpiresProps) =
         <span>
           <Trans
             i18nKey="application:share.expireAt"
-            components={[<TimeBadge variant={"inherit"} color={"inherit"} datetime={expires} />]}
+            components={[<TimeBadge key="0" variant={"inherit"} color={"inherit"} datetime={expires} />]}
           />
         </span>
       )}

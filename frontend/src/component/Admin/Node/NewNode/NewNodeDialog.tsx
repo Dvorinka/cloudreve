@@ -194,7 +194,7 @@ AllowHeaders = *
                 />
               </Suspense>
               <NoMarginHelperText sx={{ mt: 1 }}>
-                <Trans i18nKey="node.runCrWithConfig" ns="dashboard" components={[<Code />]} />
+                <Trans i18nKey="node.runCrWithConfig" ns="dashboard" components={[<Code key="0" />]} />
               </NoMarginHelperText>
             </SettingForm>
           </Step>
@@ -223,7 +223,7 @@ AllowHeaders = *
                 {t("node.testNode")}
               </SecondaryButton>
               <NoMarginHelperText sx={{ mt: 1 }}>
-                <Trans i18nKey="node.hostHeaderHint" ns="dashboard" components={[<Code />]} />
+                <Trans i18nKey="node.hostHeaderHint" ns="dashboard" components={[<Code key="0" />]} />
               </NoMarginHelperText>
             </SettingForm>
           </Step>

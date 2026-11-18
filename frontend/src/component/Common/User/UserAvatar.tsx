@@ -1,4 +1,4 @@
-import { Avatar, AvatarProps, Skeleton, SxProps, Theme } from "@mui/material";
+import { Avatar, AvatarProps, Skeleton, Theme } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { bindHover, bindPopover } from "material-ui-popup-state";
 import { usePopupState } from "material-ui-popup-state/hooks";

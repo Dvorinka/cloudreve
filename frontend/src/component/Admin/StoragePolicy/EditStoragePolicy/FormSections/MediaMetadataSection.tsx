@@ -62,7 +62,7 @@ const MediaMetadataSection = () => {
                 i18nKey="policy.nativeMediaMetaExts"
                 ns="dashboard"
                 values={{ name: t(policyProps.nativeExtractorName ?? "") }}
-                components={[<span />]}
+                components={[<span key="0" />]}
               />
             }
             lgWidth={5}
@@ -81,7 +81,7 @@ const MediaMetadataSection = () => {
                   ns="dashboard"
                   components={
                     policyProps.nativeExtractorDoc
-                      ? [<Link target="_blank" href={policyProps.nativeExtractorDoc} />]
+                      ? [<Link key="0" target="_blank" href={policyProps.nativeExtractorDoc} />]
                       : []
                   }
                 />
@@ -89,7 +89,7 @@ const MediaMetadataSection = () => {
                   <Trans
                     i18nKey={policyProps.nativeExtractorDes}
                     ns="dashboard"
-                    components={[<Link target="_blank" href={policyProps.nativeExtractorDesDoc} />]}
+                    components={[<Link key="0" target="_blank" href={policyProps.nativeExtractorDesDoc} />]}
                   />
                 )}
               </NoMarginHelperText>
@@ -111,7 +111,7 @@ const MediaMetadataSection = () => {
               <Trans
                 i18nKey="policy.mediaExtractorProxyDes"
                 ns="dashboard"
-                components={[<Link component={RouterLink} to="/admin/settings?tab=mediaProcessing" />]}
+                components={[<Link key="0" component={RouterLink} to="/admin/settings?tab=mediaProcessing" />]}
               />
             </NoMarginHelperText>
           </FormControl>

@@ -74,7 +74,7 @@ const OdSignInStatus = () => {
               <Trans
                 i18nKey="policy.granted"
                 ns="dashboard"
-                components={[<TimeBadge datetime={status.last_refresh_time} variant="inherit" />]}
+                components={[<TimeBadge key="0" datetime={status.last_refresh_time} variant="inherit" />]}
               />
             </Typography>
           )}

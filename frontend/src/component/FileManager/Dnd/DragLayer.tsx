@@ -47,7 +47,7 @@ const DragPreview = ({ pointerOffset, files, ...rest }: DragPreviewProps) => {
         </Header>
       </Paper>
       {[...Array(Math.min(2, files.length - 1)).keys()].map((i) => (
-        <Paper
+        <Paper key={i}
           sx={{
             position: "absolute",
             width: size[0],

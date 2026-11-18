@@ -267,7 +267,7 @@ const AddCondition = (props: AddConditionProps) => {
                 </ListItemText>
               </SquareMenuItem>
             ) : (
-              <DenseDivider />
+              <DenseDivider key={index} />
             ),
           )}
         </CascadingSubmenu>

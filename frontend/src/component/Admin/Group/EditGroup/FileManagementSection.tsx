@@ -311,7 +311,7 @@ const FileManagementSection = () => {
                   <Trans
                     ns="dashboard"
                     i18nKey="group.allowRemoteDownloadDes"
-                    components={[<Link component={RouterLink} to="/admin/node" />]}
+                    components={[<Link key="0" component={RouterLink} to="/admin/node" />]}
                   />
                 </NoMarginHelperText>
               </FormControl>

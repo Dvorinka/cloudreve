@@ -115,7 +115,7 @@ const RemoteWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.nodeDes"
               ns="dashboard"
-              components={[<Link component={RouterLink} to="/admin/node" />]}
+              components={[<Link key="0" component={RouterLink} to="/admin/node" />]}
             />
           </NoMarginHelperText>
         </SettingForm>

@@ -341,7 +341,7 @@ const FileViewerEditDialog = ({ viewer, onChange, open, onClose }: FileViewerEdi
                   <Trans
                     i18nKey={"settings.viewerUrlDes"}
                     ns={"dashboard"}
-                    components={[<Link onClick={openMagicVar} href={"#"} />]}
+                    components={[<Link key="0" onClick={openMagicVar} href={"#"} />]}
                   />
                 </NoMarginHelperText>
               </SettingForm>

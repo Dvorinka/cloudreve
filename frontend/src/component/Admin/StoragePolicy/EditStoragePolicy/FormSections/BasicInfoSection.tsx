@@ -386,7 +386,7 @@ const BasicInfoSection = () => {
                           values.type === PolicyType.s3 ? "policy.s3EndpointPathStyle" : "policy.ks3EndpointPathStyle"
                         }
                         ns="dashboard"
-                        components={[<Code />]}
+                        components={[<Code key="0" />]}
                       />
                     </NoMarginHelperText>
                   </>
@@ -398,7 +398,7 @@ const BasicInfoSection = () => {
                 <SettingForm title={t("policy.endpoint")} lgWidth={5}>
                   <DenseFilledTextField fullWidth required value={values.server} onChange={onEndpointChange} />
                   <NoMarginHelperText>
-                    <Trans i18nKey="policy.ossEndpointDes" ns="dashboard" components={[<Code />, <Code />, <Code />]} />
+                    <Trans i18nKey="policy.ossEndpointDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />, <Code key="2" />]} />
                   </NoMarginHelperText>
                   <FormControlLabel
                     sx={{ mt: 1, mb: -1 }}
@@ -463,7 +463,7 @@ const BasicInfoSection = () => {
               <Trans
                 i18nKey="policy.nodeDes"
                 ns="dashboard"
-                components={[<Link component={RouterLink} to="/admin/node" />]}
+                components={[<Link key="0" component={RouterLink} to="/admin/node" />]}
               />
             </NoMarginHelperText>
           </SettingForm>
@@ -499,7 +499,7 @@ const BasicInfoSection = () => {
               type="number"
             />
             <NoMarginHelperText>
-              <Trans i18nKey="policy.batchDeleteSizeDes" ns="dashboard" components={[<Code />]} />
+              <Trans i18nKey="policy.batchDeleteSizeDes" ns="dashboard" components={[<Code key="0" />]} />
             </NoMarginHelperText>
           </SettingForm>
         )}

@@ -69,7 +69,7 @@ const UpyunWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.createUpyunBucketDes"
               ns="dashboard"
-              components={[<Link href="https://console.upyun.com/console/service" target="_blank" />]}
+              components={[<Link key="0" href="https://console.upyun.com/console/service" target="_blank" />]}
             />
           </NoMarginHelperText>
         </SettingForm>
@@ -81,7 +81,7 @@ const UpyunWizard = ({ onSubmit }: AddWizardProps) => {
               onChange={(value) => setPolicy({ ...policy, is_private: value })}
             />
             <NoMarginHelperText>
-              <Trans i18nKey="policy.upyunTokenDes" ns="dashboard" components={[<Code />, <Code />]} />
+              <Trans i18nKey="policy.upyunTokenDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
             </NoMarginHelperText>
           </FormControl>
         </SettingForm>

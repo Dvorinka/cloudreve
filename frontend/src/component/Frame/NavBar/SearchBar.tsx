@@ -67,7 +67,7 @@ const SearchBar = () => {
         ns={"application"}
         i18nKey={"navbar.searchPlaceholder"}
         components={[
-          <KeyIndicator sx={{ mx: 0.5 }}>
+          <KeyIndicator key="0" sx={{ mx: 0.5 }}>
             <Typography variant={"body2"} />
           </KeyIndicator>,
         ]}

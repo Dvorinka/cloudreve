@@ -105,7 +105,7 @@ const EditPropsDialog = ({ open, onClose, onSave, isNew, props }: EditPropsDialo
                 {
                   <Trans
                     i18nKey="dashboard:customProps.iconDes"
-                    components={[<Link target="_blank" href="https://icon-sets.iconify.design/" />]}
+                    components={[<Link key="0" target="_blank" href="https://icon-sets.iconify.design/" />]}
                   />
                 }
               </NoMarginHelperText>

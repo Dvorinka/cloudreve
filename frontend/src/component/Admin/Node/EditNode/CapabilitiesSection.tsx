@@ -521,7 +521,7 @@ const CapabilitiesSection = () => {
                       variant={"outlined"}
                     />
                     <NoMarginHelperText>
-                      <Trans i18nKey="node.rpcServerHelpDes" ns="dashboard" components={[<Code />]} />
+                      <Trans i18nKey="node.rpcServerHelpDes" ns="dashboard" components={[<Code key="0" />]} />
                     </NoMarginHelperText>
                   </FormControl>
                 </SettingForm>
@@ -529,7 +529,7 @@ const CapabilitiesSection = () => {
                   <FormControl fullWidth>
                     <DenseFilledTextField value={values.settings?.aria2?.token || ""} onChange={onAria2TokenChange} />
                     <NoMarginHelperText>
-                      <Trans i18nKey="node.rpcTokenDes" ns="dashboard" components={[<Code />]} />
+                      <Trans i18nKey="node.rpcTokenDes" ns="dashboard" components={[<Code key="0" />]} />
                     </NoMarginHelperText>
                   </FormControl>
                 </SettingForm>
@@ -556,7 +556,7 @@ const CapabilitiesSection = () => {
                         i18nKey="node.downloaderOptionDes"
                         ns="dashboard"
                         components={[
-                          <Link href="https://aria2.github.io/manual/en/html/aria2c.html#id2" target="_blank" />,
+                          <Link key="0" href="https://aria2.github.io/manual/en/html/aria2c.html#id2" target="_blank" />,
                         ]}
                       />
                     </NoMarginHelperText>
@@ -586,7 +586,7 @@ const CapabilitiesSection = () => {
                       variant={"outlined"}
                     />
                     <NoMarginHelperText>
-                      <Trans i18nKey="node.webUIEndpointDes" ns="dashboard" components={[<Code />]} />
+                      <Trans i18nKey="node.webUIEndpointDes" ns="dashboard" components={[<Code key="0" />]} />
                     </NoMarginHelperText>
                   </FormControl>
                 </SettingForm>
@@ -630,7 +630,7 @@ const CapabilitiesSection = () => {
                         i18nKey="node.downloaderOptionDes"
                         ns="dashboard"
                         components={[
-                          <Link
+                          <Link key="0"
                             href="https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#add-new-torrent"
                             target="_blank"
                           />,
@@ -686,7 +686,7 @@ const CapabilitiesSection = () => {
                         i18nKey="node.ytdlpOptionDes"
                         ns="dashboard"
                         components={[
-                          <Link
+                          <Link key="0"
                             href="https://github.com/yt-dlp/yt-dlp#options"
                             target="_blank"
                           />,

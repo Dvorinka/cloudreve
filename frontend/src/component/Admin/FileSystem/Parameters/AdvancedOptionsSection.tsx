@@ -192,7 +192,7 @@ const AdvancedOptionsSection = () => {
                 des: t("settings.oauthRefreshDes"),
               }}
               ns={"dashboard"}
-              components={[<Link href="https://crontab.guru/" target="_blank" rel="noopener noreferrer" />]}
+              components={[<Link key="0" href="https://crontab.guru/" target="_blank" rel="noopener noreferrer" />]}
             />
           </NoMarginHelperText>
         </SettingForm>

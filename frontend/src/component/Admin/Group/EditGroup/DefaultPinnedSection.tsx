@@ -37,7 +37,7 @@ const DefaultPinnedSection = () => {
               <Trans
                 i18nKey="group.defaultPinnedDes"
                 ns={"dashboard"}
-                components={[<Link component={RouterLink} to={"/admin/share"} />]}
+                components={[<Link key="0" component={RouterLink} to={"/admin/share"} />]}
               />
             </NoMarginHelperText>
           </FormControl>

@@ -59,7 +59,7 @@ const FileSystemSection = () => {
                   des: t("settings.trashBinIntervalDes"),
                 }}
                 ns={"dashboard"}
-                components={[<Link href="https://crontab.guru/" target="_blank" rel="noopener noreferrer" />]}
+                components={[<Link key="0" href="https://crontab.guru/" target="_blank" rel="noopener noreferrer" />]}
               />
             </NoMarginHelperText>
           </FormControl>
@@ -82,7 +82,7 @@ const FileSystemSection = () => {
                 values={{
                   des: t("settings.entityCollectIntervalDes"),
                 }}
-                components={[<Link href="https://crontab.guru/" target="_blank" rel="noopener noreferrer" />]}
+                components={[<Link key="0" href="https://crontab.guru/" target="_blank" rel="noopener noreferrer" />]}
               />
             </NoMarginHelperText>
           </FormControl>
@@ -263,7 +263,7 @@ const FileSystemSection = () => {
                 <Trans
                   i18nKey="settings.mapboxAccessTokenDes"
                   ns="dashboard"
-                  components={[<Link href="https://account.mapbox.com/access-tokens" target="_blank" />]}
+                  components={[<Link key="0" href="https://account.mapbox.com/access-tokens" target="_blank" />]}
                 />
               </NoMarginHelperText>
             </FormControl>

@@ -139,7 +139,7 @@ const PasskeyList = (props: PasskeyProps) => {
       )}
       <List disablePadding>
         {props.setting.passkeys?.map((passkey) => (
-          <SettingListItem
+          <SettingListItem key={passkey.id}
             iconColor={theme.palette.action.active}
             icon={Fingerprint}
             secondaryAction={
@@ -153,7 +153,7 @@ const PasskeyList = (props: PasskeyProps) => {
                 <Trans
                   i18nKey={"setting.accountCreatedAt"}
                   ns={"application"}
-                  components={[<TimeBadge datetime={passkey.created_at} variant={"inherit"} />]}
+                  components={[<TimeBadge key="0" datetime={passkey.created_at} variant={"inherit"} />]}
                 />
                 <Box
                   component={isMobile ? "div" : "span"}
@@ -169,7 +169,7 @@ const PasskeyList = (props: PasskeyProps) => {
                     <Trans
                       i18nKey={"setting.usedAt"}
                       ns={"application"}
-                      components={[<TimeBadge datetime={passkey.used_at} variant={"inherit"} />]}
+                      components={[<TimeBadge key="0" datetime={passkey.used_at} variant={"inherit"} />]}
                     />
                   ) : (
                     t("setting.neverUsed")

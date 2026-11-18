@@ -380,7 +380,7 @@ const OAuthClientForm = () => {
               <FormControl fullWidth>
                 <DenseFilledTextField required value={values.name || ""} onChange={onNameChange} />
                 <NoMarginHelperText>
-                  <Trans i18nKey="oauth.clientNameDes" ns="dashboard" components={[<Code />]} />
+                  <Trans i18nKey="oauth.clientNameDes" ns="dashboard" components={[<Code key="0" />]} />
                 </NoMarginHelperText>
               </FormControl>
             </SettingForm>
