@@ -13,6 +13,12 @@ permissions:
   contents: write
   packages: write
 
+# setup-node's yarn cache probe runs `yarn --version`. Node 22 Corepack
+# then writes `packageManager` into package.json before GoReleaser's dirty
+# check, so the before-hook in build-assets.sh never gets to restore it.
+env:
+  COREPACK_ENABLE_AUTO_PIN: "0"
+
 # Never cancel an in-flight release — a canceled run can leave the
 # GitHub release half-populated. Re-tags queue instead.
 concurrency:
@@ -110,6 +116,11 @@ jobs:
       matrix:
         ro: [[self-hosted, linux, x64], [self-hosted, windows, x64], [self-hosted, macos, x64]]
     runs-on: ${{ matrix.ro }}
+    env:
+      # Tauri's target dir blows the default work-root budget (half of free
+      # disk at job start). Same ceiling CI uses for the desktop job.
+      KERN_JOB_DISK: 16G
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
 
