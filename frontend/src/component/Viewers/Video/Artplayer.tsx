@@ -4,7 +4,7 @@ import Artplayer from "artplayer";
 import artplayerPluginChapter from "artplayer-plugin-chapter";
 import artplayerPluginHlsControl from "artplayer-plugin-hls-control";
 import { CrMaskedPrefix } from "./VideoViewer";
-import Hls, { HlsConfig } from "hls.js";
+import Hls, { FragmentLoaderConstructor, FragmentLoaderContext, HlsConfig, PlaylistLoaderConstructor } from "hls.js";
 import mpegts from "mpegts.js";
 import i18next from "i18next";
 import { useEffect, useRef } from "react";
@@ -27,7 +27,9 @@ const playM3u8 =
     if (Hls.isSupported()) {
       if (art.hls) art.hls.destroy();
       const hls = new Hls({
-        fLoader: class extends Hls.DefaultConfig.loader {
+        fLoader: class extends (Hls.DefaultConfig.loader as {
+          new (config: HlsConfig): InstanceType<typeof Hls.DefaultConfig.loader>;
+        }) {
           constructor(config: HlsConfig) {
             super(config);
             var load = this.load.bind(this);
@@ -40,15 +42,22 @@ const playM3u8 =
                     loaderResponse.url = url;
                     complete(loaderResponse, stats, successContext, networkDetails);
                   };
-                  load({ ...context, frag: { ...context.frag, relurl: url, _url: url }, url }, config, callbacks);
+                  const frag = (context as FragmentLoaderContext).frag;
+                  load(
+                    { ...context, frag: { ...frag, relurl: url, _url: url }, url } as unknown as FragmentLoaderContext,
+                    config,
+                    callbacks,
+                  );
                 });
               } else {
                 load(context, config, callbacks);
               }
             };
           }
-        },
-        pLoader: class extends Hls.DefaultConfig.loader {
+        } as unknown as FragmentLoaderConstructor,
+        pLoader: class extends (Hls.DefaultConfig.loader as {
+          new (config: HlsConfig): InstanceType<typeof Hls.DefaultConfig.loader>;
+        }) {
           constructor(config: HlsConfig) {
             super(config);
             var load = this.load.bind(this);
@@ -68,7 +77,7 @@ const playM3u8 =
               }
             };
           }
-        },
+        } as unknown as PlaylistLoaderConstructor,
         xhrSetup: async (xhr, url) => {
           // Always send cookies, even for cross-origin calls.
           if (url.startsWith(CrMaskedPrefix)) {
@@ -172,7 +181,8 @@ export default function Player({
             // Show qualitys in setting
             setting: true,
             // Get the quality name from level
-            getName: (level) => (level.height ? level.height + "P" : i18next.t("application:fileManager.default")),
+            getName: (level: { height?: number }) =>
+              level.height ? level.height + "P" : i18next.t("application:fileManager.default"),
             // I18n
             title: i18next.t("application:fileManager.quality"),
             auto: i18next.t("application:fileManager.auto"),
@@ -183,7 +193,7 @@ export default function Player({
             // Show audios in setting
             setting: true,
             // Get the audio name from track
-            getName: (track) => track.name,
+            getName: (track: { name?: string }) => track.name ?? "",
             // I18n
             title: i18next.t("application:fileManager.audioTrack"),
             auto: i18next.t("application:fileManager.auto"),

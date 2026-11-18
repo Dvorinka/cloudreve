@@ -78,7 +78,7 @@ const PhotoView: React.FC<PhotoViewProps> = ({
   });
 
   const eventListeners = useMemo(() => {
-    const listener = {};
+    const listener: Record<string, React.MouseEventHandler<Element>> = {};
     triggers.forEach((eventName) => {
       listener[eventName] = fn.show.bind(null, eventName);
     });

@@ -45,6 +45,7 @@ export interface FileBlockProps {
   search?: SearchParam;
   columns?: ListViewColumn[];
   boxHeight?: number;
+  showLock?: boolean;
 }
 
 const Explorer = () => {

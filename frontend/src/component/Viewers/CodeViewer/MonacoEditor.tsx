@@ -187,7 +187,7 @@ export interface MonacoDiffEditorProps extends MonacoEditorBaseProps {
   onBlur?: (value: string) => void;
 }
 
-function processSize(size: number | string) {
+function processSize(size: number | string | undefined) {
   return !/^\d+$/.test(size as string) ? size : `${size}px`;
 }
 
@@ -235,35 +235,41 @@ function MonacoEditor({
   );
 
   const handleEditorWillMount = () => {
-    const finalOptions = editorWillMount(monaco);
+    const finalOptions = editorWillMount?.(monaco);
     return finalOptions || {};
   };
 
   const handleEditorDidMount = () => {
-    editorDidMount(editor.current, monaco);
+    const ed = editor.current;
+    if (!ed) {
+      return;
+    }
+    editorDidMount?.(ed, monaco);
 
-    _subscription.current = editor.current.onDidChangeModelContent((event) => {
+    _subscription.current = ed.onDidChangeModelContent((event) => {
       if (!__prevent_trigger_change_event.current) {
-        onChange?.(editor.current.getValue(), event);
+        onChange?.(ed.getValue(), event);
       }
     });
 
-    _subscriptionBlur.current = editor.current.onDidBlurEditorText((event) => {
-      onBlur?.(editor.current.getValue());
+    _subscriptionBlur.current = ed.onDidBlurEditorText(() => {
+      onBlur?.(ed.getValue());
     });
 
     // Add key binding for Ctrl+S or Meta+S (Cmd+S on Mac)
-    editor.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       onSave?.current();
     });
   };
 
   const handleEditorWillUnmount = () => {
-    editorWillUnmount(editor.current, monaco);
+    if (editor.current) {
+      editorWillUnmount?.(editor.current, monaco);
+    }
   };
 
   const initMonaco = () => {
-    const finalValue = value !== null ? value : defaultValue;
+    const finalValue = (value !== null ? value : defaultValue) ?? "";
 
     if (containerElement.current) {
       // Before initializing monaco editor
@@ -274,9 +280,9 @@ function MonacoEditor({
         // Cannot create two models with the same URI,
         // if model with the given URI is already created, just update it.
         model.setValue(finalValue);
-        monaco.editor.setModelLanguage(model, language);
+        monaco.editor.setModelLanguage(model, language ?? "javascript");
       } else {
-        model = monaco.editor.createModel(finalValue, language, modelUri);
+        model = monaco.editor.createModel(finalValue, language ?? "javascript", modelUri);
       }
       editor.current = monaco.editor.create(
         containerElement.current,
@@ -303,6 +309,9 @@ function MonacoEditor({
       }
 
       const model = editor.current.getModel();
+      if (!model) {
+        return;
+      }
       __prevent_trigger_change_event.current = true;
       editor.current.pushUndoStop();
       // pushEditOperations says it expects a cursorComputer, but doesn't seem to need one.
@@ -311,10 +320,10 @@ function MonacoEditor({
         [
           {
             range: model.getFullModelRange(),
-            text: value,
+            text: value ?? null,
           },
         ],
-        undefined,
+        () => null,
       );
       editor.current.pushUndoStop();
       __prevent_trigger_change_event.current = false;
@@ -324,7 +333,9 @@ function MonacoEditor({
   useEffect(() => {
     if (editor.current) {
       const model = editor.current.getModel();
-      monaco.editor.setModelLanguage(model, language);
+      if (model) {
+        monaco.editor.setModelLanguage(model, language ?? "javascript");
+      }
     }
   }, [language]);
 
@@ -339,7 +350,9 @@ function MonacoEditor({
     if (editor.current) {
       // Don't pass in the model on update because monaco crashes if we pass the model
       // a second time. See https://github.com/microsoft/monaco-editor/issues/2027
-      const { model: _model, ...optionsWithoutModel } = options;
+      const { model: _model, ...optionsWithoutModel } = (options ?? {}) as NonNullable<
+        typeof options
+      > & { model?: unknown };
       editor.current.updateOptions({
         ...(className ? { extraEditorClassName: className } : {}),
         ...optionsWithoutModel,
@@ -354,7 +367,9 @@ function MonacoEditor({
   }, [width, height]);
 
   useEffect(() => {
-    monaco.editor.setTheme(theme);
+    if (theme) {
+      monaco.editor.setTheme(theme);
+    }
   }, [theme]);
 
   useEffect(

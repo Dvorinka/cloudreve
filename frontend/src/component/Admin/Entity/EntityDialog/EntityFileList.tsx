@@ -52,7 +52,7 @@ const EntityFileList = ({ files, userHashIDMap }: { files: File[]; userHashIDMap
             </TableRow>
           </TableHead>
           <TableBody>
-            {files?.map((option, index) => {
+            {files?.map((option) => {
               return (
                 <TableRow key={option.id} hover sx={{ cursor: "pointer" }} onClick={fileClicked(option.id ?? 0)}>
                   <TableCell>

@@ -211,8 +211,7 @@ const CustomContent = React.memo(
       () => (
         <Tooltip title={label} disableInteractive>
           <NoWrapTypography
-            onClick={handleSelectionClick}
-            component="div"
+            onClick={handleSelectionClick as React.MouseEventHandler}
             sx={{
               flexGrow: 1,
               textAlign: "left",

@@ -54,8 +54,8 @@ export const handleRemoteInvoke = async (
       sendResponse(w, msg, [
         currentUser
           ? {
-              displayName: currentUser?.user.nickname,
-              uid: currentUser?.user.id,
+              displayName: currentUser?.nickname,
+              uid: currentUser?.id,
             }
           : null,
       ]);

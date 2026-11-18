@@ -119,8 +119,8 @@ export const ImportFileDialog = ({ open, onClose }: ImportFileDialogProps) => {
             <Alert severity="warning" sx={{ fontSize: (theme) => theme.typography.body2.fontSize }}>
               <AlertTitle>{t("file.importWarning")}</AlertTitle>
               <ul style={{ paddingInlineStart: "20px" }}>
-                {t("file.importWarnings", { returnObjects: true }).map((warning, index) => (
-                  <li key={index}>{warning.toString()}</li>
+                {(t("file.importWarnings", { returnObjects: true }) as string[]).map((warning: string, index: number) => (
+                  <li key={index}>{warning}</li>
                 ))}
               </ul>
             </Alert>

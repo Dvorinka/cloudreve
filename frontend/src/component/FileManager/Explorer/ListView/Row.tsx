@@ -42,7 +42,7 @@ const RowContainer = styled(Box, {
 
 const Column = styled(Box, {
   shouldForwardProp: (prop) => prop !== "w",
-})<{ w: number }>(({ theme, w }) => ({
+})<{ w: number }>(({ w }) => ({
   display: "flex",
   alignItems: "center",
   width: `${w}px`,

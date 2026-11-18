@@ -16,7 +16,7 @@ interface DirectLinkItemProps {
 }
 
 const DirectLinkItem = memo(
-  ({ target, index, displayLink, displayName, showDisplayName, relativePathPlaceholder }: DirectLinkItemProps) => {
+  ({ displayLink, displayName, showDisplayName }: DirectLinkItemProps) => {
     const { t } = useTranslation();
     const handleCopy = useCallback(() => {
       copyToClipboard(displayLink);

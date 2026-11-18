@@ -31,7 +31,7 @@ export interface SideNavItemBaseProps {
   [key: string]: any;
 }
 export const SideNavItemBase = React.forwardRef(
-  ({ active, ...rest }: SideNavItemBaseProps, ref: React.Ref<HTMLElement>) => {
+  ({ active, ...rest }: SideNavItemBaseProps, ref: React.Ref<HTMLButtonElement>) => {
     return <StyledButtonBase active={active} {...rest} ref={ref} />;
   },
 );
@@ -55,7 +55,7 @@ export interface SideNavItemProps extends SideNavItemBaseProps {
 }
 
 const SideNavItem = React.forwardRef(
-  ({ icon, label, level, sx, ...rest }: SideNavItemProps, ref: React.Ref<HTMLElement>) => {
+  ({ icon, label, level, sx, ...rest }: SideNavItemProps, ref: React.Ref<HTMLButtonElement>) => {
     return (
       <StyledSideNavItem
         level={level}

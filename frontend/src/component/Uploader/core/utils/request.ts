@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { Response } from "../types";
+import { Response } from "../../../../api/request.ts";
 import { HTTPError, TransformResponseError } from "../errors";
 
 export const { CancelToken } = axios;
@@ -10,7 +10,7 @@ const baseConfig = {
       try {
         return JSON.parse(response);
       } catch (e) {
-        throw new TransformResponseError(response, e);
+        throw new TransformResponseError(response, e as Error);
       }
     },
   ],

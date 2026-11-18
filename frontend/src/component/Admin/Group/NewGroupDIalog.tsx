@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { upsertGroup } from "../../../api/api";
-import { GroupEnt } from "../../../api/dashboard";
+import { GroupEnt, StoragePolicy } from "../../../api/dashboard";
 import { GroupPermission } from "../../../api/user";
 import { useAppDispatch } from "../../../redux/hooks";
 import Boolset from "../../../util/boolset";
@@ -22,7 +22,6 @@ const defaultGroupBs = new Boolset("");
 defaultGroupBs.sets({
   [GroupPermission.share]: true,
   [GroupPermission.share_download]: true,
-  [GroupPermission.set_anonymous_permission]: true,
 });
 const defaultGroup: GroupEnt = {
   name: "",
@@ -38,7 +37,7 @@ const defaultGroup: GroupEnt = {
     redirected_source: true,
   },
   edges: {
-    storage_policies: { id: 1 },
+    storage_policies: { id: 1 } as StoragePolicy,
   },
   id: 0,
 };

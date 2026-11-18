@@ -254,7 +254,7 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
           "--cap-spinner-background-color": theme.palette.action.hover,
           "--cap-credits-font-size": String(theme.typography.caption.fontSize || "12px"),
           "--cap-opacity-hover": "0.7",
-        } as React.CSSProperties,
+        }
       }}
     >
       <div ref={captchaRef} {...rest} />

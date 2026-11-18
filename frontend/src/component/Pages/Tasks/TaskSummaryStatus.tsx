@@ -37,7 +37,7 @@ interface TaskStatusContentProps {
   label: string;
   [key: string]: any;
 }
-const TaskStatusContent = forwardRef(({ icon, label, color, ...props }: TaskStatusContentProps, ref) => {
+const TaskStatusContent = forwardRef<HTMLDivElement, TaskStatusContentProps>(({ icon, label, color, ...props }, ref) => {
   return (
     <Box ref={ref} {...props}>
       <Typography variant={"body2"} component={"div"} sx={{ color, display: "flex", mx: 0.5 }} noWrap>

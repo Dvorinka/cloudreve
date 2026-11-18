@@ -15,7 +15,7 @@ export default class ResumeHint extends Chunk {
     this.subscriber.onProgress(this.progress);
   }
 
-  protected async uploadChunk(chunkInfo: ChunkInfo) {
+  protected async uploadChunk(_chunkInfo: ChunkInfo) {
     return null;
   }
 }

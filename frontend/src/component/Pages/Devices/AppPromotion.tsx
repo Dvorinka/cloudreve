@@ -147,7 +147,6 @@ const AppPromotion = () => {
                   component={"img"}
                   src={"https://cloudreve.org/imgs/ios/766shots_so.png"}
                   alt="Image Description"
-                  effect="blur"
                   width={1}
                   height={1}
                   sx={{

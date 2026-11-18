@@ -617,6 +617,7 @@ export interface Share extends CommonMixin {
   downloads?: number;
   expires?: string;
   remain_downloads?: number;
+  price?: number;
   edges: {
     user?: User;
     file?: File;

@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import Artplayer from "artplayer";
+import { Setting as ArtSetting } from "artplayer/types/setting";
 import dayjs from "dayjs";
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -474,16 +475,16 @@ const VideoViewer = () => {
                 name: "loop",
                 html: t("application:fileManager.loop"),
                 switch: false,
-                mounted(item: any) {
+                mounted(this: Artplayer, item: ArtSetting) {
                   const enabled = this.storage.get("loop") === true;
                   if (enabled) {
                     item.switch = true;
-                    this.loop = true;
+                    this.option.loop = true;
                   }
                 },
-                onSwitch(item: any) {
+                onSwitch(this: Artplayer, item: ArtSetting) {
                   const next = !item.switch;
-                  this.loop = next;
+                  this.option.loop = next;
                   this.storage.set("loop", next);
                   return next;
                 },

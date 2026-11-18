@@ -259,7 +259,7 @@ export function fileClicked(index: number, file: FileResponse, e?: React.MouseEv
   };
 }
 
-export function fileDoubleClicked(index: number, file: FileResponse, e?: React.MouseEvent<HTMLElement>): AppThunk {
+export function fileDoubleClicked(index: number, file: FileResponse, _e?: React.MouseEvent<HTMLElement>): AppThunk {
   return async (dispatch, _getState) => {
     const actionOpt = getActionOpt([file], Viewers);
     if (actionOpt.showOpen || actionOpt.showEnter) {
@@ -1377,7 +1377,7 @@ function startBatchGetDirectLinks(files: FileResponse[]): AppThunk<Promise<Direc
     const currentUser = SessionManager.currentUserGroup();
     const batchLimit = currentUser?.direct_link_batch_size ?? 0;
     await dispatch(
-      walk(files, async (children, relativePath) => {
+      walk(files, async (children, _relativePath) => {
         const childFiles = children.filter((f) => f.type == FileType.file);
         allFiles.push(...childFiles);
         if (allFiles.length > batchLimit) {

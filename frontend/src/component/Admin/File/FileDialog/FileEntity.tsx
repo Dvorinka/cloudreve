@@ -60,7 +60,7 @@ const FileEntity = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {values?.edges?.entities?.map((option, index) => (
+          {values?.edges?.entities?.map((option) => (
             <TableRow key={option.id} hover sx={{ cursor: "pointer" }} onClick={handleEntityDialogOpen(option.id ?? 0)}>
               <TableCell>
                 <NoWrapTypography variant="inherit">{option.id}</NoWrapTypography>

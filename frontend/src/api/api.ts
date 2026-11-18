@@ -2779,7 +2779,7 @@ export function sendConsentOauthApp(args: GrantService, deny = false): ThunkResp
       send(
         `/session/oauth/consent${deny ? "/deny" : ""}`,
         { method: "POST", data: args },
-        { bypassSnackbar: (e) => true, ...defaultOpts },
+        { bypassSnackbar: () => true, ...defaultOpts },
       ),
     );
   };

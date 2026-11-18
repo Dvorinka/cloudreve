@@ -203,9 +203,7 @@ export const getColumnTypeDefaults = (
     return {
       ...ColumnTypeDefaults[c.type],
       width:
-        isMobile && ColumnTypeDefaults[c.type].widthMobile
-          ? ColumnTypeDefaults[c.type].widthMobile
-          : ColumnTypeDefaults[c.type].width,
+        (isMobile && ColumnTypeDefaults[c.type].widthMobile) || ColumnTypeDefaults[c.type].width,
     };
   }
 

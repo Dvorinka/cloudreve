@@ -125,7 +125,7 @@ export function checkReadMeEnabled(index: number): AppThunk {
     if (path && current_fs == Filesystem.share) {
       try {
         const info = await dispatch(queueLoadShareInfo(new CrUri(path), false));
-        dispatch(setShareReadmeDetect(info?.show_readme && info.source_type == FileType.folder));
+        dispatch(setShareReadmeDetect(!!(info?.show_readme && info.source_type == FileType.folder)));
       } catch (e) {
         dispatch(setShareReadmeDetect(false));
       }

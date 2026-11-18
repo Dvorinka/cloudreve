@@ -24,6 +24,7 @@ import {
   listResumeCtx,
 } from "./utils";
 import { Pool } from "./utils/pool";
+import { SelectType } from "./selectType.ts";
 
 export interface Option {
   logLevel: LogLevel;
@@ -38,7 +39,7 @@ export interface Option {
   onProactiveFileAdded?: (uploaders: Base[]) => void;
 }
 
-export { SelectType } from "./selectType.ts";
+export { SelectType };
 
 export default class UploadManager {
   public logger: Logger;
@@ -265,6 +266,7 @@ export default class UploadManager {
             policy: this.policy as StoragePolicy,
             dst: getDirectoryUploadDst(dst, file),
             file: file,
+            blob: file,
             size: file.size,
             overwrite: this.overwrite,
             name: getName ? getName(file) : file.name,

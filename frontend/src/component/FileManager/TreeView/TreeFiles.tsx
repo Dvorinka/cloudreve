@@ -6,7 +6,7 @@ import { useAppSelector } from "../../../redux/hooks.ts";
 import CrUri, { Filesystem } from "../../../util/uri.ts";
 import SideNavItem from "../../Frame/NavBar/SideNavItem.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
-import { useBreadcrumbButtons } from "../TopBar/BreadcrumbButton.tsx";
+import { StartIcon, useBreadcrumbButtons } from "../TopBar/BreadcrumbButton.tsx";
 import TreeFile from "./TreeFile.tsx";
 
 export interface TreeFilesProps {
@@ -24,11 +24,8 @@ export interface TreeFilesProps {
 export const pinedPrefix = "Pined";
 
 const TreeFiles = React.memo(
-  React.forwardRef(
-    (
-      { path: p, level, elements, labelOverwrite, notLoaded, pinned, flatten, canDrop, ...rest }: TreeFilesProps,
-      ref: React.Ref<HTMLLIElement>,
-    ) => {
+  React.forwardRef<HTMLLIElement, TreeFilesProps>(
+    ({ path: p, level, elements, labelOverwrite, notLoaded, pinned, flatten, canDrop, ...rest }, ref) => {
       const { t } = useTranslation();
       const fmIndex = useContext(FmIndexContext);
       const parentsCache = useAppSelector((state) => state.fileManager[fmIndex].tree[p]);
@@ -109,7 +106,7 @@ const TreeFiles = React.memo(
             ref={ref}
             file={parentsCache?.file}
             nodeId={nodeId}
-            fileIcon={startIcon}
+            fileIcon={startIcon as StartIcon}
             label={labelOverwrite ?? displayName}
             loading={loading}
             notLoaded={notLoaded && !parentsCache?.children}

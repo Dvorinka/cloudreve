@@ -2,6 +2,7 @@
   "compilerOptions": {
     "types": [
       "@types/webappsec-credential-management",
+      "@types/wicg-file-system-access",
       "vite-plugin-pwa/react"
     ],
 

@@ -33,7 +33,7 @@ export default function PasskeyLoginButton({ autoComplete, onLoginSuccess, ...re
       window.PublicKeyCredential &&
       PublicKeyCredential.isConditionalMediationAvailable
     ) {
-      PublicKeyCredential.isConditionalMediationAvailable().then((v) => {
+      PublicKeyCredential.isConditionalMediationAvailable().then(() => {
         if (!abortRef.current.signal.aborted) startLogin(true)();
       });
     }

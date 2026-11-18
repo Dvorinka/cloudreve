@@ -55,7 +55,7 @@ export class EncryptedBlob implements Blob {
   /**
    * Converts hex string or base64 string to Uint8Array
    */
-  private stringToUint8Array(str: string, encoding: "hex" | "base64" = "base64"): Uint8Array<ArrayBuffer> {
+  private stringToUint8Array(str: string, encoding: "hex" | "base64" = "base64"): Uint8Array {
     if (encoding === "hex") {
       // Remove any whitespace or separators
       const cleaned = str.replace(/[^0-9a-fA-F]/g, "");
@@ -80,7 +80,7 @@ export class EncryptedBlob implements Blob {
   /**
    * Increment a counter (Uint8Array) by a given number of blocks
    */
-  private incrementCounter(counter: Uint8Array<ArrayBuffer>, blocks: number): Uint8Array<ArrayBuffer> {
+  private incrementCounter(counter: Uint8Array, blocks: number): Uint8Array {
     // Create a copy to avoid modifying the original counter
     const result = new Uint8Array(counter);
 
@@ -296,7 +296,7 @@ export class EncryptedBlob implements Blob {
   /**
    * Returns encrypted data as Uint8Array (required by Blob interface)
    */
-  async bytes(): Promise<Uint8Array<ArrayBuffer>> {
+  async bytes(): Promise<Uint8Array> {
     const buffer = await this.arrayBuffer();
     return new Uint8Array(buffer);
   }

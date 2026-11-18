@@ -69,7 +69,7 @@ const BasicInfoSection = () => {
   const onTestNode = useCallback(() => {
     setTestNodeLoading(true);
     dispatch(testNode({ node: values }))
-      .then((res) => {
+      .then(() => {
         enqueueSnackbar(t("node.testNodeSuccess"), { variant: "success", action: DefaultCloseAction });
       })
       .finally(() => {

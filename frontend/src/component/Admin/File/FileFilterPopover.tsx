@@ -23,7 +23,7 @@ export interface FileFilterPopoverProps extends PopoverProps {
   clearFilters: () => void;
 }
 
-const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
+const StyledCheckbox = styled(Checkbox)(() => ({
   paddingTop: 0,
   paddingBottom: 0,
   paddingLeft: 0,

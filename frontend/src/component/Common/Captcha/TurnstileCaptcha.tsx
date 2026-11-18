@@ -1,4 +1,4 @@
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile";
 import { Box, useTheme } from "@mui/material";
 import i18next from "i18next";
 import { useEffect, useRef } from "react";
@@ -13,7 +13,7 @@ export interface TurnstileProps {
 const TurnstileCaptcha = ({ onStateChange, generation, ...rest }: TurnstileProps) => {
   const theme = useTheme();
 
-  const captchaRef = useRef();
+  const captchaRef = useRef<TurnstileInstance>(null);
   const turnstileKey = useAppSelector((state) => state.siteConfig.basic.config.turnstile_site_id);
 
   const refreshCaptcha = async () => {

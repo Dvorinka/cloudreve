@@ -85,7 +85,7 @@ const CapCaptcha = ({ values, setSettings }: CapCaptchaProps) => {
             value={values.captcha_cap_asset_server || "jsdelivr"}
             onChange={(e) =>
               setSettings({
-                captcha_cap_asset_server: e.target.value,
+                captcha_cap_asset_server: e.target.value as string,
               })
             }
           >
