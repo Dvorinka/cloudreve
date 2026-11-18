@@ -24,7 +24,7 @@ const OrganizeMenuItems = ({ displayOpt, targets }: SubMenuItemsProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const onClick = useCallback(
-    (f: () => any) => () => {
+    (f: () => unknown) => () => {
       f();
       if (rootPopupState) {
         rootPopupState.close();

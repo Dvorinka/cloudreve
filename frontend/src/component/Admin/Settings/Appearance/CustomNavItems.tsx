@@ -15,6 +15,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { CustomNavItem } from "../../../../api/site";
 import {
@@ -53,7 +54,7 @@ interface DraggableNavItemRowProps {
   onInputBlur: (index: number, field: keyof CustomNavItem) => void;
   onFieldChange: (index: number, field: keyof CustomNavItem, value: string) => void;
   IconPreview: React.ComponentType<{ iconName: string }>;
-  t: any;
+  t: TFunction;
   style?: React.CSSProperties;
 }
 

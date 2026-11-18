@@ -56,7 +56,7 @@ const DraggableColumnRow: React.FC<DraggableColumnRowProps> = ({
   const customProps = useAppSelector((state) => state.siteConfig.explorer?.config?.custom_props);
   const [, drop] = useDrop({
     accept: DND_TYPE,
-    hover(item: any, monitor) {
+    hover(item: { index: number }, monitor) {
       if (!ref.current) return;
 
       const dragIndex = item.index;

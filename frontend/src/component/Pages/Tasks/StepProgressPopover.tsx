@@ -181,7 +181,7 @@ const ProgressBar = ({ pkey, p }: { pkey: string; p: TaskProgress }) => {
 const StepProgressPopover = ({ taskId, open, ...rest }: StepProgressPopoverProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const stopPropagation = useCallback((e: any) => e.stopPropagation(), []);
+  const stopPropagation = useCallback((e: React.SyntheticEvent) => e.stopPropagation(), []);
   const [progress, setProgress] = useState<TaskProgresses | undefined>(undefined);
 
   useEffect(() => {

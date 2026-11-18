@@ -8,13 +8,14 @@ import {
   sendUploadChunk,
 } from "../../../../api/api.ts";
 import { UploadCredential, UploadSessionRequest } from "../../../../api/explorer.ts";
-import { AppError } from "../../../../api/request.ts";
+import { AppError, Response } from "../../../../api/request.ts";
 import {
   CreateUploadSessionError,
   DeleteUploadSessionError,
   HTTPError,
   LocalChunkUploadError,
   ObsFinishUploadError,
+  ObsJsonError,
   OneDriveChunkError,
   OneDriveFinishUploadError,
   QiniuChunkError,
@@ -25,7 +26,7 @@ import {
   SlaveChunkUploadError,
   UpyunUploadError,
 } from "../errors";
-import { OneDriveChunkResponse, QiniuChunkResponse, QiniuFinishUploadRequest, QiniuPartsInfo, S3Part } from "../types";
+import { OneDriveChunkResponse, OneDriveError, QiniuChunkResponse, QiniuError, QiniuFinishUploadRequest, QiniuPartsInfo, S3Part, UpyunError } from "../types";
 import { Progress } from "../uploader/base";
 import { ChunkInfo, ChunkProgress } from "../uploader/chunk";
 import { EncryptedBlob } from "../uploader/encrypt/blob.ts";
@@ -48,7 +49,7 @@ export async function createUploadSession(req: UploadSessionRequest, _cancel: Ca
   }
 }
 
-export async function deleteUploadSession(id: string, uri: string): Promise<any> {
+export async function deleteUploadSession(id: string, uri: string): Promise<unknown> {
   try {
     return await (await getStore()).dispatch(sendDeleteUploadSession({ id, uri }));
   } catch (e) {
@@ -65,7 +66,7 @@ export async function localUploadChunk(
   chunk: ChunkInfo,
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
-): Promise<any> {
+): Promise<unknown> {
   try {
     return await (await getStore()).dispatch(
       sendUploadChunk(sessionID, chunk.chunk, chunk.index, cancel, (progressEvent) => {
@@ -90,9 +91,9 @@ export async function slaveUploadChunk(
   chunk: ChunkInfo,
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
-): Promise<any> {
+): Promise<unknown> {
   const streaming = chunk.chunk instanceof EncryptedBlob;
-  const res = await request<any>(`${url}?chunk=${chunk.index}`, {
+  const res = await request<Response<unknown>>(`${url}?chunk=${chunk.index}`, {
     method: "post",
     adapter: streaming ? "fetch" : "xhr",
     headers: {
@@ -143,7 +144,7 @@ export async function oneDriveUploadChunk(
     cancelToken: cancel,
   }).catch((e) => {
     if (e instanceof HTTPError && e.response) {
-      throw new OneDriveChunkError(e.response.data);
+      throw new OneDriveChunkError(e.response.data as OneDriveError);
     }
 
     throw e;
@@ -152,7 +153,7 @@ export async function oneDriveUploadChunk(
   return res.data;
 }
 
-export async function finishOneDriveUpload(sessionID: string, sessionKey: string): Promise<any> {
+export async function finishOneDriveUpload(sessionID: string, sessionKey: string): Promise<unknown> {
   try {
     return await (await getStore()).dispatch(sendOneDriveCompleteUpload(sessionID, sessionKey));
   } catch (e) {
@@ -189,7 +190,7 @@ export async function s3LikeUploadChunk(
     transformResponse: undefined,
   }).catch((e) => {
     if (e instanceof HTTPError && e.response) {
-      throw new S3LikeChunkError(e.response.data);
+      throw new S3LikeChunkError(e.response.data as Document);
     }
 
     throw e;
@@ -198,9 +199,9 @@ export async function s3LikeUploadChunk(
   return res.headers["etag"];
 }
 
-export async function obsFinishUpload(url: string, chunks: ChunkProgress[], cancel: CancelToken): Promise<any> {
+export async function obsFinishUpload(url: string, chunks: ChunkProgress[], cancel: CancelToken): Promise<unknown> {
   const body = encodePartsXML(chunks);
-  const res = await request<any>(url, {
+  const res = await request<unknown>(url, {
     method: "post",
     cancelToken: cancel,
     transformResponse: undefined,
@@ -212,14 +213,14 @@ export async function obsFinishUpload(url: string, chunks: ChunkProgress[], canc
       return status == 200;
     },
   }).catch((e) => {
-    if (e instanceof HTTPError && e.response?.data?.message) {
-      throw new ObsFinishUploadError(e.response.data);
+    if (e instanceof HTTPError && (e.response?.data as { message?: string })?.message) {
+      throw new ObsFinishUploadError(e.response?.data as ObsJsonError);
     }
 
     if (e instanceof HTTPError && e.response?.data) {
       // Decode xml
       const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(e.response.data, "text/xml");
+      const xmlDoc = parser.parseFromString(e.response.data as string, "text/xml");
       throw new S3LikeFinishUploadError(xmlDoc);
     }
 
@@ -235,13 +236,13 @@ export async function s3LikeFinishUpload(
   chunks: ChunkProgress[],
   cancel: CancelToken,
   headers?: { [key: string]: string },
-): Promise<any> {
+): Promise<unknown> {
   let body = "";
   if (!isOss) {
     body += encodePartsXML(chunks);
   }
 
-  const res = await request<any>(url, {
+  const res = await request<unknown>(url, {
     method: "post",
     cancelToken: cancel,
     responseType: "document",
@@ -256,7 +257,7 @@ export async function s3LikeFinishUpload(
     },
   }).catch((e) => {
     if (e instanceof HTTPError && e.response) {
-      throw new S3LikeFinishUploadError(e.response.data);
+      throw new S3LikeFinishUploadError(e.response.data as Document);
     }
 
     throw e;
@@ -290,7 +291,7 @@ export async function qiniuDriveUploadChunk(
     cancelToken: cancel,
   }).catch((e) => {
     if (e instanceof HTTPError && e.response) {
-      throw new QiniuChunkError(e.response.data);
+      throw new QiniuChunkError(e.response.data as QiniuError);
     }
 
     throw e;
@@ -305,7 +306,7 @@ export async function qiniuFinishUpload(
   chunks: ChunkProgress[],
   cancel: CancelToken,
   mimeType?: string,
-): Promise<any> {
+): Promise<unknown> {
   const content: QiniuFinishUploadRequest = {
     mimeType,
     parts: chunks.map((chunk): QiniuPartsInfo => {
@@ -316,7 +317,7 @@ export async function qiniuFinishUpload(
     }),
   };
 
-  const res = await request<any>(`${url}`, {
+  const res = await request<unknown>(`${url}`, {
     method: "post",
     headers: {
       "content-type": "application/json",
@@ -326,7 +327,7 @@ export async function qiniuFinishUpload(
     cancelToken: cancel,
   }).catch((e) => {
     if (e instanceof HTTPError && e.response) {
-      throw new QiniuFinishUploadError(e.response.data);
+      throw new QiniuFinishUploadError(e.response.data as QiniuError);
     }
 
     throw e;
@@ -343,7 +344,7 @@ export async function upyunFormUploadChunk(
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
   mimeType?: string,
-): Promise<any> {
+): Promise<unknown> {
   const bodyFormData = new FormData();
   bodyFormData.append("policy", policy);
   bodyFormData.append("authorization", credential);
@@ -353,7 +354,7 @@ export async function upyunFormUploadChunk(
   // File must be the last element in the form
   bodyFormData.append("file", file);
 
-  const res = await request<any>(`${url}`, {
+  const res = await request<unknown>(`${url}`, {
     method: "post",
     headers: {
       "content-type": "multipart/form-data",
@@ -368,7 +369,7 @@ export async function upyunFormUploadChunk(
     cancelToken: cancel,
   }).catch((e) => {
     if (e instanceof HTTPError && e.response) {
-      throw new UpyunUploadError(e.response.data);
+      throw new UpyunUploadError(e.response.data as UpyunError);
     }
 
     throw e;
@@ -377,7 +378,7 @@ export async function upyunFormUploadChunk(
   return res.data;
 }
 
-export async function s3LikeUploadCallback(sessionID: string, sessionKey: string, policyType: string): Promise<any> {
+export async function s3LikeUploadCallback(sessionID: string, sessionKey: string, policyType: string): Promise<unknown> {
   try {
     return await (await getStore()).dispatch(sendS3LikeCompleteUpload(policyType, sessionID, sessionKey));
   } catch (e) {
@@ -392,7 +393,7 @@ export async function s3LikeUploadCallback(sessionID: string, sessionKey: string
 // obsUploadCallback notifies the backend after the client completes an OBS
 // multipart upload — without it the server never finalizes the session
 // (cloudreve/frontend#344).
-export async function obsUploadCallback(sessionID: string, sessionKey: string): Promise<any> {
+export async function obsUploadCallback(sessionID: string, sessionKey: string): Promise<unknown> {
   try {
     return await (await getStore()).dispatch(sendObsCompleteUpload(sessionID, sessionKey));
   } catch (e) {
@@ -413,7 +414,7 @@ const encodePartsXML = (chunks: ChunkProgress[]): string => {
       PartNumber: chunk.index + 1,
       ETag: chunk.etag!,
     };
-    body += OBJtoXML(part);
+    body += OBJtoXML(part as unknown as Record<string, unknown>);
     body += "</Part>";
   });
   body += "</CompleteMultipartUpload>";

@@ -19,42 +19,42 @@ export const promiseId = () => new Date().getTime().toString();
 export const deleteDialogPromisePool: {
   [key: string]: {
     resolve: (value: DeleteOption | PromiseLike<DeleteOption>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
 export const generalDialogPromisePool: {
   [key: string]: {
     resolve: (value: void | PromiseLike<void>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
 export const renameDialogPromisePool: {
   [key: string]: {
     resolve: (value: string | PromiseLike<string>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
 export const pathSelectionDialogPromisePool: {
   [key: string]: {
     resolve: (value: string | PromiseLike<string>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
 export const createNewDialogPromisePool: {
   [key: string]: {
     resolve: (value: FileResponse | PromiseLike<FileResponse>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
 export const selectOptionDialogPromisePool: {
   [key: string]: {
-    resolve: (value: any | PromiseLike<any>) => void;
-    reject: (reason?: any) => void;
+    resolve: (value: unknown | PromiseLike<unknown>) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
@@ -66,7 +66,7 @@ export interface StaleVersionAction {
 export const staleVersionDialogPromisePool: {
   [key: string]: {
     resolve: (value: StaleVersionAction | PromiseLike<StaleVersionAction>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
@@ -78,7 +78,7 @@ export interface SaveAsAction {
 export const saveAsDialogPromisePool: {
   [key: string]: {
     resolve: (value: SaveAsAction | PromiseLike<SaveAsAction>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
@@ -112,7 +112,7 @@ export function renameForm(index: number, file: FileResponse): AppThunk<Promise<
   };
 }
 
-export function showAggregatedErrorDialog(error: Response<any>): AppThunk {
+export function showAggregatedErrorDialog(error: Response<unknown>): AppThunk {
   return (dispatch, getState) => {
     const tree = getState().fileManager[0].tree;
     const files: {
@@ -252,16 +252,32 @@ export function requestCreateNew(fmIndex: number, type: string, defaultName?: st
 // selectOption resolves with the chosen option value. When `rememberable`
 // is set, the dialog offers a "don't ask again" checkbox and resolves with
 // { value, remember } so the caller can persist the choice.
-export function selectOption(
-  options: DialogSelectOption[],
+export function selectOption<T>(
+  options: DialogSelectOption<T>[],
+  title: string,
+  rememberable: true,
+  subtitle?: string,
+): AppThunk<Promise<{ value: T; remember: boolean }>>;
+export function selectOption<T>(
+  options: DialogSelectOption<T>[],
+  title: string,
+  rememberable?: false,
+  subtitle?: string,
+): AppThunk<Promise<T>>;
+export function selectOption<T>(
+  options: DialogSelectOption<T>[],
   title: string,
   rememberable?: boolean,
   subtitle?: string,
-): AppThunk<Promise<any> | Promise<void>> {
+): AppThunk<Promise<T | { value: T; remember: boolean }>> {
   return async (dispatch) => {
     const id = promiseId();
-    return new Promise<any>((resolve, reject) => {
-      selectOptionDialogPromisePool[id] = { resolve, reject };
+    return new Promise<T | { value: T; remember: boolean }>((resolve, reject) => {
+      selectOptionDialogPromisePool[id] = {
+        // SAFETY: the dialog resolves with the chosen option value, or { value, remember }.
+        resolve: (value: unknown) => resolve(value as T | { value: T; remember: boolean }),
+        reject,
+      };
       dispatch(
         setSelectOptionDialog({
           open: true,

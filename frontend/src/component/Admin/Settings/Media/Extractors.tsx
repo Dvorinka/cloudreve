@@ -25,9 +25,9 @@ import { AccordionSummary, StyledAccordion } from "../UserSession/SSOSettings.ts
 
 export interface ExtractorsProps {
   values: {
-    [key: string]: any;
+    [key: string]: string;
   };
-  setSetting: (v: { [key: string]: any }) => void;
+  setSetting: (v: { [key: string]: string }) => void;
 }
 
 interface ExtractorRenderProps {
@@ -102,7 +102,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
     });
 
     const newValues = { ...values, [name]: e.target.checked ? "1" : "0" };
-    if (isTrueVal(newValues["media_meta_geocoding"]) && !isTrueVal(newValues["media_meta_exif"])) {
+    if (isTrueVal(newValues["media_meta_geocoding"] as string) && !isTrueVal(newValues["media_meta_exif"] as string)) {
       enqueueSnackbar({
         message: t("settings.geocodingDependencyWarning"),
         variant: "warning",
@@ -142,7 +142,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
               control={
                 <StyledCheckbox
                   size={"small"}
-                  checked={isTrueVal(values[e.enableFlag ?? ""])}
+                  checked={isTrueVal(values[e.enableFlag ?? ""] as string)}
                   onChange={handleEnableChange(e.enableFlag ?? "")}
                 />
               }
@@ -164,7 +164,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
                         endAdornment: (
                           <InputAdornment position="end">
                             <Button
-                              onClick={() => doTest(e.name, values[e.executableSetting ?? ""])}
+                              onClick={() => doTest(e.name, values[e.executableSetting ?? ""] as string)}
                               loading={testing}
                               color="primary"
                             >
@@ -189,7 +189,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
                     <SizeInput
                       variant={"outlined"}
                       required
-                      value={parseInt(values[e.maxSizeLocalSetting ?? ""]) ?? 0}
+                      value={parseInt(values[e.maxSizeLocalSetting ?? ""] as string) ?? 0}
                       onChange={(v) =>
                         setSetting({
                           [e.maxSizeLocalSetting ?? ""]: v.toString(),
@@ -206,7 +206,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
                     <SizeInput
                       variant={"outlined"}
                       required
-                      value={parseInt(values[e.maxSizeRemoteSetting ?? ""]) ?? 0}
+                      value={parseInt(values[e.maxSizeRemoteSetting ?? ""] as string) ?? 0}
                       onChange={(v) =>
                         setSetting({
                           [e.maxSizeRemoteSetting ?? ""]: v.toString(),
@@ -224,7 +224,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
                       <FormControlLabel
                         control={
                           <Switch
-                            checked={isTrueVal(values[setting.name])}
+                            checked={isTrueVal(values[setting.name] as string)}
                             onChange={(ev) =>
                               setSetting({
                                 [setting.name]: ev.target.checked ? "1" : "0",
@@ -237,7 +237,7 @@ const Extractors = ({ values, setSetting }: ExtractorsProps) => {
                     ) : (
                       <DenseFilledTextField
                         label={t(`settings.${setting.label}`)}
-                        required={isTrueVal(values[e.enableFlag ?? ""])}
+                        required={isTrueVal(values[e.enableFlag ?? ""] as string)}
                         value={values[setting.name]}
                         onChange={(ev) =>
                           setSetting({

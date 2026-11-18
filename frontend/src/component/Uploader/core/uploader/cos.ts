@@ -17,7 +17,7 @@ export default class COS extends Chunk {
     this.task.chunkProgress[chunkInfo.index].etag = etag;
   }
 
-  protected async afterUpload(): Promise<any> {
+  protected async afterUpload(): Promise<unknown> {
     this.logger.info(`Finishing multipart upload...`);
     this.transit(Status.finishing);
     await s3LikeFinishUpload(this.task.session!.completeURL, false, this.task.chunkProgress, this.cancelToken.token, {

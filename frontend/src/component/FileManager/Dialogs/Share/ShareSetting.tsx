@@ -145,7 +145,7 @@ const neverOption: valueOption = { value: 0, label: "modals.never" };
 
 type AccessRole = "view" | "preview" | "upload" | "edit" | "dropbox";
 
-const isNumeric = (num: any) =>
+const isNumeric = (num: unknown) =>
   (typeof num === "number" || (typeof num === "string" && num.trim() !== "")) && !isNaN(num as number);
 
 const filter = createFilterOptions<valueOption>();
@@ -159,7 +159,7 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
   const isFolder = file?.type == FileType.folder;
   const isFile = file?.type == FileType.file;
 
-  const handleExpand = (panel: string) => (_event: any, isExpanded: boolean) => {
+  const handleExpand = (panel: string) => (_event: unknown, isExpanded: boolean) => {
     setExpanded(isExpanded ? panel : undefined);
   };
 

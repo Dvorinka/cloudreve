@@ -29,7 +29,7 @@ export const DefaultCloseAction = function SnackbarAction(snackbarId: SnackbarKe
   );
 };
 
-export const ErrorListDetailAction = (error: Response<any>) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
+export const ErrorListDetailAction = (error: Response<unknown>) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 

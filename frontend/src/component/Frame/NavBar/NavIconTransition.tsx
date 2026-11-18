@@ -6,7 +6,7 @@ import SvgIcon from "@mui/material/SvgIcon/SvgIcon";
 export interface NavIconTransitionProps {
   fileIcon: ((props: SvgIconProps) => JSX.Element)[] | (typeof SvgIcon)[];
   active?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
   iconProps?: SvgIconProps;
 }
 

@@ -14,7 +14,7 @@ import Pinned, { usePinned } from "./Pinned.tsx";
 import TreeFiles from "./TreeFiles.tsx";
 
 export interface TreeNavigationProps {
-  scrollRef?: React.MutableRefObject<HTMLElement | undefined>;
+  scrollRef?: React.RefObject<HTMLElement | null>;
   index?: number;
   hideWithDrawer?: boolean;
   disableSharedWithMe?: boolean;

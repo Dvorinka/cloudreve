@@ -16,9 +16,9 @@ export interface User {
   id: string;
   email?: string;
   nickname: string;
-  status?: any /* user.Status */;
+  status?: unknown /* user.Status */;
   avatar?: string;
-  created_at: any /* time.Time */;
+  created_at: string;
   preferred_theme?: string;
   anonymous?: boolean;
   group?: Group;
@@ -50,7 +50,7 @@ export interface PrepareLoginResponse {
 }
 
 export interface CaptchaRequest {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PasswordLoginRequest extends CaptchaRequest {

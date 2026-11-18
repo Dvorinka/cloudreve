@@ -16,7 +16,7 @@ const Excalidraw = lazy(() => import("./Excalidraw.tsx"));
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
-    children: React.ReactElement<any, any>;
+    children: React.ReactElement;
   },
   ref: React.Ref<unknown>,
 ) {
@@ -71,7 +71,7 @@ const ExcalidrawViewer = () => {
   }, [dispatch]);
 
   const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],

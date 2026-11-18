@@ -72,7 +72,7 @@ const ConditionBox = forwardRef((props: ConditionProps, ref) => {
   const [hovered, setHovered] = useState(false);
 
   const onNameConditionAdded = useCallback(
-    (_e: any, newValue: string[]) => {
+    (_e: unknown, newValue: string[]) => {
       onChange({
         ...condition,
         names: newValue,

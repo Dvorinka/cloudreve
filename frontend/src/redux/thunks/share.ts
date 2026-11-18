@@ -85,7 +85,7 @@ export function createOrUpdateShareLink(
 
 interface shareInfoQueueItem {
   resolve: (value: Share | PromiseLike<Share>) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 const shareInfoLoadQueue: {

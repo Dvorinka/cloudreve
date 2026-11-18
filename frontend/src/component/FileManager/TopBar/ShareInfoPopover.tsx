@@ -71,7 +71,7 @@ const ShareInfoPopover = ({ displayName, shareInfo, ...rest }: ShareInfoPopoverP
   const dispatch = useAppDispatch();
   const [saving, setSaving] = useState(false);
   const loggedIn = SessionManager.currentLoginOrNull() != null;
-  const stopPropagation = useCallback((e: any) => e.stopPropagation(), []);
+  const stopPropagation = useCallback((e: React.SyntheticEvent) => e.stopPropagation(), []);
 
   const saveToMyFiles = useCallback(() => {
     setSaving(true);

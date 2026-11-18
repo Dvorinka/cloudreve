@@ -26,6 +26,13 @@ export default defineConfig([
     },
   },
   {
+    // Vendored upstream code (react-photo-view port) — keep its original typing
+    files: ["src/component/Viewers/ImageViewer/react-photo-view/**"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "error",

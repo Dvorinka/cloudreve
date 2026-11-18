@@ -14,7 +14,7 @@ const ListView = React.forwardRef(
     {
       ...rest
     }: {
-      [key: string]: any;
+      [key: string]: unknown;
     },
     ref,
   ) => {

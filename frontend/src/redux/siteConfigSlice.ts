@@ -22,7 +22,7 @@ export interface SiteConfigSlice {
   [key: string]: {
     loaded: ConfigLoadState;
     config: SiteConfig;
-    typed?: any;
+    typed?: unknown;
   };
 }
 
@@ -57,7 +57,7 @@ export let Viewers: ExpandedViewerSetting = {};
 export let ViewersByID: { [key: string]: Viewer } = {};
 
 const preProcessors: {
-  [key: string]: (config: SiteConfig) => any;
+  [key: string]: (config: SiteConfig) => unknown;
 } = {
   explorer: (config: SiteConfig) => {
     const icons: ExpandedIconSettings = {};

@@ -96,7 +96,7 @@ const MarkdownViewer = () => {
   }, [viewerState?.open]);
 
   const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],

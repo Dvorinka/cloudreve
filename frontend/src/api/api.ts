@@ -68,6 +68,7 @@ import {
   FileRelocateService,
   FileResponse,
   FileThumbResponse,
+  FullTextSearchResults,
   FileUpdateService,
   FileURLResponse,
   FileURLService,
@@ -773,7 +774,7 @@ export interface SharePurchaseResponse {
 export function purchaseShare(id: string): ThunkResponse<SharePurchaseResponse> {
   return async (dispatch, _getState) => {
     const res = await dispatch(
-      send(
+      send<SharePurchaseResponse>(
         "/share/purchase/" + id,
         {
           method: "POST",
@@ -816,7 +817,7 @@ export function getShareInfo(
       uri += "?" + query.toString();
     }
     const res = await dispatch(
-      send(
+      send<Share>(
         uri,
         {
           method: "GET",
@@ -2954,7 +2955,7 @@ export function sendVaultDisable(password: string): ThunkResponse {
   };
 }
 
-export function sendFullTextSearch(query: string, offset?: number): ThunkResponse {
+export function sendFullTextSearch(query: string, offset?: number): ThunkResponse<FullTextSearchResults> {
   const params = new URLSearchParams();
   params.set("query", query);
   if (offset) {
@@ -2962,7 +2963,7 @@ export function sendFullTextSearch(query: string, offset?: number): ThunkRespons
   }
   return async (dispatch, _getState) => {
     return await dispatch(
-      send(
+      send<FullTextSearchResults>(
         `/file/search`,
         {
           method: "GET",

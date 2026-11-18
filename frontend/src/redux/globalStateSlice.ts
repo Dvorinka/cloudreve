@@ -75,10 +75,10 @@ export interface UploadProgressTotal {
   totalSize: number;
 }
 
-export interface DialogSelectOption {
+export interface DialogSelectOption<T = unknown> {
   name: string;
   description: string;
-  value: any;
+  value: T;
   disabled?: boolean;
 }
 
@@ -106,7 +106,7 @@ export interface GlobalStateSlice {
   // Dialogs
   // Aggregated error dialog
   aggregatedErrorDialogOpen?: boolean;
-  aggregatedError?: Response<any>;
+  aggregatedError?: Response<unknown>;
   aggregatedErrorFile?: {
     [key: string]: FileResponse;
   };
@@ -723,7 +723,7 @@ export const globalStateSlice = createSlice({
       state,
       action: PayloadAction<{
         open: boolean;
-        error?: Response<any>;
+        error?: Response<unknown>;
         files?: { [key: string]: FileResponse };
       }>,
     ) => {

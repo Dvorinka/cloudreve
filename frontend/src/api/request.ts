@@ -5,6 +5,7 @@ import type { AppThunk } from "../redux/store.ts";
 import SessionManager from "../session";
 import { ErrNames } from "../session/errors.ts";
 import { sendRefreshToken } from "./api.ts";
+import type { ConflictDetail } from "./explorer.ts";
 
 export interface requestOpts {
   errorSnackbarMsg: (e: Error) => string;
@@ -41,14 +42,14 @@ export interface Response<T> {
 }
 
 export class AppError extends Error {
-  public code: any;
+  public code: unknown;
   public cid: string | undefined = undefined;
-  public aggregatedError: AggregatedError<any> | undefined = undefined;
+  public aggregatedError: AggregatedError<unknown> | undefined = undefined;
   public rawMessage: string = "";
   public error?: string = undefined;
-  public response: Response<any>;
+  public response: Response<unknown>;
 
-  constructor(resp: Response<any>) {
+  constructor(resp: Response<unknown>) {
     const message = resp.msg;
     const code = resp.code;
     super(message);
@@ -79,7 +80,7 @@ export class AppError extends Error {
     this.stack = new Error().stack;
   }
 
-  ErrorResponse = (): Response<any> => {
+  ErrorResponse = (): Response<unknown> => {
     return this.response;
   };
 }
@@ -125,7 +126,7 @@ export class AppError extends Error {
 //     }
 // );
 
-export type ThunkResponse<T = any> = AppThunk<Promise<T>>;
+export type ThunkResponse<T = unknown> = AppThunk<Promise<T>>;
 
 export const Code = {
   Success: 0,
@@ -187,7 +188,7 @@ function refreshToken(): AppThunk<Promise<string>> {
 
 let signOutLock = false;
 
-export function send<T = any>(
+export function send<T = unknown>(
   url: string,
   config?: AxiosRequestConfig,
   opts: requestOpts = defaultOpts,
@@ -231,7 +232,7 @@ export function send<T = any>(
       }
       return resp.data.data;
     } catch (e) {
-      let partialSuccessResponse: any = undefined;
+      let partialSuccessResponse: unknown = undefined;
       if (e instanceof Error) {
         // Handle lock conflict error
         if (e instanceof AppError && e.code == Code.LockConflict && !opts.skipLockConflict) {
@@ -240,12 +241,13 @@ export function send<T = any>(
             // Imported lazily: a static edge here cycles back through
             // the still-initializing store slices (request -> dialog thunk -> slices).
             const { openLockConflictDialog } = await import("../redux/thunks/dialog.ts");
-            await dispatch(openLockConflictDialog(e.response));
+            // SAFETY: code LockConflict is only raised with a ConflictDetail[] body.
+            await dispatch(openLockConflictDialog(e.response as Response<ConflictDetail[]>));
           } catch {
             rejected = true;
           }
           if (!rejected) {
-            return await dispatch(send(url, config, opts));
+            return await dispatch(send<T>(url, config, opts));
           }
         }
 
@@ -288,8 +290,9 @@ export function send<T = any>(
         }
       }
 
-      if (partialSuccessResponse) {
-        return partialSuccessResponse;
+      if (partialSuccessResponse !== undefined) {
+        // SAFETY: acceptBatchPartialSuccess hands back the same success payload as data.
+        return partialSuccessResponse as T;
       }
       throw e;
     }

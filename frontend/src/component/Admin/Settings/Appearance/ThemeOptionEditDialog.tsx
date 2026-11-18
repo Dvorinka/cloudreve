@@ -7,6 +7,7 @@ import {
   Divider,
   Grid,
   Link,
+  PaletteOptions,
   Paper,
   Stack,
   TextField,
@@ -26,6 +27,22 @@ import Setting from "../../../Icons/Setting";
 
 const MonacoEditor = lazy(() => import("../../../Viewers/CodeViewer/MonacoEditor"));
 
+type ParsedTheme = {
+  light?: { palette?: PaletteOptions };
+  dark?: { palette?: PaletteOptions };
+};
+
+function readTheme(raw: string): ParsedTheme | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    // SAFETY: the editor stores an MUI theme JSON; createTheme rejects a bad palette.
+    return parsed as ParsedTheme;
+  } catch {
+    return null;
+  }
+}
+
 export interface ThemeOptionEditDialogProps {
   open: boolean;
   onClose: () => void;
@@ -39,22 +56,15 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [editedConfig, setEditedConfig] = useState(config);
-  const [parsedConfig, setParsedConfig] = useState<any>(null);
+  const [parsedConfig, setParsedConfig] = useState<ParsedTheme | null>(null);
 
   useEffect(() => {
-    try {
-      setParsedConfig(JSON.parse(config));
-    } catch {
-      setParsedConfig(null);
-    }
+    setParsedConfig(readTheme(config));
   }, [config]);
 
   useEffect(() => {
-    try {
-      setParsedConfig(JSON.parse(editedConfig));
-    } catch {
-      // Don't update parsedConfig if JSON is invalid
-    }
+    const next = readTheme(editedConfig);
+    if (next) setParsedConfig(next);
   }, [editedConfig]);
 
   const handleSave = useCallback(() => {
@@ -84,7 +94,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
       return createTheme({
         palette: {
           mode: "light",
-          ...parsedConfig.light.palette,
+          ...parsedConfig.light?.palette,
         },
       });
     } catch {
@@ -98,7 +108,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
       return createTheme({
         palette: {
           mode: "dark",
-          ...parsedConfig.dark.palette,
+          ...parsedConfig.dark?.palette,
         },
       });
     } catch {

@@ -14,7 +14,7 @@ const GalleryView = React.forwardRef(
     {
       ...rest
     }: {
-      [key: string]: any;
+      [key: string]: unknown;
     },
     ref,
   ) => {
@@ -31,7 +31,7 @@ const GalleryView = React.forwardRef(
     const galleryWidth = useAppSelector((state) => state.fileManager[fmIndex].galleryWidth);
 
     const mergedRef = useCallback(
-      (val: any) => {
+      (val: unknown) => {
         mergeRefs(containerRef, ref)(val);
       },
       [containerRef, ref],

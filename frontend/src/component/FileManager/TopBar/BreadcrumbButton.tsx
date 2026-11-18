@@ -50,11 +50,11 @@ export interface BreadcrumbButtonProps {
   displayOnly?: boolean;
   is_root?: boolean;
   count_share_views?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface StartIcon {
-  Element?: (props: { [key: string]: any }) => JSX.Element;
+  Element?: (props: { [key: string]: unknown }) => JSX.Element;
   Icons?: ((props: SvgIconProps) => JSX.Element)[];
 }
 
@@ -184,7 +184,7 @@ export const useBreadcrumbButtons = ({
             const current = SessionManager.currentLoginOrNull();
             if (!current || current.user.id != uri.id()) {
               return {
-                Element: (props: { [key: string]: any }) => (
+                Element: (props: { [key: string]: unknown }) => (
                   <UserAvatar sx={{ width: 20, height: 20 }} overwriteTextSize key={uid} uid={uid} {...props} />
                 ),
               };
@@ -198,7 +198,7 @@ export const useBreadcrumbButtons = ({
         case Filesystem.share:
           if (shareInfo) {
             return {
-              Element: (props: { [key: string]: any }) => (
+              Element: (props: { [key: string]: unknown }) => (
                 <UserAvatar
                   sx={{ width: 20, height: 20 }}
                   overwriteTextSize

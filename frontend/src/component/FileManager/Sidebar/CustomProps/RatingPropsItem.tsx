@@ -5,7 +5,7 @@ import { PropsContentProps } from "./CustomPropsItem.tsx";
 const RatingPropsItem = ({ prop, onChange, loading, readOnly }: PropsContentProps) => {
   const { t: _t } = useTranslation();
 
-  const handleChange = (_: any, value: number | null) => {
+  const handleChange = (_: unknown, value: number | null) => {
     onChange(value?.toString() ?? "");
   };
 

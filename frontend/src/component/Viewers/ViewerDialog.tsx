@@ -45,7 +45,7 @@ const ViewerDialog = (props: ViewerDialogProps) => {
   const [fullScreen, setFullScreen] = useState(props.fullScreen || isMobile);
   const onClose = useCallback(() => {
     if (props.dialogProps.onClose) {
-      props.dialogProps.onClose({}, "closeButtonClick" as any);
+      props.dialogProps.onClose({}, "escapeKeyDown");
     }
   }, [props.dialogProps.onClose]);
   return (

@@ -4,7 +4,7 @@ import Base from "../uploader/base";
 export interface QueueContent {
   uploader: Base;
   resolve: () => void;
-  reject: (err?: any) => void;
+  reject: (err?: unknown) => void;
 }
 
 export class Pool {

@@ -48,7 +48,7 @@ function DraggableEmojiRow({
   const ref = React.useRef<HTMLTableRowElement>(null);
   const [, drop] = useDrop({
     accept: DND_TYPE,
-    hover(item: any, monitor) {
+    hover(item: { index: number }, monitor) {
       if (!ref.current) return;
 
       const dragIndex = item.index;

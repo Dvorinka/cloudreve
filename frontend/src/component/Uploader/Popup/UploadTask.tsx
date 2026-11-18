@@ -97,7 +97,7 @@ export interface UploadTaskProps {
   uploader: Base;
   useAvgSpeed: boolean;
   onCancel: (filter: (u: Base) => boolean) => void;
-  onClose: (u: any, reason: string) => void;
+  onClose: (u: unknown, reason: string) => void;
   selectFile: (path: string, type: SelectType, uploader: Base) => void;
   onRefresh: () => void;
 }
@@ -122,7 +122,7 @@ export default function UploadTask({
     navigateToPath(0, path);
   };
 
-  const toggleDetail = (_event: any, newExpanded: boolean) => {
+  const toggleDetail = (_event: unknown, newExpanded: boolean) => {
     setExpanded(!!newExpanded);
   };
 
@@ -273,7 +273,7 @@ export default function UploadTask({
     });
   };
 
-  const stopRipple = (e: React.MouseEvent<any> | React.TouchEvent<any>) => {
+  const stopRipple = (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
     e.stopPropagation();
   };
 

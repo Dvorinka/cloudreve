@@ -17,7 +17,7 @@ const CustomPaginationItem = (props: PaginationItemProps) => {
   const [_drag, drop, isOver, _isDragging] = useFileDrag({
     dropUri: props.type !== "start-ellipsis" && props.type !== "end-ellipsis" ? NoOpDropUri : undefined,
   });
-  const buttonRef = useRef<HTMLElement>();
+  const buttonRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (
@@ -36,7 +36,7 @@ const CustomPaginationItem = (props: PaginationItemProps) => {
   }, [isOver]);
 
   const mergedRef = useCallback(
-    (val: any) => {
+    (val: HTMLElement | null) => {
       mergeRefs(drop, buttonRef)(val);
     },
     [drop, buttonRef],

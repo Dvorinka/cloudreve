@@ -1,15 +1,15 @@
 import * as React from "react";
 import { memo, useCallback, useMemo } from "react";
-import { Box, Popover, Stack, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Popover, Stack, StackProps, useMediaQuery, useTheme } from "@mui/material";
 import { bindHover, bindPopover } from "material-ui-popup-state";
 import { bindTrigger, usePopupState } from "material-ui-popup-state/hooks";
 import HoverPopover from "material-ui-popup-state/HoverPopover";
 import FileTag, { TagChip } from "./FileTag.tsx";
 
-export interface FileTagSummaryProps {
+export interface FileTagSummaryProps extends StackProps {
   tags: { key: string; value: string }[];
   max?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const FileTagSummary = memo(({ tags, sx, max = 1, ...restProps }: FileTagSummaryProps) => {
@@ -21,7 +21,7 @@ const FileTagSummary = memo(({ tags, sx, max = 1, ...restProps }: FileTagSummary
   });
 
   const { open, ...rest } = bindPopover(popupState);
-  const stopPropagation = useCallback((e: any) => e.stopPropagation(), []);
+  const stopPropagation = useCallback((e: React.SyntheticEvent) => e.stopPropagation(), []);
   const [shown, hidden] = useMemo(() => {
     if (tags.length <= max) {
       return [tags, []];
@@ -38,7 +38,7 @@ const FileTagSummary = memo(({ tags, sx, max = 1, ...restProps }: FileTagSummary
   const PopoverComponent = isMobile ? Popover : HoverPopover;
 
   return (
-    <Stack direction={"row"} spacing={1} sx={{ ...sx }} {...restProps}>
+    <Stack direction={"row"} spacing={1} sx={{ ...(sx as object) }} {...restProps}>
       {shown.map((tag) => (
         <FileTag tagColor={tag.value == "" ? undefined : tag.value} label={tag.key} key={tag.key} />
       ))}

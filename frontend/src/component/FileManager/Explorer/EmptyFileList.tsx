@@ -2,6 +2,7 @@ import {
   Alert,
   AlertTitle,
   Box,
+  BoxProps,
   ListItemIcon,
   ListItemText,
   MenuList,
@@ -31,8 +32,8 @@ import { DenseDivider, SquareMenuItem } from "../ContextMenu/ContextMenu.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 import { ActionButton, ActionButtonGroup } from "../TopBar/TopActions.tsx";
 
-interface EmptyFileListProps {
-  [key: string]: any;
+interface EmptyFileListProps extends BoxProps {
+  [key: string]: unknown;
 }
 
 export const SearchLimitReached = () => {
@@ -203,7 +204,7 @@ const EmptyFileList = memo(
           justifyContent: "center",
           alignItems: "center",
           flexDirection: "column",
-          ...rest.sx,
+          ...(rest.sx as object),
         }}
       >
         {currentFs == Filesystem.shared_with_me && (

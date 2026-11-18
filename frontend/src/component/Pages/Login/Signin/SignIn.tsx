@@ -236,7 +236,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
           dispatch(refreshUserSession(loginRes, query.get("redirect")));
         }
       } catch (e) {
-        if (e instanceof AppError && e.code === Code.Continue) {
+        if (e instanceof AppError && e.code === Code.Continue && typeof e.response.data === "string") {
           twoFaSession.current = e.response.data;
           // User needs 2FA
           setPhase(EmailLoginPhase.Collect2FA);
@@ -260,7 +260,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
         dispatch(refreshUserSession(loginRes, query.get("redirect")));
       }
     } catch (e) {
-      if (e instanceof AppError && e.code === Code.Continue) {
+      if (e instanceof AppError && e.code === Code.Continue && typeof e.response.data === "string") {
         twoFaSession.current = e.response.data;
         setPhase(EmailLoginPhase.Collect2FA);
       }

@@ -46,7 +46,7 @@ export default abstract class Chunk extends Base {
     let chunkIndex = 0;
     let activeCount = 0;
     let hasError = false;
-    let firstError: any = null;
+    let firstError: unknown = null;
 
     // Helper function to start a new upload with immediate callback
     const startUpload = (chunkInfo: { chunk: Blob; index: number }): Promise<void> => {
@@ -176,7 +176,7 @@ export default abstract class Chunk extends Base {
     this.notifyResumeProgress();
   }
 
-  protected abstract uploadChunk(chunkInfo: ChunkInfo): Promise<any>;
+  protected abstract uploadChunk(chunkInfo: ChunkInfo): Promise<unknown>;
 
   protected updateChunkProgress(loaded: number, index: number, etag?: string) {
     // Serialize progress updates to avoid race conditions in concurrent uploads

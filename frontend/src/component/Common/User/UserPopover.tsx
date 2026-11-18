@@ -95,7 +95,7 @@ export const UserProfile = ({ user, open, displayOnly }: { user: User; open: boo
 };
 
 const UserPopover = ({ user, open, ...rest }: UserPopoverProps) => {
-  const stopPropagation = useCallback((e: any) => e.stopPropagation(), []);
+  const stopPropagation = useCallback((e: React.SyntheticEvent) => e.stopPropagation(), []);
   return (
     <HoverPopover
       onMouseDown={stopPropagation}

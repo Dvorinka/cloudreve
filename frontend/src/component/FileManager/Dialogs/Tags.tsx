@@ -111,7 +111,7 @@ const Tags = () => {
   );
 
   const onTagAdded = useCallback(
-    (_e: any, newValue: (string | Tag)[]) => {
+    (_e: unknown, newValue: (string | Tag)[]) => {
       const duplicateMap: { [key: string]: boolean } = {};
       newValue = newValue.filter((tag) => {
         const tagKey = typeof tag === "string" ? tag : tag.key;
@@ -153,16 +153,16 @@ const Tags = () => {
     >
       <DialogContent>
         <Stack spacing={1}>
-          <Autocomplete
+          <Autocomplete<Tag, true, false, true>
             multiple
             id="tags-filled"
             options={[]}
-            getOptionLabel={(o: any) => o?.key}
+            getOptionLabel={(o) => (typeof o === "string" ? o : o.key)}
             value={tags}
             freeSolo
             autoSelect={true}
             onChange={onTagAdded}
-            renderTags={(value: readonly Tag[], getTagProps) =>
+            renderTags={(value, getTagProps) =>
               value.map((option: Tag, index: number) => (
                 <FileTag
                   defaultStyle

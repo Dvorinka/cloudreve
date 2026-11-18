@@ -23,7 +23,7 @@ export interface SingleManager {
   path_elements?: string[];
   search_params?: SearchParam;
   showError: boolean;
-  error?: Response<any>;
+  error?: Response<unknown>;
   loading: boolean;
   list?: ListResponse;
   filter?: string;
@@ -151,7 +151,7 @@ export const fileManagerSlice = createSlice({
       state[action.payload].deleteFileModalOpen = state[action.payload].deleteFileModalOpen ? false : undefined;
       state[action.payload].renameFileModalOpen = state[action.payload].renameFileModalOpen ? false : undefined;
     },
-    setFmError: (state, action: PayloadAction<FileManagerArgsBase<any>>) => {
+    setFmError: (state, action: PayloadAction<FileManagerArgsBase<unknown>>) => {
       const e = action.payload.value;
       state[action.payload.index].showError = !!e;
       if (e instanceof AppError) {
@@ -295,7 +295,7 @@ export const fileManagerSlice = createSlice({
         expires: thumb?.expires,
       };
     },
-    clearSessionCache: (state, action: PayloadAction<FileManagerArgsBase<any>>) => {
+    clearSessionCache: (state, action: PayloadAction<FileManagerArgsBase<unknown>>) => {
       const index = action.payload.index;
       state[index].tree = {};
       state[index].capacity = undefined;
@@ -320,7 +320,7 @@ export const fileManagerSlice = createSlice({
       const index = action.payload.index;
       delete state[index].selected[action.payload.value];
     },
-    clearSelected: (state, action: PayloadAction<FileManagerArgsBase<any>>) => {
+    clearSelected: (state, action: PayloadAction<FileManagerArgsBase<unknown>>) => {
       const index = action.payload.index;
       state[index].selected = {};
     },
@@ -341,7 +341,7 @@ export const fileManagerSlice = createSlice({
         state[index].multiSelectHovered[path] = hovered;
       }
     },
-    clearMultiSelectHovered: (state, action: PayloadAction<FileManagerArgsBase<any>>) => {
+    clearMultiSelectHovered: (state, action: PayloadAction<FileManagerArgsBase<unknown>>) => {
       const index = action.payload.index;
       state[index].multiSelectHovered = {};
     },
@@ -365,7 +365,7 @@ export const fileManagerSlice = createSlice({
       state[index].contextMenuTargets = targets;
       state[index].contextMenuTargetFm = fmIndex;
     },
-    closeContextMenu: (state, action: PayloadAction<FileManagerArgsBase<any>>) => {
+    closeContextMenu: (state, action: PayloadAction<FileManagerArgsBase<unknown>>) => {
       const index = action.payload.index;
       state[index].contextMenuOpen = false;
     },
@@ -403,7 +403,7 @@ export const fileManagerSlice = createSlice({
       state[index].renameFileModalLoading = action.payload.value.loading;
       state[index].renameFileModalError = action.payload.value.error;
     },
-    closeRenameFileModal: (state, action: PayloadAction<FileManagerArgsBase<any>>) => {
+    closeRenameFileModal: (state, action: PayloadAction<FileManagerArgsBase<unknown>>) => {
       const index = action.payload.index;
       state[index].renameFileModalOpen = false;
     },
@@ -434,7 +434,7 @@ export const fileManagerSlice = createSlice({
           const oldPath = v.oldPath;
           const pathChanged = oldPath != file.path;
           let interestFields: {
-            [key: string]: any;
+            [key: string]: unknown;
           } = {
             name: file.name,
             updated_at: file.updated_at,

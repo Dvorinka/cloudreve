@@ -85,7 +85,7 @@ const Uploader = () => {
   const uploadManager = useMemo(() => {
     return new UploadManager({
       logLevel: "INFO",
-      concurrentLimit: parseInt(SessionManager.getWithFallback(UserSettings.ConcurrentLimit)),
+      concurrentLimit: Number(SessionManager.getWithFallback(UserSettings.ConcurrentLimit)),
       overwrite: SessionManager.getWithFallback(UserSettings.UploadOverwrite),
       dropZone: document.querySelector("body"),
       onToast: (type, msg) => {
@@ -121,11 +121,11 @@ const Uploader = () => {
   }, [policy, path]);
 
   const handleUploaderError = useCallback(
-    (e: any) => {
+    (e: unknown) => {
       if (e instanceof UploaderError) {
         enqueueSnackbar(e.Message(), { variant: "warning" });
       } else {
-        enqueueSnackbar(t("application:uploader.unknownError", { msg: e.message }), {
+        enqueueSnackbar(t("application:uploader.unknownError", { msg: e instanceof Error ? e.message : String(e) }), {
           variant: "error",
         });
       }

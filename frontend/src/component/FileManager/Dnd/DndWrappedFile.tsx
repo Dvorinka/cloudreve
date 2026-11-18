@@ -134,7 +134,7 @@ const DndWrappedFile = memo((props: DndWrappedFileProps) => {
   });
 
   const mergedRef = useCallback(
-    (val: any) => {
+    (val: HTMLElement | null) => {
       mergeRefs(drop, drag)(val);
     },
     [drop, drag],

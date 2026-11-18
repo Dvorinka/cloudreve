@@ -24,9 +24,9 @@ import { AccordionSummary, StyledAccordion } from "../UserSession/SSOSettings.ts
 
 export interface GeneratorsProps {
   values: {
-    [key: string]: any;
+    [key: string]: string;
   };
-  setSetting: (v: { [key: string]: any }) => void;
+  setSetting: (v: { [key: string]: string }) => void;
 }
 
 interface GeneratorRenderProps {

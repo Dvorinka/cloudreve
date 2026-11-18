@@ -21,6 +21,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import UploadTask from "./UploadTask.tsx";
 import MoreActions from "./MoreActions.js";
 import { Virtuoso } from "react-virtuoso";
+import UploadManager from "../core";
 import Base, { Status } from "../core/uploader/base";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "../../../redux/hooks.ts";
@@ -93,8 +94,8 @@ export interface TaskListProps {
   onClose: () => void;
   selectFile: (path: string) => void;
   taskList: Base[];
-  onCancel: (filter: (u: any) => boolean) => void;
-  uploadManager: any;
+  onCancel: (filter: (u: Base) => boolean) => void;
+  uploadManager: UploadManager;
   progress?: UploadProgressTotal;
   setUploaders: (f: (u: Base[]) => Base[]) => void;
 }
@@ -114,10 +115,10 @@ export default function TaskList({
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
   const path = useAppSelector((state) => state.fileManager[0].pure_path);
   const [expanded, setExpanded] = useState(true);
-  const [useAvgSpeed, setUseAvgSpeed] = useState<boolean>(SessionManager.getWithFallback(UserSettings.UseAvgSpeed));
+  const [useAvgSpeed, setUseAvgSpeed] = useState<boolean>(SessionManager.getWithFallback(UserSettings.UseAvgSpeed) as boolean);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [filter, setFilter] = useState(SessionManager.getWithFallback(UserSettings.TaskFilter));
-  const [sorter, setSorter] = useState(SessionManager.getWithFallback(UserSettings.TaskSorter));
+  const [filter, setFilter] = useState<string>(SessionManager.getWithFallback(UserSettings.TaskFilter) as string);
+  const [sorter, setSorter] = useState<string>(SessionManager.getWithFallback(UserSettings.TaskSorter) as string);
   const [refreshList, setRefreshList] = useState(false);
 
   const handleActionClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -128,14 +129,14 @@ export default function TaskList({
     setAnchorEl(null);
   };
 
-  const close = (_e: any, reason: string) => {
+  const close = (_e: unknown, reason: string) => {
     if (reason !== "backdropClick") {
       onClose();
     } else {
       setExpanded(false);
     }
   };
-  const handlePanelChange = (_event: any, isExpanded: boolean) => {
+  const handlePanelChange = (_event: unknown, isExpanded: boolean) => {
     setExpanded(isExpanded);
   };
 

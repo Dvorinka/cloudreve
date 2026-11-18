@@ -29,13 +29,13 @@ const FileTag = ({ disableClick, tagColor, sx: _sx, label, defaultStyle, spacing
   const dispatch = useAppDispatch();
   const root = useAppSelector((state) => state.fileManager[fmIndex].path_root);
   const stopPropagation = useCallback(
-    (e: any) => {
+    (e: React.SyntheticEvent) => {
       if (!disableClick) e.stopPropagation();
     },
     [disableClick],
   );
   const onClick = useCallback(
-    (e: any) => {
+    (e: React.SyntheticEvent) => {
       if (disableClick) {
         return;
       }

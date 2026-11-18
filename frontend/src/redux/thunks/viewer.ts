@@ -79,7 +79,7 @@ export function openViewers(
     // stale server entry (viewer removed site-wide) falls back to local.
     if (!ignorePreference) {
       const serverPreference = SessionManager.currentLoginOrNull()?.user?.preferred_viewers?.[ext];
-      const localPreference = SessionManager.get(UserSettings.OpenWithPrefix + ext);
+      const localPreference = SessionManager.get(`${UserSettings.OpenWithPrefix}${ext}`);
       const userPreference = [serverPreference, localPreference].find((id) => id && ViewersByID[id]);
       if (userPreference) {
         dispatch(openViewer(file, ViewersByID[userPreference], entitySize, preferredVersion));

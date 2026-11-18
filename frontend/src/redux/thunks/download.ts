@@ -27,6 +27,20 @@ import { AppThunk } from "../store.ts";
 import { promiseId, selectOption } from "./dialog.ts";
 import { longRunningTaskWithSnackbar, refreshSingleFileSymbolicLinks, walk, walkAll } from "./file.ts";
 
+interface ZipWriter {
+  close: () => void;
+  enqueue: (item: { name?: string; stream: () => ReadableStream<Uint8Array> | null }) => void;
+}
+
+declare global {
+  interface Window {
+    ZIP: new (source: {
+      start?: (ctrl: ZipWriter) => void;
+      pull?: (ctrl: ZipWriter) => void | Promise<void>;
+    }) => ReadableStream;
+  }
+}
+
 export enum MultipleDownloadOption {
   Browser,
   StreamSaver,
@@ -559,11 +573,11 @@ export function streamSaverDownload(files: FileResponse[]): AppThunk {
     const maxBatch = Math.min(10, max_batch_size ?? 1);
     let current = 0;
 
-    const readableZipStream = new (window as any).ZIP({
-      start(_ctrl: any) {
+    const readableZipStream = new window.ZIP({
+      start(_ctrl) {
         // ctrl.close()
       },
-      async pull(ctrl: any) {
+      async pull(ctrl) {
         const batch = allFiles.slice(current, current + maxBatch);
         current += batch.length;
         if (batch.length == 0) {

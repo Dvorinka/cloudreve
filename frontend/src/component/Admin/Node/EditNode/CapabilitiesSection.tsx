@@ -18,6 +18,20 @@ import { Trans, useTranslation } from "react-i18next";
 import { testNodeDownloader } from "../../../../api/api";
 import { DownloaderProvider, Node, NodeType } from "../../../../api/dashboard";
 import { NodeCapability } from "../../../../api/workflow";
+
+// Downloader option maps are flat string dictionaries. Non-objects are dropped.
+function parseOptionMap(value: string): Record<string, string> | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return undefined;
+    // SAFETY: the options editor only persists the downloader's string map.
+    return parsed as Record<string, string>;
+  } catch (e) {
+    console.error(e);
+    return undefined;
+  }
+}
 import { useAppDispatch } from "../../../../redux/hooks";
 import Boolset from "../../../../util/boolset";
 import { DefaultCloseAction } from "../../../Common/Snackbar/snackbar";
@@ -177,14 +191,7 @@ const CapabilitiesSection = () => {
 
   const onEditedConfigYtdlpBlur = useCallback(
     (value: string) => {
-      let res: Record<string, any> | undefined = undefined;
-      if (value) {
-        try {
-          res = JSON.parse(value);
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      const res = parseOptionMap(value);
       setNode((p: Node) => ({
         ...p,
         settings: { ...p.settings, ytdlp: { ...p.settings?.ytdlp, options: res } },
@@ -352,14 +359,7 @@ const CapabilitiesSection = () => {
 
   const onEditedConfigAria2Blur = useCallback(
     (value: string) => {
-      let res: Record<string, any> | undefined = undefined;
-      if (value) {
-        try {
-          res = JSON.parse(value);
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      const res = parseOptionMap(value);
       setNode((p: Node) => ({ ...p, settings: { ...p.settings, aria2: { ...p.settings?.aria2, options: res } } }));
     },
     [editedConfigAria2, setNode],
@@ -367,14 +367,7 @@ const CapabilitiesSection = () => {
 
   const onEditedConfigQbittorrentBlur = useCallback(
     (value: string) => {
-      let res: Record<string, any> | undefined = undefined;
-      if (value) {
-        try {
-          res = JSON.parse(value);
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      const res = parseOptionMap(value);
       setNode((p: Node) => ({
         ...p,
         settings: { ...p.settings, qbittorrent: { ...p.settings?.qbittorrent, options: res } },

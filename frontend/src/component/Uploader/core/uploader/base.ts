@@ -69,7 +69,7 @@ const deleteUploadSessionDelay = 500;
 export const uploadPromisePool: {
   [key: string]: {
     resolve: (value: Task | PromiseLike<Task>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
@@ -206,8 +206,8 @@ export default abstract class Base {
     this.logger.info("Upload task completed");
   };
 
-  public abstract upload(): Promise<any>;
-  protected async afterUpload(): Promise<any> {
+  public abstract upload(): Promise<unknown>;
+  protected async afterUpload(): Promise<unknown> {
     return;
   }
 

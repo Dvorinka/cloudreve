@@ -1,4 +1,4 @@
-import { Alert, AlertTitle, Box, Button, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, BoxProps, Button, Typography } from "@mui/material";
 import React, { memo, useCallback, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -12,9 +12,9 @@ import LinkDismiss from "../../Icons/LinkDismiss.tsx";
 import LockClosed from "../../Icons/LockClosed.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 
-interface ExplorerErrorProps {
-  error?: Response<any>;
-  [key: string]: any;
+interface ExplorerErrorProps extends BoxProps {
+  error?: Response<unknown>;
+  [key: string]: unknown;
 }
 
 const RetryPassword = () => {
@@ -185,7 +185,7 @@ const ExplorerError = memo(
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          ...rest.sx,
+          ...(rest.sx as object),
         }}
       >
         {innerError()}

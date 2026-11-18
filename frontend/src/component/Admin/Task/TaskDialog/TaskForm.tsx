@@ -33,7 +33,7 @@ import TaskProgress from "../../../Pages/Tasks/TaskProgress";
 import { getTaskStatusText } from "../../../Pages/Tasks/TaskProps";
 import UserDialog from "../../User/UserDialog/UserDialog";
 import { processTaskContent, userTaskTypes } from "../TaskContent";
-import BlobErrors from "./BlobErrors";
+import BlobErrors, { RecyclePrivateState } from "./BlobErrors";
 dayjs.extend(duration);
 
 const MonacoEditor = lazy(() => import("../../../Viewers/CodeViewer/MonacoEditor"));
@@ -55,16 +55,18 @@ const TaskForm = ({ values }: { values: Task }) => {
     return processTaskContent({ ...values.summary } as TaskSummary, values?.user_hash_id ?? "");
   }, [values]);
 
-  const privateState = useMemo((): any => {
-    let res: any = {};
-    if (values.private_state) {
-      try {
-        res = JSON.parse(values.private_state);
-      } catch (error) {
-        console.error(error);
+  const privateState = useMemo((): RecyclePrivateState => {
+    if (!values.private_state) return {};
+    try {
+      const parsed: unknown = JSON.parse(values.private_state);
+      if (typeof parsed === "object" && parsed !== null && "errors" in parsed && Array.isArray(parsed.errors)) {
+        // SAFETY: entity-recycle private_state is { errors: { id, error }[][] }.
+        return parsed as RecyclePrivateState;
       }
+    } catch (error) {
+      console.error(error);
     }
-    return res;
+    return {};
   }, [values]);
 
   const isUserTask = useMemo(() => {

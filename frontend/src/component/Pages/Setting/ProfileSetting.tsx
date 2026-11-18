@@ -145,7 +145,9 @@ const ProfileSetting = ({ setting, setSetting }: ProfileSettingProps) => {
               </SettingForm>
               <SettingForm title={t("setting.regTime")} noContainer lgWidth={6}>
                 <Typography variant={"body2"} color={"textSecondary"}>
-                  <TimeBadge datetime={user?.user.created_at} variant={"inherit"} />
+                  {user?.user.created_at ? (
+                    <TimeBadge datetime={user.user.created_at} variant={"inherit"} />
+                  ) : null}
                 </Typography>
               </SettingForm>
             </Grid2>

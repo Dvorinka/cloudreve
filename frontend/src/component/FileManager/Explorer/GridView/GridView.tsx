@@ -10,7 +10,7 @@ import GridFile from "./GridFile.tsx";
 import { CrUriPrefix } from "../../../../util/uri.ts";
 
 export interface GridViewProps {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface FmFile extends FileResponse {

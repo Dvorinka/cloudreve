@@ -11,7 +11,7 @@ import StorageSummary from "./StorageSummary.tsx";
 
 const DrawerContent = () => {
   const { sidebar_bottom } = useAppSelector((state) => state.siteConfig.basic?.config?.custom_html ?? {});
-  const scrollRef = useRef<any>();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const user = SessionManager.currentLoginOrNull();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));

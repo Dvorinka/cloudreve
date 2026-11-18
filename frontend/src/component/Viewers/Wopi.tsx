@@ -94,7 +94,7 @@ const Wopi = () => {
   }, [dispatch]);
 
   const _openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],

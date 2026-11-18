@@ -141,22 +141,22 @@ export function listResumeCtx(logger: Logger): Task[] {
   return res;
 }
 
-export function OBJtoXML(obj: any): string {
+export function OBJtoXML(obj: Record<string, unknown>): string {
   let xml = "";
   for (const prop in obj) {
     xml += "<" + prop + ">";
     if (Array.isArray(obj[prop])) {
-      for (const array of obj[prop]) {
+      for (const array of obj[prop] as unknown[]) {
         // A real botch fix here
         xml += "</" + prop + ">";
         xml += "<" + prop + ">";
 
-        xml += OBJtoXML(new Object(array));
+        xml += OBJtoXML(new Object(array) as Record<string, unknown>);
       }
     } else if (typeof obj[prop] == "object") {
-      xml += OBJtoXML(new Object(obj[prop]));
+      xml += OBJtoXML(new Object(obj[prop]) as Record<string, unknown>);
     } else {
-      xml += obj[prop];
+      xml += String(obj[prop]);
     }
     xml += "</" + prop + ">";
   }
@@ -206,10 +206,10 @@ export function trimPrefix(src: string, prefix: string): string {
   return src;
 }
 
-export function getDirectoryUploadDst(dst: string, file: any): string {
+export function getDirectoryUploadDst(dst: string, file: File & { fsPath?: string }): string {
   let relPath = file.webkitRelativePath;
   if (!relPath || relPath == "") {
-    relPath = file.fsPath;
+    relPath = file.fsPath ?? "";
     if (!relPath || relPath == "") {
       return dst;
     }
@@ -224,21 +224,22 @@ export function getDirectoryUploadDst(dst: string, file: any): string {
 }
 
 // Wrap readEntries in a promise to make working with readEntries easier
-async function readEntriesPromise(directoryReader: any): Promise<any> {
+async function readEntriesPromise(directoryReader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
   try {
     return await new Promise((resolve, reject) => {
       directoryReader.readEntries(resolve, reject);
     });
   } catch (err) {
     console.log(err);
+    return [];
   }
 }
 
-async function readFilePromise(fileReader: any, path: string): Promise<any> {
+async function readFilePromise(fileReader: FileSystemFileEntry, path: string): Promise<File | undefined> {
   try {
     return await new Promise((resolve, _reject) => {
-      fileReader.file((file: any) => {
-        file.fsPath = path;
+      fileReader.file((file: File) => {
+        (file as File & { fsPath?: string }).fsPath = path;
         resolve(file);
       });
     });
@@ -248,8 +249,8 @@ async function readFilePromise(fileReader: any, path: string): Promise<any> {
 }
 
 // Get all the entries (files or sub-directories) in a directory by calling readEntries until it returns empty array
-async function readAllDirectoryEntries(directoryReader: any): Promise<any> {
-  const entries: any[] = [];
+async function readAllDirectoryEntries(directoryReader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
+  const entries: FileSystemEntry[] = [];
   let readEntries = await readEntriesPromise(directoryReader);
   while (readEntries.length > 0) {
     entries.push(...readEntries);
@@ -260,9 +261,9 @@ async function readAllDirectoryEntries(directoryReader: any): Promise<any> {
 
 // Drop handler function to get all files
 export async function getAllFileEntries(dataTransferItemList: DataTransferItemList): Promise<File[]> {
-  const fileEntries: any[] = [];
+  const fileEntries: File[] = [];
   // Use BFS to traverse entire directory/file structure
-  const queue: any[] = [];
+  const queue: (FileSystemEntry | null)[] = [];
   // Unfortunately dataTransferItemList is not iterable i.e. no forEach
   for (let i = 0; i < dataTransferItemList.length; i++) {
     const fileEntry = dataTransferItemList[i].webkitGetAsEntry();
@@ -281,10 +282,13 @@ export async function getAllFileEntries(dataTransferItemList: DataTransferItemLi
       continue;
     }
     if (entry.isFile) {
-      fileEntries.push(await readFilePromise(entry, entry.fullPath));
+      const f = await readFilePromise(entry as FileSystemFileEntry, entry.fullPath);
+      if (f) {
+        fileEntries.push(f);
+      }
     } else if (entry.isDirectory) {
-      const reader = entry.createReader();
-      const entries: any = await readAllDirectoryEntries(reader);
+      const reader = (entry as FileSystemDirectoryEntry).createReader();
+      const entries: FileSystemEntry[] = await readAllDirectoryEntries(reader);
       queue.push(...entries);
     }
   }

@@ -25,7 +25,7 @@ export const SquareMenu = styled(Menu)(() => ({
 
 export interface CascadingMenuItem {
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function CascadingMenuItem({ onClick, ...props }: CascadingMenuItem) {
@@ -45,7 +45,7 @@ export function CascadingMenuItem({ onClick, ...props }: CascadingMenuItem) {
 export interface CascadingMenuProps {
   popupState: PopupState;
   isMobile?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function CascadingMenu({ popupState, isMobile, ...props }: CascadingMenuProps) {
@@ -72,7 +72,7 @@ export interface CascadingSubmenu {
   icon?: JSX.Element;
   popupId: string;
   menuItemProps?: MenuItemProps;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function CascadingSubmenu({ title, popupId, menuItemProps, icon, ...props }: CascadingSubmenu) {

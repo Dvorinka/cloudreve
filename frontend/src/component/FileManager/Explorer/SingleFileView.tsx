@@ -117,7 +117,7 @@ const FileList = ({ file }: { file: FileResponse }) => {
     </>
   );
 };
-const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
+const SingleFileView = forwardRef<HTMLDivElement>((_props, ref) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -147,7 +147,7 @@ const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
   }, [file]);
 
   const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       if (file) {
         dispatch(openFileContextMenu(fmIndex, file, true, e));
       }
