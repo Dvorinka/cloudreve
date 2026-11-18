@@ -184,7 +184,7 @@ const Breadcrumb = (props: BreadcrumbProps) => {
     dispatch(navigateToPath(fmIndex, uri.setPath(editedPath).toString()));
   }, [path, editedPath, props.displayOnly, fmIndex, dispatch]);
 
-  const [drag, drop, isOver, isDragging] = useFileDrag({
+  const [_drag, drop, isOver, _isDragging] = useFileDrag({
     dropUri: NoOpDropUri,
   });
 

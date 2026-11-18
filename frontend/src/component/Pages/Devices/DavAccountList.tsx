@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useCallback, useState } from "react";
 import { Box, Table, TableBody, TableContainer, TableHead, TableRow } from "@mui/material";
 import { useTranslation } from "react-i18next";
@@ -25,7 +24,7 @@ const DavAccountList = ({ creatAccountDialog, setCreateAccountDialog }: DavAccou
 
   const [nextPageToken, setNextPageToken] = useState<string | undefined>("");
   const [accounts, setAccounts] = useState<DavAccount[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [accountInfoTarget, setAccountInfoTarget] = useState<DavAccount | undefined>();
   const [editTarget, setEditTarget] = useState<DavAccount | undefined>();
   const [editOpen, setEditOpen] = useState(false);
@@ -57,7 +56,7 @@ const DavAccountList = ({ creatAccountDialog, setCreateAccountDialog }: DavAccou
     [dispatch],
   );
 
-  const refresh = () => {
+  const _refresh = () => {
     loadNextPage([], "")();
   };
 

@@ -58,7 +58,7 @@ const SelectorBox = styled(Box)({
 const ChangeIcon = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const _theme = useTheme();
 
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -105,7 +105,7 @@ const ChangeIcon = () => {
       setLoading(true);
       try {
         await dispatch(applyIcon(FileManagerIndex.main, targets, icon));
-      } catch (e) {
+      } catch {
       } finally {
         setLoading(false);
         dispatch(closeChangeIconDialog());

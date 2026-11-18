@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { useAppDispatch } from "../../../redux/hooks.ts";
-import React, { useState } from "react";
+import { useState } from "react";
 import { DialogContent, FormControl, FormHelperText, Typography } from "@mui/material";
 import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
 import { DenseFilledTextField } from "../../Common/StyledComponents.tsx";

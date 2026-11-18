@@ -15,7 +15,7 @@ const CreateNew = () => {
   const dispatch = useAppDispatch();
 
   const [name, setName] = useState("");
-  const [error, setError] = useState("");
+  const [error, _setError] = useState("");
   const [loading, setLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

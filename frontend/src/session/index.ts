@@ -171,7 +171,7 @@ export class Manager {
   public currentLoginOrNull = (): Session | null => {
     try {
       return this.currentLogin();
-    } catch (e) {
+    } catch {
       return null;
     }
   };

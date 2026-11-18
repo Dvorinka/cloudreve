@@ -315,7 +315,7 @@ export interface GlobalStateSlice {
 let preferred_theme: string | undefined = undefined;
 try {
   preferred_theme = SessionManager.currentLogin().user.preferred_theme;
-} catch (e) {}
+} catch {}
 
 const initialState: GlobalStateSlice = {
   loading: {

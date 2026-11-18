@@ -49,7 +49,7 @@ const Tags = () => {
 
   const [hex, setHex] = useState<string | undefined>(undefined);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [name, setName] = useState("");
+  const [name, _setName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const open = useAppSelector((state) => state.globalState.tagsDialogOpen);
@@ -72,7 +72,7 @@ const Tags = () => {
       setLoading(true);
       try {
         await dispatch(patchTags(FileManagerIndex.main, targets, tags));
-      } catch (e) {
+      } catch {
       } finally {
         setLoading(false);
         dispatch(closeTagsDialog());

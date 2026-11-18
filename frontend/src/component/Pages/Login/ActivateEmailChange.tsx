@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "../../../util";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import PageTitle from "../../../router/PageTitle.tsx";
 import CheckmarkCircle from "../../Icons/CheckmarkCircle.tsx";

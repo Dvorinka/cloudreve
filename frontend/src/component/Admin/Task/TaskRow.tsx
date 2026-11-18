@@ -39,11 +39,11 @@ const TaskRow = ({
   openEntity,
   openFile,
 }: TaskRowProps) => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [openLoading, setOpenLoading] = useState(false);
+  const [_openLoading, _setOpenLoading] = useState(false);
   const onRowClick = () => {
     onDetails?.(task?.id ?? 0);
   };
@@ -102,7 +102,7 @@ const TaskRow = ({
     );
   }
 
-  const stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
+  const _stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
   };
 

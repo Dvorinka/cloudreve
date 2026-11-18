@@ -51,9 +51,9 @@ const DrawerContent = () => {
 };
 
 export const DrawerPopover = (props: PopoverProps) => {
-  const dispatch = useAppDispatch();
-  const open = useAppSelector((state) => state.globalState.drawerOpen);
-  const drawerWidth = useAppSelector((state) => state.globalState.drawerWidth);
+  const _dispatch = useAppDispatch();
+  const _open = useAppSelector((state) => state.globalState.drawerOpen);
+  const _drawerWidth = useAppSelector((state) => state.globalState.drawerWidth);
   return (
     <Popover {...props}>
       <Box sx={{ width: "70vw" }}>

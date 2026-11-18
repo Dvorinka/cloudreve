@@ -576,7 +576,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
         return;
       }
 
-      const [prefix, group, type, ...other] = meta.split("_");
+      const [_prefix, group, type, ...other] = meta.split("_");
       if (!streamGrouped[group]) {
         streamGrouped[group] = {
           type: type,

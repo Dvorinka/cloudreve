@@ -1,6 +1,6 @@
 import { FileResponse, FileType } from "../../api/explorer.ts";
 import FileIcon from "./Explorer/FileIcon.tsx";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Box, ButtonProps, Skeleton, Tooltip } from "@mui/material";
 import { BadgeText, DefaultButton } from "../Common/StyledComponents.tsx";
 import CrUri from "../../util/uri.ts";
@@ -44,7 +44,7 @@ const FileBadge = ({ file, clickable, simplifiedFile, unknown, ...rest }: FileBa
     try {
       const uri = new CrUri(simplifiedFile?.path ?? "");
       return uri.elements().pop() ?? "";
-    } catch (e) {
+    } catch {
       return "";
     }
   }, [file, unknown, simplifiedFile]);

@@ -34,7 +34,7 @@ const CreateDAVAccountDialog = ({
 }: CreateDAVAccountDialogProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
 
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -43,7 +43,7 @@ const CreateDAVAccountDialog = ({
   const [blockSysFilesUpload, setBlockSysFilesUpload] = useState(false);
   const [proxy, setProxy] = useState(false);
 
-  const theme = useTheme();
+  const _theme = useTheme();
 
   const groupProxyEnabled = useMemo(() => {
     const perm = new Boolset(SessionManager.currentLoginOrNull()?.user.group?.permission);

@@ -126,7 +126,7 @@ const loadSiteConfigCache = (initial: SiteConfigSlice): SiteConfigSlice => {
       if (preProcessors[key]) {
         initial[key].typed = preProcessors[key](configCache);
       }
-    } catch (e) {}
+    } catch {}
 
     // // 检查是否有path参数
     // const url = new URL(window.location.href);

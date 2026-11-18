@@ -32,7 +32,7 @@ const SearchBar = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   useHotkeys(
     "/",
     () => {

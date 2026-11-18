@@ -4,7 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef } from "react";
 import { MapLoaderProps } from "./MapLoader.tsx";
 
-const MapboxComponent = ({ center, height, mapProvider, token, sx, ...rest }: MapLoaderProps) => {
+const MapboxComponent = ({ center, height, mapProvider: _mapProvider, token, sx, ...rest }: MapLoaderProps) => {
   const theme = useTheme();
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);

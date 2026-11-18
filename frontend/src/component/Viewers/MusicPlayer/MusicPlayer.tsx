@@ -23,7 +23,7 @@ const MusicPlayer = () => {
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.2);
   const [index, setIndex] = useState<number | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);

@@ -1,5 +1,4 @@
 import { Box, Button, IconButton, LinearProgress, Typography } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import { closeSnackbar, SnackbarKey } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -54,7 +53,7 @@ export const ErrorListDetailAction = (error: Response<any>) => function Snackbar
 export const OpenReadMeAction = (file: FileResponse) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
 
   const Close = DefaultCloseAction(snackbarId);
 

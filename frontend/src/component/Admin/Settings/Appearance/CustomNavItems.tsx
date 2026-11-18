@@ -201,7 +201,7 @@ const CustomNavItems = ({ value, onChange }: CustomNavItemsProps) => {
     try {
       const parsedItems = JSON.parse(value);
       setItems(Array.isArray(parsedItems) ? parsedItems : []);
-    } catch (e) {
+    } catch {
       setItems([]);
     }
   }, [value]);

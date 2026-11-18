@@ -21,7 +21,7 @@ import ViewerDialog, { ViewerLoading } from "../ViewerDialog.tsx";
 const ArchivePreview = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const _theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const viewerState = useAppSelector((state) => state.globalState.archiveViewer);
 
@@ -225,7 +225,7 @@ const ArchivePreview = () => {
     [currentPath],
   );
 
-  const toggleSelectAll = useCallback(() => {
+  const _toggleSelectAll = useCallback(() => {
     const allFiles = filteredFiles.map((file) => (currentPath ? currentPath + "/" + file.name : file.name));
 
     const allSelected = allFiles.every((file) => selectedFiles.includes(file));

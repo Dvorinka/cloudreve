@@ -267,7 +267,7 @@ export const useFileBlockState = (props: FileBlockProps) => {
 };
 
 const GridFile = memo((props: FileBlockProps) => {
-  const { file, isDragging, isDropOver, search, showThumb, index, dragRef } = props;
+  const { file, isDragging, isDropOver, search, showThumb, index, dragRef: _dragRef } = props;
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));

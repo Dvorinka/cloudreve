@@ -228,7 +228,7 @@ export function detectReadMe(index: number, isTablet: boolean): AppThunk<Promise
             dispatch(tryOpenReadMe(file, isTablet));
             return;
           }
-        } catch (e) {}
+        } catch {}
       }
     }
     dispatch(closeShareReadme());

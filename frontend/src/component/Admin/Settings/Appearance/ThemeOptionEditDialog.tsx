@@ -44,7 +44,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
   useEffect(() => {
     try {
       setParsedConfig(JSON.parse(config));
-    } catch (e) {
+    } catch {
       setParsedConfig(null);
     }
   }, [config]);
@@ -52,7 +52,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
   useEffect(() => {
     try {
       setParsedConfig(JSON.parse(editedConfig));
-    } catch (e) {
+    } catch {
       // Don't update parsedConfig if JSON is invalid
     }
   }, [editedConfig]);
@@ -68,7 +68,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
       // Get the new primary color (ID)
       const newId = parsed.light.palette.primary.main;
       onSave(id, newId, editedConfig);
-    } catch (e) {
+    } catch {
       enqueueSnackbar({
         message: t("settings.invalidThemeConfig"),
         variant: "warning",
@@ -87,7 +87,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
           ...parsedConfig.light.palette,
         },
       });
-    } catch (e) {
+    } catch {
       return null;
     }
   }, [parsedConfig]);
@@ -101,7 +101,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
           ...parsedConfig.dark.palette,
         },
       });
-    } catch (e) {
+    } catch {
       return null;
     }
   }, [parsedConfig]);

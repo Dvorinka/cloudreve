@@ -36,7 +36,7 @@ import { LoopMode } from "./MusicPlayer.tsx";
 import Playlist from "./Playlist.tsx";
 import RepeatModePopover from "./RepeatModePopover.tsx";
 
-const WallPaper = styled("div")({
+const _WallPaper = styled("div")({
   position: "absolute",
   width: "100%",
   height: "100%",
@@ -195,9 +195,9 @@ export const PlayerPopup = ({
   volume,
   setVolumeLevel,
   loopMode,
-  loopProceed,
+  loopProceed: _loopProceed,
   manualNavigate,
-  toggleLoopMode,
+  toggleLoopMode: _toggleLoopMode,
   setLoopMode,
   playbackSpeed,
   setPlaybackSpeed,
@@ -206,7 +206,7 @@ export const PlayerPopup = ({
   ...rest
 }: PlayerPopupProps) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const dispatch = useAppDispatch();
   const [thumbSrc, setThumbSrc] = useState<string | null>(null);
   const [thumbBgLoaded, setThumbBgLoaded] = useState(false);

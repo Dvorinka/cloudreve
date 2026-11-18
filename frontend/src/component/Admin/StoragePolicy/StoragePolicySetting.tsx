@@ -339,10 +339,10 @@ const StoragePolicySetting = () => {
   const [pageSize, setPageSize] = useQueryState(PageSizeQuery, {
     defaultValue: "11",
   });
-  const [orderBy, setOrderBy] = useQueryState(OrderByQuery, {
+  const [orderBy, _setOrderBy] = useQueryState(OrderByQuery, {
     defaultValue: "",
   });
-  const [orderDirection, setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
+  const [orderDirection, _setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
   const [policyType, setPolicyType] = useQueryState(PolicyTypeQuery, {
     defaultValue: " ",
   });
@@ -351,7 +351,7 @@ const StoragePolicySetting = () => {
   const [newPolicyType, setNewPolicyType] = useState<PolicyType | null>(null);
   const [createNewOpen, setCreateNewOpen] = useState(false);
 
-  const [open, setOpen] = useState(false);
+  const [_open, _setOpen] = useState(false);
   const pageInt = parseInt(page) ?? 1;
   const pageSizeInt = parseInt(pageSize) ?? 11;
 

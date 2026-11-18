@@ -43,7 +43,7 @@ const Excalidraw = (props: ExcalidrawProps) => {
   const initialValue = useMemo(() => {
     try {
       return JSON.parse(props.initialValue) as ExcalidrawState;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, [props.initialValue]);

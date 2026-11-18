@@ -1,4 +1,3 @@
-import React from "react";
 import Grid from "@mui/material/Grid";
 import TimeAgo from "timeago-react";
 import Base, { Status } from "../core/uploader/base";

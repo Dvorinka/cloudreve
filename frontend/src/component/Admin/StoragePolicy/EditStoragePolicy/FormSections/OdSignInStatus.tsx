@@ -14,7 +14,7 @@ import { StoragePolicySettingContext } from "../StoragePolicySettingWrapper";
 
 const OdSignInStatus = () => {
   const { t } = useTranslation("dashboard");
-  const { values, setPolicy } = useContext(StoragePolicySettingContext);
+  const { values, setPolicy: _setPolicy } = useContext(StoragePolicySettingContext);
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<OauthCredentialStatus | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);

@@ -21,7 +21,7 @@ export interface Task {
   overwrite?: boolean;
 }
 
-type Nullable<T> = T | null;
+type _Nullable<T> = T | null;
 
 export interface OneDriveError {
   error: {

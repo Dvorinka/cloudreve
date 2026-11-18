@@ -4,7 +4,7 @@ import { useCallback, useContext, useEffect, useRef } from "react";
 import { FileManagerIndex } from "../component/FileManager/FileManager.tsx";
 import { FmIndexContext } from "../component/FileManager/FmIndexContext.tsx";
 import { clearSelected } from "../redux/fileManagerSlice.ts";
-import { useAppDispatch, useAppSelector } from "../redux/hooks.ts";
+import { useAppDispatch } from "../redux/hooks.ts";
 import { useFilteredFiles } from "./useFilteredFiles.ts";
 import { selectionFromDragBox } from "../redux/thunks/file.ts";
 

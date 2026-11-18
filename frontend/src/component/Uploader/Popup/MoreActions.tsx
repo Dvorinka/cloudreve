@@ -1,5 +1,5 @@
 import { Icon, ListItemIcon, Menu, MenuItem, Tooltip } from "@mui/material";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DenseDivider } from "../../FileManager/ContextMenu/ContextMenu.tsx";
 import Checkmark from "../../Icons/Checkmark.tsx";

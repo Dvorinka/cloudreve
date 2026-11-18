@@ -119,7 +119,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
       const registration = await dispatch(getOauthAppRegistration(oauthConsent.clientId));
       dispatch(setOAuthApp(registration));
       return registration;
-    } catch (e) {
+    } catch {
       setOauthError(t("oauth.appNotFound"));
       dispatch(setOAuthAppLoading(false));
       return null;
@@ -298,7 +298,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
           variant: "success",
           action: DefaultCloseAction,
         });
-      } catch (e) {
+      } catch {
         setCaptchaGen((g) => g + 1);
       } finally {
         setLoading(false);

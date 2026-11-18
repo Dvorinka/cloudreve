@@ -70,7 +70,7 @@ interface ThemeOption {
 
 const ThemeOptions = ({ value, onChange, defaultTheme, onDefaultThemeChange }: ThemeOptionsProps) => {
   const { t } = useTranslation("dashboard");
-  const theme = useTheme();
+  const _theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [options, setOptions] = useState<Record<string, ThemeOption["config"]>>({});
   const [editingOption, setEditingOption] = useState<{ id: string; config: ThemeOption["config"] } | null>(null);
@@ -80,7 +80,7 @@ const ThemeOptions = ({ value, onChange, defaultTheme, onDefaultThemeChange }: T
     try {
       const parsedOptions = JSON.parse(value);
       setOptions(parsedOptions);
-    } catch (e) {
+    } catch {
       setOptions({});
     }
   }, [value]);
@@ -177,7 +177,7 @@ const ThemeOptions = ({ value, onChange, defaultTheme, onDefaultThemeChange }: T
         handleSave(newOptions);
         setIsDialogOpen(false);
         setEditingOption(null);
-      } catch (e) {
+      } catch {
         // Handle error
         enqueueSnackbar({
           message: t("settings.invalidThemeConfig"),

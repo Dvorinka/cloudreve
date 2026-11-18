@@ -200,11 +200,11 @@ const removeI18nCache = () => {
 
 export const App = () => {
   const theme = useGeneratedTheme();
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
 
   const {
-    offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
+    offlineReady: [_offlineReady, _setOfflineReady],
+    needRefresh: [needRefresh, _setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisterError(error) {
@@ -291,7 +291,7 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(({ theme }) =>
 }));
 
 const AppContent = () => {
-  const title = useAppSelector((state) => state.siteConfig.basic.config.title);
+  const _title = useAppSelector((state) => state.siteConfig.basic.config.title);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const scrollBar = {

@@ -32,7 +32,7 @@ const DirectLinks = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showFileName, setShowFileName] = useState(false);
   const [forceDownload, setForceDownload] = useState(false);
-  const [copiedAll, setCopiedAll] = useState(false);
+  const [_copiedAll, _setCopiedAll] = useState(false);
 
   const open = useAppSelector((state) => state.globalState.directLinkDialogOpen);
   const targets = useAppSelector((state) => state.globalState.directLinkRes);

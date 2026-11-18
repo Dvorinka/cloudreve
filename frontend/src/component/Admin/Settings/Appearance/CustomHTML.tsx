@@ -157,7 +157,7 @@ const SidebarBottomPreview = ({ bottom }: { bottom?: string }) => {
 
 const CustomHTML = ({}: CustomHTMLProps) => {
   const { t } = useTranslation("dashboard");
-  const { formRef, setSettings, values } = useContext(SettingContext);
+  const { formRef: _formRef, setSettings, values } = useContext(SettingContext);
   const theme = useTheme();
 
   return (

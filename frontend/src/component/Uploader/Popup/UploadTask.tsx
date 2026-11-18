@@ -117,7 +117,7 @@ export default function UploadTask({
   const { status, error, progress, speed, speedAvg, retry } = useUpload(uploader);
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
   const [loading, setLoading] = useState(false);
-  const navigateToDst = (path: string) => {
+  const _navigateToDst = (path: string) => {
     onClose(null, "backdropClick");
     navigateToPath(0, path);
   };
@@ -134,7 +134,7 @@ export default function UploadTask({
 
   const statusText = useMemo(() => {
     // const parent = filename(uploader.task.dst);
-    const parent = "TODO: parent";
+    const _parent = "TODO: parent";
     switch (status) {
       case Status.added:
       case Status.initialized:

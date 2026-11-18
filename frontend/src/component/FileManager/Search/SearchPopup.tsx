@@ -67,7 +67,7 @@ const SearchPopup = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [keywords, setKeywords] = useState("");
   const [searchedKeyword, setSearchedKeyword] = useState("");

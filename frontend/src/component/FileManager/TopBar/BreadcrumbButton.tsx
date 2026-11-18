@@ -220,8 +220,8 @@ export const useBreadcrumbButtons = ({
 };
 
 const BreadcrumbButton = ({ name, is_root, is_latest, path, displayOnly, ...rest }: BreadcrumbButtonProps) => {
-  const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const { t: _t } = useTranslation();
+  const _dispatch = useAppDispatch();
   const fmIndex = useContext(FmIndexContext);
 
   const [loading, displayName, startIcon, onClick, shareInfo] = useBreadcrumbButtons({
@@ -247,7 +247,7 @@ const BreadcrumbButton = ({ name, is_root, is_latest, path, displayOnly, ...rest
     return null;
   }, [startIcon, loading]);
 
-  const [drag, drop, isOver, isDragging] = useFileDrag({
+  const [_drag, drop, isOver, _isDragging] = useFileDrag({
     dropUri: path,
   });
 

@@ -29,7 +29,7 @@ const defaultUser: User = {
 const NewUserDialog = ({ open, onClose, onCreated }: NewUserDialogProps) => {
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User>({ ...defaultUser });
   const formRef = useRef<HTMLFormElement>(null);

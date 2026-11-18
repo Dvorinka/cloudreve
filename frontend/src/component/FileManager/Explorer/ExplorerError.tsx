@@ -125,7 +125,7 @@ const ExplorerError = memo(
 
       return undefined;
     }, [error]);
-    const navigateBack = useCallback(() => {
+    const _navigateBack = useCallback(() => {
       previousPath && dispatch(navigateToPath(fmIndex, previousPath));
     }, [dispatch, fmIndex, previousPath]);
 

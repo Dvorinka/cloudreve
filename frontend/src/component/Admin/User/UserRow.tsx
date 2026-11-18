@@ -24,7 +24,7 @@ export interface UserRowProps {
 }
 
 const UserRow = ({ user, loading, deleting, selected, onDelete, onDetails, onSelect }: UserRowProps) => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -56,7 +56,7 @@ const UserRow = ({ user, loading, deleting, selected, onDelete, onDetails, onSel
     onSelect?.(user?.id ?? 0);
   };
 
-  const userProps = useMemo(() => {
+  const _userProps = useMemo(() => {
     const res = {
       passkey: false,
       twoFa: false,

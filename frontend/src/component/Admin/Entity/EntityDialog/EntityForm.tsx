@@ -14,7 +14,7 @@ import SettingForm from "../../../Pages/Setting/SettingForm";
 import UserDialog from "../../User/UserDialog/UserDialog";
 import EntityFileList from "./EntityFileList";
 const EntityForm = ({ values }: { values: Entity }) => {
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { t } = useTranslation("dashboard");

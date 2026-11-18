@@ -11,12 +11,12 @@ import ViewerDialog, { ViewerLoading } from "../ViewerDialog.tsx";
 const Epub = React.lazy(() => import("./Epub.tsx"));
 
 const EpubViewer = () => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const _theme = useTheme();
   const viewerState = useAppSelector((state) => state.globalState.epubViewer);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
   const [src, setSrc] = useState("");
   const [currentLocation, setLocation] = useState<string | null>(null);
   const locationChanged = useCallback(

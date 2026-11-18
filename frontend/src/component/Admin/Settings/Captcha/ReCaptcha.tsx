@@ -2,7 +2,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { FormControl, Link, Stack } from "@mui/material";
 import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
 import { DenseFilledTextField } from "../../../Common/StyledComponents.tsx";
-import * as React from "react";
 import { NoMarginHelperText } from "../Settings.tsx";
 
 export interface ReCaptchaProps {

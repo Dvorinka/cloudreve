@@ -63,7 +63,7 @@ export function setResumeCtx(task: Task, logger: Logger) {
   const ctxKey = getResumeCtxKey(task);
   try {
     localStorage.setItem(ctxKey, JSON.stringify(task));
-  } catch (err) {
+  } catch {
     logger.warn(new UploaderError(UploaderErrorName.WriteCtxFailed, `setResumeCtx failed: ${ctxKey}`));
   }
 }
@@ -72,7 +72,7 @@ export function removeResumeCtx(task: Task | string, logger: Logger) {
   const ctxKey = getResumeCtxKey(task);
   try {
     localStorage.removeItem(ctxKey);
-  } catch (err) {
+  } catch {
     logger.warn(new UploaderError(UploaderErrorName.RemoveCtxFailed, `removeResumeCtx failed. key: ${ctxKey}`));
   }
 }
@@ -83,7 +83,7 @@ export function cleanupResumeCtx(logger: Logger) {
     if (key && key.startsWith(resumeKeyPrefix)) {
       try {
         localStorage.removeItem(key);
-      } catch (err) {
+      } catch {
         logger.warn(new UploaderError(UploaderErrorName.RemoveCtxFailed, `removeResumeCtx failed. key: ${key}`));
       }
     }
@@ -193,7 +193,7 @@ export function pathJoin(parts: string[], sep = "/"): string {
   return parts.join(sep);
 }
 
-function basename(path: string): string {
+function _basename(path: string): string {
   const pathList = path.split("/");
   pathList.pop();
   return pathList.join("/") === "" ? "/" : pathList.join("/");

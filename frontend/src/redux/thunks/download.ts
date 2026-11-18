@@ -125,7 +125,7 @@ export function downloadMultipleFiles(files: FileResponse[]): AppThunk {
         if (res.remember) {
           SessionManager.set(UserSettings.ArchiveDownloadMethod, finalOption);
         }
-      } catch (e) {
+      } catch {
         // User cancel selection
         return;
       }
@@ -230,7 +230,7 @@ export function browserBatchDownload(files: FileResponse[]): AppThunk {
         });
         throw new Error(i18next.t("application:fileManager.directoryDownloadPermissionError"));
       }
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -296,7 +296,7 @@ export function browserBatchDownload(files: FileResponse[]): AppThunk {
           action: DefaultCloseAction,
         });
       }
-    } catch (e) {
+    } catch {
       closeSnackbar(snackbarId);
       dispatch(setBatchDownloadProgress({ id: downloadId, progress: { isDownloading: false } }));
     } finally {
@@ -437,7 +437,7 @@ function startBrowserBatchDownloadTo(
                   overwriteOption = (await dispatch(
                     selectOption(getDownloadOverwriteOption(name), "fileManager.selectDirectoryDuplicationMethod"),
                   )) as DownloadOverwriteOption;
-                } catch (e) {
+                } catch {
                   // User cancel, use skip option
                   overwriteOption = DownloadOverwriteOption.Skip;
                 }

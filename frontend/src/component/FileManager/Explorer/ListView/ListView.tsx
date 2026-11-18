@@ -18,7 +18,7 @@ const ListView = React.forwardRef(
     },
     ref,
   ) => {
-    const { t } = useTranslation("application");
+    const { t: _t } = useTranslation("application");
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const dispatch = useAppDispatch();

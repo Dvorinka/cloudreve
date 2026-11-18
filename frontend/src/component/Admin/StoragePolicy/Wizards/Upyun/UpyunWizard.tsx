@@ -15,10 +15,10 @@ import BucketACLInput from "../../EditStoragePolicy/BucketACLInput";
 
 const UpyunWizard = ({ onSubmit }: AddWizardProps) => {
   const { t } = useTranslation("dashboard");
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const [corsAdded, setCorsAdded] = useState(false);
+  const _dispatch = useAppDispatch();
+  const [_loading, _setLoading] = useState(false);
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
+  const [_corsAdded, _setCorsAdded] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [policy, setPolicy] = useState<StoragePolicy>({
     id: 0,

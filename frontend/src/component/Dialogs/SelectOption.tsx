@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Checkbox, DialogContent, DialogContentText, FormControlLabel, List, ListItemButton, ListItemText } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import DraggableDialog from "./DraggableDialog.tsx";
 import { selectOptionDialogPromisePool } from "../../redux/thunks/dialog.ts";
 import { closeSelectOptionDialog, setSelectOptionRememberChecked } from "../../redux/globalStateSlice.ts";

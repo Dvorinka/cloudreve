@@ -1,4 +1,3 @@
-import React from "react";
 import Backdrop from "@mui/material/Backdrop";
 import { Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";

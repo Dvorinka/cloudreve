@@ -155,7 +155,7 @@ const BasicInfo = ({ target }: BasicInfoProps) => {
     [t],
   );
 
-  const storagePolicy = useMemo(() => {
+  const _storagePolicy = useMemo(() => {
     if (target.extended_info) {
       if (!target.extended_info.storage_policy) {
         return t("fileManager.unset");

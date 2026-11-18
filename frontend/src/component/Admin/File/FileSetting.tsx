@@ -72,7 +72,7 @@ const FileSetting = () => {
   const [deleted, setDeleted] = useQueryState(DeletedQuery, { defaultValue: "" });
   const [count, setCount] = useState(0);
   const [selected, setSelected] = useState<readonly number[]>([]);
-  const [createNewOpen, setCreateNewOpen] = useState(false);
+  const [_createNewOpen, _setCreateNewOpen] = useState(false);
   const [importFileDialogOpen, setImportFileDialogOpen] = useState(false);
   const filterPopupState = usePopupState({
     variant: "popover",

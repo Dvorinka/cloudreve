@@ -107,11 +107,11 @@ const StorageSetting = ({ setting }: StorageSettingProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const navigate = useNavigate();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const _navigate = useNavigate();
+  const _isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const capacity = useAppSelector((state) => state.fileManager[0].capacity);
 
-  const [storageBreakdown, setStorageBreakdown] = useState({
+  const [_storageBreakdown, _setStorageBreakdown] = useState({
     used: 0,
     base: 0,
   });

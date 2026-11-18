@@ -241,7 +241,7 @@ export function send<T = any>(
             // the still-initializing store slices (request -> dialog thunk -> slices).
             const { openLockConflictDialog } = await import("../redux/thunks/dialog.ts");
             await dispatch(openLockConflictDialog(e.response));
-          } catch (e) {
+          } catch {
             rejected = true;
           }
           if (!rejected) {

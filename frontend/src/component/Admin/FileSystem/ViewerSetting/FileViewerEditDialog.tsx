@@ -240,7 +240,7 @@ const FileViewerEditDialog = ({ viewer, onChange, open, onClose }: FileViewerEdi
         const parsed = JSON.parse(wopiCached);
         changed = { ...viewerShadowed, wopi_actions: parsed };
         setViewerShadowed({ ...changed });
-      } catch (e) {
+      } catch {
         enqueueSnackbar({
           message: t("settings.invalidWopiActionMapping"),
           variant: "warning",

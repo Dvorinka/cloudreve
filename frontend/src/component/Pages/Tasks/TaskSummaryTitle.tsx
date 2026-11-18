@@ -28,7 +28,7 @@ const StyledChip = styled(Chip)(() => ({
 
 const TaskSummaryTitle = ({ type, summary, isInDashboard = false }: TaskSummaryTitleProps) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
   const policyOption = useAppSelector((state) => state.globalState.policyOptionCache);
 
   const selectedCount = useMemo(() => {

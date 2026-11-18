@@ -1,4 +1,4 @@
-import React, { memo, useContext, useMemo } from "react";
+import { memo, useContext, useMemo } from "react";
 import SessionManager from "../../../session";
 import TreeFiles from "./TreeFiles.tsx";
 import CrUri, { Filesystem } from "../../../util/uri.ts";
@@ -26,7 +26,7 @@ export const usePinned = () => {
           useElements: p.uri == path_root,
         };
       });
-    } catch (e) {}
+    } catch {}
   }, [generation, path_root]);
 
   return pined;

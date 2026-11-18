@@ -36,7 +36,7 @@ const PinToSidebar = () => {
       setLoading(true);
       try {
         await dispatch(pinToSidebar(uri, name));
-      } catch (e) {
+      } catch {
       } finally {
         setLoading(false);
         dispatch(closePinFileDialog());

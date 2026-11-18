@@ -348,7 +348,7 @@ interface FolderSizeCellProps {
 }
 
 const FolderSizeCell = memo(({ file }: FolderSizeCellProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   if (file.type == FileType.folder || file.metadata?.[Metadata.share_redirect]) {
     return <Box />;
   }
@@ -362,7 +362,7 @@ interface FolderDateCellProps {
 }
 
 const FolderDateCell = memo(({ file, dateType }: FolderDateCellProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   let datetime: string | Dayjs = "";
   switch (dateType) {
     case "created":
@@ -550,7 +550,7 @@ const Cell = memo((props: CellProps) => {
     } as CustomPropsItem;
   }, [customPropDef, props.file.metadata]);
 
-  const { file, column, uploading, fileTag, search, isSelected } = props;
+  const { file, column, uploading: _uploading, fileTag: _fileTag, search: _search, isSelected: _isSelected } = props;
   switch (column.type) {
     case ColumType.name:
       return <FileNameCell {...props} />;

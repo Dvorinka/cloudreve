@@ -38,7 +38,7 @@ interface ViewerGroupProps {
   dndType: string;
 }
 
-const DND_TYPE = "viewer-row";
+const _DND_TYPE = "viewer-row";
 
 const DraggableViewerRow = memo(function DraggableViewerRow({
   viewer,

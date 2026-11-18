@@ -18,8 +18,8 @@ const GalleryView = React.forwardRef(
     },
     ref,
   ) => {
-    const { t } = useTranslation("application");
-    const dispatch = useAppDispatch();
+    const { t: _t } = useTranslation("application");
+    const _dispatch = useAppDispatch();
     const containerRef = useRef<HTMLElement>();
     const fmIndex = useContext(FmIndexContext);
     const [boxHeight, setBoxHeight] = useState(0);

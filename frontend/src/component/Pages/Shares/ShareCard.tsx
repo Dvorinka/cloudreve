@@ -159,7 +159,7 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
 
 const ShareCard = ({ share, onShareDeleted, onLoad, loading, selecting, selected, onToggleSelect }: ShareCardProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { ref, inView } = useInView({
     rootMargin: "200px 0px",
     triggerOnce: true,

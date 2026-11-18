@@ -24,7 +24,7 @@ export interface LightboxProps {
 const Lightbox = ({ viewer, onClose }: LightboxProps) => {
   const theme = useGeneratedTheme(true, true);
   const container = useRef<HTMLElement | undefined>(undefined);
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar: _closeSnackbar } = useSnackbar();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(true);

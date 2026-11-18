@@ -8,7 +8,7 @@ import CustomNavItems from "./CustomNavItems";
 import ThemeOptions from "./ThemeOptions";
 
 const Appearance = () => {
-  const { t } = useTranslation("dashboard");
+  const { t: _t } = useTranslation("dashboard");
   const { formRef, setSettings, values } = useContext(SettingContext);
 
   return (

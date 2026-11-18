@@ -23,7 +23,7 @@ import TaskList from "./Popup/TaskList.tsx";
 
 let totalProgressCollector: NodeJS.Timeout | null = null;
 let lastProgressStart = -1;
-let dragCounter = 0;
+let _dragCounter = 0;
 
 const defaultClipboardImageName = "image.png";
 
@@ -95,14 +95,14 @@ const Uploader = () => {
         if (!uploadEnabled.current) {
           return;
         }
-        dragCounter++;
+        _dragCounter++;
         setDropBgOpen((value) => !value);
       },
       onDropLeave: (_e) => {
         if (!uploadEnabled.current) {
           return false;
         }
-        dragCounter--;
+        _dragCounter--;
         setDropBgOpen((value) => !value);
         return true;
       },

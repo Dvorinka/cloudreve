@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Button, DialogContent } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
-import React, { useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
 import DraggableDialog from "./DraggableDialog.tsx";
 import { closeBatchDownloadLogDialog } from "../../redux/globalStateSlice.ts";
 import { FilledTextField } from "../Common/StyledComponents.tsx";

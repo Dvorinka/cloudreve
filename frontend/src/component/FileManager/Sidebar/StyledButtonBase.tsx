@@ -5,7 +5,7 @@ import { Box, styled } from "@mui/material";
 // TDZ when CustomPropsItem evaluated styled(StyledButtonBase) at module init.
 export const StyledButtonBase = styled(Box)(({ theme }) => {
   const bgColor = theme.palette.mode === "light" ? theme.palette.grey[100] : theme.palette.grey[900];
-  const bgColorHover = theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[700];
+  const _bgColorHover = theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[700];
   return {
     borderRadius: theme.shape.borderRadius,
     backgroundColor: bgColor,

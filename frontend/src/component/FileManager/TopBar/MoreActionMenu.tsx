@@ -36,7 +36,7 @@ const MoreActionMenu = ({ onClose, ...rest }: MenuProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const mountPopupState = usePopupState({
+  const _mountPopupState = usePopupState({
     variant: "popover",
     popupId: "mount",
   });

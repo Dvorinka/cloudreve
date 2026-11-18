@@ -41,7 +41,7 @@ export const CellHeaderWithPadding = styled(Box)({
 
 const ErrorTable = (props: ErrorTableProps) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
 
   return (
     <TableContainer component={StyledTableContainerPaper}>
@@ -120,7 +120,7 @@ const ApplicationNameMap: {
   versionControl: "fileManager.manageVersions",
 };
 
-const viewerType = "viewer";
+const _viewerType = "viewer";
 
 const Application = ({ app }: ApplicationProps) => {
   const { t } = useTranslation();

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useEffect, useMemo } from "react";
 import { IconButton, ListItemText, Menu, Skeleton, TableRow } from "@mui/material";
 import { useTranslation } from "react-i18next";

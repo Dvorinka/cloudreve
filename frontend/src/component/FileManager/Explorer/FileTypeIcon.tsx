@@ -80,7 +80,7 @@ export const builtInIcons: {
   markdown: Markdown,
 };
 
-interface TypeIcon {
+interface _TypeIcon {
   icon?: typeof SvgIcon | ((props: SvgIconProps) => JSX.Element);
   color?: string;
   color_dark?: string;

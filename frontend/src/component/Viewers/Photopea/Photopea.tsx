@@ -141,7 +141,7 @@ const Photopea = () => {
     dispatch(closePhotopeaViewer());
   }, [dispatch]);
 
-  const onLoad = useCallback((e: React.SyntheticEvent<HTMLIFrameElement>) => (pp.current = e.currentTarget), []);
+  const _onLoad = useCallback((e: React.SyntheticEvent<HTMLIFrameElement>) => (pp.current = e.currentTarget), []);
 
   const openMore = useCallback(
     (e: React.MouseEvent<any>) => {

@@ -67,7 +67,7 @@ const DragPreview = ({ pointerOffset, files, ...rest }: DragPreviewProps) => {
 const DragLayer = () => {
   DisableDropDelay();
 
-  const { itemType, isDragging, item, pointerOffset } = useDragLayer((monitor) => ({
+  const { itemType: _itemType, isDragging, item, pointerOffset } = useDragLayer((monitor) => ({
     item: monitor.getItem(),
     itemType: monitor.getItemType(),
     pointerOffset: monitor.getClientOffset(),

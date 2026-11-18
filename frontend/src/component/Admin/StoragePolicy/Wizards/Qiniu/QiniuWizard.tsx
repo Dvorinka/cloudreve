@@ -12,7 +12,7 @@ import { AddWizardProps } from "../../AddWizardDialog";
 import BucketACLInput from "../../EditStoragePolicy/BucketACLInput";
 const QiniuWizard = ({ onSubmit }: AddWizardProps) => {
   const { t } = useTranslation("dashboard");
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
   const formRef = useRef<HTMLFormElement>(null);
   const [policy, setPolicy] = useState<StoragePolicy>({
     id: 0,

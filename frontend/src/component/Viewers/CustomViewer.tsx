@@ -1,14 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
 import ViewerDialog, { ViewerLoading } from "./ViewerDialog.tsx";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { closeCustomViewer } from "../../redux/globalStateSlice.ts";
 import { Box, useTheme } from "@mui/material";
 
 const CustomViewer = () => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const _theme = useTheme();
   const viewerState = useAppSelector((state) => state.globalState.customViewer);
 
   const [loading, setLoading] = useState(false);

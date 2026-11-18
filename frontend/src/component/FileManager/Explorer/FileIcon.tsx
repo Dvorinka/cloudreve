@@ -62,7 +62,7 @@ const FileIcon = memo(
     }, [file]);
     const typedIcon = useMemo(() => {
       if (file?.metadata?.[Metadata.emoji]) {
-        const { sx, ...restIcon } = iconProps ?? {};
+        const { sx, ..._restIcon } = iconProps ?? {};
         return <EmojiIcon sx={sx} emoji={file.metadata[Metadata.emoji]} />;
       }
       return (

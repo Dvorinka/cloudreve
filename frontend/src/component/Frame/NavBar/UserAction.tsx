@@ -199,7 +199,7 @@ const UserAction = () => {
       if (session) {
         setCurrent(session);
       }
-    } catch (e) {}
+    } catch {}
   }, []);
   return (
     <>

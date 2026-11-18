@@ -149,10 +149,10 @@ const ContextMenu = ({ fmIndex = 0 }: ContextMenuProps) => {
     displayOpt.showTags || displayOpt.showOrganize || displayOpt.showMore || displayOpt.showNewFileFromTemplate;
   const part4 = displayOpt.showInfo || displayOpt.showGoToParent || displayOpt.showGoToSharedLink;
   const part5 = displayOpt.showRestore || displayOpt.showDelete || displayOpt.showRefresh;
-  const showDivider1 = part1 && part2;
-  const showDivider2 = part2 && part3;
-  const showDivider3 = part3 && part4;
-  const showDivider4 = part4 && part5;
+  const _showDivider1 = part1 && part2;
+  const _showDivider2 = part2 && part3;
+  const _showDivider3 = part3 && part4;
+  const _showDivider4 = part4 && part5;
 
   const part1Elements = part1 ? (
     <>
