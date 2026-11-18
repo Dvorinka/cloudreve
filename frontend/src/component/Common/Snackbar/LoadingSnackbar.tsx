@@ -24,7 +24,7 @@ const LoadingSnackbar = forwardRef<HTMLDivElement, LoadingSnackbarProps>((props,
   const { message, action, id, getProgress, secondaryAction, ...other } = props;
 
   useEffect(() => {
-    var intervalId: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout;
     if (getProgress) {
       intervalId = setInterval(() => {
         setProgress(getProgress());

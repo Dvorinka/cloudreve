@@ -301,7 +301,7 @@ export default class CrUri {
   // pure_uri returns the uri without searching query string, with exceptions.
   public pure_uri(...exceptions: string[]): CrUri {
     const newUri = new CrUri(this.toString());
-    let keysForDel: string[] = [];
+    const keysForDel: string[] = [];
     newUri.url.searchParams.forEach((_v, k) => {
       if (exceptions && exceptions.includes(k)) {
         return;

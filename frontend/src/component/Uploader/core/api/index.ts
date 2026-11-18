@@ -199,7 +199,7 @@ export async function s3LikeUploadChunk(
 }
 
 export async function obsFinishUpload(url: string, chunks: ChunkProgress[], cancel: CancelToken): Promise<any> {
-  let body = encodePartsXML(chunks);
+  const body = encodePartsXML(chunks);
   const res = await request<any>(url, {
     method: "post",
     cancelToken: cancel,

@@ -389,7 +389,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
   }, []);
 
   const phaseConfig = useMemo((): phaseSetting => {
-    var phaseSetting: phaseSetting = {
+    let phaseSetting: phaseSetting = {
       title: t("login.siginToYourAccount"),
       nextButtonText: t("login.continue"),
       showBackButton: false,

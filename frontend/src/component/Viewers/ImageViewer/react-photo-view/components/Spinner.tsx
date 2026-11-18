@@ -1,7 +1,7 @@
 import React from "react";
 import "./Spinner.less";
 
-// eslint-disable-next-line react/prop-types
+ 
 function Spinner({ className = "", ...props }: React.HTMLAttributes<HTMLElement>) {
   return (
     <div className={`PhotoView__Spinner ${className}`} {...props}>

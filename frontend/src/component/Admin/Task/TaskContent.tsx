@@ -78,7 +78,7 @@ export const TaskContent = memo(({ task, openEntity, openFile }: TaskContentProp
   );
 
   const content = useMemo(() => {
-    var privateState: any = {};
+    let privateState: any = {};
     try {
       privateState = JSON.parse(task.private_state ?? "{}");
     } catch (error) {

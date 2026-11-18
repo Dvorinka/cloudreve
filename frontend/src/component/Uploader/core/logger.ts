@@ -14,7 +14,7 @@ export default class Logger {
   info(...args: unknown[]) {
     const allowLevel: LogLevel[] = ["INFO"];
     if (allowLevel.includes(this.level)) {
-      // eslint-disable-next-line no-console
+       
       console.log(this.getPrintPrefix("INFO"), ...args);
     }
   }
@@ -22,7 +22,7 @@ export default class Logger {
   warn(...args: unknown[]) {
     const allowLevel: LogLevel[] = ["INFO", "WARN"];
     if (allowLevel.includes(this.level)) {
-      // eslint-disable-next-line no-console
+       
       console.warn(this.getPrintPrefix("WARN"), ...args);
     }
   }
@@ -30,7 +30,7 @@ export default class Logger {
   error(...args: unknown[]) {
     const allowLevel: LogLevel[] = ["INFO", "WARN", "ERROR"];
     if (allowLevel.includes(this.level)) {
-      // eslint-disable-next-line no-console
+       
       console.error(this.getPrintPrefix("ERROR"), ...args);
     }
   }

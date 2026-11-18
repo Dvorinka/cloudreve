@@ -1,4 +1,4 @@
-import { alpha, Box, Grid, Typography, useTheme } from "@mui/material";
+import { alpha, Box, Grid, Typography } from "@mui/material";
 import { QRCodeSVG } from "qrcode.react";
 import { useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -10,7 +10,6 @@ const AppPromotion = () => {
   const title = useAppSelector((state) => state.siteConfig.basic.config.title);
   const { t } = useTranslation();
   const [showQr, setShowQr] = useState(false);
-  const theme = useTheme();
   const refreshToken = useMemo(() => {
     return (
       window.location.origin +

@@ -1,6 +1,7 @@
 import { Box, BoxProps } from "@mui/material";
 import { fileExtension } from "../../../util";
 import Artplayer from "artplayer";
+import Option from "artplayer/types/option";
 import artplayerPluginChapter from "artplayer-plugin-chapter";
 import artplayerPluginHlsControl from "artplayer-plugin-hls-control";
 import { CrMaskedPrefix } from "./VideoViewer";
@@ -11,9 +12,9 @@ import { useEffect, useRef } from "react";
 import "./artplayer.css";
 
 export interface PlayerProps extends BoxProps {
-  option: any;
+  option: Omit<Option, "container" | "url"> & Partial<Pick<Option, "container" | "url">> & { title?: string; [key: string]: unknown };
   getInstance?: (instance: Artplayer) => void;
-  chapters?: any;
+  chapters?: { start: number; end: number; title: string }[];
   m3u8UrlTransform?: (url: string, isPlaylist?: boolean) => Promise<string>;
   getEntityUrl?: (url: string) => Promise<string>;
 }
@@ -32,7 +33,7 @@ const playM3u8 =
         }) {
           constructor(config: HlsConfig) {
             super(config);
-            var load = this.load.bind(this);
+            const load = this.load.bind(this);
             this.load = function (context, config, callbacks) {
               if (urlTransform) {
                 urlTransform(context.url).then((url) => {
@@ -60,7 +61,7 @@ const playM3u8 =
         }) {
           constructor(config: HlsConfig) {
             super(config);
-            var load = this.load.bind(this);
+            const load = this.load.bind(this);
             this.load = function (context, config, callbacks) {
               if (urlTransform) {
                 urlTransform(context.url, true).then((url) => {
@@ -152,14 +153,15 @@ export default function Player({
   getEntityUrl,
   ...rest
 }: PlayerProps) {
-  const artRef = useRef<Artplayer>();
-  const ext = fileExtension(option.title);
+  const artRef = useRef<HTMLDivElement>(null);
+  const ext = fileExtension(option.title ?? "");
 
   useEffect(() => {
-    const opts = {
+    const opts: Option = {
       ...option,
-      plugins: [...option.plugins],
-      container: artRef.current,
+      plugins: [...(option.plugins ?? [])],
+      container: artRef.current as HTMLDivElement,
+      url: option.url ?? "",
       customType: {
         ...option.customType,
         m3u8: playM3u8(m3u8UrlTransform, getEntityUrl),
@@ -169,11 +171,11 @@ export default function Player({
     };
 
     if (chapters) {
-      opts.plugins.push(artplayerPluginChapter({ chapters }));
+      opts.plugins?.push(artplayerPluginChapter({ chapters }));
     }
 
     if (ext === "m3u8") {
-      opts.plugins.push(
+      opts.plugins?.push(
         artplayerPluginHlsControl({
           quality: {
             // Show qualitys in control

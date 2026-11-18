@@ -98,12 +98,12 @@ export default abstract class Base {
     this.logger = new Logger(this.manager.logger.level, "UPLOADER", this.id);
     this.logger.info("Initialize new uploader for task: ", task);
     this.subscriber = {
-      /* eslint-disable @typescript-eslint/no-empty-function */
+       
       onTransition: (_newStatus: Status) => {},
       onError: (_err: Error) => {},
       onProgress: (_data: UploadProgress) => {},
       onMsg: (_msg, _color: MessageColor) => {},
-      /* eslint-enable @typescript-eslint/no-empty-function */
+       
     };
   }
 
@@ -260,9 +260,10 @@ export default abstract class Base {
   protected cancelUploadSession = (): Promise<void> => {
     return new Promise<void>((resolve) => {
       utils.removeResumeCtx(this.task, this.logger);
-      if (this.task.session?.session_id) {
+      const session = this.task.session;
+      if (session?.session_id) {
         setTimeout(() => {
-          deleteUploadSession(this.task.session!?.session_id, this.task.session!?.uri)
+          deleteUploadSession(session.session_id as string, session.uri as string)
             .catch((e) => {
               this.logger.warn("Failed to cancel upload session: ", e);
             })

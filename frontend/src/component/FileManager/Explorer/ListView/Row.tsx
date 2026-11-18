@@ -59,7 +59,6 @@ const Row = memo((props: FileBlockProps) => {
     isLoadingIndicator,
     noThumb,
     uploading,
-    ref,
     inView,
     fileTag,
     onClick,
@@ -144,5 +143,6 @@ const Row = memo((props: FileBlockProps) => {
     </RowContainer>
   );
 });
+Row.displayName = "Row";
 
 export default Row;

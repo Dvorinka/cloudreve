@@ -42,7 +42,6 @@ export default function Photo({
   broken,
   className,
   onPhotoLoad,
-  loadingElement,
   brokenElement,
   ...restProps
 }: IPhotoProps) {

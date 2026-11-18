@@ -48,7 +48,7 @@ const TagMenuItems = ({ targets }: SubMenuItemsProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const onClick = useCallback(
-    (f: () => any) => () => {
+    (f: () => void) => () => {
       f();
       if (rootPopupState) {
         rootPopupState.close();
@@ -83,7 +83,7 @@ const TagMenuItems = ({ targets }: SubMenuItemsProps) => {
             },
           ]),
         );
-      } catch (e) {
+      } catch {
         return;
       }
     },

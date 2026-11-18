@@ -305,7 +305,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
   const { t } = useTranslation();
 
   const exifContents = useMemo(() => {
-    let res: MediaMetaContent[] = [];
+    const res: MediaMetaContent[] = [];
     const aperture = getAperture(target);
     if (aperture) {
       res.push({
@@ -335,7 +335,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
 
   const cameraModelContent = useMemo(() => {
     let title: (MediaMetaElements | string)[] = [];
-    let content: (MediaMetaElements | string)[] = [];
+    const content: (MediaMetaElements | string)[] = [];
 
     const cameraMake = getCameraMake(target);
     if (cameraMake) {
@@ -385,7 +385,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
   }, [target, t]);
 
   const lightInfoContent = useMemo(() => {
-    let res: MediaMetaContent[] = [];
+    const res: MediaMetaContent[] = [];
 
     const exposureBias = getExposureBias(target);
     if (exposureBias) {
@@ -534,7 +534,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
   }, [target, t]);
 
   const streamFormatContent = useMemo(() => {
-    let res: MediaMetaContent[] = [];
+    const res: MediaMetaContent[] = [];
 
     if (target.metadata?.[Metadata.stream_format_long]) {
       res.push({
@@ -566,7 +566,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
   }, [target, t]);
 
   const singleStreamContents = useMemo(() => {
-    let res: MediaMetaContent[] = [];
+    const res: MediaMetaContent[] = [];
     const allMetas = Object.keys(target.metadata ?? {});
     const streamGrouped: {
       [key: string]: { type: string; [key: string]: string };
@@ -591,7 +591,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
     });
 
     for (const [group, item] of Object.entries(streamGrouped)) {
-      let content: string[] = [];
+      const content: string[] = [];
       if (item[Metadata.stream_indexed_codec]) {
         content.push(item[Metadata.stream_indexed_codec]);
       }
@@ -618,7 +618,7 @@ const MediaInfo = ({ target }: MediaInfoProps) => {
   }, [target, t]);
 
   const gpsAddressContent = useMemo(() => {
-    let content: (MediaMetaElements | string)[] = [];
+    const content: (MediaMetaElements | string)[] = [];
 
     // Build address components in hierarchical order (most specific to least specific)
     const addressComponents: (MediaMetaElements | undefined)[] = [];

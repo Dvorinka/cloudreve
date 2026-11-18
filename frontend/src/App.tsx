@@ -162,7 +162,7 @@ export const useGeneratedTheme = (preferedDark?: boolean, subTheme?: boolean) =>
           : "light";
   const theme = useMemo(() => {
     // Determine preferred theme
-    var themeConfig = {} as ThemeOptions;
+    let themeConfig = {} as ThemeOptions;
     if (themes) {
       try {
         const themeOptions = JSON.parse(themes) as themeOptions;

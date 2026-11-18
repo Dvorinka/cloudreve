@@ -570,7 +570,7 @@ export function saveImage(name: string, data: string, file: FileResponse, versio
 
 export function saveFile(
   uri: string,
-  data: any,
+  data: unknown,
   version?: string,
   saveAsNew?: boolean,
   ignoreSnackbar?: boolean,
@@ -585,7 +585,7 @@ export function saveFile(
           const dst = new CrUri(saveAsDst.uri).join(saveAsDst.name);
           uri = dst.toString();
         }
-      } catch (e) {
+      } catch {
         return;
       }
     }
@@ -839,7 +839,7 @@ export function markdownImagePreviewHandler(imageSource: string, mdFileUri: stri
       const file = await dispatch(getFileInfo({ uri: uri.toString() }, true));
       const fileUrl = await dispatch(getFileEntityUrl({ uris: [getFileLinkedUri(file)] }));
       return fileUrl.urls[0].url;
-    } catch (e) {
+    } catch {
       return BROKEN_IMG_URI;
     }
   };

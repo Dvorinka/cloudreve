@@ -109,7 +109,7 @@ const FileManagementSection = () => {
 
   const onEditedConfigBlur = useCallback(
     (value: string) => {
-      var res: Record<string, any> | undefined = undefined;
+      let res: Record<string, any> | undefined = undefined;
       if (value) {
         try {
           res = JSON.parse(value);

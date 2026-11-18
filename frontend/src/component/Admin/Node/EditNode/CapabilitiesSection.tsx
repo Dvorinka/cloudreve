@@ -177,7 +177,7 @@ const CapabilitiesSection = () => {
 
   const onEditedConfigYtdlpBlur = useCallback(
     (value: string) => {
-      var res: Record<string, any> | undefined = undefined;
+      let res: Record<string, any> | undefined = undefined;
       if (value) {
         try {
           res = JSON.parse(value);
@@ -352,7 +352,7 @@ const CapabilitiesSection = () => {
 
   const onEditedConfigAria2Blur = useCallback(
     (value: string) => {
-      var res: Record<string, any> | undefined = undefined;
+      let res: Record<string, any> | undefined = undefined;
       if (value) {
         try {
           res = JSON.parse(value);
@@ -367,7 +367,7 @@ const CapabilitiesSection = () => {
 
   const onEditedConfigQbittorrentBlur = useCallback(
     (value: string) => {
-      var res: Record<string, any> | undefined = undefined;
+      let res: Record<string, any> | undefined = undefined;
       if (value) {
         try {
           res = JSON.parse(value);

@@ -332,7 +332,7 @@ const ArchivePreview = () => {
                         setHeight(h + 0.5);
                       }}
                       components={{
-                        // eslint-disable-next-line react/display-name
+                         
                         Table: (props) => <Table {...props} size="small" />,
                       }}
                       data={filteredFiles}

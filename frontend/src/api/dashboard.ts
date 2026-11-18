@@ -68,7 +68,7 @@ export interface GroupEnt extends CommonMixin {
 export interface GroupSetting {
   compress_size?: number;
   decompress_size?: number;
-  remote_download_options?: Record<string, any>;
+  remote_download_options?: Record<string, unknown>;
   source_batch?: number;
   aria2_batch?: number;
   aria2_task_limit?: number;
@@ -412,9 +412,9 @@ export interface TestNodeService {
   node: Node;
 }
 
-export interface TestNodeDownloaderService extends TestNodeService {}
+export type TestNodeDownloaderService = TestNodeService;
 
-export interface UpsertNodeService extends TestNodeService {}
+export type UpsertNodeService = TestNodeService;
 
 export interface ListUserResponse {
   users: User[];

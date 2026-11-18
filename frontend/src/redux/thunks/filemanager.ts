@@ -101,7 +101,7 @@ export interface NavigateReconcileOptions {
 }
 
 const pageSize = (fm: SingleManager) => {
-  let pageSize = Math.max(fm.pageSize, MinPageSize);
+  const pageSize = Math.max(fm.pageSize, MinPageSize);
   return Math.min(fm.pageSize, fm.list?.props.max_page_size ?? pageSize);
 };
 
@@ -126,7 +126,7 @@ export function checkReadMeEnabled(index: number): AppThunk {
       try {
         const info = await dispatch(queueLoadShareInfo(new CrUri(path), false));
         dispatch(setShareReadmeDetect(!!(info?.show_readme && info.source_type == FileType.folder)));
-      } catch (e) {
+      } catch {
         dispatch(setShareReadmeDetect(false));
       }
     } else {
@@ -154,7 +154,7 @@ export function checkOpenViewerQuery(index: number): AppThunk {
       return;
     }
 
-    const { files: list, pagination } = getState().fileManager[index]?.list ?? {};
+    const { files: list } = getState().fileManager[index]?.list ?? {};
     if (list) {
       debugger;
       // Find readme file from highest to lowest priority
@@ -174,10 +174,7 @@ export function checkOpenViewerQuery(index: number): AppThunk {
 export function navigateReconcile(index: number, opt?: NavigateReconcileOptions): AppThunk<Promise<void>> {
   return async (dispatch, getState) => {
     const timeNow = dayjs().valueOf();
-    const {
-      fileManager,
-      globalState: { sidebarOpen, imageViewer },
-    } = getState();
+    const { fileManager } = getState();
     const { path, list, pure_path } = fileManager[index];
     if (!path) {
       return;
@@ -192,12 +189,12 @@ export function navigateReconcile(index: number, opt?: NavigateReconcileOptions)
     if (opt?.sync_view) {
       try {
         await dispatch(syncViewSettings(index));
-      } catch (e) {}
+      } catch {}
     }
 
     const currentLogin = SessionManager.currentLoginOrNull();
     const currentView = localCustomView[pure_path ?? ""];
-    let useCustomView = currentLogin?.user.disable_view_sync || currentView;
+    const useCustomView = currentLogin?.user.disable_view_sync || currentView;
 
     let listRes: ListResponse | null = null;
     try {
@@ -472,7 +469,7 @@ export function navigateToPath(
         crUri.setUsername("");
         path = crUri.toString();
       }
-    } catch (e) {}
+    } catch {}
 
     if (index == FileManagerIndex.selector) {
       return dispatch(setTargetPath(index, path));
@@ -718,7 +715,7 @@ export function openContextUrlFromUri(index: number, uri: string, e: React.Mouse
     if (!file) {
       try {
         file = await dispatch(getFileInfo({ uri }));
-      } catch (e) {
+      } catch {
         return;
       }
     }

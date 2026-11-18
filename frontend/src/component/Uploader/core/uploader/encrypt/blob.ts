@@ -135,14 +135,13 @@ export class EncryptedBlob implements Blob {
       counter = this.incrementCounter(counter, blockOffset);
     }
 
-    const that = this;
     // Track bytes processed to handle partial blocks correctly
     let totalBytesProcessed = this.counterOffset;
     // Remember if we've processed the first chunk (which may be non-block-aligned)
     let isFirstChunk = true;
 
     return new TransformStream<Uint8Array, Uint8Array>({
-      async transform(chunk, controller) {
+      transform: async (chunk, controller) => {
         // Create a new ArrayBuffer copy to ensure proper type for crypto API
         const buffer = new ArrayBuffer(chunk.byteLength);
         const chunkData = new Uint8Array(buffer);
@@ -171,7 +170,7 @@ export class EncryptedBlob implements Blob {
           controller.enqueue(encryptedBytes.slice(offsetInBlock, offsetInBlock + partialBlockSize));
 
           // Increment counter by 1 block
-          counter = that.incrementCounter(counter, 1);
+          counter = this.incrementCounter(counter, 1);
           totalBytesProcessed += partialBlockSize;
 
           // Process remaining bytes if any
@@ -186,7 +185,7 @@ export class EncryptedBlob implements Blob {
 
             // Increment counter by number of blocks processed
             const blocksProcessed = Math.ceil(remaining.byteLength / 16);
-            counter = that.incrementCounter(counter, blocksProcessed);
+            counter = this.incrementCounter(counter, blocksProcessed);
             totalBytesProcessed += remaining.byteLength;
           }
           isFirstChunk = false;
@@ -203,7 +202,7 @@ export class EncryptedBlob implements Blob {
 
           // Update counter: increment by number of 16-byte blocks (rounded up for partial blocks)
           const blocksProcessed = Math.ceil(chunkData.byteLength / 16);
-          counter = that.incrementCounter(counter, blocksProcessed);
+          counter = this.incrementCounter(counter, blocksProcessed);
           totalBytesProcessed += chunkData.byteLength;
           isFirstChunk = false;
         }

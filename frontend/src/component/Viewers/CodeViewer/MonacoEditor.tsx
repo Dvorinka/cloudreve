@@ -299,7 +299,6 @@ function MonacoEditor({
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(initMonaco, []);
 
   useEffect(() => {
@@ -385,7 +384,6 @@ function MonacoEditor({
         _subscriptionBlur.current.dispose();
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

@@ -31,7 +31,7 @@ const HeadlessFrame = () => {
   );
   const oauthApp = useAppSelector((state) => state.globalState.oauthApp);
   const oauthAppLoading = useAppSelector((state) => state.globalState.oauthAppLoading);
-  let navigation = useNavigation();
+  const navigation = useNavigation();
 
   const showOAuthCard = oauthApp || oauthAppLoading;
 

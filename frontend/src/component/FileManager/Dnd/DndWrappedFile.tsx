@@ -102,7 +102,7 @@ export const useFileDrag = ({ file, includeSelected, dropUri }: UseFileDragProps
 
   useEffect(() => {
     preview(getEmptyImage(), { captureDraggingState: true });
-    // eslint-disable-next-line
+     
   }, []);
 
   useEffect(() => {

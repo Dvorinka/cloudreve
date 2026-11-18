@@ -81,7 +81,7 @@ const AggregatedErrorDetail = () => {
       return [undefined, undefined];
     }
 
-    let rootError = new AppError(error);
+    const rootError = new AppError(error);
     const errors: { [key: string]: AppError } = {};
     Object.keys(error.aggregated_error ?? {}).forEach((key) => {
       const inner = error.aggregated_error?.[key];

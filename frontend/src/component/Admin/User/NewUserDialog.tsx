@@ -46,7 +46,7 @@ const NewUserDialog = ({ open, onClose, onCreated }: NewUserDialogProps) => {
       return;
     }
 
-    let newUser = { ...user, nick: user.email.split("@")[0] };
+    const newUser = { ...user, nick: user.email.split("@")[0] };
 
     setLoading(true);
     dispatch(upsertUser({ user: newUser, password: user.password }))

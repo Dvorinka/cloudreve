@@ -3,7 +3,6 @@ import { FormControl, Link, Stack, ListItemText } from "@mui/material";
 import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
 import { DenseFilledTextField, DenseSelect } from "../../../Common/StyledComponents.tsx";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu.tsx";
-import * as React from "react";
 import { NoMarginHelperText } from "../Settings.tsx";
 
 export interface CapCaptchaProps {

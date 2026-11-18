@@ -6,7 +6,7 @@ export const { CancelToken } = axios;
 
 const baseConfig = {
   transformResponse: [
-    (response: any) => {
+    (response: string) => {
       try {
         return JSON.parse(response);
       } catch (e) {
@@ -22,7 +22,7 @@ const cdBackendConfig = {
   withCredentials: true,
 };
 
-export function request<T = any>(url: string, config?: AxiosRequestConfig) {
+export function request<T = unknown>(url: string, config?: AxiosRequestConfig) {
   return axios.request<T>({ ...baseConfig, ...config, url }).catch((err) => {
     if (axios.isCancel(err)) {
       throw err;
@@ -36,6 +36,6 @@ export function request<T = any>(url: string, config?: AxiosRequestConfig) {
   });
 }
 
-export function requestAPI<T = any>(url: string, config?: AxiosRequestConfig) {
+export function requestAPI<T = unknown>(url: string, config?: AxiosRequestConfig) {
   return request<Response<T>>(url, { ...cdBackendConfig, ...config });
 }

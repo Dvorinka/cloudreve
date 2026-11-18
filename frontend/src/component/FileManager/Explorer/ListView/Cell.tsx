@@ -553,7 +553,7 @@ const Cell = memo((props: CellProps) => {
     case ColumType.date_created:
       return <FolderDateCell file={file} dateType={"created"} />;
     case ColumType.parent: {
-      let crUrl = new CrUri(file.path);
+      const crUrl = new CrUri(file.path);
       return <FolderCell path={crUrl.parent().toString()} />;
     }
     case ColumType.recycle_restore_parent: {
@@ -561,7 +561,7 @@ const Cell = memo((props: CellProps) => {
         return <Box />;
       }
 
-      let crUrl = new CrUri(file.metadata[Metadata.restore_uri]);
+      const crUrl = new CrUri(file.metadata[Metadata.restore_uri]);
       return <FolderCell path={crUrl.parent().toString()} />;
     }
     case ColumType.recycle_expire:

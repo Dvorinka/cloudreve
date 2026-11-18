@@ -1,4 +1,12 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+
+declare global {
+  interface Window {
+    Cap?: unknown;
+    CAP_CUSTOM_WASM_URL?: string;
+    CAP_CUSTOM_HASHWX_URL?: string;
+  }
+}
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "../../../redux/hooks.ts";
 import { CaptchaParams } from "./Captcha.tsx";
@@ -56,7 +64,7 @@ const STANDARD_INPUT_HEIGHT = "56px";
 
 const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps & { fullWidth?: boolean }) => {
   const captchaRef = useRef<HTMLDivElement>(null);
-  const widgetRef = useRef<any>(null);
+  const widgetRef = useRef<(HTMLElement & { remove?: () => void }) | null>(null);
   const onStateChangeRef = useRef(onStateChange);
   const scriptLoadedRef = useRef(false);
   const theme = useTheme();
@@ -128,7 +136,7 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
     // Clear container
     captchaRef.current.innerHTML = "";
 
-    if (typeof window !== "undefined" && (window as any).Cap) {
+    if (typeof window !== "undefined" && window.Cap) {
       const widget = document.createElement("cap-widget");
 
       // Cap 2.0 API format: {instanceURL}/{siteKey}/
@@ -143,8 +151,8 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
 
       captchaRef.current.appendChild(widget);
 
-      widget.addEventListener("solve", (e: any) => {
-        const token = e.detail.token;
+      widget.addEventListener("solve", (e: Event) => {
+        const token = (e as CustomEvent<{ token?: string }>).detail.token;
         if (token) {
           onStateChangeRef.current({ ticket: token });
         }
@@ -174,8 +182,8 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
     // CAP_CUSTOM_HASHWX_URL for the HashWX proof-of-work module and otherwise
     // falls back to jsDelivr (cloudreve/cloudreve#3617).
     const assets = capAssetURLs(capAssetServer, capInstanceURL);
-    (window as any).CAP_CUSTOM_WASM_URL = assets.wasm;
-    (window as any).CAP_CUSTOM_HASHWX_URL = assets.hashwx;
+    window.CAP_CUSTOM_WASM_URL = assets.wasm;
+    window.CAP_CUSTOM_HASHWX_URL = assets.hashwx;
 
     const scriptId = "cap-widget-script";
     let script = document.getElementById(scriptId) as HTMLScriptElement;
@@ -206,7 +214,7 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
         }
       };
       document.head.appendChild(script);
-    } else if (scriptLoadedRef.current || (window as any).Cap) {
+    } else if (scriptLoadedRef.current || window.Cap) {
       // Script already loaded
       initWidget();
     } else {

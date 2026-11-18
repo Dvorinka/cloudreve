@@ -137,7 +137,7 @@ const Uploader = () => {
     (path: string, type = SelectType.File, original?: Base) => {
       dispatch(openUploadTaskList());
 
-      // eslint-disable-next-line no-unreachable
+       
       uploadManager
         .select(path, type)
         .then(taskAdded(original))

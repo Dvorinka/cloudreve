@@ -128,7 +128,7 @@ const BasicInfoSection = () => {
               <FormControl fullWidth>
                 <DenseFilledTextField required value={values.slave_key} onChange={onSlaveKeyChange} />
                 <NoMarginHelperText>
-                  <Trans i18nKey="node.slaveSecretDes" ns="dashboard" components={[<Code />, <Code />]} />
+                  <Trans i18nKey="node.slaveSecretDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
                 </NoMarginHelperText>
               </FormControl>
             </SettingForm>

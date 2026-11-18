@@ -1007,7 +1007,7 @@ export function deleteVersion(req: VersionControlService): ThunkResponse<void> {
   };
 }
 
-export function sendUpdateFile(req: FileUpdateService, data: any): ThunkResponse<FileResponse> {
+export function sendUpdateFile(req: FileUpdateService, data: unknown): ThunkResponse<FileResponse> {
   return async (dispatch, _getState) => {
     return await dispatch(
       send(

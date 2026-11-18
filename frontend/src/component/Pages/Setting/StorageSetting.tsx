@@ -53,7 +53,7 @@ export const CapacityBar = ({ capacity, forceRow }: { capacity?: Capacity; force
     base: 0,
   });
   useEffect(() => {
-    let summary = {
+    const summary = {
       used: 0,
       base: 0,
     };

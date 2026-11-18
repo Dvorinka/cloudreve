@@ -60,7 +60,7 @@ const preProcessors: {
   [key: string]: (config: SiteConfig) => any;
 } = {
   explorer: (config: SiteConfig) => {
-    let icons: ExpandedIconSettings = {};
+    const icons: ExpandedIconSettings = {};
     try {
       const iconSettings = <FileTypeIconSetting[]>JSON.parse(config.icons ?? "[]");
       iconSettings.forEach((item) => {

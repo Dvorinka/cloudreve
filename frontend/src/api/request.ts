@@ -194,7 +194,7 @@ export function send<T = any>(
 ): ThunkResponse<T> {
   return async (dispatch, _getState) => {
     try {
-      let axiosConf: AxiosRequestConfig = {
+      const axiosConf: AxiosRequestConfig = {
         ...config,
         headers: {
           ...config?.headers,

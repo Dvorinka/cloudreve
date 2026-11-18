@@ -19,7 +19,7 @@ import { FileDialogContext } from "./FileDialog";
 
 const FileEntity = () => {
   const { t } = useTranslation("dashboard");
-  const { setFile, values } = useContext(FileDialogContext);
+  const { values } = useContext(FileDialogContext);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [userDialogId, setUserDialogId] = useState<number | null>(null);
   const [entityDialogOpen, setEntityDialogOpen] = useState(false);

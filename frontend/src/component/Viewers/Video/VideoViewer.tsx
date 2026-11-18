@@ -10,7 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import Artplayer from "artplayer";
-import { Setting as ArtSetting } from "artplayer/types/setting";
+import { Setting as ArtSetting, SettingOption as ArtSettingOption } from "artplayer/types/setting";
 import dayjs from "dayjs";
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -46,7 +46,6 @@ const VideoViewer = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const viewerState = useAppSelector((state) => state.globalState.videoViewer);
 
-  const [loaded, setLoaded] = useState(false);
   const [art, setArt] = useState<Artplayer | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const currentExpire = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -239,7 +238,7 @@ const VideoViewer = () => {
   }, [dispatch]);
 
   const openOption = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],
@@ -463,7 +462,7 @@ const VideoViewer = () => {
             moreVideoAttr: {
               "webkit-playsinline": true,
               playsInline: true,
-            },
+            } as { [key: string]: unknown },
             subtitle: {
               style: {
                 color: subtitleStyle.fontColor ?? "#fff",
@@ -475,14 +474,14 @@ const VideoViewer = () => {
                 name: "loop",
                 html: t("application:fileManager.loop"),
                 switch: false,
-                mounted(this: Artplayer, item: ArtSetting) {
+                mounted(this: Artplayer, _panel: HTMLDivElement, item: ArtSetting) {
                   const enabled = this.storage.get("loop") === true;
                   if (enabled) {
                     item.switch = true;
                     this.option.loop = true;
                   }
                 },
-                onSwitch(this: Artplayer, item: ArtSetting) {
+                onSwitch(this: Artplayer, item: ArtSettingOption, _element: HTMLDivElement, _event: Event) {
                   const next = !item.switch;
                   this.option.loop = next;
                   this.storage.set("loop", next);

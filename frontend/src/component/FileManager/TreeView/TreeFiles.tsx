@@ -18,7 +18,7 @@ export interface TreeFilesProps {
   labelOverwrite?: string;
   pinned?: boolean;
   canDrop?: boolean;
-  [key: string]: any;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- passthrough props
 }
 
 export const pinedPrefix = "Pined";
@@ -38,14 +38,14 @@ const TreeFiles = React.memo(
 
         return p;
       }, [pinned, p, flatten]);
-      const [loading, displayName, startIcon, onClick] = useBreadcrumbButtons({
+      const [loading, displayName, startIcon] = useBreadcrumbButtons({
         name: parentsCache && parentsCache.file ? parentsCache.file.name : path.basename(uri.path()),
         is_latest: false,
         path: p,
       });
 
       const childTreeFiles = useMemo(() => {
-        var res: TreeFilesProps[] = [];
+        const res: TreeFilesProps[] = [];
 
         let newParent: string | null = null;
         let elementPushed = false;

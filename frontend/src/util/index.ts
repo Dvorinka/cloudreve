@@ -114,7 +114,7 @@ export function urlBase64BufferDecode(v: string) {
   v = v.replace(/-/g, "+").replace(/_/g, "/");
 
   // Pad out with standard base64 required padding characters
-  var pad = v.length % 4;
+  const pad = v.length % 4;
   if (pad) {
     if (pad === 1) {
       throw new Error("InvalidLengthError: Input base64url string is the wrong length to determine padding");

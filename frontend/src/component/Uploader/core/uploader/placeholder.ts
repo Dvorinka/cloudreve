@@ -1,5 +1,4 @@
 import Chunk, { ChunkInfo } from "./chunk";
-import { qiniuDriveUploadChunk, qiniuFinishUpload } from "../api";
 import { Status } from "./base";
 import { Task } from "../types";
 import UploadManager from "../index";

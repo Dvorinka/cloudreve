@@ -25,9 +25,9 @@ const PieceProgress: React.FC<PieceProgressProps> = memo(({ pieces, total }) => 
 
     const bits = Uint8Array.from(atob(pieces), (c) => c.charCodeAt(0));
     for (let i = 0; i < canvas.width; i++) {
-      let bitIndex = Math.floor(((i + 1) / canvas.width) * total);
+      const bitIndex = Math.floor(((i + 1) / canvas.width) * total);
       // Read bool from unit8 array
-      let bit = bits[Math.floor(bitIndex / 8)] & (1 << bitIndex % 8);
+      const bit = bits[Math.floor(bitIndex / 8)] & (1 << bitIndex % 8);
       if (bit) {
         context.beginPath();
         context.moveTo(i, 0);
