@@ -300,6 +300,7 @@ export interface GlobalStateSlice {
   advanceSearchOpen?: boolean;
   advanceSearchBasePath?: string;
   advanceSearchInitialNameCondition?: string[];
+  advanceSearchInitialContentCondition?: string;
 
   // Share README
   shareReadmeDetect?: number;
@@ -417,11 +418,13 @@ export const globalStateSlice = createSlice({
         open: boolean;
         basePath?: string;
         nameCondition?: string[];
+        contentCondition?: string;
       }>,
     ) => {
       state.advanceSearchOpen = action.payload.open;
       state.advanceSearchBasePath = action.payload.basePath;
       state.advanceSearchInitialNameCondition = action.payload.nameCondition;
+      state.advanceSearchInitialContentCondition = action.payload.contentCondition;
     },
     closeAdvanceSearch: (state) => {
       state.advanceSearchOpen = false;

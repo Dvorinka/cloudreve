@@ -29,6 +29,7 @@ type dbfsOption struct {
 	notRoot                    bool
 	encryptMetadata            *types.EncryptMetadata
 	existingEntity             *ent.Entity
+	searchFileIDs              []int
 }
 
 func newDbfsOption() *dbfsOption {
@@ -193,5 +194,13 @@ func WithAncestor(f *File) fs.Option {
 func WithExistingEntity(e *ent.Entity) fs.Option {
 	return optionFunc(func(o *dbfsOption) {
 		o.existingEntity = e
+	})
+}
+
+// WithSearchFileIDs restricts search results to the given file IDs. A non-nil
+// empty slice matches nothing; nil leaves the search unfiltered.
+func WithSearchFileIDs(ids []int) fs.Option {
+	return optionFunc(func(o *dbfsOption) {
+		o.searchFileIDs = ids
 	})
 }

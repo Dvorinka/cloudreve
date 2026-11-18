@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAppSelector } from "../../../../redux/hooks.ts";
 import CalendarClock from "../../../Icons/CalendarClock.tsx";
 import Dismiss from "../../../Icons/Dismiss.tsx";
+import DocumentText from "../../../Icons/DocumentText.tsx";
 import FolderOutlined from "../../../Icons/FolderOutlined.tsx";
 import HardDriveOutlined from "../../../Icons/HardDriveOutlined.tsx";
 import Numbers from "../../../Icons/Numbers.tsx";
@@ -12,6 +13,7 @@ import Search from "../../../Icons/Search.tsx";
 import Tag from "../../../Icons/Tag.tsx";
 import TextCaseTitle from "../../../Icons/TextCaseTitle.tsx";
 import { customPropsMetadataPrefix } from "../../Sidebar/CustomProps/CustomProps.tsx";
+import { ContentCondition } from "./ContentCondition.tsx";
 import { CustomPropsConditon } from "./CustomPropsConditon.tsx";
 import { DateTimeCondition } from "./DateTimeCondition.tsx";
 import { FileNameCondition, StyledBox } from "./FileNameCondition.tsx";
@@ -41,6 +43,7 @@ export interface Condition {
   created_lte?: number;
   updated_gte?: number;
   updated_lte?: number;
+  content_query?: string;
 }
 
 export enum ConditionType {
@@ -52,6 +55,7 @@ export enum ConditionType {
   metadata,
   base,
   tag,
+  content,
 }
 
 export interface ConditionProps {
@@ -111,6 +115,8 @@ const ConditionBox = forwardRef((props: ConditionProps, ref) => {
         return t("application:fileManager.updatedDate");
       case ConditionType.created:
         return t("application:fileManager.createDate");
+      case ConditionType.content:
+        return t("application:navbar.fullTextSearch");
       default:
         return "Unknown";
     }
@@ -134,6 +140,8 @@ const ConditionBox = forwardRef((props: ConditionProps, ref) => {
       case ConditionType.modified:
       case ConditionType.created:
         return CalendarClock;
+      case ConditionType.content:
+        return DocumentText;
 
       default:
         return TextCaseTitle;
@@ -191,6 +199,7 @@ const ConditionBox = forwardRef((props: ConditionProps, ref) => {
         {condition.type == ConditionType.modified && (
           <DateTimeCondition condition={condition} onChange={onChange} field={"updated"} />
         )}
+        {condition.type == ConditionType.content && <ContentCondition condition={condition} onChange={onChange} />}
       </Box>
     </StyledBox>
   );

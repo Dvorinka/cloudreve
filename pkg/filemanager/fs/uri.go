@@ -35,6 +35,7 @@ const (
 	QuerySearchCreatedLte     = "created_lte"
 	QuerySearchUpdatedGte     = "updated_gte"
 	QuerySearchUpdatedLte     = "updated_lte"
+	QuerySearchContent        = "content"
 )
 
 type URI struct {
@@ -319,6 +320,11 @@ func (u *URI) SearchParameters() *inventory.SearchFileParameters {
 			res.UpdatedAtLte = &limit
 			withSearch = true
 		}
+	}
+
+	if v, ok := q[QuerySearchContent]; ok && len(v) > 0 && v[0] != "" {
+		res.Content = v[0]
+		withSearch = true
 	}
 
 	if withSearch {

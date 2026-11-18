@@ -381,6 +381,47 @@ func (m *MeilisearchIndexer) Search(ctx context.Context, ownerID int, query stri
 	return results, resp.EstimatedTotalHits, nil
 }
 
+func (m *MeilisearchIndexer) SearchFileIDs(ctx context.Context, ownerID int, query string, limit int) ([]int, error) {
+	// Meilisearch caps a single search request at 1000 hits.
+	if limit <= 0 || limit > 1000 {
+		limit = 1000
+	}
+
+	index := m.client.Index(indexName)
+	searchReq := &meilisearch.SearchRequest{
+		Filter:               fmt.Sprintf("owner_id = %d", ownerID),
+		Limit:                int64(limit),
+		AttributesToRetrieve: []string{"file_id"},
+	}
+
+	if m.cfg.EmbeddingEnbaled {
+		searchReq.Hybrid = &meilisearch.SearchRequestHybrid{
+			Embedder: embedderName,
+		}
+	}
+
+	resp, err := index.SearchWithContext(ctx, query, searchReq)
+	if err != nil {
+		return nil, fmt.Errorf("search failed: %w", err)
+	}
+
+	ids := make([]int, 0, len(resp.Hits))
+	seen := make(map[int]struct{})
+	for _, hit := range resp.Hits {
+		var doc searcher.SearchDocument
+		if err := hit.DecodeInto(&doc); err != nil {
+			continue
+		}
+		if _, exists := seen[doc.FileID]; exists {
+			continue
+		}
+		seen[doc.FileID] = struct{}{}
+		ids = append(ids, doc.FileID)
+	}
+
+	return ids, nil
+}
+
 func (m *MeilisearchIndexer) DeleteAll(ctx context.Context) error {
 	index := m.client.Index(indexName)
 	if _, err := index.DeleteAllDocumentsWithContext(ctx, nil); err != nil {

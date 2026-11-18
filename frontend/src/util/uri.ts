@@ -27,6 +27,7 @@ export const UriQuery = {
   created_lte: "created_lte",
   updated_gte: "updated_gte",
   updated_lte: "updated_lte",
+  content: "content",
 };
 
 export const UriSearchCategory = {
@@ -54,6 +55,7 @@ export interface SearchParam {
   created_at_lte?: number;
   updated_at_gte?: number;
   updated_at_lte?: number;
+  content?: string;
 }
 
 export default class CrUri {
@@ -142,6 +144,9 @@ export default class CrUri {
     if (param.updated_at_lte) {
       this.addQuery(UriQuery.updated_lte, param.updated_at_lte.toString());
     }
+    if (param.content) {
+      this.addQuery(UriQuery.content, param.content);
+    }
     return this;
   }
 
@@ -189,6 +194,9 @@ export default class CrUri {
           break;
         case UriQuery.updated_lte:
           res.updated_at_lte = parseInt(v);
+          break;
+        case UriQuery.content:
+          res.content = v;
           break;
         default:
           if (k.startsWith(UriQuery.metadata_prefix)) {

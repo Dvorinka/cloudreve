@@ -133,6 +133,7 @@
     "searchIn": "Search <0>{{keywords}}</0>",
     "recentlyViewed": "Recently viewed",
     "fullTextSearch": "Full-text search",
+    "fullTextSearchHelp": "Matches text inside files you own. Combine with other conditions to narrow results.",
     "loadMore": "Load more",
     "searchFiles": "Search files...",
     "showMore": "More",

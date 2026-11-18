@@ -16,6 +16,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/logging"
 	"github.com/cloudreve/Cloudreve/v4/pkg/queue"
 	"github.com/cloudreve/Cloudreve/v4/pkg/searcher"
+	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
 	"github.com/cloudreve/Cloudreve/v4/pkg/util"
 	"github.com/samber/lo"
 )
@@ -79,6 +80,28 @@ func (m *manager) SearchFullText(ctx context.Context, query string, offset int) 
 		Hits:  files,
 		Total: total,
 	}, nil
+}
+
+// contentSearchFileIDLimit caps how many content-matched files are fed into
+// the listing query.
+const contentSearchFileIDLimit = 1000
+
+// searchContentFileIDs resolves a full-text content query to the IDs of the
+// user's matching files. The result is ANDed with the rest of the search
+// filters by the listing query.
+func (m *manager) searchContentFileIDs(ctx context.Context, query string) ([]int, error) {
+	if !m.settings.FTSEnabled(ctx) {
+		return nil, serializer.NewError(serializer.CodeFeatureNotEnabled, "Full-text search is not enabled", nil)
+	}
+
+	ids, err := m.dep.SearchIndexer(ctx).SearchFileIDs(ctx, m.user.ID, query, contentSearchFileIDLimit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search file content: %w", err)
+	}
+	if ids == nil {
+		ids = []int{}
+	}
+	return lo.Uniq(ids), nil
 }
 
 func init() {

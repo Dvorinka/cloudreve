@@ -19,3 +19,25 @@ func TestShareUriPasswordRoundTrip(t *testing.T) {
 	require.Equal(t, "abc123", u.ID(""))
 	require.Equal(t, "", u.Password())
 }
+
+func TestSearchParametersContent(t *testing.T) {
+	u, err := NewUriFromString("cloudreve://my?content=hello+world")
+	require.NoError(t, err)
+	params := u.SearchParameters()
+	require.NotNil(t, params)
+	require.Equal(t, "hello world", params.Content)
+
+	// Empty content does not trigger search mode.
+	u, err = NewUriFromString("cloudreve://my?content=")
+	require.NoError(t, err)
+	require.Nil(t, u.SearchParameters())
+
+	// Content combines with other search parameters.
+	u, err = NewUriFromString("cloudreve://my?content=report&name=budget&case_folding=")
+	require.NoError(t, err)
+	params = u.SearchParameters()
+	require.NotNil(t, params)
+	require.Equal(t, "report", params.Content)
+	require.Equal(t, []string{"budget"}, params.Name)
+	require.True(t, params.CaseFolding)
+}

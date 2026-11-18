@@ -636,6 +636,11 @@ export function advancedSearch(index: number, conditions: Condition[]): AppThunk
             params.updated_at_lte = condition.updated_lte;
           }
           break;
+        case ConditionType.content:
+          if (condition.content_query) {
+            params.content = condition.content_query;
+          }
+          break;
       }
     });
 
@@ -649,12 +654,18 @@ export function advancedSearch(index: number, conditions: Condition[]): AppThunk
 export function openAdvancedSearch(index: number, initialKeywords?: string): AppThunk {
   return async (dispatch, getState) => {
     const current_base = getState().fileManager[index].pure_path;
+    const fullTextSearchEnabled = getState().siteConfig.explorer?.config?.full_text_search;
     dispatch(setSearchPopup(false));
     dispatch(
       setAdvanceSearch({
         open: true,
         basePath: current_base ?? defaultPath,
-        nameCondition: initialKeywords != undefined ? initialKeywords.split(SPACE_RE).filter((x) => x) : undefined,
+        nameCondition:
+          initialKeywords != undefined && !fullTextSearchEnabled
+            ? initialKeywords.split(SPACE_RE).filter((x) => x)
+            : undefined,
+        contentCondition:
+          initialKeywords != undefined && fullTextSearchEnabled ? initialKeywords : undefined,
       }),
     );
   };

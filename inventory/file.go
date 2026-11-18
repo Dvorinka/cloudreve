@@ -87,14 +87,20 @@ type (
 		Metadata       []MetadataFilter
 		Type           *types.FileType
 		UseFullText    bool
-		CaseFolding    bool
-		Category       string
-		SizeGte        int64
-		SizeLte        int64
-		CreatedAtGte   *time.Time
-		CreatedAtLte   *time.Time
-		UpdatedAtGte   *time.Time
-		UpdatedAtLte   *time.Time
+		// Content is a raw full-text content query. It is resolved to FileIDs
+		// by the file manager before the listing query runs.
+		Content string
+		// FileIDs restricts search results to the given file IDs. A non-nil
+		// empty slice matches nothing.
+		FileIDs      []int
+		CaseFolding  bool
+		Category     string
+		SizeGte      int64
+		SizeLte      int64
+		CreatedAtGte *time.Time
+		CreatedAtLte *time.Time
+		UpdatedAtGte *time.Time
+		UpdatedAtLte *time.Time
 	}
 
 	ListEntityParameters struct {
