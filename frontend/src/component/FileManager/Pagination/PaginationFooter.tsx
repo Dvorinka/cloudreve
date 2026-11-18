@@ -72,5 +72,6 @@ const PaginationFooter = forwardRef((_props, ref) => {
     </Slide>
   );
 });
+PaginationFooter.displayName = "PaginationFooter";
 
 export default PaginationFooter;

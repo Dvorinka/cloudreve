@@ -47,7 +47,6 @@ const TopAppBar = () => {
     dispatch(setMobileDrawerOpen(false));
   };
 
-  // @ts-ignore
   return (
     <AppBar
       elevation={0}
@@ -86,7 +85,6 @@ const TopAppBar = () => {
           <IconButton
             color="inherit"
             aria-label="open drawer"
-            // @ts-ignore
             onClick={isMobile ? onMobileMenuClicked : () => dispatch(setDrawerOpen(true))}
             edge="start"
             sx={{

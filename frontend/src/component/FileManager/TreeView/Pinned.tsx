@@ -58,4 +58,5 @@ const Pinned = memo(() => {
     </>
   );
 });
+Pinned.displayName = "Pinned";
 export default Pinned;

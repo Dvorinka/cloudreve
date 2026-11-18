@@ -3,7 +3,6 @@ import { List } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { sizeToString } from "../../../util";
 import { useCallback } from "react";
-// @ts-ignore
 import Highlighter from "react-highlight-words";
 import SearchResultItem from "./SearchResultItem.tsx";
 

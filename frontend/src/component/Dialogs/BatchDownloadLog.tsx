@@ -46,7 +46,7 @@ const BatchDownloadLog = () => {
           inputProps={{
             ref: logRef,
             sx: {
-              // @ts-ignore
+              // @ts-expect-error -- inputProps sx callback param untyped in MUI types
               fontSize: (theme) => theme.typography.body2.fontSize,
             },
           }}

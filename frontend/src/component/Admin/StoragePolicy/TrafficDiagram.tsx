@@ -110,6 +110,7 @@ const NodeIcon = forwardRef(({ type, size = 40, storageNodeTitle, proxyNodeTitle
     </Box>
   );
 });
+NodeIcon.displayName = "NodeIcon";
 
 export const TrafficDiagram = ({
   variant,

@@ -45,7 +45,6 @@ export const useFileDrag = ({ file, includeSelected, dropUri }: UseFileDragProps
   // const { addEventListenerForWindow, removeEventListenerForWindow } =
   //   useDragScrolling(["#" + MainExplorerContainerID]);
 
-  // @ts-ignore
   const [{ isDragging }, drag, preview] = useDrag({
     type: "file",
     item: {
@@ -152,5 +151,6 @@ const DndWrappedFile = memo((props: DndWrappedFileProps) => {
     />
   );
 });
+DndWrappedFile.displayName = "DndWrappedFile";
 
 export default DndWrappedFile;

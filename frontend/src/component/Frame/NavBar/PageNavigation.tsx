@@ -59,8 +59,7 @@ export interface NavigationItem {
   permission?: number;
 }
 
-let NavigationItems: NavigationItem[];
-NavigationItems = [
+const NavigationItems: NavigationItem[] = [
   {
     label: "navbar.myShare",
     icon: [ShareAndroid, ShareOutlined],
@@ -144,8 +143,7 @@ export const SideNavItemComponent = ({ item }: { item: NavigationItem }) => {
   );
 };
 
-let AdminNavigationItems: NavigationItem[];
-AdminNavigationItems = [
+const AdminNavigationItems: NavigationItem[] = [
   {
     label: "dashboard:nav.summary",
     icon: [DataHistogramFilled, DataHistogram],
@@ -256,6 +254,7 @@ export const AdminPageNavigation = memo(() => {
     </>
   );
 });
+AdminPageNavigation.displayName = "AdminPageNavigation";
 
 const PageNavigation = () => {
   const appPromotionEnabled = useAppSelector((state) => state.siteConfig.basic.config.app_promotion);

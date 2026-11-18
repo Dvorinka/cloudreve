@@ -31,7 +31,7 @@ import MonacoEditor from "../../../Viewers/CodeViewer/MonacoEditor";
 import { SettingContext } from "../SettingWrapper";
 import { NoMarginHelperText } from "../Settings";
 
-export interface CustomHTMLProps {}
+export type CustomHTMLProps = Record<string, never>
 
 const HeadlessFooterPreview = ({ footer, bottom }: { footer?: string; bottom?: string }) => {
   const { t } = useTranslation("application");

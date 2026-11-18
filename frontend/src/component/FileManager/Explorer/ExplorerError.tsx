@@ -149,7 +149,7 @@ const ExplorerError = memo(
           return <RetryPassword />;
         case Code.VaultLocked:
           return <RetryVaultUnlock />;
-        // @ts-ignore
+        // @ts-expect-error -- NodeFound case reachable at runtime
         case Code.NodeFound:
           if (fs == Filesystem.share) {
             return (

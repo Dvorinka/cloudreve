@@ -78,5 +78,6 @@ const FileIconSnackbar = forwardRef<HTMLDivElement, FileIconSnackbarProps>((prop
     />
   );
 });
+FileIconSnackbar.displayName = "FileIconSnackbar";
 
 export default FileIconSnackbar;

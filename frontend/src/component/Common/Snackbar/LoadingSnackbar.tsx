@@ -85,5 +85,6 @@ const LoadingSnackbar = forwardRef<HTMLDivElement, LoadingSnackbarProps>((props,
     />
   );
 });
+LoadingSnackbar.displayName = "LoadingSnackbar";
 
 export default LoadingSnackbar;

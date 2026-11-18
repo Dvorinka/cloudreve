@@ -148,5 +148,6 @@ const UserAvatar = memo(
     );
   },
 );
+UserAvatar.displayName = "UserAvatar";
 
 export default UserAvatar;

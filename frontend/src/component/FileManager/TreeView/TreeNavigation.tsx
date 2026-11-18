@@ -144,4 +144,6 @@ const TreeNavigation = React.memo(
   },
 );
 
+TreeNavigation.displayName = "TreeNavigation";
+
 export default TreeNavigation;

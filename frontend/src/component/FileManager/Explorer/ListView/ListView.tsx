@@ -94,5 +94,6 @@ const ListView = React.forwardRef(
     );
   },
 );
+ListView.displayName = "ListView";
 
 export default ListView;

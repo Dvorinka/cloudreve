@@ -37,5 +37,6 @@ const FileTagSummary = memo(({ sx, disabled, ...restProps }: UploadingTagProps) 
     </Stack>
   );
 });
+FileTagSummary.displayName = "FileTagSummary";
 
 export default FileTagSummary;

@@ -204,5 +204,6 @@ const ConditionBox = forwardRef((props: ConditionProps, ref) => {
     </StyledBox>
   );
 });
+ConditionBox.displayName = "ConditionBox";
 
 export default ConditionBox;

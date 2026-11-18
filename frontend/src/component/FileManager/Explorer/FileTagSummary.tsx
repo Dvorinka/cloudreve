@@ -87,5 +87,6 @@ const FileTagSummary = memo(({ tags, sx, max = 1, ...restProps }: FileTagSummary
     </Stack>
   );
 });
+FileTagSummary.displayName = "FileTagSummary";
 
 export default FileTagSummary;

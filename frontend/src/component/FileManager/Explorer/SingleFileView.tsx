@@ -281,5 +281,6 @@ const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
     </Stack>
   );
 });
+SingleFileView.displayName = "SingleFileView";
 
 export default SingleFileView;

@@ -12,8 +12,7 @@ import { sendUploadAvatar } from "../../../api/api.ts";
 export function useDebounceEffect(fn: () => void, waitTime: number, deps?: DependencyList) {
   useEffect(() => {
     const t = setTimeout(() => {
-      // @ts-ignore
-      fn.apply(undefined, deps);
+      fn();
     }, waitTime);
 
     return () => {
@@ -108,7 +107,6 @@ const AvatarCropperDialog = ({ open, onClose, onAvatarUpdated, file }: AvatarCro
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const imageRef = useRef<HTMLImageElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const blobUrlRef = useRef("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

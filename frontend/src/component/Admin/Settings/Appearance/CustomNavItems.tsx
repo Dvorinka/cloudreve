@@ -296,7 +296,7 @@ const CustomNavItems = ({ value, onChange }: CustomNavItemsProps) => {
 
   const IconPreview = useMemo(
     () =>
-      ({ iconName }: { iconName: string }) => {
+      function IconPreview({ iconName }: { iconName: string }) {
         if (!iconName) {
           return (
             <Box

@@ -78,7 +78,7 @@ const ImageEditor = () => {
                 await save(editedImageObject.name, editedImageObject.imageBase64);
               }}
               defaultSavedImageName={editorState.file.name}
-              // @ts-ignore
+              // @ts-expect-error -- prop missing from tui-image-editor types
               defaultSavedImageType={fileExtension(editorState.file.name) ?? "png"}
               onClose={() => dispatch(switchToImageViewer())}
               disableSaveIfNoChanges={true}

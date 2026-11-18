@@ -34,7 +34,7 @@ const RightIcon = styled(ChevronRight)(({ theme }) => ({
   color: theme.palette.text.disabled,
 }));
 
-interface pathElements extends BreadcrumbButtonProps {}
+type pathElements = BreadcrumbButtonProps
 
 const useBreadcrumb = (targetPath?: string) => {
   if (targetPath) {

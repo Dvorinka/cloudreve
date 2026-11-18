@@ -33,7 +33,7 @@ export interface ImageViewerState extends GeneralViewerState {
   exts: string[];
 }
 
-export interface ImageEditorState extends GeneralViewerState {}
+export type ImageEditorState = GeneralViewerState
 
 export interface GeneralViewerState {
   open: boolean;

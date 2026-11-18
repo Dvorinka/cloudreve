@@ -212,6 +212,7 @@ const ViewerGroupRow = memo(({ group, index, onDelete, onGroupChange, dndType }:
     </StyledAccordion>
   );
 });
+ViewerGroupRow.displayName = "ViewerGroupRow";
 
 export interface FileViewerListProps {
   config: string;
@@ -339,5 +340,6 @@ const FileViewerList = memo(({ config, onChange }: FileViewerListProps) => {
     </Box>
   );
 });
+FileViewerList.displayName = "FileViewerList";
 
 export default FileViewerList;

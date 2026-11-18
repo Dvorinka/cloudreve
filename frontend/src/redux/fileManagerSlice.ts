@@ -270,7 +270,7 @@ export const fileManagerSlice = createSlice({
       const index = action.payload.index;
       state[index].pageSize = action.payload.value;
       if (state[index].list?.pagination.next_token) {
-        // @ts-ignore
+        // @ts-expect-error -- immer draft optional token reset
         state[index].list.pagination.next_token = undefined;
       }
     },
@@ -279,7 +279,7 @@ export const fileManagerSlice = createSlice({
       state[index].sortBy = action.payload.value[0];
       state[index].sortDirection = action.payload.value[1];
       if (state[index].list?.pagination.next_token) {
-        // @ts-ignore
+        // @ts-expect-error -- immer draft optional token reset
         state[index].list.pagination.next_token = undefined;
       }
     },

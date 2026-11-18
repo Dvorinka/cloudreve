@@ -81,7 +81,7 @@ export function downloadMultipleFiles(files: FileResponse[]): AppThunk {
   return async (dispatch, _getState) => {
     // Prepare download options
     const options: MultipleDownloadOption[] = [MultipleDownloadOption.StreamSaver];
-    // @ts-ignore
+    // @ts-expect-error -- showDirectoryPicker not in DOM lib types
     if (window.isSecureContext && window.showDirectoryPicker) {
       options.push(MultipleDownloadOption.Browser);
     }

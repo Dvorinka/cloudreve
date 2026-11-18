@@ -17,7 +17,6 @@ import FileSmallIcon from "../FileSmallIcon.tsx";
 import { FmFile } from "../GridView/GridView.tsx";
 import { ColumType, ListViewColumn } from "./Column.tsx";
 import ListThumbnail from "./ListThumbnail.tsx";
-// @ts-ignore
 import dayjs, { Dayjs } from "dayjs";
 import { bindPopover } from "material-ui-popup-state";
 import { usePopupState } from "material-ui-popup-state/hooks";
@@ -176,6 +175,7 @@ export const ThumbPopover = memo((props: ThumbPopoverProps) => {
     </HoverPopover>
   );
 });
+ThumbPopover.displayName = "ThumbPopover";
 
 const FileNameCell = memo((props: CellProps) => {
   const theme = useTheme();
@@ -341,6 +341,7 @@ const FileNameCell = memo((props: CellProps) => {
     </>
   );
 });
+FileNameCell.displayName = "FileNameCell";
 
 interface FolderSizeCellProps {
   file: FmFile;
@@ -353,6 +354,7 @@ const FolderSizeCell = memo(({ file }: FolderSizeCellProps) => {
   }
   return <Box>{sizeToString(file.size)}</Box>;
 });
+FolderSizeCell.displayName = "FolderSizeCell";
 
 interface FolderDateCellProps {
   file: FmFile;
@@ -380,6 +382,7 @@ const FolderDateCell = memo(({ file, dateType }: FolderDateCellProps) => {
   }
   return <TimeBadge variant={"inherit"} datetime={datetime} />;
 });
+FolderDateCell.displayName = "FolderDateCell";
 
 const FolderCell = memo(({ path }: { path: string }) => {
   return (
@@ -393,6 +396,7 @@ const FolderCell = memo(({ path }: { path: string }) => {
     />
   );
 });
+FolderCell.displayName = "FolderCell";
 
 interface CustomPropsCellProps {
   file: FmFile;
@@ -455,6 +459,8 @@ const CustomPropsCell = memo(({ file, customProp, readOnly }: CustomPropsCellPro
   );
 });
 
+CustomPropsCell.displayName = "CustomPropsCell";
+
 interface AddCustomPropsCellProps {
   file: FmFile;
   propDef: CustomProps;
@@ -510,6 +516,7 @@ const AddCustomPropsCell = memo(({ file, propDef, readOnly }: AddCustomPropsCell
     </Box>
   );
 });
+AddCustomPropsCell.displayName = "AddCustomPropsCell";
 
 const MediaElementsCell = memo(({ element }: { element?: MediaMetaElements | string }) => {
   if (!element) {
@@ -520,6 +527,7 @@ const MediaElementsCell = memo(({ element }: { element?: MediaMetaElements | str
   }
   return <MediaMetaElements element={element} />;
 });
+MediaElementsCell.displayName = "MediaElementsCell";
 
 const Cell = memo((props: CellProps) => {
   const { t } = useTranslation();
@@ -630,5 +638,6 @@ const Cell = memo((props: CellProps) => {
       return <Box />;
   }
 });
+Cell.displayName = "Cell";
 
 export default Cell;

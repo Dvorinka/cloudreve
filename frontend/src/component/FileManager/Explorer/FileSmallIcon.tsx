@@ -93,5 +93,6 @@ const FileSmallIcon = memo(({ selected, variant, loading, file, ignoreHovered }:
     </Box>
   );
 });
+FileSmallIcon.displayName = "FileSmallIcon";
 
 export default FileSmallIcon;

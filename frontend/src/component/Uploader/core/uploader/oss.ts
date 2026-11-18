@@ -5,7 +5,7 @@ import Chunk, { ChunkInfo } from "./chunk";
 export default class OSS extends Chunk {
   protected async uploadChunk(chunkInfo: ChunkInfo) {
     return s3LikeUploadChunk(
-      this.task.session?.upload_urls[chunkInfo.index]!,
+      this.task.session!.upload_urls[chunkInfo.index],
       chunkInfo,
       (p) => {
         this.updateChunkProgress(p.loaded, chunkInfo.index);

@@ -78,7 +78,7 @@ const PasskeyList = (props: PasskeyProps) => {
               type: credential.type,
               rawId: bufferEncode(c.rawId),
               response: {
-                // @ts-ignore
+                // @ts-expect-error -- WebAuthn response field not in lib types
                 attestationObject: bufferEncode(c.response.attestationObject),
                 clientDataJSON: bufferEncode(c.response.clientDataJSON),
               },

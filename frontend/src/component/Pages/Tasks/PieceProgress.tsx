@@ -59,5 +59,6 @@ const PieceProgress: React.FC<PieceProgressProps> = memo(({ pieces, total }) => 
     </Box>
   );
 });
+PieceProgress.displayName = "PieceProgress";
 
 export default PieceProgress;

@@ -145,3 +145,4 @@ export const TaskContent = memo(({ task, openEntity, openFile }: TaskContentProp
 
   return <Typography variant="body2">{content}</Typography>;
 });
+TaskContent.displayName = "TaskContent";

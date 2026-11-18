@@ -170,5 +170,6 @@ const FileSelectedActions = forwardRef(({ targets }: FileSelectedActionsProps, r
     </Box>
   );
 });
+FileSelectedActions.displayName = "FileSelectedActions";
 
 export default FileSelectedActions;

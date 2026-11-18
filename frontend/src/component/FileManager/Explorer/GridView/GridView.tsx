@@ -153,5 +153,6 @@ const GridView = React.forwardRef(({ ...rest }: GridViewProps, ref) => {
     </Box>
   );
 });
+GridView.displayName = "GridView";
 
 export default GridView;

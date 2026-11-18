@@ -241,5 +241,6 @@ const EmojiList = memo(({ config, onChange }: EmojiListProps) => {
     </Stack>
   );
 });
+EmojiList.displayName = "EmojiList";
 
 export default EmojiList;

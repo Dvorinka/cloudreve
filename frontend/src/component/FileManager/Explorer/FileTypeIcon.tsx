@@ -171,7 +171,7 @@ const FileTypeIcon = ({
     );
   } else if (IconComponent.iconify) {
     return (
-      //@ts-ignore
+      //@ts-expect-error -- Box component prop accepts img
       <Box
         component={IconifyIcon}
         sx={{
@@ -186,7 +186,7 @@ const FileTypeIcon = ({
     );
   } else {
     return (
-      //@ts-ignore
+      //@ts-expect-error -- Box component prop accepts img
       <Box
         component={"img"}
         draggable={false}

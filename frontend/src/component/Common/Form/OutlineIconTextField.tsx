@@ -23,3 +23,4 @@ export const OutlineIconTextField = forwardRef<HTMLDivElement, OutlineIconTextFi
     );
   },
 );
+OutlineIconTextField.displayName = "OutlineIconTextField";

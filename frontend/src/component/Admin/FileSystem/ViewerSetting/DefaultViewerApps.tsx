@@ -197,5 +197,6 @@ const DefaultViewerApps = memo(({ config, fileViewers, onChange }: DefaultViewer
     </Box>
   );
 });
+DefaultViewerApps.displayName = "DefaultViewerApps";
 
 export default DefaultViewerApps;

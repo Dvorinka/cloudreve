@@ -112,5 +112,6 @@ const GalleryView = React.forwardRef(
     );
   },
 );
+GalleryView.displayName = "GalleryView";
 
 export default GalleryView;

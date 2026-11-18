@@ -1,7 +1,6 @@
 import { Box, List, ListItem, ListItemAvatar, ListItemButton, ListItemText } from "@mui/material";
 import { Trans, useTranslation } from "react-i18next";
 import React, { useCallback } from "react";
-// @ts-ignore
 import Highlighter from "react-highlight-words";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { SearchOutlined } from "@mui/icons-material";

@@ -214,7 +214,7 @@ const ShareDialog = () => {
         cancelText={shareLink ? t("common:close") : undefined}
         secondaryAction={
           shareLink
-            ? // @ts-ignore
+            ? // @ts-expect-error -- Web Share API not in DOM lib types
               navigator.share && (
                 <Tooltip title={t("application:modals.sendLink")}>
                   <IconButton onClick={() => sendLink(target?.name ?? "", finalShareLink)}>

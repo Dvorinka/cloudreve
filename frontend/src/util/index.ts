@@ -126,8 +126,7 @@ export function urlBase64BufferDecode(v: string) {
 }
 
 export function bufferEncode(value: ArrayBuffer) {
-  // @ts-ignore
-  return btoa(String.fromCharCode.apply(null, new Uint8Array(value)))
+  return btoa(String.fromCharCode(...new Uint8Array(value)))
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=/g, "");

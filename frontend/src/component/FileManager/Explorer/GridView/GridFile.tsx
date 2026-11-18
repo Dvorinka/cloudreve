@@ -25,7 +25,6 @@ import { fileHovered, navigateReconcile } from "../../../../redux/thunks/fileman
 import FileIcon from "../FileIcon.tsx";
 import FileSmallIcon from "../FileSmallIcon.tsx";
 import FileTagSummary from "../FileTagSummary.tsx";
-// @ts-ignore
 import Highlighter from "react-highlight-words";
 
 import { ContextMenuTypes } from "../../../../redux/fileManagerSlice.ts";
@@ -506,5 +505,6 @@ const GridFile = memo((props: FileBlockProps) => {
     </>
   );
 });
+GridFile.displayName = "GridFile";
 
 export default GridFile;

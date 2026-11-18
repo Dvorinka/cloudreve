@@ -349,5 +349,6 @@ const FileIconList = memo(({ config, onChange }: FileIconListProps) => {
     </Box>
   );
 });
+FileIconList.displayName = "FileIconList";
 
 export default FileIconList;

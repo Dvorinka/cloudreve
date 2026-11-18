@@ -28,7 +28,7 @@ export const DateTimeCondition = ({
             clearButtonLabel: "Vider",
           }}
           label={t("application:navbar.notBefore")}
-          // @ts-ignore
+          // @ts-expect-error -- DateTimePicker value prop type drift
           value={dayjs.unix(condition[field + "_gte"] as number)}
           onChange={(newValue) =>
             onChange({
@@ -39,7 +39,7 @@ export const DateTimeCondition = ({
         />
         <DateTimePicker
           label={t("application:navbar.notAfter")}
-          // @ts-ignore
+          // @ts-expect-error -- DateTimePicker value prop type drift
           value={dayjs.unix(condition[field + "_lte"] as number)}
           onChange={(newValue) =>
             onChange({

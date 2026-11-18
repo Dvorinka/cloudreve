@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { MapLoaderProps } from "./MapLoader.tsx";
 
-// @ts-ignore
+// @ts-expect-error -- leaflet private member
 delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
