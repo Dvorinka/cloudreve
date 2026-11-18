@@ -76,9 +76,15 @@ const CreateDAVAccountDialog = ({
     };
     dispatch(editTarget ? sendUpdateDavAccounts(editTarget.id, req) : sendCreateDavAccounts(req))
       .then((account) => {
-        onClose && onClose({}, "escapeKeyDown");
-        !editTarget && onAccountAdded && onAccountAdded(account);
-        editTarget && onAccountUpdated && onAccountUpdated(account);
+        if (onClose) {
+          onClose({}, "escapeKeyDown");
+        }
+        if (!editTarget && onAccountAdded) {
+          onAccountAdded(account);
+        }
+        if (editTarget && onAccountUpdated) {
+          onAccountUpdated(account);
+        }
       })
       .finally(() => {
         setLoading(false);

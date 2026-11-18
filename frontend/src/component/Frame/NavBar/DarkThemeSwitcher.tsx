@@ -35,7 +35,9 @@ export const SwitchPopover = ({ open, anchorEl, onClose }: SwitchPopoverProps) =
     }
     dispatch(setDarkMode(newSetting));
     SessionManager.set(UserSettings.PreferredDarkMode, newSetting);
-    onClose && onClose();
+    if (onClose) {
+      onClose();
+    }
   };
 
   const inner = (

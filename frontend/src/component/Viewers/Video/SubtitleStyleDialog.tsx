@@ -30,7 +30,9 @@ const SubtitleStyleDialog = ({ onSaveSubmit, onClose, open, ...rest }: SubtitleS
 
   const onAccept = () => {
     onSaveSubmit(style);
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   };
 
   return (

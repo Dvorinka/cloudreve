@@ -57,7 +57,9 @@ const UserPopover = ({ open, onClose, ...rest }: PopoverProps) => {
 
   const signOut = useCallback(() => {
     dispatch(signout());
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, []);
 
   // Other stored sessions for the account switcher. Signed-out entries
@@ -83,17 +85,23 @@ const UserPopover = ({ open, onClose, ...rest }: PopoverProps) => {
 
   const openMyProfile = useCallback(() => {
     navigate(`/profile/${user?.id}`);
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [user?.id]);
 
   const openSetting = useCallback(() => {
     navigate(`/settings`);
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [user?.id]);
 
   const openDashboard = useCallback(() => {
     navigate(`/admin/home`);
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [user?.id]);
 
   return (

@@ -28,7 +28,9 @@ const BreadcrumbHiddenItem = ({ name, is_root: _is_root, is_latest, path, onClos
   });
   const onItemClick = async () => {
     onClose();
-    onClick && onClick();
+    if (onClick) {
+      onClick();
+    }
   };
 
   const fmIndex = useContext(FmIndexContext);

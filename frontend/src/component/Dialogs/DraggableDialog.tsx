@@ -71,7 +71,9 @@ const DraggableDialog = (props: DraggableDialogProps) => {
   const { t } = useTranslation();
   const isTouch = useMediaQuery("(pointer: coarse)");
   const onClose = useCallback(() => {
-    props.dialogProps.onClose && props.dialogProps.onClose({}, "backdropClick");
+    if (props.dialogProps.onClose) {
+      props.dialogProps.onClose({}, "backdropClick");
+    }
   }, [props.dialogProps.onClose]);
   return (
     <Dialog

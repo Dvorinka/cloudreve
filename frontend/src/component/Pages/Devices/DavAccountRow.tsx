@@ -64,7 +64,9 @@ const DavAccountRow = ({ account, onAccountDeleted, onLoad, loading, onClick, on
     if (account) {
       onEditClicked?.(account);
     }
-    onClose && onClose();
+    if (onClose) {
+      onClose();
+    }
   };
 
   const onDelete = () => {

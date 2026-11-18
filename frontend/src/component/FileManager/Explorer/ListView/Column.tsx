@@ -68,7 +68,9 @@ const Column = ({ column, showDivider, index, startResizing, sortDirection, setS
   const onSortOptionChange = useCallback(() => {
     if (!sortable || !column.defaults.order_by) return;
     const newDirection = sortDirection === "asc" ? "desc" : "asc";
-    setSortBy && setSortBy(column.defaults.order_by, newDirection);
+    if (setSortBy) {
+      setSortBy(column.defaults.order_by, newDirection);
+    }
   }, [setSortBy, sortDirection, sortable, column]);
 
   return (

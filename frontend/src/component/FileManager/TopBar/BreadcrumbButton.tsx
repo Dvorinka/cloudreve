@@ -96,7 +96,9 @@ export const useBreadcrumbButtons = ({
 
   const onClick = useCallback(
     (e?: React.MouseEvent<HTMLElement>) => {
-      e && e.stopPropagation();
+      if (e) {
+        e.stopPropagation();
+      }
       if (is_latest && !displayOnly && !is_root && e) {
         dispatch(openContextUrlFromUri(fmIndex, path, e));
         return;
@@ -151,7 +153,7 @@ export const useBreadcrumbButtons = ({
 
           return "";
         default:
-          "Root";
+          break;
       }
     }
 

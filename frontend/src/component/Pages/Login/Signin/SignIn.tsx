@@ -473,7 +473,9 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
                 if (phase === EmailLoginPhase.Consent) {
                   sendConsent(true);
                 } else {
-                  phaseSetting.previous != undefined && setPhase(phaseSetting.previous);
+                  if (phaseSetting.previous != undefined) {
+                    setPhase(phaseSetting.previous);
+                  }
                 }
               }}
             >

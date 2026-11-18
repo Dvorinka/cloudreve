@@ -638,49 +638,65 @@ export const globalStateSlice = createSlice({
       state.epubViewer = action.payload;
     },
     closeEpubViewer: (state) => {
-      state.epubViewer && (state.epubViewer.open = false);
+      if (state.epubViewer) {
+        state.epubViewer.open = false;
+      }
     },
     setModelViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.modelViewer = action.payload;
     },
     closeModelViewer: (state) => {
-      state.modelViewer && (state.modelViewer.open = false);
+      if (state.modelViewer) {
+        state.modelViewer.open = false;
+      }
     },
     setCustomViewer: (state, action: PayloadAction<CustomViewerState>) => {
       state.customViewer = action.payload;
     },
     closeCustomViewer: (state) => {
-      state.customViewer && (state.customViewer.open = false);
+      if (state.customViewer) {
+        state.customViewer.open = false;
+      }
     },
     setPdfViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.pdfViewer = action.payload;
     },
     closePdfViewer: (state) => {
-      state.pdfViewer && (state.pdfViewer.open = false);
+      if (state.pdfViewer) {
+        state.pdfViewer.open = false;
+      }
     },
     setVideoViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.videoViewer = action.payload;
     },
     closeVideoViewer: (state) => {
-      state.videoViewer && (state.videoViewer.open = false);
+      if (state.videoViewer) {
+        state.videoViewer.open = false;
+      }
     },
     setMarkdownViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.markdownViewer = action.payload;
     },
     closeMarkdownViewer: (state) => {
-      state.markdownViewer && (state.markdownViewer.open = false);
+      if (state.markdownViewer) {
+        state.markdownViewer.open = false;
+      }
     },
     setExcalidrawViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.excalidrawViewer = action.payload;
     },
     closeExcalidrawViewer: (state) => {
-      state.excalidrawViewer && (state.excalidrawViewer.open = false);
+      if (state.excalidrawViewer) {
+        state.excalidrawViewer.open = false;
+      }
     },
     setArchiveViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.archiveViewer = action.payload;
     },
     closeArchiveViewer: (state) => {
-      state.archiveViewer && (state.archiveViewer.open = false);
+      if (state.archiveViewer) {
+        state.archiveViewer.open = false;
+      }
     },
     addShareInfo: (state, action: PayloadAction<{ info: Share; id: string }>) => {
       state.shareInfo[action.payload.id] = action.payload.info;
@@ -913,31 +929,41 @@ export const globalStateSlice = createSlice({
       state.photopeaViewer = action.payload;
     },
     closePhotopeaViewer: (state) => {
-      state.photopeaViewer && (state.photopeaViewer.open = false);
+      if (state.photopeaViewer) {
+        state.photopeaViewer.open = false;
+      }
     },
     setViewerSelector: (state, action: PayloadAction<ViewerSelectorState>) => {
       state.viewerSelector = action.payload;
     },
     closeViewerSelector: (state) => {
-      state.viewerSelector && (state.viewerSelector.open = false);
+      if (state.viewerSelector) {
+        state.viewerSelector.open = false;
+      }
     },
     setWopiViewer: (state, action: PayloadAction<WopiViewerState>) => {
       state.wopiViewer = action.payload;
     },
     closeWopiViewer: (state) => {
-      state.wopiViewer && (state.wopiViewer.open = false);
+      if (state.wopiViewer) {
+        state.wopiViewer.open = false;
+      }
     },
     setCodeViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.codeViewer = action.payload;
     },
     closeCodeViewer: (state) => {
-      state.codeViewer && (state.codeViewer.open = false);
+      if (state.codeViewer) {
+        state.codeViewer.open = false;
+      }
     },
     setDrawIOViewer: (state, action: PayloadAction<DrawIOViewerState>) => {
       state.drawIOViewer = action.payload;
     },
     closeDrawIOViewer: (state) => {
-      state.drawIOViewer && (state.drawIOViewer.open = false);
+      if (state.drawIOViewer) {
+        state.drawIOViewer.open = false;
+      }
     },
   },
 });

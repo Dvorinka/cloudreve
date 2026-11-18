@@ -78,8 +78,9 @@ const DrawIOViewer = () => {
         );
         break;
       case "remoteInvoke":
-        pp.current?.contentWindow &&
-          handleRemoteInvoke(pp.current?.contentWindow, msg, dispatch, viewerState, supportUpdate.current, instanceID);
+        if (pp.current?.contentWindow) {
+          handleRemoteInvoke(pp.current.contentWindow, msg, dispatch, viewerState, supportUpdate.current, instanceID);
+        }
         break;
       case "save":
         try {

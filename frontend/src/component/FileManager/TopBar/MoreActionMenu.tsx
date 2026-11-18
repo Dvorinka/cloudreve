@@ -43,41 +43,57 @@ const MoreActionMenu = ({ onClose, ...rest }: MenuProps) => {
 
   const onPinClicked = useCallback(() => {
     dispatch(pinCurrentView(fmIndex));
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
   }, [dispatch, onClose, fmIndex]);
 
   const onCreateShortcutClicked = useCallback(() => {
     dispatch(createShareShortcut(fmIndex));
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
   }, [dispatch, onClose, fmIndex]);
 
   const onSelectAllClicked = useCallback(() => {
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
     dispatch(selectAll(fmIndex));
   }, [dispatch, onClose, fmIndex]);
 
   const onSelectNoneClicked = useCallback(() => {
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
     dispatch(clearSelected({ index: fmIndex, value: undefined }));
   }, [dispatch, onClose, fmIndex]);
 
   const onInverseSelectionClicked = useCallback(() => {
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
     dispatch(inverseSelection(fmIndex));
   }, [dispatch, onClose, fmIndex]);
 
   const onRefreshClicked = useCallback(() => {
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
     dispatch(refreshFileList(fmIndex));
   }, [dispatch, onClose, fmIndex]);
 
   const onDownloadAllClicked = useCallback(() => {
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
     dispatch(downloadAll(fmIndex));
   }, [dispatch, onClose, fmIndex]);
 
   const onReportClicked = useCallback(() => {
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
     if (!path) {
       return;
     }
