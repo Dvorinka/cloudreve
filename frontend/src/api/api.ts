@@ -78,6 +78,7 @@ import {
   MultipleUriService,
   PatchMetadataService,
   PatchTagService,
+  PaginationResults,
   PatchViewSyncService,
   PinFileService,
   PreferredPolicyService,

@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from "axios";
 import { enqueueSnackbar, SnackbarAction } from "notistack";
 import { DefaultCloseAction, ErrorListDetailAction } from "../component/Common/Snackbar/snackbar.tsx";
 import i18n from "../i18n.ts";
-import { AppThunk } from "../redux/store.ts";
+import type { AppThunk } from "../redux/store.ts";
 import { openLockConflictDialog } from "../redux/thunks/dialog.ts";
 import { router } from "../router";
 import SessionManager from "../session";
