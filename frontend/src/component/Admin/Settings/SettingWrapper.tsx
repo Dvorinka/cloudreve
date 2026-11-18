@@ -74,7 +74,7 @@ export const SettingContext = createContext<SettingContextProps>({
 
 const SettingsWrapper = ({ settings, children }: SettingsWrapperProps) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation("dashboard");
+  const { t: _t } = useTranslation("dashboard");
   const [values, setValues] = useState<{ [key: string]: string }>({});
   const [modifiedValues, setModifiedValues] = useState<{
     [key: string]: string;

@@ -78,7 +78,7 @@ export default function SizeInput({
   suffix,
   variant = "filled",
 }: SizeInputProps) {
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
   const { t } = useTranslation();
 
   const [unit, setUnit] = useState(1);

@@ -35,6 +35,10 @@ type SearchIndexer interface {
 	CopyByFileID(ctx context.Context, srcFileID, dstFileID, dstOwnerID, dstEntityID int) error
 	Rename(ctx context.Context, fileID, entityID int, newFileName string) error
 	Search(ctx context.Context, ownerID int, query string, offset int) ([]SearchResult, int64, error)
+	// SearchFileIDs returns up to limit unique file IDs matching the query,
+	// ordered by relevance. Used to translate a content query into a file-ID
+	// filter for listing.
+	SearchFileIDs(ctx context.Context, ownerID int, query string, limit int) ([]int, error)
 	// IndexReady reports whether the search index exists and has the required
 	// configuration (filterable/searchable attributes, etc.).
 	IndexReady(ctx context.Context) (bool, error)

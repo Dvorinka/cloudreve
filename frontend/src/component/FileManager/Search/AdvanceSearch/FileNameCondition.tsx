@@ -16,7 +16,7 @@ export const FileNameCondition = ({
 }: {
   onChange: (condition: Condition) => void;
   condition: Condition;
-  onNameConditionAdded: (_e: any, newValue: string[]) => void;
+  onNameConditionAdded: (_e: unknown, newValue: string[]) => void;
 }) => {
   const { t } = useTranslation();
   return (

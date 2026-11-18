@@ -695,8 +695,12 @@ func (c *userClient) GetLoginUserByID(ctx context.Context, uid int) (*ent.User, 
 		if err == nil {
 			return expectedUser, nil
 		}
-
-		return nil, fmt.Errorf("failed to get user by id: %w", err)
+		if !ent.IsNotFound(err) {
+			return nil, fmt.Errorf("failed to get user by id: %w", err)
+		}
+		// The referenced user no longer exists or is inactive (e.g. a stale
+		// session for a deleted account). Fall back to anonymous rather than
+		// failing every request carrying the stale credential.
 	}
 
 	anonymous, err := c.AnonymousUser(ctx)

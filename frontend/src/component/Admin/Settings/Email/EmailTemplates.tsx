@@ -9,7 +9,7 @@ import { SettingContext } from "../SettingWrapper.tsx";
 import { SettingSection, SettingSectionContent } from "../Settings.tsx";
 import { AccordionSummary, StyledAccordion } from "../UserSession/SSOSettings.tsx";
 import EmailTemplateEditor from "./EmailTemplateEditor.tsx";
-interface EmailTemplate {
+interface _EmailTemplate {
   key: string;
   title: string;
   description: string;

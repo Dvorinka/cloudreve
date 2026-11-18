@@ -11,9 +11,9 @@ import FileIconList from "./FileIconList";
 const FileIcons = () => {
   const { t } = useTranslation("dashboard");
   const { formRef, setSettings, values } = useContext(SettingContext);
-  const [loading, setLoading] = useState(false);
-  const dispatch = useAppDispatch();
-  const { enqueueSnackbar } = useSnackbar();
+  const [_loading, _setLoading] = useState(false);
+  const _dispatch = useAppDispatch();
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
 
   const iconOnChange = useCallback(
     (s: string) =>

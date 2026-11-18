@@ -264,7 +264,9 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 	reCaptcha := settings.ReCaptcha(c)
 	capCaptcha := settings.CapCaptcha(c)
 	appSetting := settings.AppSetting(c)
-	customNavItems := settings.CustomNavItems(c)
+	// User-scoped links stay out of the anonymous payload (#3578). The
+	// sidebar also filters them, but the URLs must not ship in public JSON.
+	customNavItems := visibleCustomNavItems(settings.CustomNavItems(c), u == nil || inventory.IsAnonymousUser(u))
 	customHTML := settings.CustomHTML(c)
 	shareDefaults := settings.ShareDefaults(c)
 	paymentCfg := settings.Payment(c)
@@ -299,6 +301,25 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 		TaskNodes:                  taskNodes,
 		AllowSelectNode:            allowSelect,
 	}, nil
+}
+
+// visibleCustomNavItems drops scope=user entries for anonymous visitors.
+// Empty scope and "public" stay visible. A nil result omits the JSON field.
+func visibleCustomNavItems(items []setting.CustomNavItem, anonymous bool) []setting.CustomNavItem {
+	if !anonymous {
+		return items
+	}
+	visible := make([]setting.CustomNavItem, 0, len(items))
+	for _, item := range items {
+		if item.Scope == "user" {
+			continue
+		}
+		visible = append(visible, item)
+	}
+	if len(visible) == 0 {
+		return nil
+	}
+	return visible
 }
 
 // taskNodesForUser returns the nodes a user may target for tasks: active

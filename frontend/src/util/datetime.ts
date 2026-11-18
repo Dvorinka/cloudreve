@@ -24,8 +24,8 @@ const preferTimeZone: string | undefined = SessionManager.get(UserSettings.TimeZ
 export let timeZone = preferTimeZone ? preferTimeZone : userTimezone;
 
 export function refreshTimeZone() {
-  timeZone = SessionManager.get(UserSettings.TimeZone);
-  timeZone = timeZone ? timeZone : userTimezone;
+  const prefer = SessionManager.get(UserSettings.TimeZone);
+  timeZone = prefer ? prefer : userTimezone;
 }
 
 export function formatLocalTime(time: string | dayjs.Dayjs, ignoreTz?: boolean) {

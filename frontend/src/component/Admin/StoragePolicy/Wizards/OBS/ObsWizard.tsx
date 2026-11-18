@@ -90,10 +90,10 @@ const ObsWizard = ({ onSubmit }: AddWizardProps) => {
               i18nKey="policy.obsBucketDes"
               ns="dashboard"
               components={[
-                <Link href="https://console.huaweicloud.com/console/#/obs/create" target="_blank" />,
-                <Code />,
-                <Code />,
-                <Code />,
+                <Link key="0" href="https://console.huaweicloud.com/console/#/obs/create" target="_blank" />,
+                <Code key="1" />,
+                <Code key="2" />,
+                <Code key="3" />,
               ]}
             />
           </NoMarginHelperText>
@@ -119,7 +119,7 @@ const ObsWizard = ({ onSubmit }: AddWizardProps) => {
             variant={"outlined"}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.obsEndpointDes" ns="dashboard" components={[<Code />, <Code />]} />
+            <Trans i18nKey="policy.obsEndpointDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
             {t("policy.obsEndpointCnameHint")}
           </NoMarginHelperText>
         </SettingForm>
@@ -145,9 +145,9 @@ const ObsWizard = ({ onSubmit }: AddWizardProps) => {
                 i18nKey="policy.obsCredentialDes"
                 ns="dashboard"
                 components={[
-                  <Link href="https://console.huaweicloud.com/iam/#/mine/accessKey" target="_blank" />,
-                  <Code />,
-                  <Code />,
+                  <Link key="0" href="https://console.huaweicloud.com/iam/#/mine/accessKey" target="_blank" />,
+                  <Code key="1" />,
+                  <Code key="2" />,
                 ]}
               />
             </NoMarginHelperText>

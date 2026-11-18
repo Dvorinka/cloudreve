@@ -1,5 +1,4 @@
 import { Box, Button, IconButton, LinearProgress, Typography } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import { closeSnackbar, SnackbarKey } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +18,7 @@ import { FileManagerIndex } from "../../FileManager/FileManager.tsx";
 import Dismiss from "../../Icons/Dismiss.tsx";
 import { sizeToString } from "../../../util/index.ts";
 
-export const DefaultCloseAction = (snackbarId: SnackbarKey | undefined) => {
+export const DefaultCloseAction = function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
   return (
     <>
@@ -30,7 +29,7 @@ export const DefaultCloseAction = (snackbarId: SnackbarKey | undefined) => {
   );
 };
 
-export const ErrorListDetailAction = (error: Response<any>) => (snackbarId: SnackbarKey | undefined) => {
+export const ErrorListDetailAction = (error: Response<unknown>) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
@@ -51,10 +50,10 @@ export const ErrorListDetailAction = (error: Response<any>) => (snackbarId: Snac
   );
 };
 
-export const OpenReadMeAction = (file: FileResponse) => (snackbarId: SnackbarKey | undefined) => {
+export const OpenReadMeAction = (file: FileResponse) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
 
   const Close = DefaultCloseAction(snackbarId);
 
@@ -73,7 +72,7 @@ export const OpenReadMeAction = (file: FileResponse) => (snackbarId: SnackbarKey
   );
 };
 
-export const ViewDstAction = (dst: string) => (snackbarId: SnackbarKey | undefined) => {
+export const ViewDstAction = (dst: string) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
@@ -182,11 +181,11 @@ const BatchDownloadProgressContent = ({ downloadId }: { downloadId: string }) =>
   );
 };
 
-export const BatchDownloadProgressAction = (downloadId: string) => (_snackbarId: SnackbarKey | undefined) => {
+export const BatchDownloadProgressAction = (downloadId: string) => function SnackbarAction(_snackbarId: SnackbarKey | undefined) {
   return <BatchDownloadToolbar downloadId={downloadId} />;
 };
 
-export const BatchDownloadSecondaryAction = (downloadId: string) => (_snackbarId: SnackbarKey | undefined) => {
+export const BatchDownloadSecondaryAction = (downloadId: string) => function SnackbarAction(_snackbarId: SnackbarKey | undefined) {
   return <BatchDownloadProgressContent downloadId={downloadId} />;
 };
 
@@ -217,13 +216,13 @@ const BatchDownloadCompleteContent = ({
   );
 };
 
-export const BatchDownloadCompleteAction = (downloadId: string) => (snackbarId: SnackbarKey | undefined) => {
+export const BatchDownloadCompleteAction = (downloadId: string) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   return <BatchDownloadCompleteContent downloadId={downloadId} snackbarId={snackbarId} />;
 };
 
 export const ViewTaskAction =
   (path: string = "/tasks") =>
-  (snackbarId: SnackbarKey | undefined) => {
+  function SnackbarAction(snackbarId: SnackbarKey | undefined) {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -244,7 +243,7 @@ export const ViewTaskAction =
     );
   };
 
-export const ServiceWorkerUpdateAction = (updateServiceWorker: () => void) => (snackbarId: SnackbarKey | undefined) => {
+export const ServiceWorkerUpdateAction = (updateServiceWorker: () => void) => function SnackbarAction(snackbarId: SnackbarKey | undefined) {
   const { t } = useTranslation();
 
   const Close = DefaultCloseAction(snackbarId);

@@ -26,7 +26,7 @@ const ExtractArchive = () => {
   const [path, setPath] = useState("");
   const [encoding, setEncoding] = useState(defaultEncodingValue);
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [_showPassword, _setShowPassword] = useState(false);
   const [targetNode, setTargetNode] = useState("");
 
   const open = useAppSelector((state) => state.globalState.extractArchiveDialogOpen);

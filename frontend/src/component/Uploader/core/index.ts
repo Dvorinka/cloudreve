@@ -1,5 +1,5 @@
 import { PolicyType, StoragePolicy } from "../../../api/explorer.ts";
-import { defaultPath } from "../../../hooks/useNavigation.tsx";
+import { defaultPath } from "../../../util/uri.ts";
 import { UnknownPolicyError, UploaderError, UploaderErrorName } from "./errors";
 import Logger, { LogLevel } from "./logger";
 import { Task, TaskType } from "./types";
@@ -24,6 +24,7 @@ import {
   listResumeCtx,
 } from "./utils";
 import { Pool } from "./utils/pool";
+import { SelectType } from "./selectType.ts";
 
 export interface Option {
   logLevel: LogLevel;
@@ -38,10 +39,7 @@ export interface Option {
   onProactiveFileAdded?: (uploaders: Base[]) => void;
 }
 
-export enum SelectType {
-  File,
-  Directory,
-}
+export { SelectType };
 
 export default class UploadManager {
   public logger: Logger;
@@ -88,7 +86,7 @@ export default class UploadManager {
     if (this.pool.processing.length == 0) {
       return;
     }
-    var confirmationMessage =
+    const confirmationMessage =
       "It looks like you have been editing something. " + "If you leave before saving, your changes will be lost.";
 
     (e || window.event).returnValue = confirmationMessage; //Gecko + IE
@@ -220,7 +218,7 @@ export default class UploadManager {
         }
       });
     }
-    this.o.onProactiveFileAdded && this.o.onProactiveFileAdded(uploaders);
+    this.o.onProactiveFileAdded?.(uploaders);
   };
 
   private dragEnter = (e: DragEvent) => {
@@ -245,7 +243,7 @@ export default class UploadManager {
     ev: Event | File[],
     dst: string,
     resolve: (value: Base[] | PromiseLike<Base[]>) => void,
-    reject: (reason?: any) => void,
+    reject: (reason?: unknown) => void,
     getName?: (file: File) => string,
   ) => {
     let files: File[] = [];
@@ -268,6 +266,7 @@ export default class UploadManager {
             policy: this.policy as StoragePolicy,
             dst: getDirectoryUploadDst(dst, file),
             file: file,
+            blob: file,
             size: file.size,
             overwrite: this.overwrite,
             name: getName ? getName(file) : file.name,
@@ -296,7 +295,7 @@ export default class UploadManager {
       const uploaders = await new Promise<Base[]>((resolve, reject) =>
         this.addFiles(items, this.currentPath as string, resolve, reject),
       );
-      this.o.onProactiveFileAdded && this.o.onProactiveFileAdded(uploaders);
+      this.o.onProactiveFileAdded?.(uploaders);
     }
   };
 }

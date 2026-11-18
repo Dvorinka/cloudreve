@@ -4,8 +4,8 @@ import { Box, styled } from "@mui/material";
 // -> CustomPropsItem forms an import cycle, so StyledButtonBase lived in a
 // TDZ when CustomPropsItem evaluated styled(StyledButtonBase) at module init.
 export const StyledButtonBase = styled(Box)(({ theme }) => {
-  let bgColor = theme.palette.mode === "light" ? theme.palette.grey[100] : theme.palette.grey[900];
-  let bgColorHover = theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[700];
+  const bgColor = theme.palette.mode === "light" ? theme.palette.grey[100] : theme.palette.grey[900];
+  const _bgColorHover = theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[700];
   return {
     borderRadius: theme.shape.borderRadius,
     backgroundColor: bgColor,

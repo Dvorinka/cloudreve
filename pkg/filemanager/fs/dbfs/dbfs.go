@@ -201,6 +201,9 @@ func (f *DBFS) List(ctx context.Context, path *fs.URI, opts ...fs.Option) (fs.Fi
 
 	searchParams := path.SearchParameters()
 	isSearching := searchParams != nil
+	if searchParams != nil && o.searchFileIDs != nil {
+		searchParams.FileIDs = o.searchFileIDs
+	}
 
 	parent, err := f.getFileByPath(ctx, navigator, path)
 	if err != nil {

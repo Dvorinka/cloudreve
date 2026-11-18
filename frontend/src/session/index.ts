@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Group, LoginResponse, Token, User } from "../api/user.ts";
-import { ColumType } from "../component/FileManager/Explorer/ListView/Column.tsx";
+import { ColumType, ListViewColumnSetting } from "../component/FileManager/Explorer/ListView/columnType.ts";
 import Boolset from "../util/boolset.ts";
 import {
   ErrAccessTokenExpired,
@@ -39,7 +39,13 @@ export enum UserSettings {
   ArchiveDownloadMethod = "archive_download_method",
 }
 
-export const UserSettingsDefault: { [key: string]: any } = {
+/** Subtitle appearance stored under UserSettings.SubtitleStyle. */
+export interface StoredSubtitleStyle {
+  fontSize?: number;
+  fontColor?: string;
+}
+
+export const UserSettingsDefault: { [key: string]: unknown } = {
   [UserSettings.DrawerWidth]: 240,
   [UserSettings.PageSize]: 100,
   [UserSettings.Layout]: "grid",
@@ -72,7 +78,7 @@ export const UserSettingsDefault: { [key: string]: any } = {
 
 export interface Session extends LoginResponse {
   settings: {
-    [key: string]: any;
+    [key: string]: unknown;
   };
   signedOut?: boolean;
 }
@@ -80,7 +86,7 @@ export interface Session extends LoginResponse {
 export interface SessionState {
   current?: string;
   sessions: { [uid: string]: Session };
-  anonymousSettings: { [key: string]: any };
+  anonymousSettings: { [key: string]: unknown };
   anonymousUser?: User;
 }
 
@@ -137,7 +143,7 @@ export class Manager {
     }
   };
 
-  public set(key: string, value: any) {
+  public set(key: string, value: unknown) {
     try {
       this.currentLogin().settings[key] = value;
     } catch (e) {
@@ -148,7 +154,23 @@ export class Manager {
     this.syncToStore();
   }
 
-  public getWithFallback(key: string): any {
+  public getWithFallback(key: UserSettings.DrawerWidth): number;
+  public getWithFallback(key: UserSettings.PageSize): number;
+  public getWithFallback(key: UserSettings.Layout): string;
+  public getWithFallback(key: UserSettings.ShowThumb): boolean;
+  public getWithFallback(key: UserSettings.SortBy): string;
+  public getWithFallback(key: UserSettings.SortDirection): string;
+  public getWithFallback(key: UserSettings.ListViewColumns): ListViewColumnSetting[];
+  public getWithFallback(key: UserSettings.GalleryWidth): number;
+  public getWithFallback(key: UserSettings.MusicVolume): number;
+  public getWithFallback(key: UserSettings.ConcurrentLimit): number;
+  public getWithFallback(key: UserSettings.UseAvgSpeed): boolean;
+  public getWithFallback(key: UserSettings.UploadOverwrite): boolean;
+  public getWithFallback(key: UserSettings.TreeViewAutoExpand): boolean;
+  public getWithFallback(key: UserSettings.FolderClickAction): string;
+  public getWithFallback(key: UserSettings.SubtitleStyle): StoredSubtitleStyle;
+  public getWithFallback(key: string): unknown;
+  public getWithFallback(key: string): unknown {
     const res = this.get(key);
     if (res === undefined && UserSettingsDefault[key] !== undefined) {
       return UserSettingsDefault[key];
@@ -157,7 +179,15 @@ export class Manager {
     return res;
   }
 
-  public get(key: string): any {
+  public get(key: UserSettings.PreferredDarkMode): boolean | undefined;
+  public get(key: UserSettings.TimeZone): string | undefined;
+  public get(key: UserSettings.ArchiveDownloadMethod): number | undefined;
+  public get(key: `${UserSettings.OpenWithPrefix}${string}`): string | undefined;
+  public get(key: `${UserSettings.CodeCharsetPrefix}${string}`): string | undefined;
+  public get(key: `${UserSettings.CodeLanguagePrefix}${string}`): string | undefined;
+  public get(key: `${UserSettings.BookLocationPrefix}${string}`): string | undefined;
+  public get(key: string): unknown;
+  public get(key: string): unknown {
     try {
       return this.currentLogin().settings[key];
     } catch (e) {
@@ -171,7 +201,7 @@ export class Manager {
   public currentLoginOrNull = (): Session | null => {
     try {
       return this.currentLogin();
-    } catch (e) {
+    } catch {
       return null;
     }
   };

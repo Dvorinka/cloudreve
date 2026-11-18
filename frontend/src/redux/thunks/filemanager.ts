@@ -2,12 +2,12 @@ import dayjs from "dayjs";
 import { getFileInfo, getFileList, getUserCapacity, sendPatchViewSync, sendVaultUnlock } from "../../api/api.ts";
 import { ExplorerView, FileResponse, FileType, ListResponse, Metadata } from "../../api/explorer.ts";
 import { getActionOpt } from "../../component/FileManager/ContextMenu/useActionDisplayOpt.ts";
-import { ListViewColumnSetting } from "../../component/FileManager/Explorer/ListView/Column.tsx";
+import type { ListViewColumnSetting } from "../../component/FileManager/Explorer/ListView/columnType.ts";
 import { FileManagerIndex } from "../../component/FileManager/FileManager.tsx";
 import { getPaginationState } from "../../component/FileManager/Pagination/PaginationFooter.tsx";
 import { Condition, ConditionType } from "../../component/FileManager/Search/AdvanceSearch/ConditionBox.tsx";
 import { MinPageSize } from "../../component/FileManager/TopBar/ViewOptionPopover.tsx";
-import { SelectType } from "../../component/Uploader/core";
+import { SelectType } from "../../component/Uploader/core/selectType.ts";
 import { Task } from "../../component/Uploader/core/types.ts";
 import { uploadPromisePool } from "../../component/Uploader/core/uploader/base.ts";
 import { defaultPath } from "../../hooks/useNavigation.tsx";
@@ -101,7 +101,7 @@ export interface NavigateReconcileOptions {
 }
 
 const pageSize = (fm: SingleManager) => {
-  let pageSize = Math.max(fm.pageSize, MinPageSize);
+  const pageSize = Math.max(fm.pageSize, MinPageSize);
   return Math.min(fm.pageSize, fm.list?.props.max_page_size ?? pageSize);
 };
 
@@ -125,8 +125,8 @@ export function checkReadMeEnabled(index: number): AppThunk {
     if (path && current_fs == Filesystem.share) {
       try {
         const info = await dispatch(queueLoadShareInfo(new CrUri(path), false));
-        dispatch(setShareReadmeDetect(info?.show_readme && info.source_type == FileType.folder));
-      } catch (e) {
+        dispatch(setShareReadmeDetect(!!(info?.show_readme && info.source_type == FileType.folder)));
+      } catch {
         dispatch(setShareReadmeDetect(false));
       }
     } else {
@@ -154,7 +154,7 @@ export function checkOpenViewerQuery(index: number): AppThunk {
       return;
     }
 
-    const { files: list, pagination } = getState().fileManager[index]?.list ?? {};
+    const { files: list } = getState().fileManager[index]?.list ?? {};
     if (list) {
       debugger;
       // Find readme file from highest to lowest priority
@@ -174,10 +174,7 @@ export function checkOpenViewerQuery(index: number): AppThunk {
 export function navigateReconcile(index: number, opt?: NavigateReconcileOptions): AppThunk<Promise<void>> {
   return async (dispatch, getState) => {
     const timeNow = dayjs().valueOf();
-    const {
-      fileManager,
-      globalState: { sidebarOpen, imageViewer },
-    } = getState();
+    const { fileManager } = getState();
     const { path, list, pure_path } = fileManager[index];
     if (!path) {
       return;
@@ -192,12 +189,12 @@ export function navigateReconcile(index: number, opt?: NavigateReconcileOptions)
     if (opt?.sync_view) {
       try {
         await dispatch(syncViewSettings(index));
-      } catch (e) {}
+      } catch {}
     }
 
     const currentLogin = SessionManager.currentLoginOrNull();
     const currentView = localCustomView[pure_path ?? ""];
-    let useCustomView = currentLogin?.user.disable_view_sync || currentView;
+    const useCustomView = currentLogin?.user.disable_view_sync || currentView;
 
     let listRes: ListResponse | null = null;
     try {
@@ -472,7 +469,7 @@ export function navigateToPath(
         crUri.setUsername("");
         path = crUri.toString();
       }
-    } catch (e) {}
+    } catch {}
 
     if (index == FileManagerIndex.selector) {
       return dispatch(setTargetPath(index, path));
@@ -636,6 +633,11 @@ export function advancedSearch(index: number, conditions: Condition[]): AppThunk
             params.updated_at_lte = condition.updated_lte;
           }
           break;
+        case ConditionType.content:
+          if (condition.content_query) {
+            params.content = condition.content_query;
+          }
+          break;
       }
     });
 
@@ -649,12 +651,18 @@ export function advancedSearch(index: number, conditions: Condition[]): AppThunk
 export function openAdvancedSearch(index: number, initialKeywords?: string): AppThunk {
   return async (dispatch, getState) => {
     const current_base = getState().fileManager[index].pure_path;
+    const fullTextSearchEnabled = getState().siteConfig.explorer?.config?.full_text_search;
     dispatch(setSearchPopup(false));
     dispatch(
       setAdvanceSearch({
         open: true,
         basePath: current_base ?? defaultPath,
-        nameCondition: initialKeywords != undefined ? initialKeywords.split(SPACE_RE).filter((x) => x) : undefined,
+        nameCondition:
+          initialKeywords != undefined && !fullTextSearchEnabled
+            ? initialKeywords.split(SPACE_RE).filter((x) => x)
+            : undefined,
+        contentCondition:
+          initialKeywords != undefined && fullTextSearchEnabled ? initialKeywords : undefined,
       }),
     );
   };
@@ -707,7 +715,7 @@ export function openContextUrlFromUri(index: number, uri: string, e: React.Mouse
     if (!file) {
       try {
         file = await dispatch(getFileInfo({ uri }));
-      } catch (e) {
+      } catch {
         return;
       }
     }

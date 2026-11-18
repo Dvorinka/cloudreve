@@ -19,7 +19,7 @@ interface FileIconSnackbarProps extends CustomContentProps {
 }
 
 const FileIconSnackbar = forwardRef<HTMLDivElement, FileIconSnackbarProps>((props, ref) => {
-  const [progress, setProgress] = useState(0);
+  const [_progress, _setProgress] = useState(0);
   const {
     // You have access to notistack props and options 👇🏼
     message,
@@ -27,7 +27,7 @@ const FileIconSnackbar = forwardRef<HTMLDivElement, FileIconSnackbarProps>((prop
     id,
     file,
     // as well as your own custom props 👇🏼
-    ...other
+    ..._other
   } = props;
 
   let componentOrFunctionAction: React.ReactNode = undefined;
@@ -78,5 +78,6 @@ const FileIconSnackbar = forwardRef<HTMLDivElement, FileIconSnackbarProps>((prop
     />
   );
 });
+FileIconSnackbar.displayName = "FileIconSnackbar";
 
 export default FileIconSnackbar;

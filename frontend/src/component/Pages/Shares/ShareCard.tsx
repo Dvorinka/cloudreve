@@ -65,7 +65,9 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
   const deleteShare = useCallback(() => {
     dispatch(confirmOperation(t("fileManager.deleteShareWarning"))).then(() => {
       dispatch(sendDeleteShare(share.id)).then(() => {
-        onClose && onClose({}, "backdropClick");
+        if (onClose) {
+          onClose({}, "backdropClick");
+        }
         enqueueSnackbar({
           message: t("application:share.shareCanceled"),
           variant: "success",
@@ -78,17 +80,23 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
 
   const openEdit = useCallback(() => {
     dispatch(openShareEditByID(share.id, share.password, share.source_type == FileType.file));
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [dispatch, share, onClose]);
 
   const openLink = useCallback(() => {
     window.open(share.url, "_blank");
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [share, onClose]);
 
   const copyLink = useCallback(() => {
     copyToClipboard(share.url);
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [share, onClose, t]);
 
   // Share history: same activity feed as the file manager, narrowed to
@@ -105,7 +113,9 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
       path: share.source_uri ?? "",
     };
     dispatch(setActivityDialog({ open: true, file: stub, shareId: share.id }));
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   }, [dispatch, share, onClose]);
 
   return (
@@ -159,7 +169,7 @@ const ActionMenu = ({ share, onShareDeleted, onClose, ...rest }: ActionMenuProps
 
 const ShareCard = ({ share, onShareDeleted, onLoad, loading, selecting, selected, onToggleSelect }: ShareCardProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { ref, inView } = useInView({
     rootMargin: "200px 0px",
     triggerOnce: true,
@@ -203,7 +213,9 @@ const ShareCard = ({ share, onShareDeleted, onLoad, loading, selecting, selected
           {...(selecting && share?.owner?.id == user?.user.id
             ? {
                 onClick: () => {
-                  share && onToggleSelect?.(share.id);
+                  if (share) {
+                    onToggleSelect?.(share.id);
+                  }
                 },
               }
             : share?.owner?.id != user?.user.id

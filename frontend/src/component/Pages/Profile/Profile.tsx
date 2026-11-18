@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Box, Container, FormControl, Grid, ListItemText, SelectChangeEvent } from "@mui/material";
 import { useTranslation } from "react-i18next";

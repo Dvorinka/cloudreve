@@ -107,7 +107,9 @@ const SaveAsNewFormat = ({ onSaveSubmit, onClose, ...rest }: SaveAsNewFormatProp
 
   const onAccept = () => {
     onSaveSubmit(selected.ext, selected.quality ? quality : undefined);
-    onClose && onClose({}, "backdropClick");
+    if (onClose) {
+      onClose({}, "backdropClick");
+    }
   };
 
   return (

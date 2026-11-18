@@ -83,7 +83,7 @@ export const router = createBrowserRouter([
       {
         path: "/",
         async lazy() {
-          let { AutoNavbarFrame } = await import("../component/Frame/FrameManagerBundle.tsx");
+          const { AutoNavbarFrame } = await import("../component/Frame/FrameManagerBundle.tsx");
           return { Component: AutoNavbarFrame };
         },
         children: [
@@ -97,14 +97,14 @@ export const router = createBrowserRouter([
               {
                 path: "home",
                 async lazy() {
-                  let { Home } = await import("../component/Admin/AdminBundle.tsx");
+                  const { Home } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: Home };
                 },
               },
               {
                 path: "settings",
                 async lazy() {
-                  let { Settings } = await import("../component/Admin/AdminBundle.tsx");
+                  const { Settings } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: Settings };
                 },
               },
@@ -112,126 +112,126 @@ export const router = createBrowserRouter([
               {
                 path: "policy",
                 async lazy() {
-                  let { StoragePolicySetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { StoragePolicySetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: StoragePolicySetting };
                 },
               },
               {
                 path: "policy/:id",
                 async lazy() {
-                  let { EditStoragePolicy } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EditStoragePolicy } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EditStoragePolicy };
                 },
               },
               {
                 path: "policy/oauth",
                 async lazy() {
-                  let { OauthCallback } = await import("../component/Admin/AdminBundle.tsx");
+                  const { OauthCallback } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: OauthCallback };
                 },
               },
               {
                 path: "oauth",
                 async lazy() {
-                  let { OAuthClientSetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { OAuthClientSetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: OAuthClientSetting };
                 },
               },
               {
                 path: "oauth/new",
                 async lazy() {
-                  let { EditOAuthClient } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EditOAuthClient } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EditOAuthClient };
                 },
               },
               {
                 path: "oauth/:id",
                 async lazy() {
-                  let { EditOAuthClient } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EditOAuthClient } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EditOAuthClient };
                 },
               },
               {
                 path: "group",
                 async lazy() {
-                  let { GroupSetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { GroupSetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: GroupSetting };
                 },
               },
               {
                 path: "group/:id",
                 async lazy() {
-                  let { EditGroup } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EditGroup } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EditGroup };
                 },
               },
               {
                 path: "node",
                 async lazy() {
-                  let { NodeSetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { NodeSetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: NodeSetting };
                 },
               },
               {
                 path: "node/:id",
                 async lazy() {
-                  let { EditNode } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EditNode } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EditNode };
                 },
               },
               {
                 path: "user",
                 async lazy() {
-                  let { UserSetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { UserSetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: UserSetting };
                 },
               },
               {
                 path: "file",
                 async lazy() {
-                  let { FileSetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { FileSetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: FileSetting };
                 },
               },
               {
                 path: "blob",
                 async lazy() {
-                  let { EntitySetting } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EntitySetting } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EntitySetting };
                 },
               },
               {
                 path: "task",
                 async lazy() {
-                  let { TaskList } = await import("../component/Admin/AdminBundle.tsx");
+                  const { TaskList } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: TaskList };
                 },
               },
               {
                 path: "share",
                 async lazy() {
-                  let { ShareList } = await import("../component/Admin/AdminBundle.tsx");
+                  const { ShareList } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: ShareList };
                 },
               },
               {
                 path: "event",
                 async lazy() {
-                  let { EventList } = await import("../component/Admin/AdminBundle.tsx");
+                  const { EventList } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: EventList };
                 },
               },
               {
                 path: "abuse",
                 async lazy() {
-                  let { AbuseReportList } = await import("../component/Admin/AdminBundle.tsx");
+                  const { AbuseReportList } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: AbuseReportList };
                 },
               },
               {
                 path: "filesystem",
                 async lazy() {
-                  let { FileSystem } = await import("../component/Admin/AdminBundle.tsx");
+                  const { FileSystem } = await import("../component/Admin/AdminBundle.tsx");
                   return { Component: FileSystem };
                 },
               },
@@ -240,63 +240,63 @@ export const router = createBrowserRouter([
           {
             path: "/home",
             async lazy() {
-              let { FileManager } = await import("../component/Frame/FrameManagerBundle.tsx");
+              const { FileManager } = await import("../component/Frame/FrameManagerBundle.tsx");
               return { Component: FileManager };
             },
           },
           {
             path: "/tasks",
             async lazy() {
-              let { TaskList } = await import("../component/Pages/Pages");
+              const { TaskList } = await import("../component/Pages/Pages");
               return { Component: TaskList };
             },
           },
           {
             path: "/downloads",
             async lazy() {
-              let { DownloadList } = await import("../component/Pages/Pages");
+              const { DownloadList } = await import("../component/Pages/Pages");
               return { Component: DownloadList };
             },
           },
           {
             path: "/shares",
             async lazy() {
-              let { ShareList } = await import("../component/Pages/Pages");
+              const { ShareList } = await import("../component/Pages/Pages");
               return { Component: ShareList };
             },
           },
           {
             path: "/discover",
             async lazy() {
-              let { Discover } = await import("../component/Pages/Pages");
+              const { Discover } = await import("../component/Pages/Pages");
               return { Component: Discover };
             },
           },
           {
             path: "/connect",
             async lazy() {
-              let { Devices } = await import("../component/Pages/Pages");
+              const { Devices } = await import("../component/Pages/Pages");
               return { Component: Devices };
             },
           },
           {
             path: "/shop",
             async lazy() {
-              let { Shop } = await import("../component/Pages/Pages");
+              const { Shop } = await import("../component/Pages/Pages");
               return { Component: Shop };
             },
           },
           {
             path: "/settings",
             async lazy() {
-              let { Setting } = await import("../component/Pages/Pages");
+              const { Setting } = await import("../component/Pages/Pages");
               return { Component: Setting };
             },
           },
           {
             path: "/profile/:id",
             async lazy() {
-              let { Profile } = await import("../component/Pages/Pages");
+              const { Profile } = await import("../component/Pages/Pages");
               return { Component: Profile };
             },
           },

@@ -35,5 +35,6 @@ const FacebookCircularProgress = forwardRef(({ sx, bgColor, fgColor, ...rest }: 
     </Box>
   );
 });
+FacebookCircularProgress.displayName = "FacebookCircularProgress";
 
 export default FacebookCircularProgress;

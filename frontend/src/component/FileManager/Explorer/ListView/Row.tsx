@@ -42,7 +42,7 @@ const RowContainer = styled(Box, {
 
 const Column = styled(Box, {
   shouldForwardProp: (prop) => prop !== "w",
-})<{ w: number }>(({ theme, w }) => ({
+})<{ w: number }>(({ w }) => ({
   display: "flex",
   alignItems: "center",
   width: `${w}px`,
@@ -59,7 +59,6 @@ const Row = memo((props: FileBlockProps) => {
     isLoadingIndicator,
     noThumb,
     uploading,
-    ref,
     inView,
     fileTag,
     onClick,
@@ -144,5 +143,6 @@ const Row = memo((props: FileBlockProps) => {
     </RowContainer>
   );
 });
+Row.displayName = "Row";
 
 export default Row;

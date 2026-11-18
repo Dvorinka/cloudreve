@@ -25,7 +25,7 @@ const OneDriveAuthDialog = ({
 }: OneDriveAuthDialogProps) => {
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string>("");
   const [appId, setAppId] = useState<string>(initialAppId);
   const [appSecret, setAppSecret] = useState<string>(initialAppSecret);
@@ -75,7 +75,7 @@ const OneDriveAuthDialog = ({
             </Typography>
             <DenseFilledTextField fullWidth required value={appId} onChange={(e) => setAppId(e.target.value)} />
             <NoMarginHelperText>
-              <Trans i18nKey="policy.aadAppIDDes" ns="dashboard" components={[<Code />, <Code />]} />
+              <Trans i18nKey="policy.aadAppIDDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
             </NoMarginHelperText>
           </Box>
 
@@ -85,7 +85,7 @@ const OneDriveAuthDialog = ({
             </Typography>
             <DenseFilledTextField fullWidth required value={appSecret} onChange={(e) => setAppSecret(e.target.value)} />
             <NoMarginHelperText>
-              <Trans i18nKey="policy.addAppSecretDes" ns="dashboard" components={[<Code />, <Code />, <Code />]} />
+              <Trans i18nKey="policy.addAppSecretDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />, <Code key="2" />]} />
             </NoMarginHelperText>
           </Box>
           {!isHttps && <Alert severity="warning">{t("policy.httpsRequired")}</Alert>}

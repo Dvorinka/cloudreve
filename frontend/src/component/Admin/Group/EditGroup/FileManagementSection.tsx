@@ -109,7 +109,7 @@ const FileManagementSection = () => {
 
   const onEditedConfigBlur = useCallback(
     (value: string) => {
-      var res: Record<string, any> | undefined = undefined;
+      let res: Record<string, unknown> | undefined = undefined;
       if (value) {
         try {
           res = JSON.parse(value);
@@ -311,7 +311,7 @@ const FileManagementSection = () => {
                   <Trans
                     ns="dashboard"
                     i18nKey="group.allowRemoteDownloadDes"
-                    components={[<Link component={RouterLink} to="/admin/node" />]}
+                    components={[<Link key="0" component={RouterLink} to="/admin/node" />]}
                   />
                 </NoMarginHelperText>
               </FormControl>

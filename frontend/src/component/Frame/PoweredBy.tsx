@@ -2,7 +2,7 @@ import { Box, BoxProps, Typography, useTheme } from "@mui/material";
 import LogoIcon from "./assets/logo.svg";
 import LogoIconDark from "./assets/logo_light.svg";
 
-export interface PoweredByProps extends BoxProps {}
+export type PoweredByProps = BoxProps
 
 const PoweredBy = ({ ...rest }: PoweredByProps) => {
   const theme = useTheme();

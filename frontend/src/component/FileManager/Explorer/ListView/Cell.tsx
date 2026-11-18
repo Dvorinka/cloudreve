@@ -17,7 +17,6 @@ import FileSmallIcon from "../FileSmallIcon.tsx";
 import { FmFile } from "../GridView/GridView.tsx";
 import { ColumType, ListViewColumn } from "./Column.tsx";
 import ListThumbnail from "./ListThumbnail.tsx";
-// @ts-ignore
 import dayjs, { Dayjs } from "dayjs";
 import { bindPopover } from "material-ui-popup-state";
 import { usePopupState } from "material-ui-popup-state/hooks";
@@ -176,6 +175,7 @@ export const ThumbPopover = memo((props: ThumbPopoverProps) => {
     </HoverPopover>
   );
 });
+ThumbPopover.displayName = "ThumbPopover";
 
 const FileNameCell = memo((props: CellProps) => {
   const theme = useTheme();
@@ -341,18 +341,20 @@ const FileNameCell = memo((props: CellProps) => {
     </>
   );
 });
+FileNameCell.displayName = "FileNameCell";
 
 interface FolderSizeCellProps {
   file: FmFile;
 }
 
 const FolderSizeCell = memo(({ file }: FolderSizeCellProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   if (file.type == FileType.folder || file.metadata?.[Metadata.share_redirect]) {
     return <Box />;
   }
   return <Box>{sizeToString(file.size)}</Box>;
 });
+FolderSizeCell.displayName = "FolderSizeCell";
 
 interface FolderDateCellProps {
   file: FmFile;
@@ -360,7 +362,7 @@ interface FolderDateCellProps {
 }
 
 const FolderDateCell = memo(({ file, dateType }: FolderDateCellProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   let datetime: string | Dayjs = "";
   switch (dateType) {
     case "created":
@@ -380,6 +382,7 @@ const FolderDateCell = memo(({ file, dateType }: FolderDateCellProps) => {
   }
   return <TimeBadge variant={"inherit"} datetime={datetime} />;
 });
+FolderDateCell.displayName = "FolderDateCell";
 
 const FolderCell = memo(({ path }: { path: string }) => {
   return (
@@ -393,6 +396,7 @@ const FolderCell = memo(({ path }: { path: string }) => {
     />
   );
 });
+FolderCell.displayName = "FolderCell";
 
 interface CustomPropsCellProps {
   file: FmFile;
@@ -455,6 +459,8 @@ const CustomPropsCell = memo(({ file, customProp, readOnly }: CustomPropsCellPro
   );
 });
 
+CustomPropsCell.displayName = "CustomPropsCell";
+
 interface AddCustomPropsCellProps {
   file: FmFile;
   propDef: CustomProps;
@@ -510,6 +516,7 @@ const AddCustomPropsCell = memo(({ file, propDef, readOnly }: AddCustomPropsCell
     </Box>
   );
 });
+AddCustomPropsCell.displayName = "AddCustomPropsCell";
 
 const MediaElementsCell = memo(({ element }: { element?: MediaMetaElements | string }) => {
   if (!element) {
@@ -520,6 +527,7 @@ const MediaElementsCell = memo(({ element }: { element?: MediaMetaElements | str
   }
   return <MediaMetaElements element={element} />;
 });
+MediaElementsCell.displayName = "MediaElementsCell";
 
 const Cell = memo((props: CellProps) => {
   const { t } = useTranslation();
@@ -542,7 +550,7 @@ const Cell = memo((props: CellProps) => {
     } as CustomPropsItem;
   }, [customPropDef, props.file.metadata]);
 
-  const { file, column, uploading, fileTag, search, isSelected } = props;
+  const { file, column, uploading: _uploading, fileTag: _fileTag, search: _search, isSelected: _isSelected } = props;
   switch (column.type) {
     case ColumType.name:
       return <FileNameCell {...props} />;
@@ -553,7 +561,7 @@ const Cell = memo((props: CellProps) => {
     case ColumType.date_created:
       return <FolderDateCell file={file} dateType={"created"} />;
     case ColumType.parent: {
-      let crUrl = new CrUri(file.path);
+      const crUrl = new CrUri(file.path);
       return <FolderCell path={crUrl.parent().toString()} />;
     }
     case ColumType.recycle_restore_parent: {
@@ -561,7 +569,7 @@ const Cell = memo((props: CellProps) => {
         return <Box />;
       }
 
-      let crUrl = new CrUri(file.metadata[Metadata.restore_uri]);
+      const crUrl = new CrUri(file.metadata[Metadata.restore_uri]);
       return <FolderCell path={crUrl.parent().toString()} />;
     }
     case ColumType.recycle_expire:
@@ -630,5 +638,6 @@ const Cell = memo((props: CellProps) => {
       return <Box />;
   }
 });
+Cell.displayName = "Cell";
 
 export default Cell;

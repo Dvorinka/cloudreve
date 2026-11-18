@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Button, DialogContent } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
-import React, { useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
 import DraggableDialog from "./DraggableDialog.tsx";
 import { closeBatchDownloadLogDialog } from "../../redux/globalStateSlice.ts";
 import { FilledTextField } from "../Common/StyledComponents.tsx";
@@ -46,7 +46,7 @@ const BatchDownloadLog = () => {
           inputProps={{
             ref: logRef,
             sx: {
-              // @ts-ignore
+              // @ts-expect-error -- inputProps sx callback param untyped in MUI types
               fontSize: (theme) => theme.typography.body2.fontSize,
             },
           }}

@@ -79,7 +79,7 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
     }
   }, [templates, onChange]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
 

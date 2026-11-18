@@ -54,7 +54,7 @@ const FileDirectLinks = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {values?.edges?.direct_links?.map((option, index) => {
+          {values?.edges?.direct_links?.map((option) => {
             const lid = linkId(option.id);
             return (
               <TableRow key={option.id} hover>

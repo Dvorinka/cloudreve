@@ -38,7 +38,20 @@ interface ViewerGroupProps {
   dndType: string;
 }
 
-const DND_TYPE = "viewer-row";
+const _DND_TYPE = "viewer-row";
+
+interface DraggableViewerRowProps {
+  viewer: Viewer;
+  index: number;
+  moveRow: (from: number, to: number) => void;
+  onChange: (vChanged: Viewer) => void;
+  onDelete: (e: React.MouseEvent<HTMLElement>) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isLast: boolean;
+  isFirst: boolean;
+  dndType: string;
+}
 
 const DraggableViewerRow = memo(function DraggableViewerRow({
   viewer,
@@ -51,11 +64,11 @@ const DraggableViewerRow = memo(function DraggableViewerRow({
   isLast,
   isFirst,
   dndType,
-}: any) {
+}: DraggableViewerRowProps) {
   const ref = React.useRef<HTMLTableRowElement>(null);
   const [, drop] = useDrop({
     accept: dndType,
-    hover(item: any, monitor) {
+    hover(item: { index: number }, monitor) {
       if (!ref.current) return;
 
       const dragIndex = item.index;
@@ -212,6 +225,7 @@ const ViewerGroupRow = memo(({ group, index, onDelete, onGroupChange, dndType }:
     </StyledAccordion>
   );
 });
+ViewerGroupRow.displayName = "ViewerGroupRow";
 
 export interface FileViewerListProps {
   config: string;
@@ -339,5 +353,6 @@ const FileViewerList = memo(({ config, onChange }: FileViewerListProps) => {
     </Box>
   );
 });
+FileViewerList.displayName = "FileViewerList";
 
 export default FileViewerList;

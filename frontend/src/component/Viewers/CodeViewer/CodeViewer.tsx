@@ -183,8 +183,8 @@ const CodeViewer = () => {
     }
 
     const ext = fileExtension(viewerState.file.name) ?? "";
-    const rememberedCharset = SessionManager.get(UserSettings.CodeCharsetPrefix + ext);
-    const rememberedLng = SessionManager.get(UserSettings.CodeLanguagePrefix + ext);
+    const rememberedCharset = SessionManager.get(`${UserSettings.CodeCharsetPrefix}${ext}`);
+    const rememberedLng = SessionManager.get(`${UserSettings.CodeLanguagePrefix}${ext}`);
     setLng(null);
     setSaved(true);
     setLng(rememberedLng ?? codePreviewSuffix[ext] ?? "");
@@ -192,14 +192,14 @@ const CodeViewer = () => {
   }, [viewerState?.open]);
 
   const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],
   );
 
   const openOption = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setOptionAnchorEl(e.currentTarget);
     },
     [dispatch],

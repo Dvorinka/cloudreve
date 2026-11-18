@@ -33,7 +33,7 @@ export default function PasskeyLoginButton({ autoComplete, onLoginSuccess, ...re
       window.PublicKeyCredential &&
       PublicKeyCredential.isConditionalMediationAvailable
     ) {
-      PublicKeyCredential.isConditionalMediationAvailable().then((v) => {
+      PublicKeyCredential.isConditionalMediationAvailable().then(() => {
         if (!abortRef.current.signal.aborted) startLogin(true)();
       });
     }
@@ -80,14 +80,14 @@ export default function PasskeyLoginButton({ autoComplete, onLoginSuccess, ...re
               type: credential.type,
               rawId: bufferEncode(c.rawId),
               response: {
-                // @ts-ignore
+                // @ts-expect-error -- WebAuthn response fields not in DOM lib
                 attestationObject: bufferEncode(c.response.attestationObject),
                 clientDataJSON: bufferEncode(c.response.clientDataJSON),
-                // @ts-ignore
+                // @ts-expect-error -- WebAuthn response fields not in DOM lib
                 signature: bufferEncode(c.response.signature),
-                // @ts-ignore
+                // @ts-expect-error -- WebAuthn response fields not in DOM lib
                 userHandle: bufferEncode(c.response.userHandle),
-                // @ts-ignore
+                // @ts-expect-error -- WebAuthn response fields not in DOM lib
                 authenticatorData: bufferEncode(c.response.authenticatorData),
               },
             }),
@@ -102,7 +102,7 @@ export default function PasskeyLoginButton({ autoComplete, onLoginSuccess, ...re
     } catch (e) {
       console.log(e);
     } finally {
-      !conditional && setLoading(false);
+      if (!conditional) setLoading(false);
       dispatch(setHeadlessFrameLoading(false));
     }
   };

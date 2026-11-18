@@ -1,7 +1,6 @@
 // 所有 Uploader 的基类
 import axios, { CanceledError, CancelTokenSource } from "axios";
 import { EncryptionCipher, PolicyType } from "../../../../api/explorer.ts";
-import { store } from "../../../../redux/store.ts";
 import CrUri from "../../../../util/uri.ts";
 import { createUploadSession, deleteUploadSession } from "../api";
 import { UploaderError } from "../errors";
@@ -70,7 +69,7 @@ const deleteUploadSessionDelay = 500;
 export const uploadPromisePool: {
   [key: string]: {
     resolve: (value: Task | PromiseLike<Task>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   };
 } = {};
 
@@ -99,12 +98,12 @@ export default abstract class Base {
     this.logger = new Logger(this.manager.logger.level, "UPLOADER", this.id);
     this.logger.info("Initialize new uploader for task: ", task);
     this.subscriber = {
-      /* eslint-disable @typescript-eslint/no-empty-function */
+       
       onTransition: (_newStatus: Status) => {},
       onError: (_err: Error) => {},
       onProgress: (_data: UploadProgress) => {},
       onMsg: (_msg, _color: MessageColor) => {},
-      /* eslint-enable @typescript-eslint/no-empty-function */
+       
     };
   }
 
@@ -145,6 +144,9 @@ export default abstract class Base {
       // plaintext hash would never match — and storing it would leak content
       // identity.
       let hash: string | undefined;
+      // Imported lazily: a static edge to the redux store creates an
+      // initialization cycle (store -> slices -> uploader core -> store).
+      const { store } = await import("../../../../redux/store.ts");
       if (store.getState().siteConfig.basic.config.upload_dedup && !this.task.policy.encryption) {
         try {
           hash = await utils.sha256File(this.task.file);
@@ -204,8 +206,8 @@ export default abstract class Base {
     this.logger.info("Upload task completed");
   };
 
-  public abstract upload(): Promise<any>;
-  protected async afterUpload(): Promise<any> {
+  public abstract upload(): Promise<unknown>;
+  protected async afterUpload(): Promise<unknown> {
     return;
   }
 
@@ -258,9 +260,10 @@ export default abstract class Base {
   protected cancelUploadSession = (): Promise<void> => {
     return new Promise<void>((resolve) => {
       utils.removeResumeCtx(this.task, this.logger);
-      if (this.task.session?.session_id) {
+      const session = this.task.session;
+      if (session?.session_id) {
         setTimeout(() => {
-          deleteUploadSession(this.task.session!?.session_id, this.task.session!?.uri)
+          deleteUploadSession(session.session_id as string, session.uri as string)
             .catch((e) => {
               this.logger.warn("Failed to cancel upload session: ", e);
             })

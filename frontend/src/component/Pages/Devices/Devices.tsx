@@ -71,8 +71,8 @@ const Devices = () => {
     return res;
   }, [webDavEnabled, appPromotion, desktopAppPromotion, t]);
 
-  const [tab, setTab] = useState(
-    searchParams.get(PageTabQuery) ?? (webDavEnabled ? DevicePageTab.Dav : DevicePageTab.Mcp),
+  const [tab, setTab] = useState<DevicePageTab>(
+    (searchParams.get(PageTabQuery) as DevicePageTab | null) ?? (webDavEnabled ? DevicePageTab.Dav : DevicePageTab.Mcp),
   );
   const selectTab = (_event: React.SyntheticEvent, value: DevicePageTab) => {
     setTab(value);

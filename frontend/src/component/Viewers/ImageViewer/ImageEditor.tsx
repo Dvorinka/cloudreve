@@ -13,8 +13,8 @@ import "./editor.css";
 export const editorSupportedExt = ["jpg", "jpeg", "png", "webp"];
 
 const ImageEditor = () => {
-  const theme = useTheme();
-  const { t, i18n } = useTranslation();
+  const _theme = useTheme();
+  const { t: _t, i18n } = useTranslation();
   const [nsLoaded, setNsLoaded] = useState(false);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const ImageEditor = () => {
   }, [editorState]);
 
   const dispatch = useAppDispatch();
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
 
   const save = useCallback(
     async (name: string, data?: string) => {
@@ -78,7 +78,7 @@ const ImageEditor = () => {
                 await save(editedImageObject.name, editedImageObject.imageBase64);
               }}
               defaultSavedImageName={editorState.file.name}
-              // @ts-ignore
+              // @ts-expect-error -- prop missing from tui-image-editor types
               defaultSavedImageType={fileExtension(editorState.file.name) ?? "png"}
               onClose={() => dispatch(switchToImageViewer())}
               disableSaveIfNoChanges={true}

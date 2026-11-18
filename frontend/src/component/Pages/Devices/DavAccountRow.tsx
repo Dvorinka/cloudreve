@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useEffect, useMemo } from "react";
 import { IconButton, ListItemText, Menu, Skeleton, TableRow } from "@mui/material";
 import { useTranslation } from "react-i18next";
@@ -65,7 +64,9 @@ const DavAccountRow = ({ account, onAccountDeleted, onLoad, loading, onClick, on
     if (account) {
       onEditClicked?.(account);
     }
-    onClose && onClose();
+    if (onClose) {
+      onClose();
+    }
   };
 
   const onDelete = () => {

@@ -33,6 +33,10 @@ func (n *NoopIndexer) Search(ctx context.Context, ownerID int, query string, off
 	return nil, 0, nil
 }
 
+func (n *NoopIndexer) SearchFileIDs(ctx context.Context, ownerID int, query string, limit int) ([]int, error) {
+	return nil, nil
+}
+
 func (n *NoopIndexer) IndexReady(ctx context.Context) (bool, error) {
 	return true, nil
 }

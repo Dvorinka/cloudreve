@@ -44,7 +44,9 @@ const ViewerDialog = (props: ViewerDialogProps) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [fullScreen, setFullScreen] = useState(props.fullScreen || isMobile);
   const onClose = useCallback(() => {
-    props.dialogProps.onClose && props.dialogProps.onClose({}, "closeButtonClick" as any);
+    if (props.dialogProps.onClose) {
+      props.dialogProps.onClose({}, "escapeKeyDown");
+    }
   }, [props.dialogProps.onClose]);
   return (
     <Dialog
@@ -64,7 +66,11 @@ const ViewerDialog = (props: ViewerDialogProps) => {
             {props.fullScreenToggle && (
               <IconButton
                 onClick={() => {
-                  props.toggleFullScreen ? props.toggleFullScreen() : setFullScreen((s) => !s);
+                  if (props.toggleFullScreen) {
+                    props.toggleFullScreen();
+                  } else {
+                    setFullScreen((s) => !s);
+                  }
                 }}
               >
                 {fullScreen ? <FullScreenMinimize fontSize={"small"} /> : <FullScreenMaximize fontSize={"small"} />}

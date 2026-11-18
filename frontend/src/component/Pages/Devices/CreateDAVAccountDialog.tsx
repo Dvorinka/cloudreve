@@ -34,7 +34,7 @@ const CreateDAVAccountDialog = ({
 }: CreateDAVAccountDialogProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
 
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -43,7 +43,7 @@ const CreateDAVAccountDialog = ({
   const [blockSysFilesUpload, setBlockSysFilesUpload] = useState(false);
   const [proxy, setProxy] = useState(false);
 
-  const theme = useTheme();
+  const _theme = useTheme();
 
   const groupProxyEnabled = useMemo(() => {
     const perm = new Boolset(SessionManager.currentLoginOrNull()?.user.group?.permission);
@@ -76,9 +76,15 @@ const CreateDAVAccountDialog = ({
     };
     dispatch(editTarget ? sendUpdateDavAccounts(editTarget.id, req) : sendCreateDavAccounts(req))
       .then((account) => {
-        onClose && onClose({}, "escapeKeyDown");
-        !editTarget && onAccountAdded && onAccountAdded(account);
-        editTarget && onAccountUpdated && onAccountUpdated(account);
+        if (onClose) {
+          onClose({}, "escapeKeyDown");
+        }
+        if (!editTarget && onAccountAdded) {
+          onAccountAdded(account);
+        }
+        if (editTarget && onAccountUpdated) {
+          onAccountUpdated(account);
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -153,7 +159,7 @@ const CreateDAVAccountDialog = ({
                 <Trans
                   i18nKey="application:setting.blockSysFilesUploadTooltip"
                   ns="application"
-                  components={[<Code />]}
+                  components={[<Code key="0" />]}
                 />
               </Typography>
               {groupProxyEnabled && (

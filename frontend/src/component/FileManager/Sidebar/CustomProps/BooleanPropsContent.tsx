@@ -7,7 +7,7 @@ import { PropsContentProps } from "./CustomPropsItem.tsx";
 const BooleanPropsItem = ({ prop, onChange, loading, readOnly, fullSize }: PropsContentProps) => {
   const { t } = useTranslation();
 
-  const handleChange = (_: any, checked: boolean) => {
+  const handleChange = (_: unknown, checked: boolean) => {
     onChange(checked.toString());
   };
 

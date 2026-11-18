@@ -41,7 +41,7 @@ const FileRow = ({
   onSelect,
   openUserDialog,
 }: FileRowProps) => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -155,7 +155,7 @@ const FileRow = ({
     );
   }
 
-  const stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
+  const _stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
   };
 

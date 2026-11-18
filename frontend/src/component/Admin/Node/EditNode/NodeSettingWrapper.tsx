@@ -57,7 +57,7 @@ const nodeValueFilter = (node: Node): Node => {
 
 const NodeSettingWrapper = ({ nodeID, children, onNodeChange }: NodeSettingWrapperProps) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation("dashboard");
+  const { t: _t } = useTranslation("dashboard");
   const [values, setValues] = useState<Node>({
     ...defaultNode,
   });

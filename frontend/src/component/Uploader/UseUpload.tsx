@@ -10,7 +10,7 @@ export function useUpload(uploader: Base) {
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
-    /* eslint-disable @typescript-eslint/no-empty-function */
+     
     uploader.subscribe({
       onTransition: (newStatus) => {
         setStatus(newStatus);

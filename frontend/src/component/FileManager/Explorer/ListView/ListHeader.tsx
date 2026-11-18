@@ -4,7 +4,6 @@ import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import { FmIndexContext } from "../../FmIndexContext.tsx";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
 import { changeSortOption } from "../../../../redux/thunks/filemanager.ts";
-import SessionManager, { UserSettings } from "../../../../session";
 import { Add } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { setListViewColumnSettingDialog } from "../../../../redux/globalStateSlice.ts";

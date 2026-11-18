@@ -35,7 +35,7 @@ const StyledImageListItem = styled(ImageListItem, {
 });
 
 const GalleryImage = memo((props: FileBlockProps) => {
-  const { file, columns, search, isDragging, isDropOver } = props;
+  const { file, isDragging, isDropOver, showLock } = props;
   const dispatch = useAppDispatch();
 
   const {
@@ -43,15 +43,10 @@ const GalleryImage = memo((props: FileBlockProps) => {
     isSelected,
     isLoadingIndicator,
     noThumb,
-    uploading,
     ref,
     inView,
-    showLock,
-    fileTag,
     onClick,
     onDoubleClicked,
-    hoverStateOff,
-    hoverStateOn,
     onContextMenu,
     setRefFunc,
     disabled,
@@ -223,5 +218,6 @@ const GalleryImage = memo((props: FileBlockProps) => {
     </StyledImageListItem>
   );
 });
+GalleryImage.displayName = "GalleryImage";
 
 export default GalleryImage;

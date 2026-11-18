@@ -1,5 +1,4 @@
 import { Box, Stack } from "@mui/material";
-import React from "react";
 import { useTranslation } from "react-i18next";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
@@ -10,7 +9,7 @@ export interface LogoPreviewProps {
 }
 
 const LogoPreview = ({ logoLight, logoDark }: LogoPreviewProps) => {
-  const { t } = useTranslation("dashboard");
+  const { t: _t } = useTranslation("dashboard");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 

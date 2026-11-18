@@ -96,7 +96,7 @@ const UnpinButton = (props: UnpinButton) => {
       setLoading(true);
       try {
         await dispatch(unPinFromSidebar(props.uri));
-      } catch (e) {
+      } catch {
         setLoading(false);
       }
     },
@@ -122,7 +122,7 @@ const CustomContent = React.memo(
     const [showDelete, setShowDelete] = useState(false);
     const { classes, className, label, nodeId, icon: iconProp, expansionIcon, displayIcon, file, fileIcon } = props;
 
-    const { disabled, expanded, selected, focused, handleExpansion, handleSelection, preventSelection } =
+    const { disabled, expanded, selected, handleExpansion, handleSelection } =
       useTreeItem(nodeId);
 
     const uri = useMemo(() => {
@@ -136,9 +136,6 @@ const CustomContent = React.memo(
 
     const icon = iconProp || expansionIcon || displayIcon;
 
-    const handleMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      preventSelection(event);
-    };
 
     const handleExpansionClick = useCallback(
       async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -211,8 +208,7 @@ const CustomContent = React.memo(
       () => (
         <Tooltip title={label} disableInteractive>
           <NoWrapTypography
-            onClick={handleSelectionClick}
-            component="div"
+            onClick={handleSelectionClick as React.MouseEventHandler}
             sx={{
               flexGrow: 1,
               textAlign: "left",
@@ -241,14 +237,13 @@ const CustomContent = React.memo(
     });
 
     const mergedRef = useCallback(
-      (val: any) => {
+      (val: HTMLElement | null) => {
         mergeRefs(ref as React.Ref<HTMLDivElement>, drop, drag)(val);
       },
       [ref, drop, drag],
     );
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <CustomContentRoot
         onContextMenu={onContextMenu}
         onMouseEnter={onMouseEnter}
@@ -269,7 +264,6 @@ const CustomContent = React.memo(
         onClick={handleSelectionClick}
         ref={mergedRef}
       >
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
         <div onClick={handleExpansionClick} className={classes.iconContainer}>
           {icon && !loading && <CaretDownIcon expanded={expanded} />}
           {icon && loading && <FacebookCircularProgress size={15} sx={{ pt: 0.5 }} />}
@@ -288,11 +282,11 @@ const TreeFile = React.memo(
       const { level, file, notLoaded, fileIcon, loading, pinned, canDrop } = props;
       return { level, file, notLoaded, fileIcon, loading, pinned, canDrop };
     }, [props.level, props.file, props.notLoaded, props.fileIcon, props.loading, props.canDrop, props.pinned]);
-    const { level, file, notLoaded, fileIcon, loading, pinned, canDrop, ...treeItemProps } = props;
+    const { level: _level, file: _file, notLoaded: _notLoaded, fileIcon: _fileIcon, loading: _loading, pinned: _pinned, canDrop: _canDrop, ...treeItemProps } = props;
     return (
       <StyledTreeItemRoot
         ContentComponent={CustomContent}
-        // @ts-ignore
+        // @ts-expect-error -- ContentProps type gap in useTreeItem
         ContentProps={contentProps}
         {...treeItemProps}
         ref={ref}

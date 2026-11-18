@@ -162,7 +162,7 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
                 height: 150,
               }}
               user={{
-                created_at: values.created_at,
+                created_at: values.created_at ?? "",
                 nickname: values.nick ?? "",
                 id: values.avatar ? values.hash_id ?? "" : "dummy",
               }}

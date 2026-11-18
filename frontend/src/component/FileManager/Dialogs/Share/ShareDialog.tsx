@@ -43,7 +43,7 @@ const lastUsedSetting = (privateByDefault: boolean): ShareSetting => {
 
 const rememberSetting = (setting: ShareSetting) => {
   try {
-    const { password, use_custom_password, slug, use_custom_link, ...rest } = setting;
+    const { password: _password, use_custom_password: _use_custom_password, slug: _slug, use_custom_link: _use_custom_link, ...rest } = setting;
     localStorage.setItem(shareSettingStorageKey, JSON.stringify(rest));
   } catch {
     // storage unavailable; remembering is best-effort
@@ -106,7 +106,7 @@ const shareToSetting = (share: ShareModel, t: TFunction): ShareSetting => {
 const ShareDialog = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const theme = useTheme();
+  const _theme = useTheme();
 
   const sitePrivateDefault = useAppSelector((state) => state.siteConfig.basic.config.share_default_private);
   const userPrivateDefault = SessionManager.currentLoginOrNull()?.user.share_default_private;
@@ -170,7 +170,7 @@ const ShareDialog = () => {
         );
         rememberSetting(setting);
         setShareLink(shareLink);
-      } catch (e) {
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -214,7 +214,7 @@ const ShareDialog = () => {
         cancelText={shareLink ? t("common:close") : undefined}
         secondaryAction={
           shareLink
-            ? // @ts-ignore
+            ? // @ts-expect-error -- Web Share API not in DOM lib types
               navigator.share && (
                 <Tooltip title={t("application:modals.sendLink")}>
                   <IconButton onClick={() => sendLink(target?.name ?? "", finalShareLink)}>

@@ -16,7 +16,7 @@ const autoRefreshInterval = 20 * 1000;
 const TaskList = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const policyOption = useAppSelector((state) => state.globalState.policyOptionCache);
+  const _policyOption = useAppSelector((state) => state.globalState.policyOptionCache);
   const [nextPageToken, setNextPageToken] = useState<string | undefined>("");
   const [tasks, setTasks] = useState<TaskResponse[]>([]);
   const [loading, setLoading] = useState(false);

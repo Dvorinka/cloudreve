@@ -31,6 +31,13 @@ const searchParamToConditions = (search_params: SearchParam, base: string): Cond
     });
   }
 
+  if (search_params.content) {
+    applied.push({
+      type: ConditionType.content,
+      content_query: search_params.content,
+    });
+  }
+
   if (search_params.type != undefined) {
     applied.push({
       type: ConditionType.type,
@@ -97,8 +104,6 @@ const searchParamToConditions = (search_params: SearchParam, base: string): Cond
     });
   }
 
-  console.log(search_params);
-
   return applied;
 };
 
@@ -111,6 +116,7 @@ const AdvanceSearch = () => {
   const open = useAppSelector((state) => state.globalState.advanceSearchOpen);
   const base = useAppSelector((state) => state.globalState.advanceSearchBasePath);
   const initialNames = useAppSelector((state) => state.globalState.advanceSearchInitialNameCondition);
+  const initialContentQuery = useAppSelector((state) => state.globalState.advanceSearchInitialContentCondition);
   const search_params = useAppSelector((state) => state.fileManager[FileManagerIndex.main].search_params);
   const current_base = useAppSelector((state) => state.fileManager[FileManagerIndex.main].pure_path);
 
@@ -120,6 +126,20 @@ const AdvanceSearch = () => {
 
   useEffect(() => {
     if (open) {
+      if (initialContentQuery && base) {
+        setConditions([
+          {
+            type: ConditionType.base,
+            base_uri: base,
+          },
+          {
+            type: ConditionType.content,
+            content_query: initialContentQuery,
+          },
+        ]);
+        return;
+      }
+
       if (initialNames && base) {
         setConditions([
           {

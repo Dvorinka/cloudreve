@@ -77,7 +77,7 @@ const OneDriveWizard = ({ onSubmit }: AddWizardProps) => {
               i18nKey="policy.creatAadAppDes"
               ns="dashboard"
               components={[
-                <Link
+                <Link key="0"
                   href={
                     wwGraph === policy.server
                       ? "https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Overview"
@@ -85,7 +85,7 @@ const OneDriveWizard = ({ onSubmit }: AddWizardProps) => {
                   }
                   target="_blank"
                 />,
-                <Code />,
+                <Code key="1" />,
               ]}
             />
           </Typography>
@@ -94,7 +94,7 @@ const OneDriveWizard = ({ onSubmit }: AddWizardProps) => {
               i18nKey="policy.createAadAppDes2"
               ns="dashboard"
               values={{ url: redirectUrl }}
-              components={[<Code />, <Code />, <Code />, <Code />, <Code />, <Code />, <Code />]}
+              components={[<Code key="0" />, <Code key="1" />, <Code key="2" />, <Code key="3" />, <Code key="4" />, <Code key="5" />, <Code key="6" />]}
             />
           </Typography>
           <DenseFilledTextField
@@ -106,7 +106,7 @@ const OneDriveWizard = ({ onSubmit }: AddWizardProps) => {
             onChange={(e) => setPolicy({ ...policy, bucket_name: e.target.value })}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.aadAppIDDes" ns="dashboard" components={[<Code />, <Code />]} />
+            <Trans i18nKey="policy.aadAppIDDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
           </NoMarginHelperText>
           <DenseFilledTextField
             sx={{ mt: 2 }}
@@ -117,7 +117,7 @@ const OneDriveWizard = ({ onSubmit }: AddWizardProps) => {
             onChange={(e) => setPolicy({ ...policy, secret_key: e.target.value })}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.addAppSecretDes" ns="dashboard" components={[<Code />, <Code />, <Code />]} />
+            <Trans i18nKey="policy.addAppSecretDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />, <Code key="2" />]} />
           </NoMarginHelperText>
         </SettingForm>
         <SettingForm title={t("policy.grantAccess")} lgWidth={12}>

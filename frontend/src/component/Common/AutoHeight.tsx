@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import AnimateHeight, { Height } from "react-animate-height";
+import { useEffect, useRef, useState } from "react";
+import AnimateHeight, { AnimateHeightProps, Height } from "react-animate-height";
 import { useTheme } from "@mui/material";
 
-// @ts-ignore
-const AutoHeight = ({ children, ...props }) => {
+const AutoHeight = ({ children, ...props }: Omit<AnimateHeightProps, "height">) => {
   const [height, setHeight] = useState<Height>("auto");
   const contentDiv = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();

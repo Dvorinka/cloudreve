@@ -19,7 +19,7 @@ const Rename = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fmIndex = useContext(FmIndexContext);
+  const _fmIndex = useContext(FmIndexContext);
 
   const open = useAppSelector((state) => state.fileManager[0].renameFileModalOpen);
   const targets = useAppSelector((state) => state.fileManager[0].renameFileModalSelected);

@@ -86,7 +86,7 @@ const Data = ({ target }: DataProps) => {
             {target.extended_info?.entities
               ?.filter((e) => e.type != EntityType.version)
               .map((e) => (
-                <TableRow hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                <TableRow key={e.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <NoWrapTableCell component="th" scope="row">
                     {t(EntityTypeText[e.type as EntityType])}
                   </NoWrapTableCell>

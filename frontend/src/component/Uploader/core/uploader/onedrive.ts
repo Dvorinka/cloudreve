@@ -26,7 +26,7 @@ export default class OneDrive extends Chunk {
   private async sendRange(chunkInfo: ChunkInfo, start: number, end: number, chunkOffset: number) {
     const range = `bytes ${start}-${end}/${this.task.file.size}`;
     return oneDriveUploadChunk(
-      `${this.task.session?.upload_urls[0]!}`,
+      `${this.task.session!.upload_urls[0]}`,
       range,
       chunkInfo,
       (p) => {
@@ -39,7 +39,7 @@ export default class OneDrive extends Chunk {
   private async alignChunkOffset(chunkInfo: ChunkInfo) {
     this.logger.info(`Chunk [${chunkInfo.index}] overlapped, checking next expected range...`);
     const rangeStatus = await oneDriveUploadChunk(
-      `${this.task.session?.upload_urls[0]!}`,
+      `${this.task.session!.upload_urls[0]}`,
       "",
       chunkInfo,
       (_p) => {
@@ -66,7 +66,7 @@ export default class OneDrive extends Chunk {
     }
   }
 
-  protected async afterUpload(): Promise<any> {
+  protected async afterUpload(): Promise<unknown> {
     this.logger.info(`Finishing upload...`);
     this.transit(Status.finishing);
     return finishOneDriveUpload(this.task.session!.session_id, this.task.session!.callback_secret);

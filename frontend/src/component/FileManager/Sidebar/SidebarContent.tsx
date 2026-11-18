@@ -34,7 +34,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const SidebarContent = ({ target, inPhotoViewer, setTarget }: SidebarContentProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const targetDisplayOptions = useActionDisplayOpt(target ? [target] : []);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>

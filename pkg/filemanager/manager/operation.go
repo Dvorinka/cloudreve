@@ -65,7 +65,9 @@ func (m *manager) List(ctx context.Context, path *fs.URI, args *ListArgs) (fs.Fi
 	}
 
 	searchParams := path.SearchParameters()
+	contentQuery := ""
 	if searchParams != nil {
+		contentQuery = searchParams.Content
 		if dbfsSetting.UseSSEForSearch {
 			opts = append(opts, dbfs.WithStreamListResponseCallback(args.StreamResponseCallback))
 		}
@@ -80,6 +82,16 @@ func (m *manager) List(ctx context.Context, path *fs.URI, args *ListArgs) (fs.Fi
 			path = path.SetQuery(m.settings.SearchCategoryQuery(ctx, category))
 			searchParams = path.SearchParameters()
 		}
+	}
+
+	if contentQuery != "" {
+		// The category rewrite above drops the content parameter from the URI,
+		// so the resolved file IDs are passed as an option instead.
+		ids, err := m.searchContentFileIDs(ctx, contentQuery)
+		if err != nil {
+			return nil, nil, err
+		}
+		opts = append(opts, dbfs.WithSearchFileIDs(ids))
 	}
 
 	if dbfsSetting.UseCursorPagination || searchParams != nil {

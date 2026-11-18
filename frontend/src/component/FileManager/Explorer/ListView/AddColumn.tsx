@@ -103,7 +103,7 @@ const AddColumn = (props: AddColumnProps) => {
                 {t(getColumnTypeDefaults({ type: option }).title)}
               </SquareMenuItem>
             ) : (
-              <DenseDivider />
+              <DenseDivider key={index} />
             ),
           )}
         </CascadingSubmenu>

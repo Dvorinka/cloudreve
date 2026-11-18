@@ -98,14 +98,14 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     bucketName: "policy.bucketName",
     bucketType: "policy.bucketType",
     endpointName: "policy.policyEndpoint",
-    endpointDes: <Trans i18nKey="policy.s3EndpointDes" ns="dashboard" components={[<Code />]} />,
+    endpointDes: <Trans i18nKey="policy.s3EndpointDes" ns="dashboard" components={[<Code key="0" />]} />,
     akName: "Access Key",
     skName: "Secret Key",
     chunkSizeMin: 5 * 1024 * 1024, //5MB
     chunkSizeMax: 5 * 1024 * 1024 * 1024, //5GB
     chunkSizeDes: "policy.chunkSizeDesS3",
     regionCode: "policy.s3Region",
-    regionCodeDes: <Trans i18nKey={"policy.selectRegionDes"} ns="dashboard" components={[<Code />]} />,
+    regionCodeDes: <Trans i18nKey={"policy.selectRegionDes"} ns="dashboard" components={[<Code key="0" />]} />,
   },
   [PolicyType.ks3]: {
     name: "policy.ks3",
@@ -115,7 +115,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     bucketName: "policy.bucketName",
     bucketType: "policy.bucketType",
     endpointName: "policy.policyEndpoint",
-    endpointDes: <Trans i18nKey="policy.ks3selectRegionDes" ns="dashboard" components={[<Code />]} />,
+    endpointDes: <Trans i18nKey="policy.ks3selectRegionDes" ns="dashboard" components={[<Code key="0" />]} />,
     akName: "Access Key",
     skName: "Secret Key",
     corsExposedHeaders: ["ETag"],
@@ -123,7 +123,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     chunkSizeMax: 5 * 1024 * 1024 * 1024, //5GB
     chunkSizeDes: "policy.chunkSizeDesS3",
     regionCode: "policy.s3Region",
-    regionCodeDes: <Trans i18nKey={"policy.ks3selectRegionDes"} ns="dashboard" components={[<Code />]} />,
+    regionCodeDes: <Trans i18nKey={"policy.ks3selectRegionDes"} ns="dashboard" components={[<Code key="0" />]} />,
   },
   [PolicyType.cos]: {
     name: "policy.cos",
@@ -135,12 +135,12 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
       <Trans
         i18nKey="policy.createCOSBucketDes"
         ns="dashboard"
-        components={[<Link href="https://console.cloud.tencent.com/cos/bucket" target="_blank" />, <Code />]}
+        components={[<Link key="0" href="https://console.cloud.tencent.com/cos/bucket" target="_blank" />, <Code key="1" />]}
       />
     ),
     bucketType: "policy.accessType",
     endpointName: "policy.accessDomain",
-    endpointDes: <Trans i18nKey="policy.cosAccessDomainDes" ns="dashboard" components={[<Code />, <Code />]} />,
+    endpointDes: <Trans i18nKey="policy.cosAccessDomainDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />,
     chunkSizeMin: 1024 * 1024, //1MB
     chunkSizeMax: 5 * 1024 * 1024 * 1024, //5GB
     chunkSizeDes: "policy.chunkSizeDesQiniuCos",
@@ -158,9 +158,9 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
         i18nKey="policy.cosCredentialDes"
         ns="dashboard"
         components={[
-          <Link href="https://console.cloud.tencent.com/cam/capi" target="_blank" />,
-          <Code />,
-          <Link href="https://console.cloud.tencent.com/cam" target="_blank" />,
+          <Link key="0" href="https://console.cloud.tencent.com/cam/capi" target="_blank" />,
+          <Code key="1" />,
+          <Link key="2" href="https://console.cloud.tencent.com/cam" target="_blank" />,
         ]}
       />
     ),
@@ -184,7 +184,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
       <Trans
         i18nKey="policy.createOSSBucketDes"
         ns="dashboard"
-        components={[<Link href="https://oss.console.aliyun.com/bucket" target="_blank" />, <Code />, <Code />]}
+        components={[<Link key="0" href="https://oss.console.aliyun.com/bucket" target="_blank" />, <Code key="1" />, <Code key="2" />]}
       />
     ),
     bucketType: "policy.bucketType",
@@ -195,9 +195,9 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
         i18nKey="policy.ossAKDes"
         ns="dashboard"
         components={[
-          <Link href="https://ram.console.aliyun.com/profile/access-keys" target="_blank" />,
-          <Link href="https://ram.console.aliyun.com/ram/overview" target="_blank" />,
-          <Code />,
+          <Link key="0" href="https://ram.console.aliyun.com/profile/access-keys" target="_blank" />,
+          <Link key="1" href="https://ram.console.aliyun.com/ram/overview" target="_blank" />,
+          <Code key="2" />,
         ]}
       />
     ),
@@ -207,9 +207,9 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
         i18nKey={"policy.ossRegionDes"}
         ns="dashboard"
         components={[
-          <Code />,
-          <Link href="https://www.alibabacloud.com/help/oss/regions-and-endpoints" target="_blank" />,
-          <Code />,
+          <Code key="0" />,
+          <Link key="1" href="https://www.alibabacloud.com/help/oss/regions-and-endpoints" target="_blank" />,
+          <Code key="2" />,
         ]}
       />
     ),
@@ -225,16 +225,16 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
         i18nKey="policy.obsBucketDes"
         ns="dashboard"
         components={[
-          <Link href="https://console.huaweicloud.com/console/#/obs/create" target="_blank" />,
-          <Code />,
-          <Code />,
-          <Code />,
+          <Link key="0" href="https://console.huaweicloud.com/console/#/obs/create" target="_blank" />,
+          <Code key="1" />,
+          <Code key="2" />,
+          <Code key="3" />,
         ]}
       />
     ),
     bucketType: "policy.bucketPolicy",
     endpointName: "policy.policyEndpoint",
-    endpointDes: <Trans i18nKey="policy.obsEndpointDes" ns="dashboard" components={[<Code />, <Code />]} />,
+    endpointDes: <Trans i18nKey="policy.obsEndpointDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />,
     endpointNotEnforcePrefix: true,
     akName: "Access Key Id",
     skName: "Secret Access Key",
@@ -243,10 +243,10 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
         i18nKey="policy.obsCredentialDes"
         ns="dashboard"
         components={[
-          <Link href="https://console.huaweicloud.com/iam/#/mine/accessKey" target="_blank" />,
-          <Code />,
-          <Code />,
-          <Code />,
+          <Link key="0" href="https://console.huaweicloud.com/iam/#/mine/accessKey" target="_blank" />,
+          <Code key="1" />,
+          <Code key="2" />,
+          <Code key="3" />,
         ]}
       />
     ),
@@ -271,7 +271,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
       <Trans
         i18nKey="policy.enterQiniuBucket"
         ns="dashboard"
-        components={[<Link href="https://portal.qiniu.com/kodo/bucket" target="_blank" />]}
+        components={[<Link key="0" href="https://portal.qiniu.com/kodo/bucket" target="_blank" />]}
       />
     ),
     bucketType: "policy.aclType",
@@ -297,7 +297,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
       <Trans
         i18nKey="policy.createUpyunBucketDes"
         ns="dashboard"
-        components={[<Link href="https://console.upyun.com/console/service" target="_blank" />]}
+        components={[<Link key="0" href="https://console.upyun.com/console/service" target="_blank" />]}
       />
     ),
     bucketType: "policy.tokenStatus",
@@ -323,7 +323,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
       <Trans
         i18nKey="policy.createUpyunBucketDes"
         ns="dashboard"
-        components={[<Link href="https://console.upyun.com/console/service" target="_blank" />]}
+        components={[<Link key="0" href="https://console.upyun.com/console/service" target="_blank" />]}
       />
     ),
     bucketType: "policy.tokenStatus",
@@ -339,10 +339,10 @@ const StoragePolicySetting = () => {
   const [pageSize, setPageSize] = useQueryState(PageSizeQuery, {
     defaultValue: "11",
   });
-  const [orderBy, setOrderBy] = useQueryState(OrderByQuery, {
+  const [orderBy, _setOrderBy] = useQueryState(OrderByQuery, {
     defaultValue: "",
   });
-  const [orderDirection, setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
+  const [orderDirection, _setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
   const [policyType, setPolicyType] = useQueryState(PolicyTypeQuery, {
     defaultValue: " ",
   });
@@ -351,7 +351,7 @@ const StoragePolicySetting = () => {
   const [newPolicyType, setNewPolicyType] = useState<PolicyType | null>(null);
   const [createNewOpen, setCreateNewOpen] = useState(false);
 
-  const [open, setOpen] = useState(false);
+  const [_open, _setOpen] = useState(false);
   const pageInt = parseInt(page) ?? 1;
   const pageSizeInt = parseInt(pageSize) ?? 11;
 

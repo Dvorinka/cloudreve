@@ -53,7 +53,7 @@ const FileEncryptionSection = () => {
                     primary: { variant: "body2" },
                   }}
                 >
-                  {<Trans i18nKey="settings.masterEncryptionKeyVaultEnv" ns="dashboard" components={[<Code />]} />}
+                  {<Trans i18nKey="settings.masterEncryptionKeyVaultEnv" ns="dashboard" components={[<Code key="0" />]} />}
                 </ListItemText>
               </SquareMenuItem>
             </DenseSelect>
@@ -62,7 +62,7 @@ const FileEncryptionSection = () => {
                 i18nKey="settings.masterEncryptionKeyVaultDes"
                 ns="dashboard"
                 components={[
-                  <Link
+                  <Link key="0"
                     href="https://docs.cloudreve.org/usage/file-encryption#rotate-master-encryption-key"
                     target="_blank"
                   />,

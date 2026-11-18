@@ -206,5 +206,6 @@ const ListThumbnail = memo(({ file, isSelected, noThumb, showLock }: ListThumbna
     </ThumbSquare>
   );
 });
+ListThumbnail.displayName = "ListThumbnail";
 
 export default ListThumbnail;

@@ -7,6 +7,12 @@ import { AppDispatch } from "../../../redux/store.ts";
 import { DrawIOViewerState } from "../../../redux/globalStateSlice.ts";
 import { getFileInfo } from "../../../api/api.ts";
 
+interface DrawIOMessage {
+  action: string;
+  msgMarkers?: unknown;
+  [key: string]: unknown;
+}
+
 const defaultHost = "https://embed.diagrams.net";
 
 export const generateIframeSrc = (
@@ -42,7 +48,7 @@ export const generateIframeSrc = (
 
 export const handleRemoteInvoke = async (
   w: Window,
-  msg: any,
+  msg: DrawIOMessage,
   dispatch: AppDispatch,
   viewerState: DrawIOViewerState,
   writeable?: boolean,
@@ -54,15 +60,15 @@ export const handleRemoteInvoke = async (
       sendResponse(w, msg, [
         currentUser
           ? {
-              displayName: currentUser?.user.nickname,
-              uid: currentUser?.user.id,
+              displayName: currentUser?.nickname,
+              uid: currentUser?.id,
             }
           : null,
       ]);
       break;
     case "saveFile":
       try {
-        const res = await dispatch(saveDrawIO(msg.functionArgs[2], viewerState.file, false));
+        const res = await dispatch(saveDrawIO((msg.functionArgs as string[])[2], viewerState.file, false));
         if (res) {
           sendResponse(w, msg, [
             {
@@ -99,12 +105,12 @@ export const handleRemoteInvoke = async (
   }
 };
 
-const sendResponse = (w: Window, msg: any, respose: any, error?: string) => {
-  var respMsg: {
+const sendResponse = (w: Window, msg: DrawIOMessage, respose: unknown, error?: string) => {
+  const respMsg: {
     action: string;
-    msgMarkers: any;
+    msgMarkers: unknown;
     error?: { errResp?: string };
-    resp?: any;
+    resp?: unknown;
   } = { action: "remoteInvokeResponse", msgMarkers: msg.msgMarkers };
   if (error) {
     respMsg.error = { errResp: error };

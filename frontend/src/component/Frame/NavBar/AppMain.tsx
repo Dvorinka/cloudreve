@@ -29,8 +29,8 @@ export const PageLoading = () => {
 const AppMain = () => {
   const open = useAppSelector((state) => state.globalState.drawerOpen);
   const drawerWidth = useAppSelector((state) => state.globalState.drawerWidth);
-  const [innerHeight, setInnerHeight] = useState(window.innerHeight);
-  let navigation = useNavigation();
+  const [_innerHeight, setInnerHeight] = useState(window.innerHeight);
+  const navigation = useNavigation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const pageVariant = useContext(PageVariantContext);

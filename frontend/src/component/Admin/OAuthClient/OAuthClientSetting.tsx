@@ -27,10 +27,10 @@ const OAuthClientSetting = () => {
   const [pageSize, setPageSize] = useQueryState(PageSizeQuery, {
     defaultValue: "11",
   });
-  const [orderBy, setOrderBy] = useQueryState(OrderByQuery, {
+  const [orderBy, _setOrderBy] = useQueryState(OrderByQuery, {
     defaultValue: "",
   });
-  const [orderDirection, setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
+  const [orderDirection, _setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
   const [count, setCount] = useState(0);
 
   const pageInt = parseInt(page) ?? 1;

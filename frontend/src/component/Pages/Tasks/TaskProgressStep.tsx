@@ -10,9 +10,9 @@ import CheckCircleFilled from "../../Icons/CheckCircleFilled.tsx";
 import DismissCircleFilled from "../../Icons/DismissCircleFilled.tsx";
 import StepProgressPopover from "./StepProgressPopover.tsx";
 
-interface ProgressStepIconProps extends StepIconProps {}
+type ProgressStepIconProps = StepIconProps
 
-const ProgressStepIcon = (status: string) => (props: ProgressStepIconProps) => {
+const ProgressStepIcon = (status: string) => function ProgressStepIconInner(props: ProgressStepIconProps) {
   const { active, completed, icon, ...rest } = props;
 
   let newIcon = icon;

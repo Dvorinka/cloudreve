@@ -88,7 +88,7 @@ const CosWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.createCOSBucketDes"
               ns="dashboard"
-              components={[<Link href="https://console.cloud.tencent.com/cos/bucket" target="_blank" />, <Code />]}
+              components={[<Link key="0" href="https://console.cloud.tencent.com/cos/bucket" target="_blank" />, <Code key="1" />]}
             />
           </NoMarginHelperText>
         </SettingForm>
@@ -112,7 +112,7 @@ const CosWizard = ({ onSubmit }: AddWizardProps) => {
             variant={"outlined"}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.cosAccessDomainDes" ns="dashboard" components={[<Code />, <Code />]} />
+            <Trans i18nKey="policy.cosAccessDomainDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
           </NoMarginHelperText>
         </SettingForm>
         <SettingForm title={t("policy.accessCredential")} lgWidth={12}>
@@ -137,9 +137,9 @@ const CosWizard = ({ onSubmit }: AddWizardProps) => {
                 i18nKey="policy.cosCredentialDes"
                 ns="dashboard"
                 components={[
-                  <Link href="https://console.cloud.tencent.com/cam/capi" target="_blank" />,
-                  <Code />,
-                  <Link href="https://console.cloud.tencent.com/cam" target="_blank" />,
+                  <Link key="0" href="https://console.cloud.tencent.com/cam/capi" target="_blank" />,
+                  <Code key="1" />,
+                  <Link key="2" href="https://console.cloud.tencent.com/cam" target="_blank" />,
                 ]}
               />
             </NoMarginHelperText>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { setDrawerWidth } from "../../../redux/globalStateSlice.ts";
 import SessionManager, { UserSettings } from "../../../session";
 
-export interface SplitHandleProps {}
+export type SplitHandleProps = Record<string, never>
 
 const minDrawerWidth = 236;
 

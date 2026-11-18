@@ -12,7 +12,7 @@ import { AddWizardProps } from "../../AddWizardDialog";
 import BucketACLInput from "../../EditStoragePolicy/BucketACLInput";
 const QiniuWizard = ({ onSubmit }: AddWizardProps) => {
   const { t } = useTranslation("dashboard");
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
   const formRef = useRef<HTMLFormElement>(null);
   const [policy, setPolicy] = useState<StoragePolicy>({
     id: 0,
@@ -91,7 +91,7 @@ const QiniuWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.enterQiniuBucket"
               ns="dashboard"
-              components={[<Link href="https://portal.qiniu.com/kodo/bucket" target="_blank" />]}
+              components={[<Link key="0" href="https://portal.qiniu.com/kodo/bucket" target="_blank" />]}
             />
           </NoMarginHelperText>
         </SettingForm>

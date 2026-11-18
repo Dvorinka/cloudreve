@@ -10,7 +10,7 @@ export interface GeneralImagePreviewProps {
 }
 
 const GeneralImagePreview = ({ src, debounce = 0 }: GeneralImagePreviewProps) => {
-  const { t } = useTranslation("dashboard");
+  const { t: _t } = useTranslation("dashboard");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 

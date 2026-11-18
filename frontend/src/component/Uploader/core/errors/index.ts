@@ -1,3 +1,4 @@
+import { AxiosError, AxiosResponse } from "axios";
 import { StoragePolicy } from "../../../../api/explorer.ts";
 import { AppError, Response } from "../../../../api/request.ts";
 import i18next from "../../../../i18n";
@@ -124,7 +125,7 @@ export class APIError extends UploaderError {
   constructor(
     name: UploaderErrorName,
     message: string,
-    protected response: Response<any>,
+    protected response: Response<unknown>,
   ) {
     super(name, message);
     this.appError = new AppError(response);
@@ -145,7 +146,7 @@ export class APIError extends UploaderError {
 
 // 无法创建上传会话
 export class CreateUploadSessionError extends APIError {
-  constructor(response: Response<any>) {
+  constructor(response: Response<unknown>) {
     super(UploaderErrorName.FailedCreateUploadSession, "", response);
   }
 
@@ -157,7 +158,7 @@ export class CreateUploadSessionError extends APIError {
 
 // 无法删除上传会话
 export class DeleteUploadSessionError extends APIError {
-  constructor(response: Response<any>) {
+  constructor(response: Response<unknown>) {
     super(UploaderErrorName.FailedDeleteUploadSession, "", response);
   }
 
@@ -169,9 +170,9 @@ export class DeleteUploadSessionError extends APIError {
 
 // HTTP 请求出错
 export class HTTPError extends UploaderError {
-  public response?: any;
+  public response?: AxiosResponse<unknown>;
   constructor(
-    public axiosErr: any,
+    public axiosErr: AxiosError,
     protected url: string,
   ) {
     super(UploaderErrorName.HTTPRequestFailed, axiosErr.message);
@@ -189,7 +190,7 @@ export class HTTPError extends UploaderError {
 // 本地分块上传失败
 export class LocalChunkUploadError extends APIError {
   constructor(
-    response: Response<any>,
+    response: Response<unknown>,
     protected chunkIndex: number,
   ) {
     super(UploaderErrorName.LocalChunkUploadFailed, "", response);
@@ -206,7 +207,7 @@ export class LocalChunkUploadError extends APIError {
 // 从机分块上传失败
 export class SlaveChunkUploadError extends APIError {
   constructor(
-    response: Response<any>,
+    response: Response<unknown>,
     protected chunkIndex: number,
   ) {
     super(UploaderErrorName.SlaveChunkUploadFailed, "", response);
@@ -271,7 +272,7 @@ export class OneDriveEmptyFileSelected extends UploaderError {
 
 // OneDrive 无法完成文件上传
 export class OneDriveFinishUploadError extends APIError {
-  constructor(response: Response<any>) {
+  constructor(response: Response<unknown>) {
     super(UploaderErrorName.FailedFinishOneDriveUpload, "", response);
   }
 
@@ -368,7 +369,7 @@ export class COSUploadError extends UploaderError {
 
 // COS 无法完成上传回调
 export class COSUploadCallbackError extends APIError {
-  constructor(response: Response<any>) {
+  constructor(response: Response<unknown>) {
     super(UploaderErrorName.COSUploadCallbackFailed, "", response);
   }
 
@@ -393,7 +394,7 @@ export class UpyunUploadError extends UploaderError {
 
 // S3 无法完成上传回调
 export class S3LikeUploadCallbackError extends APIError {
-  constructor(response: Response<any>) {
+  constructor(response: Response<unknown>) {
     super(UploaderErrorName.S3LikeUploadCallbackFailed, "", response);
   }
 

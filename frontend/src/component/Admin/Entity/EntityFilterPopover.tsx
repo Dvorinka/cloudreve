@@ -147,7 +147,7 @@ const EntityFilterPopover = ({
             <DenseSelect
               displayEmpty
               value={localRefCountOp}
-              onChange={(e) => setLocalRefCountOp(e.target.value)}
+              onChange={(e) => setLocalRefCountOp(e.target.value as string)}
               sx={{ minWidth: 140 }}
             >
               <SquareMenuItem value="">

@@ -13,6 +13,10 @@ export const Filesystem = {
   trash: "trash",
 };
 
+export const defaultPath = "cloudreve://" + Filesystem.my;
+export const defaultTrashPath = "cloudreve://" + Filesystem.trash;
+export const defaultSharedWithMePath = "cloudreve://" + Filesystem.shared_with_me;
+
 export const UriQuery = {
   name: "name",
   name_op_or: "name_op_or",
@@ -27,6 +31,7 @@ export const UriQuery = {
   created_lte: "created_lte",
   updated_gte: "updated_gte",
   updated_lte: "updated_lte",
+  content: "content",
 };
 
 export const UriSearchCategory = {
@@ -54,6 +59,7 @@ export interface SearchParam {
   created_at_lte?: number;
   updated_at_gte?: number;
   updated_at_lte?: number;
+  content?: string;
 }
 
 export default class CrUri {
@@ -142,6 +148,9 @@ export default class CrUri {
     if (param.updated_at_lte) {
       this.addQuery(UriQuery.updated_lte, param.updated_at_lte.toString());
     }
+    if (param.content) {
+      this.addQuery(UriQuery.content, param.content);
+    }
     return this;
   }
 
@@ -189,6 +198,9 @@ export default class CrUri {
           break;
         case UriQuery.updated_lte:
           res.updated_at_lte = parseInt(v);
+          break;
+        case UriQuery.content:
+          res.content = v;
           break;
         default:
           if (k.startsWith(UriQuery.metadata_prefix)) {
@@ -289,7 +301,7 @@ export default class CrUri {
   // pure_uri returns the uri without searching query string, with exceptions.
   public pure_uri(...exceptions: string[]): CrUri {
     const newUri = new CrUri(this.toString());
-    let keysForDel: string[] = [];
+    const keysForDel: string[] = [];
     newUri.url.searchParams.forEach((_v, k) => {
       if (exceptions && exceptions.includes(k)) {
         return;

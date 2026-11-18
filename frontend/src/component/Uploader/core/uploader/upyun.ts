@@ -9,10 +9,10 @@ export default class Upyun extends Base {
       this.task.blob = new Blob([await this.task.blob.bytes()]);
     }
     await upyunFormUploadChunk(
-      this.task.session?.upload_urls[0]!,
+      this.task.session!.upload_urls[0],
       this.task.blob,
-      this.task.session?.upload_policy!,
-      this.task.session?.credential!,
+      this.task.session!.upload_policy!,
+      this.task.session!.credential,
       (p) => {
         this.subscriber.onProgress({
           total: this.getProgressInfoItem(p.loaded, p.total ?? 1),

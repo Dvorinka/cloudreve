@@ -50,7 +50,7 @@ export interface PropsContentProps {
   fullSize?: boolean;
 }
 
-const PropsCard = styled(StyledButtonBase)(({ theme }) => ({
+const PropsCard = styled(StyledButtonBase)(() => ({
   flexDirection: "column",
   alignItems: "flex-start",
   gap: 9,

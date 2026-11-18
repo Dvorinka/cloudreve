@@ -8,8 +8,8 @@ export default class Boolset {
 
     try {
       const binString = atob(data);
-      var bytes = new Uint8Array(binString.length);
-      for (var i = 0; i < binString.length; i++) {
+      const bytes = new Uint8Array(binString.length);
+      for (let i = 0; i < binString.length; i++) {
         bytes[i] = binString.charCodeAt(i);
       }
       this.data = bytes;

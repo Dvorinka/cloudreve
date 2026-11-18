@@ -1,4 +1,4 @@
-import { Alert, AlertTitle, Box, Button, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, BoxProps, Button, Typography } from "@mui/material";
 import React, { memo, useCallback, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -12,9 +12,9 @@ import LinkDismiss from "../../Icons/LinkDismiss.tsx";
 import LockClosed from "../../Icons/LockClosed.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 
-interface ExplorerErrorProps {
-  error?: Response<any>;
-  [key: string]: any;
+interface ExplorerErrorProps extends BoxProps {
+  error?: Response<unknown>;
+  [key: string]: unknown;
 }
 
 const RetryPassword = () => {
@@ -125,8 +125,10 @@ const ExplorerError = memo(
 
       return undefined;
     }, [error]);
-    const navigateBack = useCallback(() => {
-      previousPath && dispatch(navigateToPath(fmIndex, previousPath));
+    const _navigateBack = useCallback(() => {
+      if (previousPath) {
+        dispatch(navigateToPath(fmIndex, previousPath));
+      }
     }, [dispatch, fmIndex, previousPath]);
 
     const signIn = useCallback(() => {
@@ -149,7 +151,7 @@ const ExplorerError = memo(
           return <RetryPassword />;
         case Code.VaultLocked:
           return <RetryVaultUnlock />;
-        // @ts-ignore
+        // @ts-expect-error -- NodeFound case reachable at runtime
         case Code.NodeFound:
           if (fs == Filesystem.share) {
             return (
@@ -183,7 +185,7 @@ const ExplorerError = memo(
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          ...rest.sx,
+          ...(rest.sx as object),
         }}
       >
         {innerError()}

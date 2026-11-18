@@ -119,7 +119,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
       const registration = await dispatch(getOauthAppRegistration(oauthConsent.clientId));
       dispatch(setOAuthApp(registration));
       return registration;
-    } catch (e) {
+    } catch {
       setOauthError(t("oauth.appNotFound"));
       dispatch(setOAuthAppLoading(false));
       return null;
@@ -236,7 +236,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
           dispatch(refreshUserSession(loginRes, query.get("redirect")));
         }
       } catch (e) {
-        if (e instanceof AppError && e.code === Code.Continue) {
+        if (e instanceof AppError && e.code === Code.Continue && typeof e.response.data === "string") {
           twoFaSession.current = e.response.data;
           // User needs 2FA
           setPhase(EmailLoginPhase.Collect2FA);
@@ -260,7 +260,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
         dispatch(refreshUserSession(loginRes, query.get("redirect")));
       }
     } catch (e) {
-      if (e instanceof AppError && e.code === Code.Continue) {
+      if (e instanceof AppError && e.code === Code.Continue && typeof e.response.data === "string") {
         twoFaSession.current = e.response.data;
         setPhase(EmailLoginPhase.Collect2FA);
       }
@@ -298,7 +298,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
           variant: "success",
           action: DefaultCloseAction,
         });
-      } catch (e) {
+      } catch {
         setCaptchaGen((g) => g + 1);
       } finally {
         setLoading(false);
@@ -389,7 +389,7 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
   }, []);
 
   const phaseConfig = useMemo((): phaseSetting => {
-    var phaseSetting: phaseSetting = {
+    let phaseSetting: phaseSetting = {
       title: t("login.siginToYourAccount"),
       nextButtonText: t("login.continue"),
       showBackButton: false,
@@ -473,7 +473,9 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
                 if (phase === EmailLoginPhase.Consent) {
                   sendConsent(true);
                 } else {
-                  phaseSetting.previous != undefined && setPhase(phaseSetting.previous);
+                  if (phaseSetting.previous != undefined) {
+                    setPhase(phaseSetting.previous);
+                  }
                 }
               }}
             >

@@ -1,8 +1,8 @@
-import { Box, Skeleton, useTheme } from "@mui/material";
+import { Box, BoxProps, Skeleton, useTheme } from "@mui/material";
 import React, { useEffect, useRef } from "react";
 import { useAppSelector } from "../../redux/hooks.ts";
 
-const Logo = (props: any) => {
+const Logo = (props: BoxProps) => {
   const theme = useTheme();
   const imageRef = useRef<HTMLImageElement>();
   const [loaded, setLoaded] = React.useState(false);
@@ -21,7 +21,7 @@ const Logo = (props: any) => {
 
   return (
     <>
-      {(!logo || !loaded) && <Skeleton animation="wave" {...props} />}
+      {(!logo || !loaded) && <Skeleton animation="wave" variant="rectangular" sx={props.sx} />}
       {logo && (
         <Box
           ref={imageRef}
@@ -37,7 +37,7 @@ const Logo = (props: any) => {
             WebkitUserDrag: "none",
             MozUserDrag: "none",
             msUserDrag: "none",
-            ...props.sx,
+            ...(props.sx as object),
           }}
         />
       )}

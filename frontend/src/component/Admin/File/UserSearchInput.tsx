@@ -75,7 +75,7 @@ const UserSearchInput = (props: UserSearchInputProps) => {
       options={options}
       loading={loading}
       blurOnSelect
-      onChange={(_event: any, newValue: User | null) => {
+      onChange={(_event: unknown, newValue: User | null) => {
         setValue(newValue);
         if (newValue) {
           props.onUserSelected(newValue);

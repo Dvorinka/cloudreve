@@ -15,10 +15,10 @@ import BucketACLInput from "../../EditStoragePolicy/BucketACLInput";
 
 const UpyunWizard = ({ onSubmit }: AddWizardProps) => {
   const { t } = useTranslation("dashboard");
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const [corsAdded, setCorsAdded] = useState(false);
+  const _dispatch = useAppDispatch();
+  const [_loading, _setLoading] = useState(false);
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
+  const [_corsAdded, _setCorsAdded] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [policy, setPolicy] = useState<StoragePolicy>({
     id: 0,
@@ -69,7 +69,7 @@ const UpyunWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.createUpyunBucketDes"
               ns="dashboard"
-              components={[<Link href="https://console.upyun.com/console/service" target="_blank" />]}
+              components={[<Link key="0" href="https://console.upyun.com/console/service" target="_blank" />]}
             />
           </NoMarginHelperText>
         </SettingForm>
@@ -81,7 +81,7 @@ const UpyunWizard = ({ onSubmit }: AddWizardProps) => {
               onChange={(value) => setPolicy({ ...policy, is_private: value })}
             />
             <NoMarginHelperText>
-              <Trans i18nKey="policy.upyunTokenDes" ns="dashboard" components={[<Code />, <Code />]} />
+              <Trans i18nKey="policy.upyunTokenDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />]} />
             </NoMarginHelperText>
           </FormControl>
         </SettingForm>

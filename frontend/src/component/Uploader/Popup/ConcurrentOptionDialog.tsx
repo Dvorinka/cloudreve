@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { DialogContent, FilledInput, InputLabel } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
 import { useTranslation } from "react-i18next";
@@ -13,7 +13,7 @@ export interface ConcurrentOptionDialogProps {
 
 export default function ConcurrentOptionDialog({ open, onClose, onSave }: ConcurrentOptionDialogProps) {
   const { t } = useTranslation();
-  const [count, setCount] = useState(SessionManager.getWithFallback(UserSettings.ConcurrentLimit));
+  const [count, setCount] = useState(String(SessionManager.getWithFallback(UserSettings.ConcurrentLimit)));
 
   const onAccept = useCallback(() => {
     onSave(count);

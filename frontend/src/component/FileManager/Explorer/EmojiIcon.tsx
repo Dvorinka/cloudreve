@@ -8,13 +8,13 @@ const EmojiIcon = ({ sx, fontSize, emoji, ...rest }: EmojiIconProps) => {
   return (
     <Typography
       sx={{
-        color: (theme) => theme.palette.text.primary,
+        color: "text.primary",
         minWidth: "24px",
         pl: "4px",
         ...sx,
       }}
       fontSize={fontSize}
-      {...rest}
+      {...(rest as object)}
     >
       {emoji}
     </Typography>

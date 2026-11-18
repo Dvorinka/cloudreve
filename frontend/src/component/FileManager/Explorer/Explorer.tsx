@@ -40,11 +40,12 @@ export interface FileBlockProps {
   file: FmFile;
   isDragging?: boolean;
   isDropOver?: boolean;
-  dragRef?: RefCallback<any>;
+  dragRef?: RefCallback<HTMLElement>;
   index?: number;
   search?: SearchParam;
   columns?: ListViewColumn[];
   boxHeight?: number;
+  showLock?: boolean;
 }
 
 const Explorer = () => {

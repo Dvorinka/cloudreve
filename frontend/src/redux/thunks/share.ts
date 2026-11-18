@@ -85,7 +85,7 @@ export function createOrUpdateShareLink(
 
 interface shareInfoQueueItem {
   resolve: (value: Share | PromiseLike<Share>) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 const shareInfoLoadQueue: {
@@ -228,7 +228,7 @@ export function detectReadMe(index: number, isTablet: boolean): AppThunk<Promise
             dispatch(tryOpenReadMe(file, isTablet));
             return;
           }
-        } catch (e) {}
+        } catch {}
       }
     }
     dispatch(closeShareReadme());

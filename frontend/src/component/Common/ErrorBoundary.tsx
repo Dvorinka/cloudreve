@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useRouteError } from "react-router-dom";
 
 function ErrorBoundary() {
-  let error = useRouteError();
+  const error = useRouteError() as Error | undefined;
   const { t } = useTranslation();
   const loader = document.getElementById("app-loader");
   if (loader) loader.style.display = "none";

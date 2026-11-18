@@ -66,7 +66,7 @@ export interface EncodingSelectorProps {
   SelectProps?: Partial<SelectProps>;
 }
 
-export const StyledInputAdornment = styled(InputAdornment)(({ theme }) => ({
+export const StyledInputAdornment = styled(InputAdornment)(() => ({
   "&.MuiInputAdornment-positionStart": {
     marginTop: "0!important",
   },

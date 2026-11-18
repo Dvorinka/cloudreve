@@ -41,7 +41,7 @@ const InfoTextField = ({ label, value }: { label: string; value: string }) => {
 
 const ConnectionInfoDialog = ({ onClose, account, ...rest }: ConnectionInfoDialogProps) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
 
   return (
     <DraggableDialog

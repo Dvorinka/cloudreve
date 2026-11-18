@@ -14,12 +14,12 @@ const GalleryView = React.forwardRef(
     {
       ...rest
     }: {
-      [key: string]: any;
+      [key: string]: unknown;
     },
     ref,
   ) => {
-    const { t } = useTranslation("application");
-    const dispatch = useAppDispatch();
+    const { t: _t } = useTranslation("application");
+    const _dispatch = useAppDispatch();
     const containerRef = useRef<HTMLElement>();
     const fmIndex = useContext(FmIndexContext);
     const [boxHeight, setBoxHeight] = useState(0);
@@ -31,7 +31,7 @@ const GalleryView = React.forwardRef(
     const galleryWidth = useAppSelector((state) => state.fileManager[fmIndex].galleryWidth);
 
     const mergedRef = useCallback(
-      (val: any) => {
+      (val: unknown) => {
         mergeRefs(containerRef, ref)(val);
       },
       [containerRef, ref],
@@ -112,5 +112,6 @@ const GalleryView = React.forwardRef(
     );
   },
 );
+GalleryView.displayName = "GalleryView";
 
 export default GalleryView;

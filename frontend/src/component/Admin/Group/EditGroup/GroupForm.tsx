@@ -9,8 +9,8 @@ import ShareSection from "./ShareSection";
 import UploadDownloadSection from "./UploadDownloadSection";
 
 const GroupForm = () => {
-  const { t } = useTranslation("dashboard");
-  const { formRef, values } = useContext(GroupSettingContext);
+  const { t: _t } = useTranslation("dashboard");
+  const { formRef, values: _values } = useContext(GroupSettingContext);
   return (
     <Box component={"form"} ref={formRef} onSubmit={(e) => e.preventDefault()}>
       <Stack spacing={5}>

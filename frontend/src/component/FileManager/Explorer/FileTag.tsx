@@ -23,19 +23,19 @@ export interface FileTagProps extends ChipProps {
   disableClick?: boolean;
 }
 
-const FileTag = ({ disableClick, tagColor, sx, label, defaultStyle, spacing, openInNewTab, ...rest }: FileTagProps) => {
+const FileTag = ({ disableClick, tagColor, sx: _sx, label, defaultStyle, spacing, openInNewTab, ...rest }: FileTagProps) => {
   const theme = useTheme();
   const fmIndex = useContext(FmIndexContext);
   const dispatch = useAppDispatch();
   const root = useAppSelector((state) => state.fileManager[fmIndex].path_root);
   const stopPropagation = useCallback(
-    (e: any) => {
+    (e: React.SyntheticEvent) => {
       if (!disableClick) e.stopPropagation();
     },
     [disableClick],
   );
   const onClick = useCallback(
-    (e: any) => {
+    (e: React.SyntheticEvent) => {
       if (disableClick) {
         return;
       }

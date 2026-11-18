@@ -112,7 +112,7 @@ const taskIconsMap: {
 };
 
 const TaskCard = ({ loading, showProgress, onLoad, onRetried, task }: TaskCardProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const dispatch = useAppDispatch();

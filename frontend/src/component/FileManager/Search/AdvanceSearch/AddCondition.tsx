@@ -9,6 +9,7 @@ import { useAppSelector } from "../../../../redux/hooks.ts";
 import { SecondaryButton } from "../../../Common/StyledComponents.tsx";
 import Add from "../../../Icons/Add.tsx";
 import CalendarClock from "../../../Icons/CalendarClock.tsx";
+import DocumentText from "../../../Icons/DocumentText.tsx";
 import FolderOutlined from "../../../Icons/FolderOutlined.tsx";
 import HardDriveOutlined from "../../../Icons/HardDriveOutlined.tsx";
 import Info from "../../../Icons/Info.tsx";
@@ -202,11 +203,23 @@ const mediaMetaOptions: (ConditionOption | null)[] = [
 const AddCondition = (props: AddConditionProps) => {
   const { t } = useTranslation();
   const customPropsOptions = useAppSelector((state) => state.siteConfig.explorer?.config?.custom_props);
+  const fullTextSearchEnabled = useAppSelector((state) => state.siteConfig.explorer?.config?.full_text_search);
   const conditionPopupState = usePopupState({
     variant: "popover",
     popupId: "conditions",
   });
   const { onClose, ...menuProps } = bindMenu(conditionPopupState);
+  const menuOptions = fullTextSearchEnabled
+    ? [
+        options[0],
+        {
+          name: "application:navbar.fullTextSearch",
+          icon: <DocumentText fontSize={"small"} />,
+          condition: { type: ConditionType.content },
+        },
+        ...options.slice(1),
+      ]
+    : options;
   const onConditionAdd = (condition: Condition) => {
     props.onConditionAdd({
       ...condition,
@@ -231,7 +244,7 @@ const AddCondition = (props: AddConditionProps) => {
         }}
         {...menuProps}
       >
-        {options.map((option, index) => (
+        {menuOptions.map((option, index) => (
           <SquareMenuItem dense key={index} onClick={() => onConditionAdd(option.condition)}>
             <ListItemIcon>{option.icon}</ListItemIcon>
             {t(option.name)}
@@ -254,7 +267,7 @@ const AddCondition = (props: AddConditionProps) => {
                 </ListItemText>
               </SquareMenuItem>
             ) : (
-              <DenseDivider />
+              <DenseDivider key={index} />
             ),
           )}
         </CascadingSubmenu>

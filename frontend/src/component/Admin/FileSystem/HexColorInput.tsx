@@ -3,7 +3,6 @@ import { InputAdornment } from "@mui/material";
 import CircleColorSelector, {
   customizeMagicColor,
 } from "../../FileManager/FileInfo/ColorCircle/CircleColorSelector.tsx";
-import * as React from "react";
 
 export interface HexColorInputProps {
   currentColor: string;

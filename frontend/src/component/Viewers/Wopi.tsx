@@ -40,11 +40,11 @@ const Wopi = () => {
 
   const displayOpt = useActionDisplayOpt(viewerState?.file ? [viewerState?.file] : []);
   const canEdit = canUpdate(displayOpt);
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const formRef = useRef<HTMLFormElement>(null);
+  const _formRef = useRef<HTMLFormElement>(null);
   const submitedRef = useRef<boolean>(false);
 
   const replacedSrc = useMemo(() => {
@@ -62,7 +62,7 @@ const Wopi = () => {
     let msg;
     try {
       msg = JSON.parse(e.data);
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -93,8 +93,8 @@ const Wopi = () => {
     dispatch(closeWopiViewer());
   }, [dispatch]);
 
-  const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+  const _openMore = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],

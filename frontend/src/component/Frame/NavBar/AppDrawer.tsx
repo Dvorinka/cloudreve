@@ -11,7 +11,7 @@ import StorageSummary from "./StorageSummary.tsx";
 
 const DrawerContent = () => {
   const { sidebar_bottom } = useAppSelector((state) => state.siteConfig.basic?.config?.custom_html ?? {});
-  const scrollRef = useRef<any>();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const user = SessionManager.currentLoginOrNull();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -51,9 +51,9 @@ const DrawerContent = () => {
 };
 
 export const DrawerPopover = (props: PopoverProps) => {
-  const dispatch = useAppDispatch();
-  const open = useAppSelector((state) => state.globalState.drawerOpen);
-  const drawerWidth = useAppSelector((state) => state.globalState.drawerWidth);
+  const _dispatch = useAppDispatch();
+  const _open = useAppSelector((state) => state.globalState.drawerOpen);
+  const _drawerWidth = useAppSelector((state) => state.globalState.drawerWidth);
   return (
     <Popover {...props}>
       <Box sx={{ width: "70vw" }}>

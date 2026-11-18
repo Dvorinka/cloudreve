@@ -26,12 +26,12 @@ const NodeSetting = () => {
   const [pageSize, setPageSize] = useQueryState(PageSizeQuery, {
     defaultValue: "11",
   });
-  const [orderBy, setOrderBy] = useQueryState(OrderByQuery, {
+  const [orderBy, _setOrderBy] = useQueryState(OrderByQuery, {
     defaultValue: "",
   });
-  const [orderDirection, setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
+  const [orderDirection, _setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
   const [count, setCount] = useState(0);
-  const [selectProviderOpen, setSelectProviderOpen] = useState(false);
+  const [_selectProviderOpen, _setSelectProviderOpen] = useState(false);
   const [createNewOpen, setCreateNewOpen] = useState(false);
 
   const pageInt = parseInt(page) ?? 1;

@@ -45,7 +45,7 @@ const PasteTarget = ({ onFilePasted, onClose }: PasteTargetProps) => {
     };
   }, []);
 
-  const disableDefault = useCallback((e: React.MouseEvent | React.KeyboardEvent | React.ClipboardEvent) => {
+  const _disableDefault = useCallback((e: React.MouseEvent | React.KeyboardEvent | React.ClipboardEvent) => {
     e.preventDefault();
     return false;
   }, []);

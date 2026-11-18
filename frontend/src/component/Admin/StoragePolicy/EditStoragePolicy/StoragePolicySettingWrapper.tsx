@@ -37,7 +37,7 @@ export const StoragePolicySettingContext = createContext<StoragePolicySettingCon
 
 const StoragePolicySettingWrapper = ({ policyID, children, onPolicyChange }: StoragePolicySettingWrapperProps) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation("dashboard");
+  const { t: _t } = useTranslation("dashboard");
   const [values, setValues] = useState<StoragePolicy>({
     ...defaultPolicy,
   });

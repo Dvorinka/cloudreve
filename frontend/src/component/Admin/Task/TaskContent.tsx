@@ -78,7 +78,17 @@ export const TaskContent = memo(({ task, openEntity, openFile }: TaskContentProp
   );
 
   const content = useMemo(() => {
-    var privateState: any = {};
+    interface TaskPrivateState {
+      session?: { Props?: { UploadSessionID?: string } };
+      entity_id?: number;
+      entity_ids?: number[];
+      file_id?: number;
+      file_ids?: number[];
+      policy_id?: number;
+      orphan_count?: number;
+      [key: string]: unknown;
+    }
+    let privateState: TaskPrivateState = {};
     try {
       privateState = JSON.parse(task.private_state ?? "{}");
     } catch (error) {
@@ -145,3 +155,4 @@ export const TaskContent = memo(({ task, openEntity, openFile }: TaskContentProp
 
   return <Typography variant="body2">{content}</Typography>;
 });
+TaskContent.displayName = "TaskContent";

@@ -7,6 +7,7 @@ import {
   Divider,
   Grid,
   Link,
+  PaletteOptions,
   Paper,
   Stack,
   TextField,
@@ -26,6 +27,22 @@ import Setting from "../../../Icons/Setting";
 
 const MonacoEditor = lazy(() => import("../../../Viewers/CodeViewer/MonacoEditor"));
 
+type ParsedTheme = {
+  light?: { palette?: PaletteOptions };
+  dark?: { palette?: PaletteOptions };
+};
+
+function readTheme(raw: string): ParsedTheme | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    // SAFETY: the editor stores an MUI theme JSON; createTheme rejects a bad palette.
+    return parsed as ParsedTheme;
+  } catch {
+    return null;
+  }
+}
+
 export interface ThemeOptionEditDialogProps {
   open: boolean;
   onClose: () => void;
@@ -39,22 +56,15 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [editedConfig, setEditedConfig] = useState(config);
-  const [parsedConfig, setParsedConfig] = useState<any>(null);
+  const [parsedConfig, setParsedConfig] = useState<ParsedTheme | null>(null);
 
   useEffect(() => {
-    try {
-      setParsedConfig(JSON.parse(config));
-    } catch (e) {
-      setParsedConfig(null);
-    }
+    setParsedConfig(readTheme(config));
   }, [config]);
 
   useEffect(() => {
-    try {
-      setParsedConfig(JSON.parse(editedConfig));
-    } catch (e) {
-      // Don't update parsedConfig if JSON is invalid
-    }
+    const next = readTheme(editedConfig);
+    if (next) setParsedConfig(next);
   }, [editedConfig]);
 
   const handleSave = useCallback(() => {
@@ -68,7 +78,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
       // Get the new primary color (ID)
       const newId = parsed.light.palette.primary.main;
       onSave(id, newId, editedConfig);
-    } catch (e) {
+    } catch {
       enqueueSnackbar({
         message: t("settings.invalidThemeConfig"),
         variant: "warning",
@@ -84,10 +94,10 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
       return createTheme({
         palette: {
           mode: "light",
-          ...parsedConfig.light.palette,
+          ...parsedConfig.light?.palette,
         },
       });
-    } catch (e) {
+    } catch {
       return null;
     }
   }, [parsedConfig]);
@@ -98,10 +108,10 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
       return createTheme({
         palette: {
           mode: "dark",
-          ...parsedConfig.dark.palette,
+          ...parsedConfig.dark?.palette,
         },
       });
-    } catch (e) {
+    } catch {
       return null;
     }
   }, [parsedConfig]);
@@ -140,7 +150,7 @@ const ThemeOptionEditDialog = ({ open, onClose, id, config, onSave }: ThemeOptio
                 i18nKey={"settings.themeDes"}
                 ns={"dashboard"}
                 components={[
-                  <Link href={"https://mui.com/material-ui/customization/default-theme/"} target={"_blank"} />,
+                  <Link key="0" href={"https://mui.com/material-ui/customization/default-theme/"} target={"_blank"} />,
                 ]}
               />
             </Typography>

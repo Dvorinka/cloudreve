@@ -57,11 +57,11 @@ const FileList = ({ file }: { file: FileResponse }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTouch = useMediaQuery("(pointer: coarse)");
 
-  const { uploading, noThumb, fileTag, isSelected, thumbWidth, thumbHeight } = useFileBlockState({
+  const { uploading: _uploading, noThumb, fileTag, isSelected: _isSelected, thumbWidth, thumbHeight } = useFileBlockState({
     file,
   });
 
-  const user = useMemo(() => {
+  const _user = useMemo(() => {
     return SessionManager.currentLoginOrNull();
   }, []);
 
@@ -117,7 +117,7 @@ const FileList = ({ file }: { file: FileResponse }) => {
     </>
   );
 };
-const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
+const SingleFileView = forwardRef<HTMLDivElement>((_props, ref) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -147,7 +147,7 @@ const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
   }, [file]);
 
   const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       if (file) {
         dispatch(openFileContextMenu(fmIndex, file, true, e));
       }
@@ -192,7 +192,7 @@ const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
                 <Trans
                   i18nKey="application:share.sharedBy"
                   components={[
-                    <Link
+                    <Link key="0"
                       underline="hover"
                       color="inherit"
                       component={RouterLink}
@@ -281,5 +281,6 @@ const SingleFileView = forwardRef((_props, ref: React.Ref<any>) => {
     </Stack>
   );
 });
+SingleFileView.displayName = "SingleFileView";
 
 export default SingleFileView;

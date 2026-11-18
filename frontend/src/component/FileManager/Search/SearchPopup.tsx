@@ -17,11 +17,7 @@ import Fuse from "fuse.js";
 import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { sendFullTextSearch } from "../../../api/api.ts";
-import {
-  FileResponse,
-  FullTextSearchResults,
-  FullTextSearchResult as FullTextSearchResultType,
-} from "../../../api/explorer.ts";
+import { FileResponse, FullTextSearchResult as FullTextSearchResultType } from "../../../api/explorer.ts";
 import { defaultPath } from "../../../hooks/useNavigation.tsx";
 import { setSearchPopup, setSearchPopupKeyword } from "../../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
@@ -56,7 +52,7 @@ const StyledOutlinedIconTextFiled = styled(OutlineIconTextField)(() => ({
 
 export const GrowDialogTransition = forwardRef(function Transition(
   props: TransitionProps & {
-    children: React.ReactElement<any, any>;
+    children: React.ReactElement;
   },
   ref: React.Ref<unknown>,
 ) {
@@ -67,7 +63,7 @@ const SearchPopup = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [keywords, setKeywords] = useState("");
   const [searchedKeyword, setSearchedKeyword] = useState("");
@@ -157,7 +153,7 @@ const SearchPopup = () => {
         setFullTextResults([]);
         setFullTextTotal(0);
         dispatch(sendFullTextSearch(query))
-          .then((res: FullTextSearchResults) => {
+          .then((res) => {
             setFullTextResults(res.hits ?? []);
             setFullTextTotal(res.total);
           })
@@ -189,7 +185,7 @@ const SearchPopup = () => {
     if (fullTextLoading) return;
     setFullTextLoading(true);
     dispatch(sendFullTextSearch(keywords, fullTextResults.length))
-      .then((res: FullTextSearchResults) => {
+      .then((res) => {
         setFullTextResults((prev) => [...prev, ...(res.hits ?? [])]);
         setFullTextTotal(res.total);
       })

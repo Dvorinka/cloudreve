@@ -50,7 +50,7 @@ const StaleVersionConfirm = () => {
         });
         dispatch(closeStaleVersionDialog());
       }
-    } catch (e) {
+    } catch {
       return;
     }
   }, [dispatch, promiseId, uri]);

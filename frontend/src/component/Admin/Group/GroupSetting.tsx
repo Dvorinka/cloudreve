@@ -29,7 +29,7 @@ import NewGroupDialog from "./NewGroupDIalog";
 
 const GroupSetting = () => {
   const { t } = useTranslation("dashboard");
-  const theme = useTheme();
+  const _theme = useTheme();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<GroupEnt[]>([]);

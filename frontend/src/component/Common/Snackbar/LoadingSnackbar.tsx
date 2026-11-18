@@ -21,10 +21,10 @@ interface LoadingSnackbarProps extends CustomContentProps {
 
 const LoadingSnackbar = forwardRef<HTMLDivElement, LoadingSnackbarProps>((props, ref) => {
   const [progress, setProgress] = useState(0);
-  const { message, action, id, getProgress, secondaryAction, ...other } = props;
+  const { message, action, id, getProgress, secondaryAction, ..._other } = props;
 
   useEffect(() => {
-    var intervalId: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout;
     if (getProgress) {
       intervalId = setInterval(() => {
         setProgress(getProgress());
@@ -85,5 +85,6 @@ const LoadingSnackbar = forwardRef<HTMLDivElement, LoadingSnackbarProps>((props,
     />
   );
 });
+LoadingSnackbar.displayName = "LoadingSnackbar";
 
 export default LoadingSnackbar;

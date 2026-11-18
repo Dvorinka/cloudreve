@@ -216,7 +216,7 @@ const stepOptions: {
 };
 
 const TaskProgress = ({ taskId, taskStatus, taskType, summary, node }: TaskProgressProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const steps = useMemo((): StepModel[] => {
     return stepOptions[taskType]?.[node?.type == NodeTypes.slave ? 1 : 0] ?? [];

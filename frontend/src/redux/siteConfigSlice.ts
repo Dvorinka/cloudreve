@@ -22,7 +22,7 @@ export interface SiteConfigSlice {
   [key: string]: {
     loaded: ConfigLoadState;
     config: SiteConfig;
-    typed?: any;
+    typed?: unknown;
   };
 }
 
@@ -57,10 +57,10 @@ export let Viewers: ExpandedViewerSetting = {};
 export let ViewersByID: { [key: string]: Viewer } = {};
 
 const preProcessors: {
-  [key: string]: (config: SiteConfig) => any;
+  [key: string]: (config: SiteConfig) => unknown;
 } = {
   explorer: (config: SiteConfig) => {
-    let icons: ExpandedIconSettings = {};
+    const icons: ExpandedIconSettings = {};
     try {
       const iconSettings = <FileTypeIconSetting[]>JSON.parse(config.icons ?? "[]");
       iconSettings.forEach((item) => {
@@ -126,7 +126,7 @@ const loadSiteConfigCache = (initial: SiteConfigSlice): SiteConfigSlice => {
       if (preProcessors[key]) {
         initial[key].typed = preProcessors[key](configCache);
       }
-    } catch (e) {}
+    } catch {}
 
     // // 检查是否有path参数
     // const url = new URL(window.location.href);

@@ -510,7 +510,7 @@ const SecuritySetting = ({ setting, setSetting }: ProfileSettingProps) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 

@@ -36,7 +36,7 @@ export interface FileTypeIconProps extends SvgIconProps {
   fileType: number;
   notLoaded?: boolean;
   customizedColor?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface FileTypeIconSetting {
@@ -80,7 +80,7 @@ export const builtInIcons: {
   markdown: Markdown,
 };
 
-interface TypeIcon {
+interface _TypeIcon {
   icon?: typeof SvgIcon | ((props: SvgIconProps) => JSX.Element);
   color?: string;
   color_dark?: string;
@@ -109,7 +109,12 @@ const FileTypeIcon = ({
   ...rest
 }: FileTypeIconProps) => {
   const theme = useTheme();
-  const iconOptions = useAppSelector((state) => state.siteConfig.explorer.typed?.icons) as ExpandedIconSettings;
+  const explorerTyped = useAppSelector((state) => state.siteConfig.explorer.typed);
+  const iconOptions =
+    explorerTyped !== null && typeof explorerTyped === "object" && "icons" in explorerTyped
+      ? // SAFETY: the explorer preprocessor always stores { icons: ExpandedIconSettings }.
+        (explorerTyped.icons as ExpandedIconSettings)
+      : undefined;
   const IconComponent: IconComponentProps = useMemo(() => {
     if (fileType === 1) {
       return notLoaded ? { icon: FolderOutlined } : { icon: Folder };
@@ -171,7 +176,7 @@ const FileTypeIcon = ({
     );
   } else if (IconComponent.iconify) {
     return (
-      //@ts-ignore
+      //@ts-expect-error -- Box component prop accepts img
       <Box
         component={IconifyIcon}
         sx={{
@@ -186,7 +191,7 @@ const FileTypeIcon = ({
     );
   } else {
     return (
-      //@ts-ignore
+      //@ts-expect-error -- Box component prop accepts img
       <Box
         component={"img"}
         draggable={false}

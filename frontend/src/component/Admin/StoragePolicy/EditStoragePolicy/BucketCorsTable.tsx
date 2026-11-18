@@ -24,12 +24,12 @@ const BucketCorsTable = ({ exposedHeaders }: BucketCorsTableProps) => {
           <TableRow>
             <TableCell>*</TableCell>
             <TableCell>
-              {["GET", "POST", "PUT", "DELETE", "HEAD"].map((t) => (
-                <div>{t}</div>
+              {["GET", "POST", "PUT", "DELETE", "HEAD"].map((t, index) => (
+                <div key={index}>{t}</div>
               ))}
             </TableCell>
             <TableCell>*</TableCell>
-            <TableCell>{exposedHeaders?.map((h) => <div>{h}</div>)}</TableCell>
+            <TableCell>{exposedHeaders?.map((h, index) => <div key={index}>{h}</div>)}</TableCell>
             <TableCell>3600</TableCell>
           </TableRow>
         </TableBody>

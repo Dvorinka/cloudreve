@@ -3,7 +3,6 @@ import { FormControl, Link, Stack, ListItemText } from "@mui/material";
 import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
 import { DenseFilledTextField, DenseSelect } from "../../../Common/StyledComponents.tsx";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu.tsx";
-import * as React from "react";
 import { NoMarginHelperText } from "../Settings.tsx";
 
 export interface CapCaptchaProps {
@@ -85,7 +84,7 @@ const CapCaptcha = ({ values, setSettings }: CapCaptchaProps) => {
             value={values.captcha_cap_asset_server || "jsdelivr"}
             onChange={(e) =>
               setSettings({
-                captcha_cap_asset_server: e.target.value,
+                captcha_cap_asset_server: e.target.value as string,
               })
             }
           >

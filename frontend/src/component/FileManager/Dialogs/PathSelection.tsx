@@ -123,7 +123,7 @@ const PathSelection = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
 
   const open = useAppSelector((state) => state.globalState.pathSelectDialogOpen);
   const variant = useAppSelector((state) => state.globalState.pathSelectDialogVariant);

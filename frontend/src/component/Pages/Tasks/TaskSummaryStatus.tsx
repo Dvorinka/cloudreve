@@ -2,7 +2,6 @@ import { Box, styled, Tooltip, Typography, useTheme } from "@mui/material";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { TaskStatus, TaskSummary, TaskType } from "../../../api/workflow.ts";
-import { useAppDispatch } from "../../../redux/hooks.ts";
 import { sizeToString } from "../../../util";
 import ArrowSyncCircleFilled from "../../Icons/ArrowSyncCircleFilled.tsx";
 import CheckCircleFilled from "../../Icons/CheckCircleFilled.tsx";
@@ -35,9 +34,9 @@ interface TaskStatusContentProps {
   color: string;
   icon: React.ReactNode;
   label: string;
-  [key: string]: any;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- passthrough props
 }
-const TaskStatusContent = forwardRef(({ icon, label, color, ...props }: TaskStatusContentProps, ref) => {
+const TaskStatusContent = forwardRef<HTMLDivElement, TaskStatusContentProps>(({ icon, label, color, ...props }, ref) => {
   return (
     <Box ref={ref} {...props}>
       <Typography variant={"body2"} component={"div"} sx={{ color, display: "flex", mx: 0.5 }} noWrap>
@@ -47,10 +46,10 @@ const TaskStatusContent = forwardRef(({ icon, label, color, ...props }: TaskStat
     </Box>
   );
 });
+TaskStatusContent.displayName = "TaskStatusContent";
 
 const TaskSummaryStatus = ({ type, status, summary, error, simplified, transferPercent }: TaskSummaryStatusProps) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
   const theme = useTheme();
 
   switch (status) {

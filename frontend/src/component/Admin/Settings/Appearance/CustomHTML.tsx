@@ -31,7 +31,7 @@ import MonacoEditor from "../../../Viewers/CodeViewer/MonacoEditor";
 import { SettingContext } from "../SettingWrapper";
 import { NoMarginHelperText } from "../Settings";
 
-export interface CustomHTMLProps {}
+export type CustomHTMLProps = Record<string, never>
 
 const HeadlessFooterPreview = ({ footer, bottom }: { footer?: string; bottom?: string }) => {
   const { t } = useTranslation("application");
@@ -157,7 +157,7 @@ const SidebarBottomPreview = ({ bottom }: { bottom?: string }) => {
 
 const CustomHTML = ({}: CustomHTMLProps) => {
   const { t } = useTranslation("dashboard");
-  const { formRef, setSettings, values } = useContext(SettingContext);
+  const { formRef: _formRef, setSettings, values } = useContext(SettingContext);
   const theme = useTheme();
 
   return (

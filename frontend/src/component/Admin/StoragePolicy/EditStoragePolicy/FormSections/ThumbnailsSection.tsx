@@ -142,7 +142,7 @@ const ThumbnailsSection = () => {
                       i18nKey={policyProps.nativeThumbDes}
                       ns="dashboard"
                       components={
-                        policyProps.nativeThumbDoc ? [<Link href={policyProps.nativeThumbDoc} target="_blank" />] : []
+                        policyProps.nativeThumbDoc ? [<Link key="0" href={policyProps.nativeThumbDoc} target="_blank" />] : []
                       }
                     />
                   )}
@@ -174,7 +174,7 @@ const ThumbnailsSection = () => {
                 <Trans
                   i18nKey="policy.thumbProxyDes"
                   ns="dashboard"
-                  components={[<Link component={RouterLink} to="/admin/settings?tab=mediaProcessing" />]}
+                  components={[<Link key="0" component={RouterLink} to="/admin/settings?tab=mediaProcessing" />]}
                 />
               </NoMarginHelperText>
             </FormControl>

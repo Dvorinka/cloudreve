@@ -97,7 +97,9 @@ const SortMethodMenu = ({ onClose, ...rest }: MenuProps) => {
 
   const selectOption = (option: sortOption) => {
     dispatch(changeSortOption(fmIndex, option.order_by, option.order_direction));
-    onClose && onClose({}, "escapeKeyDown");
+    if (onClose) {
+      onClose({}, "escapeKeyDown");
+    }
   };
 
   return (

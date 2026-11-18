@@ -19,7 +19,7 @@ export const StyledMenuItem = styled(MenuItem, {
   boxShadow: isDropOver ? `inset 0 0 0 2px ${theme.palette.primary.light}` : "none",
 }));
 
-const BreadcrumbHiddenItem = ({ name, is_root, is_latest, path, onClose, ...rest }: BreadcrumbHiddenItem) => {
+const BreadcrumbHiddenItem = ({ name, is_root: _is_root, is_latest, path, onClose, ...rest }: BreadcrumbHiddenItem) => {
   const [loading, displayName, startIcon, onClick] = useBreadcrumbButtons({
     name,
     is_latest,
@@ -28,7 +28,9 @@ const BreadcrumbHiddenItem = ({ name, is_root, is_latest, path, onClose, ...rest
   });
   const onItemClick = async () => {
     onClose();
-    onClick && onClick();
+    if (onClick) {
+      onClick();
+    }
   };
 
   const fmIndex = useContext(FmIndexContext);
@@ -47,7 +49,7 @@ const BreadcrumbHiddenItem = ({ name, is_root, is_latest, path, onClose, ...rest
     }
   }, [startIcon, loading]);
 
-  const [drag, drop, isOver, isDragging] = useFileDrag({
+  const [_drag, drop, isOver, _isDragging] = useFileDrag({
     dropUri: path,
   });
 

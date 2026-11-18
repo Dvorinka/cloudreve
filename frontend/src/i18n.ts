@@ -2,14 +2,10 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import Backend from "i18next-http-backend";
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-// @ts-ignore
 import LanguageDetector from "i18next-browser-languagedetector";
 import ChainedBackend from "i18next-chained-backend";
 import LocalStorageBackend from "i18next-localstorage-backend";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-// @ts-ignore
 i18n
   .use(ChainedBackend)
   .use(LanguageDetector)

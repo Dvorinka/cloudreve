@@ -76,7 +76,7 @@ const DirectLinksControl = () => {
     });
   }, [fileExtended?.extended_info?.direct_links, forceDownload]);
 
-  const handleRowClick = useCallback((directLink: DirectLink) => {
+  const _handleRowClick = useCallback((directLink: DirectLink) => {
     window.open(directLink.url, "_blank");
   }, []);
 

@@ -20,7 +20,7 @@ import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Trans, useTranslation } from "react-i18next";
-import { Viewer, ViewerPlatform, ViewerType } from "../../../../api/explorer.ts";
+import { NewFileTemplate, Viewer, ViewerPlatform, ViewerType } from "../../../../api/explorer.ts";
 import { builtInViewers } from "../../../../redux/thunks/viewer.ts";
 import { isTrueVal } from "../../../../session/utils.ts";
 import CircularProgress from "../../../Common/CircularProgress.tsx";
@@ -108,7 +108,6 @@ const magicVars: MagicVar[] = [
 const DND_TYPE = "template-row";
 
 interface DraggableTemplateRowProps {
-  t: any;
   i: number;
   moveRow: (from: number, to: number) => void;
   onExtChange: (e: SelectChangeEvent<unknown>, child: React.ReactNode) => void;
@@ -117,7 +116,7 @@ interface DraggableTemplateRowProps {
   isFirst: boolean;
   isLast: boolean;
   extList: string[];
-  template: any;
+  template: NewFileTemplate;
 }
 
 function DraggableTemplateRow({
@@ -134,7 +133,7 @@ function DraggableTemplateRow({
   const ref = React.useRef<HTMLTableRowElement>(null);
   const [, drop] = useDrop({
     accept: DND_TYPE,
-    hover(item: any, monitor) {
+    hover(item: { index: number }, monitor) {
       if (!ref.current) return;
 
       const dragIndex = item.index;
@@ -240,7 +239,7 @@ const FileViewerEditDialog = ({ viewer, onChange, open, onClose }: FileViewerEdi
         const parsed = JSON.parse(wopiCached);
         changed = { ...viewerShadowed, wopi_actions: parsed };
         setViewerShadowed({ ...changed });
-      } catch (e) {
+      } catch {
         enqueueSnackbar({
           message: t("settings.invalidWopiActionMapping"),
           variant: "warning",
@@ -342,7 +341,7 @@ const FileViewerEditDialog = ({ viewer, onChange, open, onClose }: FileViewerEdi
                   <Trans
                     i18nKey={"settings.viewerUrlDes"}
                     ns={"dashboard"}
-                    components={[<Link onClick={openMagicVar} href={"#"} />]}
+                    components={[<Link key="0" onClick={openMagicVar} href={"#"} />]}
                   />
                 </NoMarginHelperText>
               </SettingForm>
@@ -483,7 +482,7 @@ const FileViewerEditDialog = ({ viewer, onChange, open, onClose }: FileViewerEdi
                         {viewerShadowed.templates?.map((template, i) => (
                           <DraggableTemplateRow
                             key={i}
-                            t={template}
+
                             i={i}
                             moveRow={(from, to) => {
                               if (from === to || to < 0 || to >= (viewerShadowed.templates?.length ?? 0)) return;

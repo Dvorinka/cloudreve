@@ -1,7 +1,7 @@
 import { FileResponse, Metadata } from "../../../api/explorer.ts";
 import { useTranslation } from "react-i18next";
 import { Box, Typography } from "@mui/material";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import FileTag from "../Explorer/FileTag.tsx";
 
@@ -27,7 +27,7 @@ export const getFileTags = (file: FileResponse) => {
 
 const Tags = ({ target }: TagsProps) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const _dispatch = useAppDispatch();
 
   const fileTag = useMemo(() => getFileTags(target), [target]);
 

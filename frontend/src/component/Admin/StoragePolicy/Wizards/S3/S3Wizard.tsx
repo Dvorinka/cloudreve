@@ -108,7 +108,7 @@ const S3Wizard = ({ onSubmit }: AddWizardProps) => {
             variant={"outlined"}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.s3EndpointDes" ns="dashboard" components={[<Code />]} />
+            <Trans i18nKey="policy.s3EndpointDes" ns="dashboard" components={[<Code key="0" />]} />
           </NoMarginHelperText>
           <FormControlLabel
             sx={{ mt: 1, mb: -1 }}
@@ -132,7 +132,7 @@ const S3Wizard = ({ onSubmit }: AddWizardProps) => {
             label={t("policy.usePathEndpoint")}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.s3EndpointPathStyle" ns="dashboard" components={[<Code />]} />
+            <Trans i18nKey="policy.s3EndpointPathStyle" ns="dashboard" components={[<Code key="0" />]} />
           </NoMarginHelperText>
         </SettingForm>
         <SettingForm title={t(policyProps.regionCode ?? "")} lgWidth={12}>

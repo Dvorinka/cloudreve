@@ -25,16 +25,18 @@ interface ExcalidrawState {
   source: string;
 }
 
-const serializeExcalidrawState = (elements: readonly OrderedExcalidrawElement[], appState: any, file: BinaryFiles) => {
-  if (!Array.isArray(appState.collaborators)) {
-    appState.collaborators = [];
-  }
+const serializeExcalidrawState = (
+  elements: readonly OrderedExcalidrawElement[],
+  appState: AppState,
+  file: BinaryFiles,
+) => {
+  const { collaborators: _collaborators, ...persist } = appState;
   return JSON.stringify({
     type: "excalidraw",
     version: 2,
     source: window.location.origin,
     elements,
-    appState,
+    appState: { ...persist, collaborators: [] },
     files: file,
   });
 };
@@ -43,7 +45,7 @@ const Excalidraw = (props: ExcalidrawProps) => {
   const initialValue = useMemo(() => {
     try {
       return JSON.parse(props.initialValue) as ExcalidrawState;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, [props.initialValue]);

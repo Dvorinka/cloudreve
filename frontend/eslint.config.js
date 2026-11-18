@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 export default defineConfig([
   {
-    ignores: ["build/**", "dist/**", "node_modules/**"],
+    ignores: ["build/**", "dist/**", "dev-dist/**", "node_modules/**", "public/assets/**"],
   },
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
@@ -19,6 +19,19 @@ export default defineConfig([
   tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat["jsx-runtime"],
+  {
+    files: ["**/*.{ts,tsx,mts,cts}"],
+    rules: {
+      "react/prop-types": "off",
+    },
+  },
+  {
+    // Vendored upstream code (react-photo-view port) — keep its original typing
+    files: ["src/component/Viewers/ImageViewer/react-photo-view/**"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": [

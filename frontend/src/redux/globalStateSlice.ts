@@ -10,7 +10,7 @@ import {
 } from "../api/explorer.ts";
 import { Response } from "../api/request.ts";
 import { AppRegistration, User } from "../api/user.ts";
-import { SelectType } from "../component/Uploader/core";
+import { SelectType } from "../component/Uploader/core/selectType.ts";
 import SessionManager, { UserSettings } from "../session";
 
 export interface BatchDownloadProgress {
@@ -33,7 +33,7 @@ export interface ImageViewerState extends GeneralViewerState {
   exts: string[];
 }
 
-export interface ImageEditorState extends GeneralViewerState {}
+export type ImageEditorState = GeneralViewerState
 
 export interface GeneralViewerState {
   open: boolean;
@@ -75,10 +75,10 @@ export interface UploadProgressTotal {
   totalSize: number;
 }
 
-export interface DialogSelectOption {
+export interface DialogSelectOption<T = unknown> {
   name: string;
   description: string;
-  value: any;
+  value: T;
   disabled?: boolean;
 }
 
@@ -106,7 +106,7 @@ export interface GlobalStateSlice {
   // Dialogs
   // Aggregated error dialog
   aggregatedErrorDialogOpen?: boolean;
-  aggregatedError?: Response<any>;
+  aggregatedError?: Response<unknown>;
   aggregatedErrorFile?: {
     [key: string]: FileResponse;
   };
@@ -300,6 +300,7 @@ export interface GlobalStateSlice {
   advanceSearchOpen?: boolean;
   advanceSearchBasePath?: string;
   advanceSearchInitialNameCondition?: string[];
+  advanceSearchInitialContentCondition?: string;
 
   // Share README
   shareReadmeDetect?: number;
@@ -314,7 +315,7 @@ export interface GlobalStateSlice {
 let preferred_theme: string | undefined = undefined;
 try {
   preferred_theme = SessionManager.currentLogin().user.preferred_theme;
-} catch (e) {}
+} catch {}
 
 const initialState: GlobalStateSlice = {
   loading: {
@@ -417,11 +418,13 @@ export const globalStateSlice = createSlice({
         open: boolean;
         basePath?: string;
         nameCondition?: string[];
+        contentCondition?: string;
       }>,
     ) => {
       state.advanceSearchOpen = action.payload.open;
       state.advanceSearchBasePath = action.payload.basePath;
       state.advanceSearchInitialNameCondition = action.payload.nameCondition;
+      state.advanceSearchInitialContentCondition = action.payload.contentCondition;
     },
     closeAdvanceSearch: (state) => {
       state.advanceSearchOpen = false;
@@ -635,49 +638,65 @@ export const globalStateSlice = createSlice({
       state.epubViewer = action.payload;
     },
     closeEpubViewer: (state) => {
-      state.epubViewer && (state.epubViewer.open = false);
+      if (state.epubViewer) {
+        state.epubViewer.open = false;
+      }
     },
     setModelViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.modelViewer = action.payload;
     },
     closeModelViewer: (state) => {
-      state.modelViewer && (state.modelViewer.open = false);
+      if (state.modelViewer) {
+        state.modelViewer.open = false;
+      }
     },
     setCustomViewer: (state, action: PayloadAction<CustomViewerState>) => {
       state.customViewer = action.payload;
     },
     closeCustomViewer: (state) => {
-      state.customViewer && (state.customViewer.open = false);
+      if (state.customViewer) {
+        state.customViewer.open = false;
+      }
     },
     setPdfViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.pdfViewer = action.payload;
     },
     closePdfViewer: (state) => {
-      state.pdfViewer && (state.pdfViewer.open = false);
+      if (state.pdfViewer) {
+        state.pdfViewer.open = false;
+      }
     },
     setVideoViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.videoViewer = action.payload;
     },
     closeVideoViewer: (state) => {
-      state.videoViewer && (state.videoViewer.open = false);
+      if (state.videoViewer) {
+        state.videoViewer.open = false;
+      }
     },
     setMarkdownViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.markdownViewer = action.payload;
     },
     closeMarkdownViewer: (state) => {
-      state.markdownViewer && (state.markdownViewer.open = false);
+      if (state.markdownViewer) {
+        state.markdownViewer.open = false;
+      }
     },
     setExcalidrawViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.excalidrawViewer = action.payload;
     },
     closeExcalidrawViewer: (state) => {
-      state.excalidrawViewer && (state.excalidrawViewer.open = false);
+      if (state.excalidrawViewer) {
+        state.excalidrawViewer.open = false;
+      }
     },
     setArchiveViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.archiveViewer = action.payload;
     },
     closeArchiveViewer: (state) => {
-      state.archiveViewer && (state.archiveViewer.open = false);
+      if (state.archiveViewer) {
+        state.archiveViewer.open = false;
+      }
     },
     addShareInfo: (state, action: PayloadAction<{ info: Share; id: string }>) => {
       state.shareInfo[action.payload.id] = action.payload.info;
@@ -704,7 +723,7 @@ export const globalStateSlice = createSlice({
       state,
       action: PayloadAction<{
         open: boolean;
-        error?: Response<any>;
+        error?: Response<unknown>;
         files?: { [key: string]: FileResponse };
       }>,
     ) => {
@@ -910,31 +929,41 @@ export const globalStateSlice = createSlice({
       state.photopeaViewer = action.payload;
     },
     closePhotopeaViewer: (state) => {
-      state.photopeaViewer && (state.photopeaViewer.open = false);
+      if (state.photopeaViewer) {
+        state.photopeaViewer.open = false;
+      }
     },
     setViewerSelector: (state, action: PayloadAction<ViewerSelectorState>) => {
       state.viewerSelector = action.payload;
     },
     closeViewerSelector: (state) => {
-      state.viewerSelector && (state.viewerSelector.open = false);
+      if (state.viewerSelector) {
+        state.viewerSelector.open = false;
+      }
     },
     setWopiViewer: (state, action: PayloadAction<WopiViewerState>) => {
       state.wopiViewer = action.payload;
     },
     closeWopiViewer: (state) => {
-      state.wopiViewer && (state.wopiViewer.open = false);
+      if (state.wopiViewer) {
+        state.wopiViewer.open = false;
+      }
     },
     setCodeViewer: (state, action: PayloadAction<GeneralViewerState>) => {
       state.codeViewer = action.payload;
     },
     closeCodeViewer: (state) => {
-      state.codeViewer && (state.codeViewer.open = false);
+      if (state.codeViewer) {
+        state.codeViewer.open = false;
+      }
     },
     setDrawIOViewer: (state, action: PayloadAction<DrawIOViewerState>) => {
       state.drawIOViewer = action.payload;
     },
     closeDrawIOViewer: (state) => {
-      state.drawIOViewer && (state.drawIOViewer.open = false);
+      if (state.drawIOViewer) {
+        state.drawIOViewer.open = false;
+      }
     },
   },
 });

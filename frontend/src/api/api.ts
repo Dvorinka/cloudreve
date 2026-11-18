@@ -68,6 +68,7 @@ import {
   FileRelocateService,
   FileResponse,
   FileThumbResponse,
+  FullTextSearchResults,
   FileUpdateService,
   FileURLResponse,
   FileURLService,
@@ -78,6 +79,7 @@ import {
   MultipleUriService,
   PatchMetadataService,
   PatchTagService,
+  PaginationResults,
   PatchViewSyncService,
   PinFileService,
   PreferredPolicyService,
@@ -772,7 +774,7 @@ export interface SharePurchaseResponse {
 export function purchaseShare(id: string): ThunkResponse<SharePurchaseResponse> {
   return async (dispatch, _getState) => {
     const res = await dispatch(
-      send(
+      send<SharePurchaseResponse>(
         "/share/purchase/" + id,
         {
           method: "POST",
@@ -815,7 +817,7 @@ export function getShareInfo(
       uri += "?" + query.toString();
     }
     const res = await dispatch(
-      send(
+      send<Share>(
         uri,
         {
           method: "GET",
@@ -1006,7 +1008,7 @@ export function deleteVersion(req: VersionControlService): ThunkResponse<void> {
   };
 }
 
-export function sendUpdateFile(req: FileUpdateService, data: any): ThunkResponse<FileResponse> {
+export function sendUpdateFile(req: FileUpdateService, data: unknown): ThunkResponse<FileResponse> {
   return async (dispatch, _getState) => {
     return await dispatch(
       send(
@@ -2778,7 +2780,7 @@ export function sendConsentOauthApp(args: GrantService, deny = false): ThunkResp
       send(
         `/session/oauth/consent${deny ? "/deny" : ""}`,
         { method: "POST", data: args },
-        { bypassSnackbar: (e) => true, ...defaultOpts },
+        { bypassSnackbar: () => true, ...defaultOpts },
       ),
     );
   };
@@ -2953,7 +2955,7 @@ export function sendVaultDisable(password: string): ThunkResponse {
   };
 }
 
-export function sendFullTextSearch(query: string, offset?: number): ThunkResponse {
+export function sendFullTextSearch(query: string, offset?: number): ThunkResponse<FullTextSearchResults> {
   const params = new URLSearchParams();
   params.set("query", query);
   if (offset) {
@@ -2961,7 +2963,7 @@ export function sendFullTextSearch(query: string, offset?: number): ThunkRespons
   }
   return async (dispatch, _getState) => {
     return await dispatch(
-      send(
+      send<FullTextSearchResults>(
         `/file/search`,
         {
           method: "GET",

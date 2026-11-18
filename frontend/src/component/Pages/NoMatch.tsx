@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button } from "@mui/material";
-import React from "react";
 import DismissCircleFilled from "../Icons/DismissCircleFilled.tsx";
 
 const NoMatch = () => {

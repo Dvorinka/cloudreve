@@ -42,7 +42,6 @@ export default function Photo({
   broken,
   className,
   onPhotoLoad,
-  loadingElement,
   brokenElement,
   ...restProps
 }: IPhotoProps) {
@@ -146,7 +145,7 @@ export default function Photo({
           loadLivePhoto(file, originalUrl);
         }
       })
-      .catch((e) => {
+      .catch(() => {
         if (mountedRef.current) {
           onPhotoLoad({
             broken: true,

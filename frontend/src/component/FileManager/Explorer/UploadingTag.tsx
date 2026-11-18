@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Stack, StackProps } from "@mui/material";
 import { memo, useCallback, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Metadata } from "../../../api/explorer.ts";
@@ -7,27 +7,27 @@ import { searchMetadata } from "../../../redux/thunks/filemanager.ts";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 import { TagChip } from "./FileTag.tsx";
 
-export interface UploadingTagProps {
+export interface UploadingTagProps extends StackProps {
   disabled?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const FileTagSummary = memo(({ sx, disabled, ...restProps }: UploadingTagProps) => {
   const fmIndex = useContext(FmIndexContext);
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const stopPropagation = useCallback((e: any) => {
+  const stopPropagation = useCallback((e: React.SyntheticEvent) => {
     e.stopPropagation();
   }, []);
   const onClick = useCallback(
-    (e: any) => {
+    (e: React.MouseEvent) => {
       e.stopPropagation();
       dispatch(searchMetadata(fmIndex, Metadata.upload_session_id));
     },
     [dispatch, fmIndex],
   );
   return (
-    <Stack direction={"row"} spacing={1} sx={{ ...sx }} {...restProps}>
+    <Stack direction={"row"} spacing={1} sx={{ ...(sx as object) }} {...restProps}>
       <TagChip
         onClick={disabled ? undefined : onClick}
         onMouseDown={stopPropagation}
@@ -37,5 +37,6 @@ const FileTagSummary = memo(({ sx, disabled, ...restProps }: UploadingTagProps) 
     </Stack>
   );
 });
+FileTagSummary.displayName = "FileTagSummary";
 
 export default FileTagSummary;

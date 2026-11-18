@@ -37,7 +37,7 @@ export const ShareExpires = ({ expires, remain_downloads }: ShareExpiresProps) =
         <span>
           <Trans
             i18nKey="application:share.expireAt"
-            components={[<TimeBadge variant={"inherit"} color={"inherit"} datetime={expires} />]}
+            components={[<TimeBadge key="0" variant={"inherit"} color={"inherit"} datetime={expires} />]}
           />
         </span>
       )}
@@ -71,7 +71,7 @@ const ShareInfoPopover = ({ displayName, shareInfo, ...rest }: ShareInfoPopoverP
   const dispatch = useAppDispatch();
   const [saving, setSaving] = useState(false);
   const loggedIn = SessionManager.currentLoginOrNull() != null;
-  const stopPropagation = useCallback((e: any) => e.stopPropagation(), []);
+  const stopPropagation = useCallback((e: React.SyntheticEvent) => e.stopPropagation(), []);
 
   const saveToMyFiles = useCallback(() => {
     setSaving(true);

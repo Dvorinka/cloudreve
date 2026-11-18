@@ -2,7 +2,7 @@ import DraggableDialog from "../../../Dialogs/DraggableDialog.tsx";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, DialogContent, FormControl, Stack, styled, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import AutoHeight from "../../../Common/AutoHeight.tsx";

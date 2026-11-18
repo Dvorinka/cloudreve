@@ -10,11 +10,11 @@ export interface CaptchaProps {
   onStateChange: (state: CaptchaParams) => void;
   generation: number;
   noLabel?: boolean;
-  [x: string]: any;
+  [x: string]: unknown;
 }
 
 export interface CaptchaParams {
-  [x: string]: any;
+  [x: string]: unknown;
 }
 
 export const Captcha = (props: CaptchaProps) => {

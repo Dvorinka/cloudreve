@@ -32,7 +32,7 @@ const SearchBar = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   useHotkeys(
     "/",
     () => {
@@ -67,7 +67,7 @@ const SearchBar = () => {
         ns={"application"}
         i18nKey={"navbar.searchPlaceholder"}
         components={[
-          <KeyIndicator sx={{ mx: 0.5 }}>
+          <KeyIndicator key="0" sx={{ mx: 0.5 }}>
             <Typography variant={"body2"} />
           </KeyIndicator>,
         ]}

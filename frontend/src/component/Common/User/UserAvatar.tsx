@@ -1,4 +1,4 @@
-import { Avatar, Skeleton } from "@mui/material";
+import { Avatar, AvatarProps, Skeleton, Theme } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { bindHover, bindPopover } from "material-ui-popup-state";
 import { usePopupState } from "material-ui-popup-state/hooks";
@@ -12,7 +12,7 @@ import { loadUserInfo } from "../../../redux/thunks/session.ts";
 import InPrivate from "../../Icons/InPrivate.tsx";
 import UserPopover from "./UserPopover.tsx";
 
-export interface UserAvatarProps {
+export interface UserAvatarProps extends AvatarProps {
   user?: User;
   uid?: string;
   overwriteTextSize?: boolean;
@@ -20,14 +20,13 @@ export interface UserAvatarProps {
   enablePopover?: boolean;
   square?: boolean;
   cacheKey?: string;
-  [key: string]: any;
 }
 
 function stringToColor(string: string) {
   let hash = 0;
   let i;
 
-  /* eslint-disable no-bitwise */
+   
   for (i = 0; i < string.length; i += 1) {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
@@ -38,7 +37,7 @@ function stringToColor(string: string) {
     const value = (hash >> (i * 8)) & 0xff;
     color += `00${value.toString(16)}`.slice(-2);
   }
-  /* eslint-enable no-bitwise */
+   
 
   return color;
 }
@@ -99,6 +98,11 @@ const UserAvatar = memo(
       return undefined;
     }, [loadedUser, cacheKey]);
 
+    const avatarWidth =
+      sx && typeof sx === "object" && !Array.isArray(sx) && "width" in sx && typeof sx.width === "number"
+        ? sx.width
+        : undefined;
+
     return (
       <>
         {loadedUser && (
@@ -115,38 +119,37 @@ const UserAvatar = memo(
               }}
               {...rest}
               {...bindHover(popupState)}
-              sx={[
-                {
-                  bgcolor: loadedUser.nickname ? stringToColor(loadedUser.nickname) : grey[500],
-                  ...sx,
-                },
-                overwriteTextSize && {
-                  fontSize: `${sx.width * 0.6}px!important`,
-                },
-                square && {
-                  borderRadius: (theme) => `${theme.shape.borderRadius}px`,
-                },
-              ]}
+              sx={{
+                bgcolor: loadedUser.nickname ? stringToColor(loadedUser.nickname) : grey[500],
+                ...(sx && typeof sx === "object" && !Array.isArray(sx) ? sx : {}),
+                ...(overwriteTextSize && avatarWidth ? { fontSize: `${avatarWidth * 0.6}px!important` } : {}),
+                ...(square ? { borderRadius: (theme: Theme) => `${theme.shape.borderRadius}px` } : {}),
+              }}
             >
               {loadedUser.id == "" ? (
                 <InPrivate
-                  sx={{
-                    ...(overwriteTextSize
-                      ? {
-                          fontSize: `${sx.width * 0.6}px`,
-                        }
-                      : {}),
-                  }}
+                  sx={
+                    overwriteTextSize && avatarWidth
+                      ? { fontSize: `${avatarWidth * 0.6}px` }
+                      : undefined
+                  }
                 />
               ) : undefined}
             </Avatar>
             {enablePopover && user && <UserPopover user={user} {...bindPopover(popupState)} />}
           </>
         )}
-        {!loadedUser && <Skeleton ref={ref} variant={"circular"} sx={{ ...sx }} {...rest} />}
+        {!loadedUser && (
+          <Skeleton
+            ref={ref}
+            variant={"circular"}
+            sx={sx && typeof sx === "object" && !Array.isArray(sx) ? sx : undefined}
+          />
+        )}
       </>
     );
   },
 );
+UserAvatar.displayName = "UserAvatar";
 
 export default UserAvatar;

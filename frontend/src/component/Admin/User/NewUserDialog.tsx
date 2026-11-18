@@ -29,7 +29,7 @@ const defaultUser: User = {
 const NewUserDialog = ({ open, onClose, onCreated }: NewUserDialogProps) => {
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User>({ ...defaultUser });
   const formRef = useRef<HTMLFormElement>(null);
@@ -46,7 +46,7 @@ const NewUserDialog = ({ open, onClose, onCreated }: NewUserDialogProps) => {
       return;
     }
 
-    let newUser = { ...user, nick: user.email.split("@")[0] };
+    const newUser = { ...user, nick: user.email.split("@")[0] };
 
     setLoading(true);
     dispatch(upsertUser({ user: newUser, password: user.password }))

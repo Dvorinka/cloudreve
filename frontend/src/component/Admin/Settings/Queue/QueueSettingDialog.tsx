@@ -1,4 +1,4 @@
-import { Box, FormControl, FormHelperText } from "@mui/material";
+import { Box, FormControl, FormHelperText, FormHelperTextProps } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QueueType } from "../../../../api/dashboard.ts";
@@ -16,7 +16,7 @@ export interface QueueSettingDialogProps {
   setSettings: (settings: { [key: string]: string }) => void;
 }
 
-const NoMarginHelperText = (props: any) => (
+const NoMarginHelperText = (props: FormHelperTextProps) => (
   <FormHelperText
     {...props}
     sx={{

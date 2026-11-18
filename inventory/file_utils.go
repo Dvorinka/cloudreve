@@ -3,6 +3,7 @@ package inventory
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
@@ -36,6 +37,20 @@ func (f *fileClient) searchQuery(q *ent.FileQuery, args *SearchFileParameters, p
 				),
 			),
 		)
+	}
+
+	if args.FileIDs != nil {
+		if len(args.FileIDs) == 0 {
+			// Resolved content query with no matches.
+			q = q.Where(file.IDEQ(-1))
+		} else {
+			predicates, _ := f.batchInCondition(math.MaxInt, 10, 1, args.FileIDs)
+			q = q.Where(file.Or(predicates...))
+		}
+	} else if args.Content != "" {
+		// Content query reached the query layer without resolved file IDs;
+		// match nothing rather than returning unfiltered results.
+		q = q.Where(file.IDEQ(-1))
 	}
 
 	if len(args.Name) > 0 {

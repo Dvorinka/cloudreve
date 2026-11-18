@@ -1,8 +1,6 @@
 import { Box, List, ListItem, ListItemAvatar, ListItemButton, ListItemText } from "@mui/material";
 import { Trans, useTranslation } from "react-i18next";
-import React, { useCallback } from "react";
-// @ts-ignore
-import Highlighter from "react-highlight-words";
+import { useCallback } from "react";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { SearchOutlined } from "@mui/icons-material";
 import { FileType } from "../../../api/explorer.ts";
@@ -16,7 +14,7 @@ export interface FullSearchOptionProps {
 }
 
 const FullSearchOption = ({ options, keyword }: FullSearchOptionProps) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const dispatch = useAppDispatch();
 
   const onClick = useCallback(

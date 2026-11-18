@@ -36,7 +36,7 @@ const MarkdownViewer = () => {
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [optionAnchorEl, setOptionAnchorEl] = useState<null | HTMLElement>(null);
+  const [_optionAnchorEl, setOptionAnchorEl] = useState<null | HTMLElement>(null);
   const saveFunction = useRef(() => {});
 
   const closeViewer = useCallback(() => {
@@ -96,7 +96,7 @@ const MarkdownViewer = () => {
   }, [viewerState?.open]);
 
   const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],

@@ -10,7 +10,7 @@ import SessionManager, { UserSettings } from "../../session";
 import { isTrueVal } from "../../session/utils.ts";
 import { dataUrlToBytes, fileExtension, fileNameNoExt, getFileLinkedUri, sizeToString } from "../../util";
 import { base64Encode } from "../../util/base64.ts";
-import CrUri, { CrUriPrefix } from "../../util/uri.ts";
+import CrUri, { CrUriPrefix, Filesystem } from "../../util/uri.ts";
 import { closeContextMenu, ContextMenuTypes, fileUpdated } from "../fileManagerSlice.ts";
 import {
   closeImageEditor,
@@ -58,6 +58,17 @@ export const builtInViewers = {
   model3d: "model3d",
 };
 
+function isPublicShareFile(file: FileResponse): boolean {
+  if (!file.path) {
+    return false;
+  }
+  try {
+    return new CrUri(file.path).fs() === Filesystem.share;
+  } catch {
+    return false;
+  }
+}
+
 export function openViewers(
   index: number,
   file: FileResponse,
@@ -74,12 +85,15 @@ export function openViewers(
     const ext = fileExtension(file.name) ?? "";
     const entitySize = size ?? file.size;
 
+    const onPublicShare = isPublicShareFile(file);
+
     // Try user preference — the server-synced map wins over the per-device
     // localStorage copy so the choice follows the user across devices. A
     // stale server entry (viewer removed site-wide) falls back to local.
-    if (!ignorePreference) {
+    // Public shares ignore it and use the built-in viewer.
+    if (!ignorePreference && !onPublicShare) {
       const serverPreference = SessionManager.currentLoginOrNull()?.user?.preferred_viewers?.[ext];
-      const localPreference = SessionManager.get(UserSettings.OpenWithPrefix + ext);
+      const localPreference = SessionManager.get(`${UserSettings.OpenWithPrefix}${ext}`);
       const userPreference = [serverPreference, localPreference].find((id) => id && ViewersByID[id]);
       if (userPreference) {
         dispatch(openViewer(file, ViewersByID[userPreference], entitySize, preferredVersion));
@@ -89,7 +103,15 @@ export function openViewers(
 
     const viewerOptions = Viewers[ext];
 
-    if (!ignorePreference && viewerOptions.length == 1) {
+    // Public share visitors get the built-in viewer. The Open with dialog
+    // (Google Docs, Office, Photopea, …) is an extra choice they do not need.
+    if (!ignorePreference && onPublicShare && viewerOptions?.length) {
+      const predefined = viewerOptions.find((viewer) => viewer.type === ViewerType.builtin) ?? viewerOptions[0];
+      dispatch(openViewer(file, predefined, entitySize, preferredVersion));
+      return;
+    }
+
+    if (!ignorePreference && viewerOptions?.length == 1) {
       dispatch(openViewer(file, viewerOptions[0], entitySize, preferredVersion));
       return;
     }
@@ -570,7 +592,7 @@ export function saveImage(name: string, data: string, file: FileResponse, versio
 
 export function saveFile(
   uri: string,
-  data: any,
+  data: unknown,
   version?: string,
   saveAsNew?: boolean,
   ignoreSnackbar?: boolean,
@@ -585,7 +607,7 @@ export function saveFile(
           const dst = new CrUri(saveAsDst.uri).join(saveAsDst.name);
           uri = dst.toString();
         }
-      } catch (e) {
+      } catch {
         return;
       }
     }
@@ -820,7 +842,7 @@ const BROKEN_IMG_URI =
 `);
 
 export function markdownImagePreviewHandler(imageSource: string, mdFileUri: string): AppThunk<Promise<string>> {
-  return async (dispatch, getState) => {
+  return async (dispatch, _getState) => {
     // For URl, return the image source
     if (imageSource.startsWith("http://") || imageSource.startsWith("https://")) {
       return imageSource;
@@ -839,7 +861,7 @@ export function markdownImagePreviewHandler(imageSource: string, mdFileUri: stri
       const file = await dispatch(getFileInfo({ uri: uri.toString() }, true));
       const fileUrl = await dispatch(getFileEntityUrl({ uris: [getFileLinkedUri(file)] }));
       return fileUrl.urls[0].url;
-    } catch (e) {
+    } catch {
       return BROKEN_IMG_URI;
     }
   };
@@ -862,7 +884,7 @@ export function markdownImageAutocompleteSuggestions(): AppThunk<string[] | null
 }
 
 export function uploadMarkdownImage(file: File): AppThunk<Promise<string>> {
-  return async (dispatch, getState) => {
+  return async (dispatch, _getState) => {
     const task = await dispatch(uploadRawFile(file));
     return task.name;
   };

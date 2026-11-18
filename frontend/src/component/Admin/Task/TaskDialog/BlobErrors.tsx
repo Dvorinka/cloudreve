@@ -4,8 +4,17 @@ import { useTranslation } from "react-i18next";
 import { StyledTableContainerPaper } from "../../../Common/StyledComponents";
 import EntityDialog from "../../Entity/EntityDialog/EntityDialog";
 
+export interface BlobErrorItem {
+  id: number;
+  error: string;
+}
+
+export interface RecyclePrivateState {
+  errors?: BlobErrorItem[][];
+}
+
 export interface BlobErrorsProps {
-  privateState: any;
+  privateState: RecyclePrivateState;
 }
 export const BlobErrors = ({ privateState }: BlobErrorsProps) => {
   const { t } = useTranslation("dashboard");
@@ -31,8 +40,8 @@ export const BlobErrors = ({ privateState }: BlobErrorsProps) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {privateState?.errors?.map((error: any, retryIndex: number) => [
-            ...error.map((e: any, index: number) => [
+          {privateState.errors?.map((error, retryIndex) => [
+            ...error.map((e, index) => [
               <TableRow hover key={index} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                 <TableCell component="th" scope="row">
                   <Typography variant="body2" color="textSecondary">

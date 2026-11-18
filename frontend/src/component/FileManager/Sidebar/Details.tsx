@@ -18,7 +18,7 @@ export interface DetailsProps {
   targetDisplayOptions?: DisplayOption;
 }
 
-const InfoBlock = ({ title, children }: { title: string; children: React.ReactNode }) => {
+const _InfoBlock = ({ title, children }: { title: string; children: React.ReactNode }) => {
   return (
     <Box>
       <Typography variant={"body2"}>{title}</Typography>

@@ -27,6 +27,20 @@ import { AppThunk } from "../store.ts";
 import { promiseId, selectOption } from "./dialog.ts";
 import { longRunningTaskWithSnackbar, refreshSingleFileSymbolicLinks, walk, walkAll } from "./file.ts";
 
+interface ZipWriter {
+  close: () => void;
+  enqueue: (item: { name?: string; stream: () => ReadableStream<Uint8Array> | null }) => void;
+}
+
+declare global {
+  interface Window {
+    ZIP: new (source: {
+      start?: (ctrl: ZipWriter) => void;
+      pull?: (ctrl: ZipWriter) => void | Promise<void>;
+    }) => ReadableStream;
+  }
+}
+
 export enum MultipleDownloadOption {
   Browser,
   StreamSaver,
@@ -81,7 +95,7 @@ export function downloadMultipleFiles(files: FileResponse[]): AppThunk {
   return async (dispatch, _getState) => {
     // Prepare download options
     const options: MultipleDownloadOption[] = [MultipleDownloadOption.StreamSaver];
-    // @ts-ignore
+    // @ts-expect-error -- showDirectoryPicker not in DOM lib types
     if (window.isSecureContext && window.showDirectoryPicker) {
       options.push(MultipleDownloadOption.Browser);
     }
@@ -125,7 +139,7 @@ export function downloadMultipleFiles(files: FileResponse[]): AppThunk {
         if (res.remember) {
           SessionManager.set(UserSettings.ArchiveDownloadMethod, finalOption);
         }
-      } catch (e) {
+      } catch {
         // User cancel selection
         return;
       }
@@ -230,7 +244,7 @@ export function browserBatchDownload(files: FileResponse[]): AppThunk {
         });
         throw new Error(i18next.t("application:fileManager.directoryDownloadPermissionError"));
       }
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -296,7 +310,7 @@ export function browserBatchDownload(files: FileResponse[]): AppThunk {
           action: DefaultCloseAction,
         });
       }
-    } catch (e) {
+    } catch {
       closeSnackbar(snackbarId);
       dispatch(setBatchDownloadProgress({ id: downloadId, progress: { isDownloading: false } }));
     } finally {
@@ -437,7 +451,7 @@ function startBrowserBatchDownloadTo(
                   overwriteOption = (await dispatch(
                     selectOption(getDownloadOverwriteOption(name), "fileManager.selectDirectoryDuplicationMethod"),
                   )) as DownloadOverwriteOption;
-                } catch (e) {
+                } catch {
                   // User cancel, use skip option
                   overwriteOption = DownloadOverwriteOption.Skip;
                 }
@@ -559,11 +573,11 @@ export function streamSaverDownload(files: FileResponse[]): AppThunk {
     const maxBatch = Math.min(10, max_batch_size ?? 1);
     let current = 0;
 
-    const readableZipStream = new (window as any).ZIP({
-      start(_ctrl: any) {
+    const readableZipStream = new window.ZIP({
+      start(_ctrl) {
         // ctrl.close()
       },
-      async pull(ctrl: any) {
+      async pull(ctrl) {
         const batch = allFiles.slice(current, current + maxBatch);
         current += batch.length;
         if (batch.length == 0) {

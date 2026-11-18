@@ -96,7 +96,7 @@ const UserSession = () => {
                   <Trans
                     i18nKey="settings.emailActivationDes"
                     ns={"dashboard"}
-                    components={[<Link href={"/admin/settings?tab=email"} />]}
+                    components={[<Link key="0" href={"/admin/settings?tab=email"} />]}
                   />
                 </NoMarginHelperText>
               </FormControl>
@@ -164,7 +164,7 @@ const UserSession = () => {
                   <Trans
                     i18nKey="settings.defaultSymbolicsDes"
                     ns={"dashboard"}
-                    components={[<Link component={RouterLink} to={"/admin/share"} />]}
+                    components={[<Link key="0" component={RouterLink} to={"/admin/share"} />]}
                   />
                 </NoMarginHelperText>
               </FormControl>
@@ -277,7 +277,7 @@ const UserSession = () => {
                   }
                 />
                 <NoMarginHelperText>
-                  <Trans i18nKey="vas.disableSubAddressEmailDes" ns={"dashboard"} components={[<Code />]} />
+                  <Trans i18nKey="vas.disableSubAddressEmailDes" ns={"dashboard"} components={[<Code key="0" />]} />
                 </NoMarginHelperText>
               </FormControl>
             </SettingForm>
@@ -291,7 +291,7 @@ const UserSession = () => {
                     onChange={(e) => setSettings({ email_subaddress_chars: e.target.value })}
                   />
                   <NoMarginHelperText>
-                    <Trans i18nKey="vas.subAddressCharsDes" ns={"dashboard"} components={[<Code />]} />
+                    <Trans i18nKey="vas.subAddressCharsDes" ns={"dashboard"} components={[<Code key="0" />]} />
                   </NoMarginHelperText>
                 </FormControl>
               </SettingForm>

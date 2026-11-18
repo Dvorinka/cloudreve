@@ -128,7 +128,7 @@ const ContextMenu = ({ fmIndex = 0 }: ContextMenuProps) => {
 
   const showOpenWithCascading = displayOpt.showOpenWithCascading && displayOpt.showOpenWithCascading();
   const showOpenWith = displayOpt.showOpenWith && displayOpt.showOpenWith();
-  let part1 =
+  const part1 =
     displayOpt.showOpen ||
     showOpenWithCascading ||
     showOpenWith ||
@@ -138,21 +138,21 @@ const ContextMenu = ({ fmIndex = 0 }: ContextMenuProps) => {
     displayOpt.showTorrentRemoteDownload ||
     displayOpt.showExtractArchive ||
     displayOpt.showUpload;
-  let part2 =
+  const part2 =
     displayOpt.showCreateFolder ||
     displayOpt.showCreateFile ||
     displayOpt.showShare ||
     displayOpt.showRename ||
     displayOpt.showCopy ||
     displayOpt.showDirectLink;
-  let part3 =
+  const part3 =
     displayOpt.showTags || displayOpt.showOrganize || displayOpt.showMore || displayOpt.showNewFileFromTemplate;
-  let part4 = displayOpt.showInfo || displayOpt.showGoToParent || displayOpt.showGoToSharedLink;
-  let part5 = displayOpt.showRestore || displayOpt.showDelete || displayOpt.showRefresh;
-  const showDivider1 = part1 && part2;
-  const showDivider2 = part2 && part3;
-  const showDivider3 = part3 && part4;
-  const showDivider4 = part4 && part5;
+  const part4 = displayOpt.showInfo || displayOpt.showGoToParent || displayOpt.showGoToSharedLink;
+  const part5 = displayOpt.showRestore || displayOpt.showDelete || displayOpt.showRefresh;
+  const _showDivider1 = part1 && part2;
+  const _showDivider2 = part2 && part3;
+  const _showDivider3 = part3 && part4;
+  const _showDivider4 = part4 && part5;
 
   const part1Elements = part1 ? (
     <>

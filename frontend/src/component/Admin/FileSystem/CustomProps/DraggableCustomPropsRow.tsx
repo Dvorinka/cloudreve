@@ -1,4 +1,5 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { TFunction } from "i18next";
 import { Box, IconButton, SvgIconProps, TableRow, useTheme } from "@mui/material";
 import React from "react";
 import { useDrag, useDrop } from "react-dnd";
@@ -32,7 +33,7 @@ export interface DraggableCustomPropsRowProps {
   onMoveDown: () => void;
   isFirst: boolean;
   isLast: boolean;
-  t: any;
+  t: TFunction;
   style?: React.CSSProperties;
 }
 

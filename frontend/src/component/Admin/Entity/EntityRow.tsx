@@ -37,7 +37,7 @@ const EntityRow = ({
 }: EntityRowProps) => {
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteLoading, _setDeleteLoading] = useState(false);
   const [openLoading, setOpenLoading] = useState(false);
 
   const onSelectClick = (e: React.MouseEvent<HTMLElement>) => {

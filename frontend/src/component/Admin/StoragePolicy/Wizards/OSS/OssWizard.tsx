@@ -92,7 +92,7 @@ const OssWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans
               i18nKey="policy.createOSSBucketDes"
               ns="dashboard"
-              components={[<Link href="https://oss.console.aliyun.com/bucket" target="_blank" />, <Code />, <Code />]}
+              components={[<Link key="0" href="https://oss.console.aliyun.com/bucket" target="_blank" />, <Code key="1" />, <Code key="2" />]}
             />
           </NoMarginHelperText>
         </SettingForm>
@@ -113,7 +113,7 @@ const OssWizard = ({ onSubmit }: AddWizardProps) => {
             onChange={(e) => setPolicy({ ...policy, server: e.target.value })}
           />
           <NoMarginHelperText>
-            <Trans i18nKey="policy.ossEndpointDes" ns="dashboard" components={[<Code />, <Code />, <Code />]} />
+            <Trans i18nKey="policy.ossEndpointDes" ns="dashboard" components={[<Code key="0" />, <Code key="1" />, <Code key="2" />]} />
             {t("policy.ossEndpointDesInternalHint")}
           </NoMarginHelperText>
         </SettingForm>
@@ -148,9 +148,9 @@ const OssWizard = ({ onSubmit }: AddWizardProps) => {
                 i18nKey="policy.ossAKDes"
                 ns="dashboard"
                 components={[
-                  <Link href="https://ram.console.aliyun.com/profile/access-keys" target="_blank" />,
-                  <Link href="https://ram.console.aliyun.com/ram/overview" target="_blank" />,
-                  <Code />,
+                  <Link key="0" href="https://ram.console.aliyun.com/profile/access-keys" target="_blank" />,
+                  <Link key="1" href="https://ram.console.aliyun.com/ram/overview" target="_blank" />,
+                  <Code key="2" />,
                 ]}
               />
             </NoMarginHelperText>

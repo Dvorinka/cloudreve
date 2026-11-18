@@ -21,7 +21,7 @@ const DrawIOViewer = () => {
 
   const displayOpt = useActionDisplayOpt(viewerState?.file ? [viewerState?.file] : []);
   const supportUpdate = useRef(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
   const [src, setSrc] = useState("");
   const [loaded, setLoaded] = useState(false);
   const pp = useRef<HTMLIFrameElement | undefined>();
@@ -58,7 +58,7 @@ const DrawIOViewer = () => {
     let msg;
     try {
       msg = JSON.parse(e.data);
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -78,8 +78,9 @@ const DrawIOViewer = () => {
         );
         break;
       case "remoteInvoke":
-        pp.current?.contentWindow &&
-          handleRemoteInvoke(pp.current?.contentWindow, msg, dispatch, viewerState, supportUpdate.current, instanceID);
+        if (pp.current?.contentWindow) {
+          handleRemoteInvoke(pp.current.contentWindow, msg, dispatch, viewerState, supportUpdate.current, instanceID);
+        }
         break;
       case "save":
         try {
@@ -94,7 +95,7 @@ const DrawIOViewer = () => {
             }),
             "*",
           );
-        } catch (e) {}
+        } catch {}
         break;
 
       case "init":
@@ -125,7 +126,7 @@ const DrawIOViewer = () => {
           if (supportUpdate.current) {
             pp.current?.contentWindow?.postMessage(JSON.stringify({ action: "remoteInvokeReady" }), "*");
           }
-        } catch (e) {
+        } catch {
           onClose();
         }
         break;
@@ -136,8 +137,8 @@ const DrawIOViewer = () => {
     dispatch(closeDrawIOViewer());
   }, [dispatch]);
 
-  const openMore = useCallback(
-    (e: React.MouseEvent<any>) => {
+  const _openMore = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(e.currentTarget);
     },
     [dispatch],

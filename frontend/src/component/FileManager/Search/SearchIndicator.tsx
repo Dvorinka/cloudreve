@@ -8,7 +8,7 @@ import Search from "../../Icons/Search.tsx";
 import { FileManagerIndex } from "../FileManager.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 
-export const StyledButtonGroup = styled(ButtonGroup)(({ theme }) => ({
+export const StyledButtonGroup = styled(ButtonGroup)(() => ({
   "& .MuiButtonGroup-firstButton, .MuiButtonGroup-lastButton": {
     "&:hover": {
       border: "none",

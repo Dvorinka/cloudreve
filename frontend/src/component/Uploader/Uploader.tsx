@@ -23,7 +23,7 @@ import TaskList from "./Popup/TaskList.tsx";
 
 let totalProgressCollector: NodeJS.Timeout | null = null;
 let lastProgressStart = -1;
-let dragCounter = 0;
+let _dragCounter = 0;
 
 const defaultClipboardImageName = "image.png";
 
@@ -85,7 +85,7 @@ const Uploader = () => {
   const uploadManager = useMemo(() => {
     return new UploadManager({
       logLevel: "INFO",
-      concurrentLimit: parseInt(SessionManager.getWithFallback(UserSettings.ConcurrentLimit)),
+      concurrentLimit: Number(SessionManager.getWithFallback(UserSettings.ConcurrentLimit)),
       overwrite: SessionManager.getWithFallback(UserSettings.UploadOverwrite),
       dropZone: document.querySelector("body"),
       onToast: (type, msg) => {
@@ -95,14 +95,14 @@ const Uploader = () => {
         if (!uploadEnabled.current) {
           return;
         }
-        dragCounter++;
+        _dragCounter++;
         setDropBgOpen((value) => !value);
       },
       onDropLeave: (_e) => {
         if (!uploadEnabled.current) {
           return false;
         }
-        dragCounter--;
+        _dragCounter--;
         setDropBgOpen((value) => !value);
         return true;
       },
@@ -121,11 +121,11 @@ const Uploader = () => {
   }, [policy, path]);
 
   const handleUploaderError = useCallback(
-    (e: any) => {
+    (e: unknown) => {
       if (e instanceof UploaderError) {
         enqueueSnackbar(e.Message(), { variant: "warning" });
       } else {
-        enqueueSnackbar(t("application:uploader.unknownError", { msg: e.message }), {
+        enqueueSnackbar(t("application:uploader.unknownError", { msg: e instanceof Error ? e.message : String(e) }), {
           variant: "error",
         });
       }
@@ -137,7 +137,7 @@ const Uploader = () => {
     (path: string, type = SelectType.File, original?: Base) => {
       dispatch(openUploadTaskList());
 
-      // eslint-disable-next-line no-unreachable
+       
       uploadManager
         .select(path, type)
         .then(taskAdded(original))

@@ -9,12 +9,10 @@ import {
   setTargetPath,
 } from "../redux/thunks/filemanager.ts";
 import { useQuery } from "../util";
-import { Filesystem } from "../util/uri.ts";
+import { defaultPath } from "../util/uri.ts";
 
 const pathQueryKey = "path";
-export const defaultPath = "cloudreve://my";
-export const defaultTrashPath = "cloudreve://trash";
-export const defaultSharedWithMePath = "cloudreve://" + Filesystem.shared_with_me;
+export { defaultPath, defaultTrashPath, defaultSharedWithMePath } from "../util/uri.ts";
 
 const useNavigation = (index: number, initialPath?: string) => {
   const dispatch = useAppDispatch();

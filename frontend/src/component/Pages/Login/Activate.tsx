@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { useQuery } from "../../../util";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import PageTitle from "../../../router/PageTitle.tsx";
 import CheckmarkCircle from "../../Icons/CheckmarkCircle.tsx";
@@ -12,9 +12,9 @@ import { sendEmailActivate } from "../../../api/api.ts";
 
 const Activate = () => {
   const { t } = useTranslation();
-  const { reg_captcha } = useAppSelector((state) => state.siteConfig.login.config);
+  const { reg_captcha: _reg_captcha } = useAppSelector((state) => state.siteConfig.login.config);
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar: _enqueueSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
   const query = useQuery();
 

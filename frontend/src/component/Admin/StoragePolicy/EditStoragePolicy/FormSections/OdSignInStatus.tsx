@@ -14,7 +14,7 @@ import { StoragePolicySettingContext } from "../StoragePolicySettingWrapper";
 
 const OdSignInStatus = () => {
   const { t } = useTranslation("dashboard");
-  const { values, setPolicy } = useContext(StoragePolicySettingContext);
+  const { values, setPolicy: _setPolicy } = useContext(StoragePolicySettingContext);
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<OauthCredentialStatus | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
@@ -74,7 +74,7 @@ const OdSignInStatus = () => {
               <Trans
                 i18nKey="policy.granted"
                 ns="dashboard"
-                components={[<TimeBadge datetime={status.last_refresh_time} variant="inherit" />]}
+                components={[<TimeBadge key="0" datetime={status.last_refresh_time} variant="inherit" />]}
               />
             </Typography>
           )}

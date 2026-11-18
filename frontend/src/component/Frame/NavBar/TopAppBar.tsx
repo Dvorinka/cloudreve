@@ -17,7 +17,7 @@ import { useContext, useState } from "react";
 import { DrawerPopover } from "./AppDrawer.tsx";
 import { PageVariant, PageVariantContext } from "../NavBarFrame.tsx";
 
-interface AppBarProps extends MuiAppBarProps {
+interface _AppBarProps extends MuiAppBarProps {
   open?: boolean;
 }
 
@@ -47,7 +47,6 @@ const TopAppBar = () => {
     dispatch(setMobileDrawerOpen(false));
   };
 
-  // @ts-ignore
   return (
     <AppBar
       elevation={0}
@@ -86,7 +85,6 @@ const TopAppBar = () => {
           <IconButton
             color="inherit"
             aria-label="open drawer"
-            // @ts-ignore
             onClick={isMobile ? onMobileMenuClicked : () => dispatch(setDrawerOpen(true))}
             edge="start"
             sx={{

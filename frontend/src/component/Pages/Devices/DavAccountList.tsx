@@ -1,11 +1,11 @@
-import * as React from "react";
 import { useCallback, useState } from "react";
-import { Box, Table, TableBody, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Table, TableBody, TableContainer, TableHead, TableRow } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { getDavAccounts } from "../../../api/api.ts";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { DavAccount } from "../../../api/setting.ts";
 import DavAccountRow from "./DavAccountRow.tsx";
+import Nothing from "../../Common/Nothing.tsx";
 import { NoWrapTableCell } from "../../Common/StyledComponents.tsx";
 import { CellHeaderWithPadding } from "../../FileManager/Dialogs/LockConflictDetails.tsx";
 import CreateDAVAccountDialog from "./CreateDAVAccountDialog.tsx";
@@ -24,7 +24,7 @@ const DavAccountList = ({ creatAccountDialog, setCreateAccountDialog }: DavAccou
 
   const [nextPageToken, setNextPageToken] = useState<string | undefined>("");
   const [accounts, setAccounts] = useState<DavAccount[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [accountInfoTarget, setAccountInfoTarget] = useState<DavAccount | undefined>();
   const [editTarget, setEditTarget] = useState<DavAccount | undefined>();
   const [editOpen, setEditOpen] = useState(false);
@@ -56,7 +56,7 @@ const DavAccountList = ({ creatAccountDialog, setCreateAccountDialog }: DavAccou
     [dispatch],
   );
 
-  const refresh = () => {
+  const _refresh = () => {
     loadNextPage([], "")();
   };
 
@@ -99,14 +99,14 @@ const DavAccountList = ({ creatAccountDialog, setCreateAccountDialog }: DavAccou
         <Table sx={{ width: "100%", tableLayout: "fixed" }} size="small">
           <TableHead>
             <TableRow>
-              <NoWrapTableCell width={200}>{t("setting.annotation")}</NoWrapTableCell>
-              <NoWrapTableCell width={200}>
+              <NoWrapTableCell sx={{ pr: 2 }}>{t("setting.annotation")}</NoWrapTableCell>
+              <NoWrapTableCell sx={{ pr: 2 }}>
                 <CellHeaderWithPadding>{t("setting.rootFolder")}</CellHeaderWithPadding>
               </NoWrapTableCell>
-              <NoWrapTableCell width={150}>{t("fileManager.permissions")}</NoWrapTableCell>
-              <NoWrapTableCell width={150}>{t("setting.proxy")}</NoWrapTableCell>
-              <NoWrapTableCell width={200}>{t("fileManager.createdAt")}</NoWrapTableCell>
-              <NoWrapTableCell width={100}>{t("fileManager.actions")}</NoWrapTableCell>
+              <NoWrapTableCell width={110}>{t("fileManager.permissions")}</NoWrapTableCell>
+              <NoWrapTableCell width={120}>{t("setting.proxy")}</NoWrapTableCell>
+              <NoWrapTableCell width={160}>{t("fileManager.createdAt")}</NoWrapTableCell>
+              <NoWrapTableCell width={80}>{t("fileManager.actions")}</NoWrapTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -134,11 +134,7 @@ const DavAccountList = ({ creatAccountDialog, setCreateAccountDialog }: DavAccou
           </TableBody>
         </Table>
         {nextPageToken == undefined && accounts.length == 0 && (
-          <Box sx={{ p: 1, width: "100%", textAlign: "center" }}>
-            <Typography variant={"caption"} color={"text.secondary"}>
-              {t("application:setting.listEmpty")}
-            </Typography>
-          </Box>
+          <Nothing size={0.8} top={40} primary={t("setting.listEmpty")} />
         )}
       </TableContainer>
     </Box>

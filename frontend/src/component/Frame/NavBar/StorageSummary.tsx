@@ -65,5 +65,6 @@ const StorageSummary = memo(() => {
     </StyledBox>
   );
 });
+StorageSummary.displayName = "StorageSummary";
 
 export default StorageSummary;

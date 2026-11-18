@@ -42,13 +42,13 @@ const getTagOptions = (targets: FileResponse[]): TagOption[] => {
   return Object.values(tags);
 };
 
-const TagMenuItems = ({ displayOpt, targets }: SubMenuItemsProps) => {
+const TagMenuItems = ({ targets }: SubMenuItemsProps) => {
   const { rootPopupState } = useContext(CascadingContext);
   const [tags, setTags] = useState<TagOption[]>(getTagOptions(targets));
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const onClick = useCallback(
-    (f: () => any) => () => {
+    (f: () => void) => () => {
       f();
       if (rootPopupState) {
         rootPopupState.close();
@@ -83,7 +83,7 @@ const TagMenuItems = ({ displayOpt, targets }: SubMenuItemsProps) => {
             },
           ]),
         );
-      } catch (e) {
+      } catch {
         return;
       }
     },

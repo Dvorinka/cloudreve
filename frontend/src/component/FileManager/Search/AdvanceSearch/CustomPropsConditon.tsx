@@ -13,7 +13,7 @@ export const CustomPropsConditon = ({
   condition: Condition;
   option: CustomProps;
 }) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   return (
     <Box
       sx={{

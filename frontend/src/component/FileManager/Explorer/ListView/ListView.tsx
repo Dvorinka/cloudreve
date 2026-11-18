@@ -14,11 +14,11 @@ const ListView = React.forwardRef(
     {
       ...rest
     }: {
-      [key: string]: any;
+      [key: string]: unknown;
     },
     ref,
   ) => {
-    const { t } = useTranslation("application");
+    const { t: _t } = useTranslation("application");
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const dispatch = useAppDispatch();
@@ -94,5 +94,6 @@ const ListView = React.forwardRef(
     );
   },
 );
+ListView.displayName = "ListView";
 
 export default ListView;

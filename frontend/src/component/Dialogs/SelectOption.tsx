@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Checkbox, DialogContent, DialogContentText, FormControlLabel, List, ListItemButton, ListItemText } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import DraggableDialog from "./DraggableDialog.tsx";
 import { selectOptionDialogPromisePool } from "../../redux/thunks/dialog.ts";
 import { closeSelectOptionDialog, setSelectOptionRememberChecked } from "../../redux/globalStateSlice.ts";
@@ -26,7 +26,7 @@ const SelectOption = () => {
   }, [dispatch, promiseId]);
 
   const onAccept = useCallback(
-    (v: any) => {
+    (v: unknown) => {
       dispatch(closeSelectOptionDialog());
       if (promiseId) {
         selectOptionDialogPromisePool[promiseId]?.resolve(
@@ -50,7 +50,7 @@ const SelectOption = () => {
         {subtitle && <DialogContentText sx={{ mb: 1 }}>{subtitle}</DialogContentText>}
         <List component="nav">
           {options?.map((o) => (
-            <ListItemButton key={o.value} disabled={o.disabled} onClick={() => onAccept(o.value)}>
+            <ListItemButton key={String(o.value)} disabled={o.disabled} onClick={() => onAccept(o.value)}>
               <ListItemText
                 primary={o.name}
                 secondary={o.description}

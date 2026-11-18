@@ -47,7 +47,7 @@ const DragPreview = ({ pointerOffset, files, ...rest }: DragPreviewProps) => {
         </Header>
       </Paper>
       {[...Array(Math.min(2, files.length - 1)).keys()].map((i) => (
-        <Paper
+        <Paper key={i}
           sx={{
             position: "absolute",
             width: size[0],
@@ -67,7 +67,7 @@ const DragPreview = ({ pointerOffset, files, ...rest }: DragPreviewProps) => {
 const DragLayer = () => {
   DisableDropDelay();
 
-  const { itemType, isDragging, item, pointerOffset } = useDragLayer((monitor) => ({
+  const { itemType: _itemType, isDragging, item, pointerOffset } = useDragLayer((monitor) => ({
     item: monitor.getItem(),
     itemType: monitor.getItemType(),
     pointerOffset: monitor.getClientOffset(),

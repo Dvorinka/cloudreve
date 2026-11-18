@@ -259,7 +259,7 @@ export function fileClicked(index: number, file: FileResponse, e?: React.MouseEv
   };
 }
 
-export function fileDoubleClicked(index: number, file: FileResponse, e?: React.MouseEvent<HTMLElement>): AppThunk {
+export function fileDoubleClicked(index: number, file: FileResponse, _e?: React.MouseEvent<HTMLElement>): AppThunk {
   return async (dispatch, _getState) => {
     const actionOpt = getActionOpt([file], Viewers);
     if (actionOpt.showOpen || actionOpt.showEnter) {
@@ -358,7 +358,7 @@ export function forceUnlockFiles(tokens: string[]): AppThunk<Promise<void>> {
   return async (dispatch, getState) => {
     try {
       await dispatch(confirmOperation(i18next.t("application:modals.forceUnlockDes")));
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -393,7 +393,7 @@ export function submitRenameFile(index: number, file: FileResponse, newName: str
           expect_id: file.id,
         }),
       );
-    } catch (e) {
+    } catch {
       return false;
     }
 
@@ -447,7 +447,7 @@ export function renameFile(index: number, file: FileResponse): AppThunk<Promise<
     let newName = "";
     try {
       newName = await dispatch(renameForm(index, file));
-    } catch (e) {
+    } catch {
       // operation canceled
       return;
     }
@@ -512,7 +512,7 @@ export function deleteFile(index: number, files: FileResponse[]): AppThunk<Promi
     let opt: DeleteOption;
     try {
       opt = await dispatch(deleteConfirmation(index, files));
-    } catch (e) {
+    } catch {
       // operation canceled
       return;
     }
@@ -554,7 +554,7 @@ export function deleteFile(index: number, files: FileResponse[]): AppThunk<Promi
 function processFileListDiff(index: number, deleted: FileResponse[], refreshIfNeeded: boolean = true): AppThunk {
   return async (dispatch, getState) => {
     const fm = getState().fileManager[index];
-    let potentialParents: string[] = [];
+    const potentialParents: string[] = [];
     dispatch(removeTreeCache({ index, value: deleted.map((f) => f.path) }));
     if (!fm.path) {
       return;
@@ -712,7 +712,7 @@ export function moveFiles(index: number, src: FileResponse[], dst: string, isCop
           try {
             await longRunningTaskWithSnackbar(dispatch(sendMoveFile(moveReq(onConflict))), moveLabel);
             success = true;
-          } catch (e) {
+          } catch {
             // Retried operation failed; error snackbar already shown.
           }
         }
@@ -747,7 +747,7 @@ export function restoreFile(index: number, src: FileResponse[]): AppThunk {
         dispatch(sendRestoreFile({ uris: src.map((f) => f.path) })),
         "application:modals.processingRestoring",
       );
-    } catch (e) {
+    } catch {
       success = false;
     }
 
@@ -770,7 +770,7 @@ export function emptyTrash(index: number): AppThunk {
   return async (dispatch, _getState) => {
     try {
       await dispatch(confirmOperation(i18next.t("application:fileManager.emptyTrashConfirm")));
-    } catch (e) {
+    } catch {
       // user canceled
       return;
     }
@@ -778,7 +778,7 @@ export function emptyTrash(index: number): AppThunk {
     let success = true;
     try {
       await longRunningTaskWithSnackbar(dispatch(sendEmptyTrash()), "application:modals.processingDeletion");
-    } catch (e) {
+    } catch {
       success = false;
     }
 
@@ -895,7 +895,7 @@ export function applyIconColor(
     ];
     try {
       await dispatch(patchFileMetadata(index, files, patches));
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -944,7 +944,7 @@ export function patchTags(index: number, files: FileResponse[], tags: Tag[]): Ap
 
     try {
       await dispatch(patchFileMetadata(index, files, patches));
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -963,7 +963,7 @@ export function applyIcon(index: number, files: FileResponse[], icon?: string): 
     ];
     try {
       await dispatch(patchFileMetadata(index, files, patches));
-    } catch (e) {
+    } catch {
       return;
     }
   };
@@ -1122,7 +1122,7 @@ export function createNew(index: number, type: string, viewer?: Viewer, template
           type == CreateNewDialogType.folder ? i18next.t("application:fileManager.newlyCreatedFolder") : newFileName,
         ),
       );
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -1170,7 +1170,7 @@ export function submitCreateNew(index: number, name: string, type: number): AppT
 
 export function walk(
   files: FileResponse[],
-  callback: (f: FileResponse[], relativePath: string) => Promise<any>,
+  callback: (f: FileResponse[], relativePath: string) => Promise<unknown>,
   walkedSymbolicLinks: string[] = [],
   relativePath: string = "",
 ): AppThunk {
@@ -1179,7 +1179,7 @@ export function walk(
 
     for (const f of files) {
       if (f.type == FileType.folder) {
-        var uri = getFileLinkedUri(f);
+        const uri = getFileLinkedUri(f);
         if (f.metadata && f.metadata[Metadata.share_redirect]) {
           if (!walkedSymbolicLinks.includes(uri)) {
             walkedSymbolicLinks.push(uri);
@@ -1377,7 +1377,7 @@ function startBatchGetDirectLinks(files: FileResponse[]): AppThunk<Promise<Direc
     const currentUser = SessionManager.currentUserGroup();
     const batchLimit = currentUser?.direct_link_batch_size ?? 0;
     await dispatch(
-      walk(files, async (children, relativePath) => {
+      walk(files, async (children, _relativePath) => {
         const childFiles = children.filter((f) => f.type == FileType.file);
         allFiles.push(...childFiles);
         if (allFiles.length > batchLimit) {

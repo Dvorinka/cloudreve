@@ -45,7 +45,6 @@ export const useFileDrag = ({ file, includeSelected, dropUri }: UseFileDragProps
   // const { addEventListenerForWindow, removeEventListenerForWindow } =
   //   useDragScrolling(["#" + MainExplorerContainerID]);
 
-  // @ts-ignore
   const [{ isDragging }, drag, preview] = useDrag({
     type: "file",
     item: {
@@ -102,7 +101,7 @@ export const useFileDrag = ({ file, includeSelected, dropUri }: UseFileDragProps
 
   useEffect(() => {
     preview(getEmptyImage(), { captureDraggingState: true });
-    // eslint-disable-next-line
+     
   }, []);
 
   useEffect(() => {
@@ -135,7 +134,7 @@ const DndWrappedFile = memo((props: DndWrappedFileProps) => {
   });
 
   const mergedRef = useCallback(
-    (val: any) => {
+    (val: HTMLElement | null) => {
       mergeRefs(drop, drag)(val);
     },
     [drop, drag],
@@ -152,5 +151,6 @@ const DndWrappedFile = memo((props: DndWrappedFileProps) => {
     />
   );
 });
+DndWrappedFile.displayName = "DndWrappedFile";
 
 export default DndWrappedFile;

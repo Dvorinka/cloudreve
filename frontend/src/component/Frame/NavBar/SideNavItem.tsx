@@ -28,13 +28,14 @@ const StyledButtonBase = styled(ButtonBase, {
 
 export interface SideNavItemBaseProps {
   active?: boolean;
-  [key: string]: any;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- passthrough props
 }
-export const SideNavItemBase = React.forwardRef(
-  ({ active, ...rest }: SideNavItemBaseProps, ref: React.Ref<HTMLElement>) => {
-    return <StyledButtonBase active={active} {...rest} ref={ref} />;
-  },
-);
+export const SideNavItemBase = React.forwardRef(function SideNavItemBase(
+  { active, ...rest }: SideNavItemBaseProps,
+  ref: React.Ref<HTMLButtonElement>,
+) {
+  return <StyledButtonBase active={active} {...rest} ref={ref} />;
+});
 
 const StyledSideNavItem = styled(SideNavItemBase)<{ level?: number }>(({ theme, level }) => ({
   "&:hover": {
@@ -51,11 +52,13 @@ export interface SideNavItemProps extends SideNavItemBaseProps {
   icon?: React.ReactNode;
   label?: string | React.ReactNode;
   level?: number;
-  [key: string]: any;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- passthrough props
 }
 
-const SideNavItem = React.forwardRef(
-  ({ icon, label, level, sx, ...rest }: SideNavItemProps, ref: React.Ref<HTMLElement>) => {
+const SideNavItem = React.forwardRef(function SideNavItem(
+  { icon, label, level, sx, ...rest }: SideNavItemProps,
+  ref: React.Ref<HTMLButtonElement>,
+) {
     return (
       <StyledSideNavItem
         level={level}
@@ -75,8 +78,7 @@ const SideNavItem = React.forwardRef(
         </Box>
         <NoWrapTypography variant={"body2"}>{label}</NoWrapTypography>
       </StyledSideNavItem>
-    );
-  },
-);
+  );
+});
 
 export default SideNavItem;

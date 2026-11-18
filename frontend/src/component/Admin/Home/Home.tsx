@@ -108,7 +108,7 @@ const Home = () => {
                     <Trans
                       i18nKey={"summary.generatedAt"}
                       ns={"dashboard"}
-                      components={[<TimeBadge datetime={summary?.metrics_summary?.generated_at} variant={"inherit"} />]}
+                      components={[<TimeBadge key="0" datetime={summary?.metrics_summary?.generated_at} variant={"inherit"} />]}
                     />
                   )}
                 </Typography>

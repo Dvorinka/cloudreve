@@ -50,6 +50,7 @@ export interface PreferenceSettingProps {
   setSetting: (setting: UserSettingsType) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace -- augmenting the global Intl namespace requires declare namespace
 declare namespace Intl {
   type Key = "calendar" | "collation" | "currency" | "numberingSystem" | "timeZone" | "unit";
 
@@ -57,7 +58,7 @@ declare namespace Intl {
 }
 
 interface ThemeOption {
-  [key: string]: any;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- theme option passthrough
 }
 
 const OutlinedSettingBox = styled(Box)(({ theme }) => ({
@@ -96,8 +97,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
   // Same availability rules as the download picker.
   const archiveMethodOptions = useMemo(() => {
     const opts = [MultipleDownloadOption.StreamSaver];
-    // @ts-ignore
-    if (window.isSecureContext && window.showDirectoryPicker) {
+    if (window.isSecureContext && typeof window.showDirectoryPicker === "function") {
       opts.push(MultipleDownloadOption.Browser);
     }
     const permission = new Boolset(SessionManager.currentUser()?.group?.permission);
@@ -150,7 +150,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
     setShowSaveButton(true);
   };
 
-  const newExtAdded = (_e: any, newValue: string[]) => {
+  const newExtAdded = (_e: React.SyntheticEvent, newValue: string[]) => {
     // Remove start dots in each value if presented
     setVersionRetentionExts(newValue.map((v) => v.replace(/^\./, "")));
     setShowSaveButton(true);
@@ -209,7 +209,7 @@ const PreferenceSetting = ({ setting, setSetting }: PreferenceSettingProps) => {
       });
   };
 
-  const onDisableViewSyncChange = (e: React.MouseEvent<HTMLElement>, enabled: boolean) => {
+  const onDisableViewSyncChange = (_: React.MouseEvent<HTMLElement>, enabled: boolean) => {
     setSetting({ ...setting, disable_view_sync: !enabled });
     setLoading(true);
     dispatch(
