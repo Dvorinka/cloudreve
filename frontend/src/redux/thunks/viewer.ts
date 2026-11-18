@@ -10,7 +10,7 @@ import SessionManager, { UserSettings } from "../../session";
 import { isTrueVal } from "../../session/utils.ts";
 import { dataUrlToBytes, fileExtension, fileNameNoExt, getFileLinkedUri, sizeToString } from "../../util";
 import { base64Encode } from "../../util/base64.ts";
-import CrUri, { CrUriPrefix } from "../../util/uri.ts";
+import CrUri, { CrUriPrefix, Filesystem } from "../../util/uri.ts";
 import { closeContextMenu, ContextMenuTypes, fileUpdated } from "../fileManagerSlice.ts";
 import {
   closeImageEditor,
@@ -58,6 +58,17 @@ export const builtInViewers = {
   model3d: "model3d",
 };
 
+function isPublicShareFile(file: FileResponse): boolean {
+  if (!file.path) {
+    return false;
+  }
+  try {
+    return new CrUri(file.path).fs() === Filesystem.share;
+  } catch {
+    return false;
+  }
+}
+
 export function openViewers(
   index: number,
   file: FileResponse,
@@ -74,10 +85,13 @@ export function openViewers(
     const ext = fileExtension(file.name) ?? "";
     const entitySize = size ?? file.size;
 
+    const onPublicShare = isPublicShareFile(file);
+
     // Try user preference — the server-synced map wins over the per-device
     // localStorage copy so the choice follows the user across devices. A
     // stale server entry (viewer removed site-wide) falls back to local.
-    if (!ignorePreference) {
+    // Public shares ignore it and use the built-in viewer.
+    if (!ignorePreference && !onPublicShare) {
       const serverPreference = SessionManager.currentLoginOrNull()?.user?.preferred_viewers?.[ext];
       const localPreference = SessionManager.get(`${UserSettings.OpenWithPrefix}${ext}`);
       const userPreference = [serverPreference, localPreference].find((id) => id && ViewersByID[id]);
@@ -89,7 +103,15 @@ export function openViewers(
 
     const viewerOptions = Viewers[ext];
 
-    if (!ignorePreference && viewerOptions.length == 1) {
+    // Public share visitors get the built-in viewer. The Open with dialog
+    // (Google Docs, Office, Photopea, …) is an extra choice they do not need.
+    if (!ignorePreference && onPublicShare && viewerOptions?.length) {
+      const predefined = viewerOptions.find((viewer) => viewer.type === ViewerType.builtin) ?? viewerOptions[0];
+      dispatch(openViewer(file, predefined, entitySize, preferredVersion));
+      return;
+    }
+
+    if (!ignorePreference && viewerOptions?.length == 1) {
       dispatch(openViewer(file, viewerOptions[0], entitySize, preferredVersion));
       return;
     }

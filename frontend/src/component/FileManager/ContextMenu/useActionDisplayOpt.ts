@@ -311,9 +311,21 @@ export const getActionOpt = (
     groupBs.enabled(GroupPermission.remote_download) &&
     firstFileSuffix == "torrent";
 
+  const onPublicShare = targets.some((file) => {
+    if (!file.path) {
+      return false;
+    }
+    try {
+      return new CrUri(file.path).fs() === Filesystem.share;
+    } catch {
+      return false;
+    }
+  });
+
   display.showOpenWithCascading = () => false;
-  display.showOpenWith = () => targets.length == 1 && !!display.hasFile && !!display.showDownload;
-  if (display.showOpen) {
+  display.showOpenWith = () =>
+    !onPublicShare && targets.length == 1 && !!display.hasFile && !!display.showDownload;
+  if (display.showOpen && !onPublicShare) {
     display.showOpenWithCascading = () =>
       !!(display.showOpen && viewerSetting && viewerSetting[firstFileSuffix ?? ""]?.length >= 1);
     display.showOpenWith = () =>
