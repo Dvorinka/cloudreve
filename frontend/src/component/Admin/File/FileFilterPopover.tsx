@@ -10,6 +10,8 @@ export interface FileFilterPopoverProps extends PopoverProps {
   setStoragePolicy: (storagePolicy: string) => void;
   owner: string;
   setOwner: (owner: string) => void;
+  excludeOwner: string;
+  setExcludeOwner: (excludeOwner: string) => void;
   name: string;
   setName: (name: string) => void;
   hasShareLink: boolean;
@@ -34,6 +36,8 @@ const FileFilterPopover = ({
   setStoragePolicy,
   owner,
   setOwner,
+  excludeOwner,
+  setExcludeOwner,
   name,
   setName,
   hasShareLink,
@@ -54,6 +58,7 @@ const FileFilterPopover = ({
   // Create local state to track changes before applying
   const [localStoragePolicy, setLocalStoragePolicy] = useState(storagePolicy);
   const [localOwner, setLocalOwner] = useState(owner);
+  const [localExcludeOwner, setLocalExcludeOwner] = useState(excludeOwner);
   const [localName, setLocalName] = useState(name);
   const [localHasShareLink, setLocalHasShareLink] = useState(hasShareLink);
   const [localHasDirectLink, setLocalHasDirectLink] = useState(hasDirectLink);
@@ -65,6 +70,7 @@ const FileFilterPopover = ({
     if (open) {
       setLocalStoragePolicy(storagePolicy);
       setLocalOwner(owner);
+      setLocalExcludeOwner(excludeOwner);
       setLocalName(name);
       setLocalHasShareLink(hasShareLink);
       setLocalHasDirectLink(hasDirectLink);
@@ -77,6 +83,7 @@ const FileFilterPopover = ({
   const handleApplyFilters = () => {
     setStoragePolicy(localStoragePolicy);
     setOwner(localOwner);
+    setExcludeOwner(localExcludeOwner);
     setName(localName);
     setHasShareLink(localHasShareLink);
     setHasDirectLink(localHasDirectLink);
@@ -89,6 +96,7 @@ const FileFilterPopover = ({
   const handleResetFilters = () => {
     setLocalStoragePolicy("");
     setLocalOwner("");
+    setLocalExcludeOwner("");
     setLocalName("");
     setLocalHasShareLink(false);
     setLocalHasDirectLink(false);
@@ -128,6 +136,16 @@ const FileFilterPopover = ({
             value={localOwner}
             onChange={(e) => setLocalOwner(e.target.value)}
             placeholder={t("user.emptyNoFilter")}
+            size="small"
+          />
+        </SettingForm>
+
+        <SettingForm title={t("file.excludeUserIDs")} noContainer lgWidth={12}>
+          <DenseFilledTextField
+            fullWidth
+            value={localExcludeOwner}
+            onChange={(e) => setLocalExcludeOwner(e.target.value)}
+            placeholder={t("file.excludeUserIDsPlaceholder")}
             size="small"
           />
         </SettingForm>

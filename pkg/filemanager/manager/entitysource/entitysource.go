@@ -341,6 +341,15 @@ func (f *entitySource) Serve(w http.ResponseWriter, r *http.Request, opts ...Ent
 			return
 		}
 
+		// Presigned remote URLs are GET. Forwarding HEAD makes S3 (and
+		// compatible stores) answer 403, so WebDAV clients that probe with
+		// HEAD — Kodi's nfo scan among them — treat the file as missing
+		// (upstream cloudreve/cloudreve#3626).
+		if r.Method == http.MethodHead {
+			f.writeRemoteHead(w, r, target.String())
+			return
+		}
+
 		start := time.Now()
 		proxy := &httputil.ReverseProxy{
 			Director: func(request *http.Request) {
@@ -816,6 +825,97 @@ func capExpireTime(expire *time.Time, min, max time.Duration) *time.Time {
 	}
 
 	return &cappedExpires
+}
+
+// contentRangeTotal reads the complete length from a Content-Range header
+// ("bytes 0-0/12345"). It returns false when the total is absent or "*".
+func contentRangeTotal(header string) (int64, bool) {
+	_, total, ok := strings.Cut(header, "/")
+	if !ok {
+		return 0, false
+	}
+	total = strings.TrimSpace(total)
+	if total == "" || total == "*" {
+		return 0, false
+	}
+	n, err := strconv.ParseInt(total, 10, 64)
+	if err != nil || n < 0 {
+		return 0, false
+	}
+	return n, true
+}
+
+// probePresignedHead checks a presigned GET URL with a one-byte range.
+// A successful upstream 200 or 206 becomes status 200 plus the object
+// length. contentLength is -1 when the upstream did not say how big the
+// object is. Other statuses pass through.
+func probePresignedHead(ctx context.Context, client *http.Client, rawURL string) (status int, contentLength int64, contentType string, err error) {
+	if client == nil {
+		client = http.DefaultClient
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return 0, -1, "", err
+	}
+	req.Header.Set("Range", "bytes=0-0")
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, -1, "", err
+	}
+	defer resp.Body.Close()
+	// A store that ignores Range would otherwise stream the whole object.
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
+
+	contentType = resp.Header.Get("Content-Type")
+	switch {
+	case resp.StatusCode == http.StatusPartialContent:
+		total, ok := contentRangeTotal(resp.Header.Get("Content-Range"))
+		if !ok {
+			total = -1
+		}
+		return http.StatusOK, total, contentType, nil
+	case resp.StatusCode == http.StatusRequestedRangeNotSatisfiable:
+		// bytes=0-0 does not overlap an empty object. The object is there.
+		return http.StatusOK, 0, contentType, nil
+	case resp.StatusCode >= 200 && resp.StatusCode < 300:
+		n := resp.ContentLength
+		if n < 0 {
+			if v := resp.Header.Get("Content-Length"); v != "" {
+				parsed, perr := strconv.ParseInt(v, 10, 64)
+				if perr == nil && parsed >= 0 {
+					n = parsed
+				}
+			}
+		}
+		return http.StatusOK, n, contentType, nil
+	default:
+		return resp.StatusCode, -1, "", nil
+	}
+}
+
+func (f *entitySource) writeRemoteHead(w http.ResponseWriter, r *http.Request, rawURL string) {
+	// f.o.Ctx is the caller context used to sign the URL. The probe itself
+	// must follow the HTTP request so a client disconnect cancels it.
+	status, length, contentType, err := probePresignedHead(r.Context(), nil, rawURL)
+	if err != nil {
+		if f.l != nil {
+			f.l.Error("WebDAV HEAD probe failed: %s", err)
+		}
+		http.Error(w, "upstream request failed", http.StatusBadGateway)
+		return
+	}
+	// The database size is the plaintext length clients will receive from
+	// GET. Prefer it once the store has confirmed the object exists.
+	if status == http.StatusOK && f.e != nil && f.e.Size() > 0 {
+		length = f.e.Size()
+	}
+	if contentType != "" {
+		w.Header().Set("Content-Type", contentType)
+	}
+	if length >= 0 {
+		w.Header().Set("Content-Length", strconv.FormatInt(length, 10))
+	}
+	w.WriteHeader(status)
 }
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition

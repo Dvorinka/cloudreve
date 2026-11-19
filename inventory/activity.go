@@ -35,10 +35,11 @@ type (
 
 	ListActivityArgs struct {
 		PaginationArgs
-		Type    *int
-		FileID  int
-		ActorID int
-		ShareID int
+		Type            *int
+		FileID          int
+		ActorID         int
+		ShareID         int
+		ExcludeActorIDs []int
 	}
 )
 
@@ -88,6 +89,9 @@ func (c *activityClient) List(ctx context.Context, args *ListActivityArgs) ([]*e
 	}
 	if args.ActorID > 0 {
 		query = query.Where(activityevent.ActorIDEQ(args.ActorID))
+	}
+	if len(args.ExcludeActorIDs) > 0 {
+		query = query.Where(activityevent.ActorIDNotIn(args.ExcludeActorIDs...))
 	}
 	if args.ShareID > 0 {
 		query = query.Where(activityevent.ShareIDEQ(args.ShareID))

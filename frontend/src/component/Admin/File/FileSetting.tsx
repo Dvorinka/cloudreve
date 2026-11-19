@@ -42,6 +42,7 @@ import { ImportFileDialog } from "./ImportFileDialog";
 
 export const StoragePolicyQuery = "storage_policy";
 export const OwnerQuery = "owner";
+export const ExcludeOwnerQuery = "exclude_owner";
 export const NameQuery = "name";
 export const HasDirectLinkQuery = "has_direct_link";
 export const SharedQuery = "shared";
@@ -65,6 +66,7 @@ const FileSetting = () => {
   const [orderDirection, setOrderDirection] = useQueryState(OrderDirectionQuery, { defaultValue: "desc" });
   const [storagePolicy, setStoragePolicy] = useQueryState(StoragePolicyQuery, { defaultValue: "" });
   const [owner, setOwner] = useQueryState(OwnerQuery, { defaultValue: "" });
+  const [excludeOwner, setExcludeOwner] = useQueryState(ExcludeOwnerQuery, { defaultValue: "" });
   const [name, setName] = useQueryState(NameQuery, { defaultValue: "" });
   const [hasDirectLink, setHasDirectLink] = useQueryState(HasDirectLinkQuery, { defaultValue: "" });
   const [shared, setShared] = useQueryState(SharedQuery, { defaultValue: "" });
@@ -91,16 +93,30 @@ const FileSetting = () => {
   const clearFilters = useCallback(() => {
     setStoragePolicy("");
     setOwner("");
+    setExcludeOwner("");
     setName("");
     setHasDirectLink("");
     setShared("");
     setUploading("");
     setDeleted("");
-  }, [setStoragePolicy, setOwner, setName, setHasDirectLink, setShared, setUploading, setDeleted]);
+  }, [setStoragePolicy, setOwner, setExcludeOwner, setName, setHasDirectLink, setShared, setUploading, setDeleted]);
 
   useEffect(() => {
     fetchFiles();
-  }, [page, pageSize, orderBy, orderDirection, storagePolicy, owner, name, hasDirectLink, shared, uploading, deleted]);
+  }, [
+    page,
+    pageSize,
+    orderBy,
+    orderDirection,
+    storagePolicy,
+    owner,
+    excludeOwner,
+    name,
+    hasDirectLink,
+    shared,
+    uploading,
+    deleted,
+  ]);
 
   const fetchFiles = () => {
     setLoading(true);
@@ -114,6 +130,7 @@ const FileSetting = () => {
         conditions: {
           file_policy: storagePolicy,
           file_user: owner,
+          file_user_exclude: excludeOwner,
           file_name: name,
           file_direct_link: hasDirectLink === "true" ? "true" : "",
           file_shared: shared === "true" ? "true" : "",
@@ -187,8 +204,8 @@ const FileSetting = () => {
   };
 
   const hasActiveFilters = useMemo(() => {
-    return !!(storagePolicy || owner || name || hasDirectLink || shared || uploading || deleted);
-  }, [storagePolicy, owner, name, hasDirectLink, shared, uploading, deleted]);
+    return !!(storagePolicy || owner || excludeOwner || name || hasDirectLink || shared || uploading || deleted);
+  }, [storagePolicy, owner, excludeOwner, name, hasDirectLink, shared, uploading, deleted]);
 
   const handleFileDialogOpen = (id: number) => {
     setFileDialogID(id);
@@ -234,6 +251,8 @@ const FileSetting = () => {
             setStoragePolicy={setStoragePolicy}
             owner={owner}
             setOwner={setOwner}
+            excludeOwner={excludeOwner}
+            setExcludeOwner={setExcludeOwner}
             name={name}
             setName={setName}
             clearFilters={clearFilters}

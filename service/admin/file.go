@@ -146,13 +146,14 @@ func (service *FileBatchService) Delete(c *gin.Context) serializer.Response {
 }
 
 const (
-	fileNameCondition       = "file_name"
-	fileUserCondition       = "file_user"
-	filePolicyCondition     = "file_policy"
-	fileMetadataCondition   = "file_metadata"
-	fileSharedCondition     = "file_shared"
-	fileDirectLinkCondition = "file_direct_link"
-	fileDeletedCondition    = "file_deleted"
+	fileNameCondition        = "file_name"
+	fileUserCondition        = "file_user"
+	fileUserExcludeCondition = "file_user_exclude"
+	filePolicyCondition      = "file_policy"
+	fileMetadataCondition    = "file_metadata"
+	fileSharedCondition      = "file_shared"
+	fileDirectLinkCondition  = "file_direct_link"
+	fileDeletedCondition     = "file_deleted"
 )
 
 func (service *AdminListService) Files(c *gin.Context) (*ListFileResponse, error) {
@@ -181,6 +182,14 @@ func (service *AdminListService) Files(c *gin.Context) (*ListFileResponse, error
 		if err != nil {
 			return nil, serializer.NewError(serializer.CodeParamErr, "Invalid user ID", err)
 		}
+	}
+
+	excludeUserIDs, err := parseIDList(service.Conditions[fileUserExcludeCondition])
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid excluded user ID", err)
+	}
+	if overlapsID(userID, excludeUserIDs) {
+		return nil, serializer.NewError(serializer.CodeParamErr, "User ID is both included and excluded", nil)
 	}
 
 	if service.Conditions[filePolicyCondition] != "" {
@@ -217,6 +226,7 @@ func (service *AdminListService) Files(c *gin.Context) (*ListFileResponse, error
 			Order:    inventory.OrderDirection(service.OrderDirection),
 		},
 		UserID:          userID,
+		ExcludeUserIDs:  excludeUserIDs,
 		StoragePolicyID: policyID,
 		Name:            service.Conditions[fileNameCondition],
 		HasMetadata:     metadata,

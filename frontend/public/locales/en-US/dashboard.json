@@ -1615,6 +1615,8 @@
     "uploading": "Uploading",
     "unknownUploader": "Unknown",
     "uploaderID": "Owner ID",
+    "excludeUserIDs": "Exclude owner IDs",
+    "excludeUserIDsPlaceholder": "1, 2, 3",
     "searchFileName": "Search file name",
     "storagePolicy": "Storage policy",
     "selectTargetUser": "Select target user",
@@ -1707,6 +1709,8 @@
     "linkedShare": "Linked share",
     "rawContent": "Raw content",
     "noEvents": "No events recorded yet",
+    "excludeActorIDs": "Exclude user IDs",
+    "excludeActorIDsPlaceholder": "Exclude user IDs, e.g. 1, 2",
     "confirmDelete": "Are you sure you want to delete this event?",
     "deleteXEvents": "Delete {{num}} events",
     "confirmBatchDelete": "Are you sure you want to delete {{num}} events?"

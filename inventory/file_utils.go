@@ -28,16 +28,15 @@ func (f *fileClient) searchQuery(q *ent.FileQuery, args *SearchFileParameters, p
 		if ownerId > 0 {
 			q = q.Where(file.OwnerID(ownerId))
 		}
-	} else {
-		q = q.Where(
-			file.HasParentWith(
-				file.IDIn(lo.Map(parents, func(item *ent.File, index int) int {
-					return item.ID
-				})...,
-				),
-			),
-		)
 	}
+	// Parent membership is applied by childFileQuery. Repeating it here
+	// binds every parent id a second time, and PostgreSQL rejects the
+	// statement once one level holds ~32k folders
+	// (upstream cloudreve/cloudreve#3625).
+	// shortcut: one level above sqlParamLimit still fails (32766 on
+	// SQLite/MySQL, 34464 on PostgreSQL). Chunk the parent list inside
+	// GetChildFiles, before childFileQuery builds one IN, so walk and
+	// search both stay under the cap.
 
 	if args.FileIDs != nil {
 		if len(args.FileIDs) == 0 {
