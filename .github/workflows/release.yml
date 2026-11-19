@@ -100,6 +100,10 @@ jobs:
           # so cap harder and give the GC a soft limit.
           GOFLAGS: "-p=2"
           GOMEMLIMIT: "4GiB"
+          # The before-hook runs build-assets.sh → vite, which balloons past
+          # the 6g job ceiling (SIGKILL, exit 137). Cap the node heap so GC
+          # kicks in before the cgroup does.
+          NODE_OPTIONS: "--max-old-space-size=4096"
       # Floating tags (latest, v4, slim) moved out of goreleaser's
       # docker_manifests so a re-release of an old tag can't regress them.
       # The script no-ops unless the released tag is the newest v* tag.
@@ -261,8 +265,11 @@ jobs:
         shell: bash
         run: |
           set -e
-          for _ in $(seq 1 90); do
+          # Heartbeat every poll: KERN's silence watchdog kills steps that
+          # produce no output for 20m while prepare waits in the queue.
+          for i in $(seq 1 90); do
             gh release view "$TAG" >/dev/null 2>&1 && break
+            echo "waiting for GitHub release $TAG ($i/90)"
             sleep 20
           done
           # The prepare job normally created this already; create as a
@@ -414,8 +421,9 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -e
-          for _ in $(seq 1 90); do
+          for i in $(seq 1 90); do
             gh release view "$TAG" >/dev/null 2>&1 && break
+            echo "waiting for GitHub release $TAG ($i/90)"
             sleep 20
           done
           gh release view "$TAG" >/dev/null 2>&1 || \
