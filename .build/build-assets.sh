@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
-export NODE_OPTIONS="--max-old-space-size=8192"
+# KERN release runners cap the job at 6g; an 8g heap lets vite get
+# SIGKILLed mid-build. 4g leaves headroom for esbuild and shell overhead.
+export NODE_OPTIONS="--max-old-space-size=4096"
 
 # This script is used to build the assets for the application.
 cd frontend
