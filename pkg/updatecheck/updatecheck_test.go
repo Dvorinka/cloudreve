@@ -25,3 +25,51 @@ func TestIsNewer(t *testing.T) {
 		}
 	}
 }
+
+func TestParseAtomReleases(t *testing.T) {
+	feed := `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <updated>2026-11-19T13:51:53Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/Dvorinka/cloudreve/releases/tag/desktop-v0.3.21"/>
+    <title>Cloudreve desktop-v0.3.21</title>
+    <content type="html">&lt;p&gt;desktop notes&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <updated>2026-11-19T13:26:07Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/Dvorinka/cloudreve/releases/tag/v4.23.16"/>
+    <title>Cloudreve v4.23.16</title>
+    <content type="html">&lt;h2&gt;What&amp;#39;s Changed&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;fix things&lt;/li&gt;&lt;/ul&gt;</content>
+  </entry>
+  <entry>
+    <updated>2026-11-18T18:46:57Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/Dvorinka/cloudreve/releases/tag/android-v1.3.2"/>
+    <title>Cloudreve android-v1.3.2</title>
+    <content type="html">&lt;p&gt;android notes&lt;/p&gt;</content>
+  </entry>
+</feed>`
+
+	rel, err := parseAtomReleases([]byte(feed))
+	if err != nil {
+		t.Fatalf("parseAtomReleases: %v", err)
+	}
+	if rel.Version != "4.23.16" {
+		t.Errorf("Version = %q, want 4.23.16", rel.Version)
+	}
+	if rel.URL != "https://github.com/Dvorinka/cloudreve/releases/tag/v4.23.16" {
+		t.Errorf("URL = %q", rel.URL)
+	}
+	if rel.PublishedAt.IsZero() {
+		t.Error("PublishedAt is zero")
+	}
+	if rel.Notes != "What's Changed fix things" {
+		t.Errorf("Notes = %q", rel.Notes)
+	}
+}
+
+func TestParseAtomReleasesNone(t *testing.T) {
+	feed := `<feed xmlns="http://www.w3.org/2005/Atom"><entry><link rel="alternate" href="https://github.com/Dvorinka/cloudreve/releases/tag/desktop-v1"/></entry></feed>`
+	if _, err := parseAtomReleases([]byte(feed)); err == nil {
+		t.Error("expected error when no server tag present")
+	}
+}
