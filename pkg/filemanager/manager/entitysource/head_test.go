@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -55,4 +56,37 @@ func TestProbePresignedHeadTranslatesRangeAndRejectsForbidden(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, status)
 	require.Equal(t, int64(0), length)
+}
+
+func TestWriteRemoteHeadFollowsRequestCancel(t *testing.T) {
+	release := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-release:
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	t.Cleanup(func() {
+		close(release)
+		srv.Close()
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	req := httptest.NewRequest(http.MethodHead, "http://cloudreve.local/f", nil).WithContext(ctx)
+	rec := httptest.NewRecorder()
+	src := &entitySource{o: &EntitySourceOptions{Ctx: context.Background()}}
+
+	done := make(chan struct{})
+	go func() {
+		src.writeRemoteHead(rec, req, srv.URL)
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("HEAD probe ignored a cancelled request context")
+	}
+	require.Equal(t, http.StatusBadGateway, rec.Code)
 }

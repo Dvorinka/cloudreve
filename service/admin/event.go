@@ -41,6 +41,9 @@ func (s *EventListService) Get(c *gin.Context) (*EventListResponse, error) {
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid excluded user ID", err)
 	}
+	if overlapsID(s.ActorID, excludeActorIDs) {
+		return nil, serializer.NewError(serializer.CodeParamErr, "User ID is both included and excluded", nil)
+	}
 
 	events, total, err := dep.ActivityClient().List(c, &inventory.ListActivityArgs{
 		PaginationArgs: inventory.PaginationArgs{

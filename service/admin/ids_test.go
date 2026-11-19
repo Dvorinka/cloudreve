@@ -21,3 +21,10 @@ func TestParseIDList(t *testing.T) {
 	_, err = parseIDList("0")
 	require.Error(t, err)
 }
+
+func TestOverlapsID(t *testing.T) {
+	require.True(t, overlapsID(2, []int{1, 2}))
+	require.False(t, overlapsID(0, []int{0}))
+	require.False(t, overlapsID(4, []int{1, 2}))
+	require.False(t, overlapsID(1, nil))
+}

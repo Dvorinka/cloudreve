@@ -894,11 +894,9 @@ func probePresignedHead(ctx context.Context, client *http.Client, rawURL string)
 }
 
 func (f *entitySource) writeRemoteHead(w http.ResponseWriter, r *http.Request, rawURL string) {
-	ctx := r.Context()
-	if f.o != nil && f.o.Ctx != nil {
-		ctx = f.o.Ctx
-	}
-	status, length, contentType, err := probePresignedHead(ctx, nil, rawURL)
+	// f.o.Ctx is the caller context used to sign the URL. The probe itself
+	// must follow the HTTP request so a client disconnect cancels it.
+	status, length, contentType, err := probePresignedHead(r.Context(), nil, rawURL)
 	if err != nil {
 		if f.l != nil {
 			f.l.Error("WebDAV HEAD probe failed: %s", err)

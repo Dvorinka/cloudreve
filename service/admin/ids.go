@@ -2,9 +2,16 @@ package admin
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
+
+// overlapsID reports that a positive included id is also excluded.
+// An empty include (id <= 0) is not a filter, so it cannot conflict.
+func overlapsID(id int, ids []int) bool {
+	return id > 0 && slices.Contains(ids, id)
+}
 
 // parseIDList splits a comma-separated list of positive integer ids.
 // Empty input is no filter. Duplicates are dropped. Order is kept.

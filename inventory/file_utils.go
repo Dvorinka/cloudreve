@@ -33,9 +33,10 @@ func (f *fileClient) searchQuery(q *ent.FileQuery, args *SearchFileParameters, p
 	// binds every parent id a second time, and PostgreSQL rejects the
 	// statement once one level holds ~32k folders
 	// (upstream cloudreve/cloudreve#3625).
-	// shortcut: one level above the database parameter cap still fails
-	// (32766 on SQLite/MySQL, 65535 on PostgreSQL). Chunk the parent list
-	// in baseNavigator.search when a tree exceeds that.
+	// shortcut: one level above sqlParamLimit still fails (32766 on
+	// SQLite/MySQL, 34464 on PostgreSQL). Chunk the parent list inside
+	// GetChildFiles, before childFileQuery builds one IN, so walk and
+	// search both stay under the cap.
 
 	if args.FileIDs != nil {
 		if len(args.FileIDs) == 0 {

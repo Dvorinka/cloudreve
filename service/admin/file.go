@@ -188,6 +188,9 @@ func (service *AdminListService) Files(c *gin.Context) (*ListFileResponse, error
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid excluded user ID", err)
 	}
+	if overlapsID(userID, excludeUserIDs) {
+		return nil, serializer.NewError(serializer.CodeParamErr, "User ID is both included and excluded", nil)
+	}
 
 	if service.Conditions[filePolicyCondition] != "" {
 		policyID, err = strconv.Atoi(service.Conditions[filePolicyCondition])
