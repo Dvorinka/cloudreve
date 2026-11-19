@@ -3215,6 +3215,7 @@ export function adminListEvents(args: {
   pageSize: number;
   type?: number;
   actor_id?: string;
+  exclude_actor_id?: string;
   file_id?: string;
   share_id?: string;
 }): ThunkResponse<ActivityEventListResponse> {
@@ -3225,6 +3226,9 @@ export function adminListEvents(args: {
     }
     if (args.actor_id) {
       params.set("actor_id", args.actor_id);
+    }
+    if (args.exclude_actor_id) {
+      params.set("exclude_actor_id", args.exclude_actor_id);
     }
     if (args.file_id) {
       params.set("file_id", args.file_id);

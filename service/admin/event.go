@@ -13,12 +13,13 @@ import (
 type (
 	// EventListService lists audit events for the admin feed.
 	EventListService struct {
-		Page     int `form:"page" binding:"required,min=1"`
-		PageSize int `form:"page_size" binding:"required,min=1,max=200"`
-		Type     int `form:"type" binding:"omitempty,min=0"`
-		ActorID  int `form:"actor_id" binding:"omitempty,min=0"`
-		FileID   int `form:"file_id" binding:"omitempty,min=0"`
-		ShareID  int `form:"share_id" binding:"omitempty,min=0"`
+		Page           int    `form:"page" binding:"required,min=1"`
+		PageSize       int    `form:"page_size" binding:"required,min=1,max=200"`
+		Type           int    `form:"type" binding:"omitempty,min=0"`
+		ActorID        int    `form:"actor_id" binding:"omitempty,min=0"`
+		ExcludeActorID string `form:"exclude_actor_id"`
+		FileID         int    `form:"file_id" binding:"omitempty,min=0"`
+		ShareID        int    `form:"share_id" binding:"omitempty,min=0"`
 	}
 	EventListParamCtx struct{}
 
@@ -36,15 +37,21 @@ func (s *EventListService) Get(c *gin.Context) (*EventListResponse, error) {
 		typeFilter = &s.Type
 	}
 
+	excludeActorIDs, err := parseIDList(s.ExcludeActorID)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid excluded user ID", err)
+	}
+
 	events, total, err := dep.ActivityClient().List(c, &inventory.ListActivityArgs{
 		PaginationArgs: inventory.PaginationArgs{
 			Page:     s.Page - 1,
 			PageSize: s.PageSize,
 		},
-		Type:    typeFilter,
-		FileID:  s.FileID,
-		ActorID: s.ActorID,
-		ShareID: s.ShareID,
+		Type:            typeFilter,
+		FileID:          s.FileID,
+		ActorID:         s.ActorID,
+		ShareID:         s.ShareID,
+		ExcludeActorIDs: excludeActorIDs,
 	})
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to list events", err)

@@ -72,6 +72,9 @@ type (
 		// Deleted filters by soft-delete state: nil lists everything (current
 		// behavior), true lists only trash, false only live files.
 		Deleted *bool
+		// ExcludeUserIDs drops files owned by these users. Applied before
+		// pagination so totals and pages match the filtered set.
+		ExcludeUserIDs []int
 	}
 
 	MetadataFilter struct {
@@ -1343,6 +1346,9 @@ func (f *fileClient) FlattenListFiles(ctx context.Context, args *FlattenListFile
 
 	if args.UserID > 0 {
 		query = query.Where(file.OwnerID(args.UserID))
+	}
+	if len(args.ExcludeUserIDs) > 0 {
+		query = query.Where(file.OwnerIDNotIn(args.ExcludeUserIDs...))
 	}
 
 	if args.StoragePolicyID > 0 {

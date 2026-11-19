@@ -20,7 +20,7 @@ import { adminListEvents } from "../../../api/api";
 import { ActivityEvent } from "../../../api/dashboard";
 import { AuditLogType } from "../../../api/explorer";
 import { useAppDispatch } from "../../../redux/hooks";
-import { DenseSelect } from "../../Common/StyledComponents";
+import { DenseFilledTextField, DenseSelect } from "../../Common/StyledComponents";
 import { SquareMenuItem } from "../../FileManager/ContextMenu/ContextMenu";
 import PageContainer from "../../Pages/PageContainer";
 import PageHeader from "../../Pages/PageHeader";
@@ -30,6 +30,7 @@ import { getEventName } from "../Settings/Event/Events";
 import { StyledTableContainerPaper } from "../../Common/StyledComponents";
 
 export const TypeQuery = "type";
+export const ExcludeActorQuery = "exclude_actor";
 
 const EventRow = ({ event }: { event: ActivityEvent }) => {
   const { t } = useTranslation("dashboard");
@@ -92,20 +93,42 @@ const EventList = () => {
   const [page, setPage] = useQueryState(PageQuery, { defaultValue: "1" });
   const [pageSize, setPageSize] = useQueryState(PageSizeQuery, { defaultValue: "25" });
   const [type, setType] = useQueryState(TypeQuery, { defaultValue: "" });
+  const [excludeActor, setExcludeActor] = useQueryState(ExcludeActorQuery, { defaultValue: "" });
+  const [excludeDraft, setExcludeDraft] = useState(excludeActor);
 
   const pageInt = parseInt(page) ?? 1;
   const pageSizeInt = parseInt(pageSize) ?? 25;
   const typeInt = parseInt(type) || 0;
 
   useEffect(() => {
+    setExcludeDraft(excludeActor);
+  }, [excludeActor]);
+
+  useEffect(() => {
     setLoading(true);
-    dispatch(adminListEvents({ page: pageInt, pageSize: pageSizeInt, type: typeInt }))
+    dispatch(
+      adminListEvents({
+        page: pageInt,
+        pageSize: pageSizeInt,
+        type: typeInt,
+        exclude_actor_id: excludeActor,
+      }),
+    )
       .then((res) => {
         setEvents(res.events);
         setCount(res.total);
       })
       .finally(() => setLoading(false));
-  }, [page, pageSize, type]);
+  }, [page, pageSize, type, excludeActor]);
+
+  const commitExclude = () => {
+    const next = excludeDraft.trim();
+    if (next === excludeActor) {
+      return;
+    }
+    setExcludeActor(next);
+    setPage("1");
+  };
 
   return (
     <PageContainer>
@@ -128,6 +151,20 @@ const EventList = () => {
             </SquareMenuItem>
           ))}
         </DenseSelect>
+        <DenseFilledTextField
+          size="small"
+          value={excludeDraft}
+          placeholder={t("event.excludeActorIDsPlaceholder")}
+          aria-label={t("event.excludeActorIDs")}
+          onChange={(e) => setExcludeDraft(e.target.value)}
+          onBlur={commitExclude}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              commitExclude();
+            }
+          }}
+          sx={{ minWidth: 220 }}
+        />
       </Stack>
       <StyledTableContainerPaper>
         <Table size={isMobile ? "small" : "medium"}>
