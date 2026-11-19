@@ -46,6 +46,11 @@ jobs:
 
   server:
     runs-on: [self-hosted, linux, x64]
+    env:
+      # GoReleaser builds 11 Go targets then four buildx images (Dockerfile
+      # and Dockerfile.slim, amd64+arm64) in one job; the default work-root
+      # budget (half of free disk at start) was exceeded mid-build.
+      KERN_JOB_DISK: 24G
     steps:
       # Full fetch so retag-floating.sh can compare against every v* tag.
       - uses: actions/checkout@v4
