@@ -114,4 +114,9 @@ interface ApiService {
 
     @PUT("api/v4/share")
     suspend fun createShare(@Body request: ShareCreateRequest): Response<ApiResponse<String>>
+
+    // Raw image body; the server reads Content-Type to pick the decoder and
+    // requires a known Content-Length, so callers must send buffered bytes.
+    @PUT("api/v4/user/setting/avatar")
+    suspend fun uploadAvatar(@Body body: RequestBody): Response<ApiResponse<Unit>>
 }

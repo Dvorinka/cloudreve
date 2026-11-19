@@ -128,6 +128,7 @@ class LoginViewModel(
             accessExpiresAt = ApiClient.parseExpiresAt(login.token.accessExpires),
             email = login.user.email,
             nick = login.user.nickname,
+            userId = login.user.id,
         )
         _state.value = _state.value.copy(loading = false, loggedIn = true, twoFactorSessionId = null, otp = "")
     }
@@ -194,6 +195,7 @@ class LoginViewModel(
                     } else 0L,
                     email = info?.email ?: "",
                     nick = info?.name?.ifEmpty { info.preferredUsername } ?: "",
+                    userId = info?.sub ?: "",
                 )
                 _state.value = _state.value.copy(loading = false, loggedIn = true)
             } catch (e: Exception) {

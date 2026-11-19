@@ -36,6 +36,8 @@ class SessionManager(private val context: Context) {
         val accessExpiresAt = longPreferencesKey("access_expires_at")
         val userEmail = stringPreferencesKey("user_email")
         val userNick = stringPreferencesKey("user_nick")
+        // Hashid user id; needed for /user/avatar/:id and /user/info/:id.
+        val userId = stringPreferencesKey("user_id")
         val pendingOauthVerifier = stringPreferencesKey("pending_oauth_verifier")
         val pendingOauthState = stringPreferencesKey("pending_oauth_state")
     }
@@ -44,6 +46,7 @@ class SessionManager(private val context: Context) {
     val accessToken: Flow<String> = context.sessionStore.data.map { it[Keys.accessToken] ?: "" }
     val userEmail: Flow<String> = context.sessionStore.data.map { it[Keys.userEmail] ?: "" }
     val userNick: Flow<String> = context.sessionStore.data.map { it[Keys.userNick] ?: "" }
+    val userId: Flow<String> = context.sessionStore.data.map { it[Keys.userId] ?: "" }
     val isLoggedIn: Flow<Boolean> = context.sessionStore.data.map {
         !it[Keys.refreshToken].isNullOrEmpty() && !it[Keys.serverUrl].isNullOrEmpty()
     }
@@ -54,6 +57,7 @@ class SessionManager(private val context: Context) {
         context.sessionStore.data.first()[Keys.refreshToken] ?: ""
     suspend fun accessExpiresAtNow(): Long =
         context.sessionStore.data.first()[Keys.accessExpiresAt] ?: 0L
+    suspend fun userIdNow(): String = userId.first()
 
     suspend fun saveServerUrl(url: String) {
         context.sessionStore.edit { it[Keys.serverUrl] = normalizeServerUrl(url) }
@@ -85,6 +89,7 @@ class SessionManager(private val context: Context) {
         accessExpiresAt: Long,
         email: String,
         nick: String,
+        userId: String = "",
     ) {
         context.sessionStore.edit {
             it[Keys.accessToken] = accessToken
@@ -92,6 +97,7 @@ class SessionManager(private val context: Context) {
             it[Keys.accessExpiresAt] = accessExpiresAt
             it[Keys.userEmail] = email
             it[Keys.userNick] = nick
+            it[Keys.userId] = userId
         }
     }
 
@@ -118,6 +124,7 @@ class SessionManager(private val context: Context) {
             it.remove(Keys.refreshToken)
             it.remove(Keys.accessExpiresAt)
             it.remove(Keys.userNick)
+            it.remove(Keys.userId)
             it.remove(Keys.pendingOauthVerifier)
             it.remove(Keys.pendingOauthState)
         }
