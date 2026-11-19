@@ -100,6 +100,10 @@ jobs:
           # so cap harder and give the GC a soft limit.
           GOFLAGS: "-p=2"
           GOMEMLIMIT: "4GiB"
+          # The before-hook runs build-assets.sh → vite, which balloons past
+          # the 6g job ceiling (SIGKILL, exit 137). Cap the node heap so GC
+          # kicks in before the cgroup does.
+          NODE_OPTIONS: "--max-old-space-size=4096"
       # Floating tags (latest, v4, slim) moved out of goreleaser's
       # docker_manifests so a re-release of an old tag can't regress them.
       # The script no-ops unless the released tag is the newest v* tag.
