@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/gob"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -22,6 +24,7 @@ const (
 	// ReleaseRepo is the GitHub repository releases are fetched from.
 	ReleaseRepo     = "Dvorinka/cloudreve"
 	releaseAPI      = "https://api.github.com/repos/" + ReleaseRepo + "/releases"
+	releasesAtom    = "https://github.com/" + ReleaseRepo + "/releases.atom"
 	releaseTTL      = 6 * time.Hour
 	cacheKey        = "server_update_latest"
 	checkTimeout    = 15 * time.Second
@@ -31,6 +34,11 @@ const (
 // serverTag matches server release tags (v4.19.2, v4.19.2-rc1) and rejects the
 // desktop-v* / android-v* tag families living in the same repository.
 var serverTag = regexp.MustCompile(`^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$`)
+
+var (
+	atomTagLink = regexp.MustCompile(`releases/tag/([^/?#\s]+)`)
+	htmlTag     = regexp.MustCompile(`<[^>]+>`)
+)
 
 func init() {
 	// Required for *ReleaseInfo to survive a round trip through the
@@ -71,6 +79,28 @@ func LatestRelease(ctx context.Context, kv cache.Driver) (*ReleaseInfo, error) {
 		}
 	}
 
+	rel, err := latestReleaseAPI(ctx)
+	if err != nil {
+		// api.github.com allows 60 unauthenticated requests/hour per source
+		// IP and secondary-limits datacenter IPs aggressively — self-hosted
+		// instances see 403s. The releases Atom feed is outside that budget.
+		rel, err = latestReleaseAtom(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	rel.Current = strings.TrimPrefix(constants.BackendVersion, "v")
+	rel.Newer = IsNewer(rel.Current, rel.Version)
+
+	if kv != nil {
+		_ = kv.Set(cacheKey, rel, int(releaseTTL.Seconds()))
+	}
+	return rel, nil
+}
+
+// latestReleaseAPI is the primary path: the GitHub REST releases list.
+func latestReleaseAPI(ctx context.Context) (*ReleaseInfo, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, releaseAPI, nil)
 	if err != nil {
 		return nil, err
@@ -107,19 +137,94 @@ func LatestRelease(ctx context.Context, kv cache.Driver) (*ReleaseInfo, error) {
 		return nil, fmt.Errorf("no server release found")
 	}
 
-	rel := &ReleaseInfo{
+	return &ReleaseInfo{
 		Version:     strings.TrimPrefix(gh.TagName, "v"),
 		URL:         gh.HTMLURL,
 		Notes:       gh.Body,
 		PublishedAt: gh.PublishedAt,
-		Current:     strings.TrimPrefix(constants.BackendVersion, "v"),
-	}
-	rel.Newer = IsNewer(rel.Current, rel.Version)
+	}, nil
+}
 
-	if kv != nil {
-		_ = kv.Set(cacheKey, rel, int(releaseTTL.Seconds()))
+// latestReleaseAtom is the fallback: the releases Atom feed on github.com,
+// which is not subject to the api.github.com rate limit.
+func latestReleaseAtom(ctx context.Context) (*ReleaseInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, releasesAtom, nil)
+	if err != nil {
+		return nil, err
 	}
-	return rel, nil
+	req.Header.Set("User-Agent", "cloudreve-update-check")
+
+	client := &http.Client{Timeout: checkTimeout}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("release check failed: %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if err != nil {
+		return nil, err
+	}
+	return parseAtomReleases(body)
+}
+
+type atomFeed struct {
+	Entries []struct {
+		Link []struct {
+			Rel  string `xml:"rel,attr"`
+			Href string `xml:"href,attr"`
+		} `xml:"link"`
+		Published string `xml:"published"`
+		Updated   string `xml:"updated"`
+		Content   string `xml:"content"`
+	} `xml:"entry"`
+}
+
+func parseAtomReleases(body []byte) (*ReleaseInfo, error) {
+	var feed atomFeed
+	if err := xml.Unmarshal(body, &feed); err != nil {
+		return nil, fmt.Errorf("parse release feed: %w", err)
+	}
+	for _, e := range feed.Entries {
+		var tag, pageURL string
+		for _, l := range e.Link {
+			if l.Rel != "" && l.Rel != "alternate" {
+				continue
+			}
+			if m := atomTagLink.FindStringSubmatch(l.Href); m != nil {
+				tag, pageURL = m[1], l.Href
+				break
+			}
+		}
+		if !serverTag.MatchString(tag) {
+			continue
+		}
+		published, _ := time.Parse(time.RFC3339, firstNonEmpty(e.Published, e.Updated))
+		return &ReleaseInfo{
+			Version:     strings.TrimPrefix(tag, "v"),
+			URL:         pageURL,
+			Notes:       atomText(e.Content),
+			PublishedAt: published,
+		}, nil
+	}
+	return nil, fmt.Errorf("no server release found")
+}
+
+func firstNonEmpty(s ...string) string {
+	for _, v := range s {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// atomText flattens the feed's HTML release notes to plain text.
+func atomText(s string) string {
+	return strings.Join(strings.Fields(html.UnescapeString(htmlTag.ReplaceAllString(s, " "))), " ")
 }
 
 // IsNewer reports whether latest is a strictly newer version than current.
