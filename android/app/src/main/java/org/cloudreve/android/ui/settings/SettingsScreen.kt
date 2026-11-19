@@ -9,15 +9,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,9 +44,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -85,6 +94,10 @@ fun SettingsScreen(
     val syncSnap by sync.snapshot.collectAsState(initial = null)
     val serverUrl by app.sessionManager.serverUrl.collectAsState(initial = "")
     val email by app.sessionManager.userEmail.collectAsState(initial = "")
+    val userId by app.sessionManager.userId.collectAsState(initial = "")
+    var avatarNonce by remember { mutableStateOf(0) }
+    var avatarBusy by remember { mutableStateOf(false) }
+    var avatarStatus by remember { mutableStateOf<String?>(null) }
 
     var cameraFolder by remember(cameraSnap?.remoteFolder) {
         mutableStateOf(cameraSnap?.remoteFolder ?: CameraUploadSettings.DEFAULT_FOLDER)
@@ -115,6 +128,22 @@ fun SettingsScreen(
             camera.setRemoteFolder(cameraFolder)
             camera.setEnabled(true)
             CameraUploadWorker.apply(context, cameraSnap?.wifiOnly ?: true)
+        }
+    }
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) scope.launch {
+            avatarBusy = true
+            avatarStatus = null
+            runCatching {
+                // Buffered bytes: the server rejects chunked bodies (unknown length).
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: throw Exception("Could not read the image")
+                app.fileRepository.uploadAvatar(bytes.toRequestBody(mime.toMediaType()))
+                avatarNonce++
+            }.onSuccess { avatarStatus = "Photo updated" }
+                .onFailure { avatarStatus = it.message ?: "Upload failed" }
+            avatarBusy = false
         }
     }
 
@@ -275,10 +304,37 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             SectionLabel("Account")
+            val avatarUrl = if (userId.isEmpty()) null
+            else "${serverUrl.trimEnd('/')}/api/v4/user/avatar/$userId?nocache=1&key=$avatarNonce"
             ListItem(
+                modifier = Modifier.clickable(enabled = !avatarBusy) { avatarPicker.launch("image/*") },
                 headlineContent = { Text(email.ifEmpty { "Signed in" }) },
-                supportingContent = { Text(serverUrl) },
-                leadingContent = { Icon(Icons.Default.Folder, contentDescription = null) },
+                supportingContent = {
+                    Column {
+                        Text(serverUrl)
+                        avatarStatus?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (it == "Photo updated") MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                },
+                leadingContent = {
+                    if (avatarUrl != null) {
+                        SubcomposeAsyncImage(
+                            model = ImageRequest.Builder(context).data(avatarUrl).crossfade(180).build(),
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp).clip(CircleShape),
+                            loading = { CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) },
+                            error = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
+                        )
+                    } else {
+                        Icon(Icons.Default.AccountCircle, contentDescription = null)
+                    }
+                },
             )
             capacity?.let { cap ->
                 if (cap.total > 0) {

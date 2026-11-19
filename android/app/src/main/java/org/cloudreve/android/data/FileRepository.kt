@@ -1,6 +1,7 @@
 package org.cloudreve.android.data
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
 import org.cloudreve.android.api.ApiClient
 import org.cloudreve.android.api.CapacityResponse
 import org.cloudreve.android.api.CreateFileRequest
@@ -80,6 +81,11 @@ class FileRepository(private val api: ApiClient) {
             .unwrap().urls.firstOrNull()?.url
             ?: throw ApiException(-1, "No URL returned for $uri")
         return reachableUrl(url)
+    }
+
+    /** Profile photo upload; [body] must carry a known Content-Length. */
+    suspend fun uploadAvatar(body: RequestBody) {
+        api.service().uploadAvatar(body).unwrapEmpty()
     }
 
     /** Account storage usage; null when the server does not report it. */
