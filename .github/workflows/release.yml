@@ -51,6 +51,12 @@ jobs:
       # and Dockerfile.slim, amd64+arm64) in one job; the default work-root
       # budget (half of free disk at start) was exceeded mid-build.
       KERN_JOB_DISK: 24G
+      # Go build + module caches for 11 cross-compiled targets exceed the
+      # work-root disk budget; the shared runner toolcache lives outside it
+      # and persists between jobs, so builds also get faster.
+      GOCACHE: /kern/cache/go-build
+      GOMODCACHE: /kern/cache/go-mod
+      YARN_CACHE_FOLDER: /kern/cache/yarn
     steps:
       # Full fetch so retag-floating.sh can compare against every v* tag.
       - uses: actions/checkout@v4
