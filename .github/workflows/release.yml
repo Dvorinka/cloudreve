@@ -92,6 +92,21 @@ jobs:
           docker container prune -f || true
           docker image prune -f || true
           docker system df || true
+      # Mirror checkouts on KERN runners before v0.19.3 omit tags on SHA
+      # fetches; ensure tags exist locally for GoReleaser and
+      # retag-floating.sh.
+      - name: Fetch git tags
+        run: git fetch --tags --force
+      # KERN injects BUILDX_BUILDER=kern for privileged jobs, but the
+      # builder instance lives in the agent's home — invisible inside the
+      # job container. Recreate it in the job's own docker config; on
+      # GitHub-hosted runners BUILDX_BUILDER is unset and this no-ops.
+      - name: Ensure buildx builder
+        run: |
+          if [ "${BUILDX_BUILDER:-}" = "kern" ]; then
+            docker buildx inspect kern >/dev/null 2>&1 || \
+              docker buildx create --name kern --driver docker-container
+          fi
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
