@@ -50,7 +50,7 @@ export const UserSettingsDefault: { [key: string]: unknown } = {
   [UserSettings.PageSize]: 100,
   [UserSettings.Layout]: "grid",
   [UserSettings.ShowThumb]: true,
-  [UserSettings.SortBy]: "created_at",
+  [UserSettings.SortBy]: "name",
   [UserSettings.SortDirection]: "asc",
   [UserSettings.SubtitleStyle]: {},
   [UserSettings.MusicVolume]: 0.2,
