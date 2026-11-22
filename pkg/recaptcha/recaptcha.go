@@ -3,6 +3,7 @@ package recaptcha
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -10,6 +11,10 @@ import (
 )
 
 const reCAPTCHALink = "https://www.recaptcha.net/recaptcha/api/siteverify"
+
+// maxResponseBodySize caps the siteverify response — it is a small JSON
+// payload; anything larger is a malformed or hostile upstream.
+const maxResponseBodySize = 1 << 20
 
 // VERSION the recaptcha api version
 type VERSION int8
@@ -127,9 +132,13 @@ func (r *ReCAPTCHA) confirm(recaptcha reCHAPTCHARequest, options VerifyOption) (
 		return
 	}
 	defer response.Body.Close()
-	resultBody, err := ioutil.ReadAll(response.Body)
+	resultBody, err := ioutil.ReadAll(io.LimitReader(response.Body, maxResponseBodySize+1))
 	if err != nil {
 		Err = fmt.Errorf("couldn't read response body: '%s'", err)
+		return
+	}
+	if len(resultBody) > maxResponseBodySize {
+		Err = fmt.Errorf("recaptcha response body exceeds %d bytes", maxResponseBodySize)
 		return
 	}
 	var result reCHAPTCHAResponse

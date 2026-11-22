@@ -93,6 +93,12 @@ func isUploadDataRequest(r *http.Request) bool {
 
 }
 
+// maxSignContentBodySize caps the request body buffered for signature
+// verification. Signed requests are control-plane JSON — file uploads are
+// excluded via isUploadDataRequest — so anything larger fails the
+// signature check rather than being buffered whole.
+const maxSignContentBodySize = 32 << 20
+
 // getSignContent 签名请求 path、正文、以`X-`开头的 Header. 如果请求 path 为从机上传 API，
 // 则不对正文签名。返回待签名/验证的字符串
 func getSignContent(ctx context.Context, r *http.Request) (rawSignString string) {
@@ -100,7 +106,7 @@ func getSignContent(ctx context.Context, r *http.Request) (rawSignString string)
 	var body = []byte{}
 	if !isUploadDataRequest(r) {
 		if r.Body != nil {
-			body, _ = io.ReadAll(r.Body)
+			body, _ = io.ReadAll(io.LimitReader(r.Body, maxSignContentBodySize+1))
 			_ = r.Body.Close()
 			r.Body = io.NopCloser(bytes.NewReader(body))
 		}

@@ -31,6 +31,24 @@ const (
 	LocalIP           = "localhost"
 )
 
+// MaxResponseBodySize caps outbound response bodies buffered by
+// GetResponse/GetResponseIgnoreErr. These endpoints return API JSON;
+// anything larger is a malformed or hostile upstream.
+const MaxResponseBodySize = 32 << 20
+
+// readBodyLimited reads at most MaxResponseBodySize+1 bytes so an
+// oversized upstream is rejected instead of buffered whole.
+func readBodyLimited(body io.ReadCloser) ([]byte, error) {
+	buf, err := io.ReadAll(io.LimitReader(body, MaxResponseBodySize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(buf) > MaxResponseBodySize {
+		return nil, fmt.Errorf("response body exceeds %d bytes", MaxResponseBodySize)
+	}
+	return buf, nil
+}
+
 // Response 请求的响应或错误信息
 type Response struct {
 	Err      error
@@ -213,7 +231,7 @@ func (resp *Response) GetResponse() (string, error) {
 	if resp.Err != nil {
 		return "", resp.Err
 	}
-	respBody, err := io.ReadAll(resp.Response.Body)
+	respBody, err := readBodyLimited(resp.Response.Body)
 	_ = resp.Response.Body.Close()
 
 	return string(respBody), err
@@ -225,8 +243,11 @@ func (resp *Response) GetResponseIgnoreErr() (string, error) {
 		return "", resp.Err
 	}
 
-	respBody, _ := io.ReadAll(resp.Response.Body)
+	respBody, err := readBodyLimited(resp.Response.Body)
 	_ = resp.Response.Body.Close()
+	if err != nil {
+		return "", err
+	}
 
 	return string(respBody), resp.Err
 }
