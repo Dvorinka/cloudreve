@@ -3,10 +3,13 @@ package dbfs
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/cloudreve/Cloudreve/v4/application/constants"
 	"github.com/cloudreve/Cloudreve/v4/ent"
+	entfile "github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
 	"github.com/cloudreve/Cloudreve/v4/inventory/types"
 	"github.com/cloudreve/Cloudreve/v4/pkg/boolset"
@@ -372,6 +375,9 @@ func (n *shareNavigator) Children(ctx context.Context, parent *File, args *ListA
 		if err != nil {
 			return nil, err
 		}
+		if args != nil && args.Page != nil && (args.Page.OrderBy == "" || args.Page.OrderBy == entfile.FieldName) {
+			sortFilesNatural(files, false, args.Page.Order == inventory.OrderDirectionDesc)
+		}
 
 		return &ListResult{
 			Files:      files,
@@ -390,6 +396,15 @@ func (n *shareNavigator) Children(ctx context.Context, parent *File, args *ListA
 		res.Files = lo.Filter(res.Files, func(f *File, _ int) bool {
 			return !readMeFileNames[strings.ToUpper(f.Name())]
 		})
+	}
+
+	// When the whole folder fits in one page, apply natural numeric name order
+	// (1, 2, ..., 10) so API, desktop, mobile, and web clients all agree.
+	if args != nil && args.Page != nil && args.Page.OrderBy == entfile.FieldName &&
+		args.Page.Page == 0 && args.Page.PageToken == "" &&
+		res.Pagination != nil && res.Pagination.NextPageToken == "" &&
+		(res.Pagination.TotalItems == 0 || res.Pagination.TotalItems <= len(res.Files)) {
+		sortFilesNatural(res.Files, res.MixedType, args.Page.Order == inventory.OrderDirectionDesc)
 	}
 	return res, nil
 }
@@ -680,5 +695,113 @@ func (n *shareNavigator) Walk(ctx context.Context, levelFiles []*File, limit, de
 }
 
 func (n *shareNavigator) GetView(ctx context.Context, file *File) *types.ExplorerView {
-	return file.View()
+	// Copy before defaulting so cached model props are never mutated; shares
+	// auto-sort by name ascending unless the owner explicitly chose another order.
+	var view types.ExplorerView
+	if v := file.View(); v != nil {
+		view = *v
+	} else {
+		view = *getDefaultView()
+	}
+	if view.Order == "" {
+		view.Order = entfile.FieldName
+		if view.OrderDirection == "" {
+			view.OrderDirection = string(inventory.OrderDirectionAsc)
+		}
+	}
+	return &view
+}
+
+// sortFilesNatural orders entries by natural numeric filename (1, 2, ..., 10),
+// keeping folders ahead of files unless mixed is true.
+func sortFilesNatural(files []*File, mixed, desc bool) {
+	slices.SortStableFunc(files, func(a, b *File) int {
+		if !mixed && a.Type() != b.Type() {
+			if a.Type() == types.FileTypeFolder {
+				return -1
+			}
+			return 1
+		}
+		cmp := compareNaturalName(a.Name(), b.Name())
+		if desc {
+			return -cmp
+		}
+		return cmp
+	})
+}
+
+// compareNaturalName compares strings with embedded ASCII digit runs ordered
+// by numeric value (1 < 2 < 10), case-insensitively with exact tiebreak.
+func compareNaturalName(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	ia, ib := 0, 0
+	for ia < len(ra) && ib < len(rb) {
+		if isASCIIDigit(ra[ia]) && isASCIIDigit(rb[ib]) {
+			ja, jb := ia, ib
+			for ja < len(ra) && isASCIIDigit(ra[ja]) {
+				ja++
+			}
+			for jb < len(rb) && isASCIIDigit(rb[jb]) {
+				jb++
+			}
+			if cmp := compareDigitRuns(ra[ia:ja], rb[ib:jb]); cmp != 0 {
+				return cmp
+			}
+			ia, ib = ja, jb
+			continue
+		}
+		la, lb := unicode.ToLower(ra[ia]), unicode.ToLower(rb[ib])
+		if la != lb {
+			if la < lb {
+				return -1
+			}
+			return 1
+		}
+		ia++
+		ib++
+	}
+	if len(ra) != len(rb) {
+		if len(ra) < len(rb) {
+			return -1
+		}
+		return 1
+	}
+	return strings.Compare(a, b)
+}
+
+func isASCIIDigit(r rune) bool {
+	return r >= '0' && r <= '9'
+}
+
+// compareDigitRuns compares two non-empty ASCII digit slices by numeric value
+// without integer overflow, breaking equal-value ties (e.g. "01" vs "1") by length.
+func compareDigitRuns(a, b []rune) int {
+	sa, sb := a, b
+	for len(sa) > 1 && sa[0] == '0' {
+		sa = sa[1:]
+	}
+	for len(sb) > 1 && sb[0] == '0' {
+		sb = sb[1:]
+	}
+	if len(sa) != len(sb) {
+		if len(sa) < len(sb) {
+			return -1
+		}
+		return 1
+	}
+	for i := range sa {
+		if sa[i] != sb[i] {
+			if sa[i] < sb[i] {
+				return -1
+			}
+			return 1
+		}
+	}
+	if len(a) != len(b) {
+		if len(a) < len(b) {
+			return -1
+		}
+		return 1
+	}
+	return 0
 }

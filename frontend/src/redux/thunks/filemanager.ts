@@ -215,9 +215,13 @@ export function navigateReconcile(index: number, opt?: NavigateReconcileOptions)
 
       // DB sorting has limit on string comparison, so we need to
       // sort by localCompare, if all files in current page is loaded, and sortBy is name.
-      const sortBy = listRes.view ? listRes.view.order : currentView?.order;
-      const orderDirection = listRes.view ? listRes.view.order_direction : currentView?.order_direction;
-      if (sortBy == "name" && !getPaginationState(list?.pagination).moreItems) {
+      const sortBy = listRes.view
+        ? listRes.view.order
+        : (currentView?.order ?? (useCustomView ? fileManager[index].sortBy : undefined));
+      const orderDirection = listRes.view
+        ? listRes.view.order_direction
+        : (currentView?.order_direction ?? (useCustomView ? fileManager[index].sortDirection : undefined));
+      if (sortBy == "name" && !getPaginationState(listRes.pagination).moreItems) {
         listRes.files = sortByLocalCompare(listRes.files, listRes.mixed_type, orderDirection == "desc");
       }
     } catch (e) {
@@ -254,7 +258,7 @@ export function navigateReconcile(index: number, opt?: NavigateReconcileOptions)
         // Apply view setting from cloud
         dispatch(setPageSize({ index, value: listRes.view.page_size }));
         dispatch(
-          setSortOption({ index, value: [listRes.view.order ?? "created_at", listRes.view.order_direction ?? "asc"] }),
+          setSortOption({ index, value: [listRes.view.order || "name", listRes.view.order_direction || "asc"] }),
         );
         if (!currentView) {
           dispatch(setShowThumb({ index, value: !!listRes.view.thumbnail }));
@@ -771,7 +775,7 @@ export function syncViewSettings(
 
     const currentView: ExplorerView = {
       page_size: Math.max(MinPageSize, pageSize(fm)),
-      order: fm.sortBy ?? "created_at",
+      order: fm.sortBy ?? "name",
       order_direction: fm.sortDirection ?? "asc",
       view: fm.layout ?? Layouts.grid,
       thumbnail: thumbOff ?? fm.showThumb,
@@ -825,6 +829,14 @@ export function uploadRawFile(files: File): AppThunk<Promise<Task>> {
   };
 }
 
+function compareFileName(a: FileResponse, b: FileResponse, descending: boolean): number {
+  const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
+    numeric: true,
+    ignorePunctuation: true,
+  });
+  return descending ? -result : result;
+}
+
 function sortByLocalCompare(files: FileResponse[], mixed?: boolean, isDesc?: boolean): FileResponse[] {
   if (files.length === 0) {
     return files;
@@ -834,10 +846,7 @@ function sortByLocalCompare(files: FileResponse[], mixed?: boolean, isDesc?: boo
 
   // If mixed is true, sort all files together
   if (mixed) {
-    return files.slice().sort((a, b) => {
-      const result = a.name.localeCompare(b.name);
-      return descending ? -result : result;
-    });
+    return files.slice().sort((a, b) => compareFileName(a, b, descending));
   }
 
   // If mixed is false, separate folders and files, then sort each part
@@ -858,13 +867,7 @@ function sortByLocalCompare(files: FileResponse[], mixed?: boolean, isDesc?: boo
 
   if (!hasFolder || !hasFile) {
     // All items are the same type, just sort normally
-    return sortedFiles.sort((a, b) => {
-      const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
-        numeric: true,
-        ignorePunctuation: true,
-      });
-      return descending ? -result : result;
-    });
+    return sortedFiles.sort((a, b) => compareFileName(a, b, descending));
   }
 
   // Find the division using binary search
@@ -915,22 +918,10 @@ function sortByLocalCompare(files: FileResponse[], mixed?: boolean, isDesc?: boo
   }
 
   // Sort folders by name
-  folders.sort((a, b) => {
-    const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
-      numeric: true,
-      ignorePunctuation: true,
-    });
-    return descending ? -result : result;
-  });
+  folders.sort((a, b) => compareFileName(a, b, descending));
 
   // Sort files by name
-  filesOnly.sort((a, b) => {
-    const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
-      numeric: true,
-      ignorePunctuation: true,
-    });
-    return descending ? -result : result;
-  });
+  filesOnly.sort((a, b) => compareFileName(a, b, descending));
 
   // Return folders first, then files
   return [...folders, ...filesOnly];
