@@ -92,6 +92,10 @@ jobs:
           docker container prune -f || true
           docker image prune -f || true
           docker system df || true
+      # KERN mirror checkouts before v0.19.3 omit tags on SHA fetches;
+      # ensure tags exist locally for GoReleaser and retag-floating.sh.
+      - name: Fetch git tags
+        run: git fetch --tags --force
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
