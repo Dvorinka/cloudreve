@@ -104,16 +104,28 @@ func (s *subscriber) OfflineSince() time.Time {
 	return s.offlineSince
 }
 
+// detachedDBTimeout bounds DB work done while holding s.mu on behalf of
+// background flushes. Without it a saturated connection pool deadlocks:
+// the DB wait holds the subscriber mutex that in-request Publish calls
+// need, while those requests hold the pooled connections.
+const detachedDBTimeout = 30 * time.Second
+
+func detachedDBCtx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), detachedDBTimeout)
+}
+
 func (s *subscriber) Owner() (*ent.User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.ownerLocked()
+	ctx, cancel := detachedDBCtx()
+	defer cancel()
+	return s.ownerLocked(ctx)
 }
 
-func (s *subscriber) ownerLocked() (*ent.User, error) {
+func (s *subscriber) ownerLocked(ctx context.Context) (*ent.User, error) {
 	if time.Since(s.cachedAt) > userCacheTTL || s.ownerCached == nil {
-		user, err := s.userClient.GetLoginUserByID(context.Background(), s.uid)
+		user, err := s.userClient.GetLoginUserByID(ctx, s.uid)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get login user: %w", err)
 		}
@@ -158,7 +170,9 @@ func (s *subscriber) flush() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.flushLocked(context.Background())
+	ctx, cancel := detachedDBCtx()
+	defer cancel()
+	s.flushLocked(ctx)
 }
 
 // flushLocked sends all buffered events to the channel.
@@ -169,7 +183,7 @@ func (s *subscriber) flushLocked(ctx context.Context) {
 	}
 
 	if !s.online {
-		owner, err := s.ownerLocked()
+		owner, err := s.ownerLocked(ctx)
 		if err != nil {
 			return
 		}
@@ -207,7 +221,9 @@ func (s *subscriber) Stop() {
 	}
 
 	// Flush any remaining events before stopping
-	s.flushLocked(context.Background())
+	ctx, cancel := detachedDBCtx()
+	defer cancel()
+	s.flushLocked(ctx)
 }
 
 // setOnline marks the subscriber as online and flushes any buffered events.
@@ -270,7 +286,9 @@ func (s *subscriber) setOffline() {
 	}
 
 	// flush the buffer
-	s.flushLocked(context.Background())
+	ctx, cancel := detachedDBCtx()
+	defer cancel()
+	s.flushLocked(ctx)
 }
 
 // close permanently closes the subscriber.
@@ -289,7 +307,9 @@ func (s *subscriber) close() {
 	}
 
 	// Delete the FsEvent
-	s.fsEventClient.DeleteBySubscriber(context.Background(), uuid.FromStringOrNil(s.id))
+	dbCtx, dbCancel := detachedDBCtx()
+	s.fsEventClient.DeleteBySubscriber(dbCtx, uuid.FromStringOrNil(s.id))
+	dbCancel()
 
 	// Signal close and close the channel
 	close(s.closedCh)
