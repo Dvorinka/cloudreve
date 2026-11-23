@@ -68,9 +68,18 @@ func (t *TikaExtractor) Extract(ctx context.Context, reader io.Reader) (string, 
 		return "", fmt.Errorf("tika returned status %d", resp.Response.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Response.Body)
+	// Extracted text cannot meaningfully exceed the source document, so the
+	// response cap tracks the configured input limit with a sane floor.
+	limit := t.maxFileSize
+	if limit < request.MaxResponseBodySize {
+		limit = request.MaxResponseBodySize
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Response.Body, limit+1))
 	if err != nil {
 		return "", fmt.Errorf("failed to read tika response: %w", err)
+	}
+	if int64(len(body)) > limit {
+		return "", fmt.Errorf("tika response exceeds %d bytes", limit)
 	}
 
 	return strings.TrimSpace(string(body)), nil

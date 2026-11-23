@@ -314,3 +314,28 @@ func TestSignBaseTimeShiftsExpiry(t *testing.T) {
 	asserts.NoError(err)
 	asserts.InDelta(base.Add(60*time.Second).Unix(), expires, 5)
 }
+
+func TestGetResponseSizeCap(t *testing.T) {
+	asserts := assert.New(t)
+
+	// Over the cap: rejected instead of buffered whole.
+	over := Response{Response: &http.Response{Body: io.NopCloser(io.LimitReader(zeroReader{}, MaxResponseBodySize+2))}}
+	content, err := over.GetResponse()
+	asserts.Empty(content)
+	asserts.ErrorContains(err, "exceeds")
+
+	// At the cap: passes through.
+	at := Response{Response: &http.Response{Body: io.NopCloser(io.LimitReader(zeroReader{}, MaxResponseBodySize))}}
+	content, err = at.GetResponse()
+	asserts.NoError(err)
+	asserts.Len(content, MaxResponseBodySize)
+}
+
+type zeroReader struct{}
+
+func (zeroReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'a'
+	}
+	return len(p), nil
+}
