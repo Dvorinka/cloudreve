@@ -82,24 +82,25 @@ jobs:
       # fetches; ensure tags exist locally for GoReleaser.
       - name: Fetch git tags
         run: git fetch --tags --force
-      # Docker image builds are skipped here: the `images` matrix below
-      # builds the same four images in parallel across runners instead of
-      # sequentially inside GoReleaser. .goreleaser.yaml's dockers sections
-      # still serve local `goreleaser release` runs.
+      # GHCR image builds are not part of this job at all —
+      # .goreleaser.yaml has no docker pipes; the `images` matrix below
+      # builds the four variants in parallel across runners.
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean --skip=docker --skip=docker_manifests
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # KERN runners OOM-killed parallel `go build` compiles
-          # (signal: killed) when goreleaser builds all 11 targets;
-          # -p=4 still exceeded the 6g job ceiling on ci-runner-903,
-          # so cap harder and give the GC a soft limit.
-          GOFLAGS: "-p=2"
-          GOMEMLIMIT: "4GiB"
+          # (signal: killed) when goreleaser builds all 11 targets —
+          # -p=2 still exceeded the ~6g job ceiling on ci-runner-901
+          # (v4.23.16 run #31). -p=1 halves peak compile memory; wall
+          # time barely moves because goreleaser already runs the 11
+          # targets concurrently.
+          GOFLAGS: "-p=1"
+          GOMEMLIMIT: "3GiB"
       # The two linux binaries the Dockerfiles COPY into the image.
       # Directory names come from goreleaser's build-id convention
       # (cloudreve_<goos>_<goarch>[_v<variant>]) — see dist/ after a run.
@@ -173,30 +174,18 @@ jobs:
             docker buildx inspect kern >/dev/null 2>&1 || \
               docker buildx create --name kern --driver docker-container
           fi
+      # The artifact keeps goreleaser's dist/ layout
+      # (cloudreve_<goos>_<goarch>[_v<variant>]/cloudreve) so
+      # .build/build-image.sh finds the binary unchanged.
       - uses: actions/download-artifact@v4
         with:
           name: linux-bins-${{ github.ref_name }}
-          path: bins
+          path: dist
       - name: Build and push image
         run: |
-          set -euo pipefail
-          ctx="$(mktemp -d)"
-          cp "${{ matrix.dockerfile }}" "$ctx/Dockerfile"
-          mkdir -p "$ctx/.build"
-          cp .build/aria2.supervisor.conf .build/entrypoint.sh "$ctx/.build/"
-          bin="$(find bins -type f -path '*${{ matrix.bindir }}*' -name cloudreve | head -1)"
-          [ -n "$bin" ]
-          cp "$bin" "$ctx/cloudreve"
-          img="ghcr.io/dvorinka/cloudreve"
-          tag="${{ github.ref_name }}${{ matrix.suffix }}-${{ matrix.arch }}"
-          cache="buildcache${{ matrix.suffix }}-${{ matrix.arch }}"
-          docker buildx build "$ctx" \
-            --platform=${{ matrix.platform }} \
-            --provenance=false --sbom=false \
-            --cache-from "type=registry,ref=$img:$cache" \
-            --cache-to "type=registry,ref=$img:$cache,mode=max" \
-            -t "$img:$tag" \
-            --push
+          ./.build/build-image.sh "${{ matrix.dockerfile }}" \
+            "${{ matrix.suffix }}" "${{ matrix.platform }}" \
+            "${{ matrix.bindir }}" "${{ github.ref_name }}"
 
   # Combine the per-arch images into the multi-arch tags goreleaser's
   # docker_manifests used to create, then re-point the floating tags.
