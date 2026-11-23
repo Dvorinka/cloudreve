@@ -32,6 +32,7 @@ jobs:
   # `release not found`. GoReleaser uploads into an existing release.
   prepare:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 5
     steps:
       - name: Create GitHub release
         env:
@@ -43,14 +44,20 @@ jobs:
             gh release create "$TAG" --verify-tag --generate-notes \
               --title "Cloudreve $TAG"
           fi
+          # A draft release is invisible to GoReleaser's get-by-tag lookup;
+          # it then POSTs a duplicate create and dies on a 422
+          # (target_commitish). Seen on v4.23.16 — publish any draft.
+          if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = "true" ]; then
+            gh release edit "$TAG" --draft=false
+          fi
 
   server:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 45
     env:
-      # GoReleaser builds 11 Go targets then four buildx images (Dockerfile
-      # and Dockerfile.slim, amd64+arm64) in one job; the default work-root
-      # budget (half of free disk at start) was exceeded mid-build.
-      KERN_JOB_DISK: 24G
+      # GoReleaser builds 11 Go targets then archives/checksums in one job;
+      # docker image builds moved to the parallel `images` matrix below.
+      KERN_JOB_DISK: 16G
       # Go build + module caches for 11 cross-compiled targets exceed the
       # work-root disk budget; the shared runner toolcache lives outside it
       # and persists between jobs, so builds also get faster.
@@ -58,7 +65,8 @@ jobs:
       GOMODCACHE: /kern/cache/go-mod
       YARN_CACHE_FOLDER: /kern/cache/yarn
     steps:
-      # Full fetch so retag-floating.sh can compare against every v* tag.
+      # Full fetch so goreleaser's changger and retag-floating.sh can
+      # compare against every v* tag.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -70,49 +78,20 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      # GHCR rejects GitHub App installation tokens (ghs_*) — GITHUB_TOKEN on
-      # KERN is one. GHCR_TOKEN is a classic PAT with write:packages.
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-      # The Dockerfile's apk layer floats (unpinned packages), so every
-      # release writes ~GBs of fresh buildkit layers on the shared runner
-      # daemon. Reclaim before building or the daemon hits ENOSPC mid-apk.
-      - name: Reclaim docker disk
-        run: |
-          docker system df || true
-          for b in $(docker buildx ls --format '{{.Name}}'); do
-            docker buildx prune --builder "$b" -af || true
-          done
-          docker builder prune -af || true
-          docker container prune -f || true
-          docker image prune -f || true
-          docker system df || true
       # Mirror checkouts on KERN runners before v0.19.3 omit tags on SHA
-      # fetches; ensure tags exist locally for GoReleaser and
-      # retag-floating.sh.
+      # fetches; ensure tags exist locally for GoReleaser.
       - name: Fetch git tags
         run: git fetch --tags --force
-      # KERN injects BUILDX_BUILDER=kern for privileged jobs, but the
-      # builder instance lives in the agent's home — invisible inside the
-      # job container. Recreate it in the job's own docker config; on
-      # GitHub-hosted runners BUILDX_BUILDER is unset and this no-ops.
-      - name: Ensure buildx builder
-        run: |
-          if [ "${BUILDX_BUILDER:-}" = "kern" ]; then
-            docker buildx inspect kern >/dev/null 2>&1 || \
-              docker buildx create --name kern --driver docker-container
-          fi
+      # Docker image builds are skipped here: the `images` matrix below
+      # builds the same four images in parallel across runners instead of
+      # sequentially inside GoReleaser. .goreleaser.yaml's dockers sections
+      # still serve local `goreleaser release` runs.
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean
+          args: release --clean --skip=docker --skip=docker_manifests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # KERN runners OOM-killed parallel `go build` compiles
@@ -121,21 +100,129 @@ jobs:
           # so cap harder and give the GC a soft limit.
           GOFLAGS: "-p=2"
           GOMEMLIMIT: "4GiB"
-      # Floating tags (latest, v4, slim) moved out of goreleaser's
-      # docker_manifests so a re-release of an old tag can't regress them.
-      # The script no-ops unless the released tag is the newest v* tag.
-      - name: Re-point floating GHCR tags
-        run: ./.build/retag-floating.sh "${{ github.ref_name }}"
-      # Leave the host clean for the next job — built image layers and
-      # buildkit cache are dead weight once pushed to GHCR.
-      - name: Reclaim docker disk
-        if: always()
+      # The two linux binaries the Dockerfiles COPY into the image.
+      # Directory names come from goreleaser's build-id convention
+      # (cloudreve_<goos>_<goarch>[_v<variant>]) — see dist/ after a run.
+      - name: Upload linux binaries for image jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-bins-${{ github.ref_name }}
+          path: |
+            dist/cloudreve_linux_amd64_v1/cloudreve
+            dist/cloudreve_linux_arm64_v8.0/cloudreve
+          retention-days: 1
+          if-no-files-found: error
+
+  # One leg per image variant × arch, all in parallel. Each leg is a plain
+  # `docker buildx build --push` of the Dockerfile plus the matching
+  # goreleaser-built binary — same tags goreleaser produced before.
+  images:
+    needs: server
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: Dockerfile
+            suffix: ''
+            platform: linux/amd64
+            arch: amd64
+            bindir: cloudreve_linux_amd64_v1
+            qemu: false
+          - dockerfile: Dockerfile
+            suffix: ''
+            platform: linux/arm64
+            arch: arm64
+            bindir: cloudreve_linux_arm64_v8.0
+            qemu: true
+          - dockerfile: Dockerfile.slim
+            suffix: -slim
+            platform: linux/amd64
+            arch: amd64
+            bindir: cloudreve_linux_amd64_v1
+            qemu: false
+          - dockerfile: Dockerfile.slim
+            suffix: -slim
+            platform: linux/arm64
+            arch: arm64
+            bindir: cloudreve_linux_arm64_v8.0
+            qemu: true
+    runs-on: [self-hosted, linux, x64]
+    env:
+      # apk pulls a few GB of packages for the full image; keep the
+      # work-root budget above the buildkit peak.
+      KERN_JOB_DISK: 12G
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.qemu
+      - uses: docker/setup-buildx-action@v3
+      # GHCR rejects GitHub App installation tokens (ghs_*) — GITHUB_TOKEN
+      # on KERN is one. GHCR_TOKEN is a classic PAT with write:packages.
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      # KERN injects BUILDX_BUILDER=kern for privileged jobs. On v0.19.3+
+      # the builder is registered under the shared runner home so it is
+      # visible in the job container; this fallback covers older agents.
+      - name: Ensure buildx builder
         run: |
-          for b in $(docker buildx ls --format '{{.Name}}'); do
-            docker buildx prune --builder "$b" -af || true
-          done
-          docker builder prune -af || true
-          docker image prune -f || true
+          if [ "${BUILDX_BUILDER:-}" = "kern" ]; then
+            docker buildx inspect kern >/dev/null 2>&1 || \
+              docker buildx create --name kern --driver docker-container
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-bins-${{ github.ref_name }}
+          path: bins
+      - name: Build and push image
+        run: |
+          set -euo pipefail
+          ctx="$(mktemp -d)"
+          cp "${{ matrix.dockerfile }}" "$ctx/Dockerfile"
+          mkdir -p "$ctx/.build"
+          cp .build/aria2.supervisor.conf .build/entrypoint.sh "$ctx/.build/"
+          bin="$(find bins -type f -path '*${{ matrix.bindir }}*' -name cloudreve | head -1)"
+          [ -n "$bin" ]
+          cp "$bin" "$ctx/cloudreve"
+          img="ghcr.io/dvorinka/cloudreve"
+          tag="${{ github.ref_name }}${{ matrix.suffix }}-${{ matrix.arch }}"
+          cache="buildcache${{ matrix.suffix }}-${{ matrix.arch }}"
+          docker buildx build "$ctx" \
+            --platform=${{ matrix.platform }} \
+            --provenance=false --sbom=false \
+            --cache-from "type=registry,ref=$img:$cache" \
+            --cache-to "type=registry,ref=$img:$cache,mode=max" \
+            -t "$img:$tag" \
+            --push
+
+  # Combine the per-arch images into the multi-arch tags goreleaser's
+  # docker_manifests used to create, then re-point the floating tags.
+  publish-images:
+    needs: images
+    timeout-minutes: 10
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Create manifests and re-point floating tags
+        run: |
+          set -euo pipefail
+          img="ghcr.io/dvorinka/cloudreve"
+          tag="${{ github.ref_name }}"
+          docker buildx imagetools create -t "$img:$tag" \
+            "$img:$tag-amd64" "$img:$tag-arm64"
+          docker buildx imagetools create -t "$img:$tag-slim" \
+            "$img:$tag-slim-amd64" "$img:$tag-slim-arm64"
+          # No-ops unless this is the newest v* tag, so re-releasing an
+          # old tag can't drag latest/v4/slim backwards.
+          ./.build/retag-floating.sh "$tag"
 
   desktop:
     strategy:
@@ -143,6 +230,7 @@ jobs:
       matrix:
         ro: [[self-hosted, linux, x64], [self-hosted, windows, x64], [self-hosted, macos, x64]]
     runs-on: ${{ matrix.ro }}
+    timeout-minutes: 60
     env:
       # Tauri's target dir blows the default work-root budget (half of free
       # disk at job start). Same ceiling CI uses for the desktop job.
@@ -308,6 +396,7 @@ jobs:
     needs: desktop
     if: startsWith(github.ref_name, 'v')
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Build and publish latest.json
@@ -318,6 +407,7 @@ jobs:
 
   android:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: android

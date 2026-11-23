@@ -15,6 +15,7 @@ jobs:
   # skipped via `if:` report Success, so required checks still pass.
   changes:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 5
     outputs:
       backend: ${{ steps.f.outputs.backend }}
       frontend: ${{ steps.f.outputs.frontend }}
@@ -52,6 +53,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
+    env:
+      # Same OOM guard as the release job: KERN caps jobs near 6g and an
+      # unbounded `go test ./...` compile fan-out has been SIGKILLed before.
+      GOFLAGS: "-p=2"
+      GOMEMLIMIT: "4GiB"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -68,6 +75,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -81,7 +89,9 @@ jobs:
       - run: yarn install --frozen-lockfile --network-timeout 1000000
       - run: yarn build
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          # Same 4g cap as .build/build-assets.sh — the release pipeline
+          # builds this identical frontend under the KERN 6g job ceiling.
+          NODE_OPTIONS: --max-old-space-size=4096
 
   # Phase D: the full workspace is cross-platform (Windows CFAPI +
   # Linux/macOS full-sync), so every OS checks and tests all crates.
@@ -92,6 +102,7 @@ jobs:
       matrix:
         ro: [[self-hosted, linux, x64], [self-hosted, windows, x64], [self-hosted, macos, x64]]
     runs-on: ${{ matrix.ro }}
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: desktop
@@ -119,6 +130,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.android == 'true'
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: android
@@ -234,6 +246,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.cli == 'true'
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: cli
@@ -250,6 +263,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.cli == 'true'
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: cli

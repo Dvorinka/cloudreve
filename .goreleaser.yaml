@@ -75,10 +75,11 @@ changelog:
 release:
   draft: false
   prerelease: auto
-  # Do not pin a SHA: GitHub's releases API 403s app/integration tokens
-  # when target_commitish is a commit SHA (KERN's GITHUB_TOKEN). The tag
-  # exists before this runs, so the release attaches to it regardless.
-  target_commitish: "{{ .Tag }}"
+  # The prepare job creates the release before this runs, so this is only
+  # a fallback. A commit SHA is the unambiguous valid commitish — a tag
+  # name got a 422 `target_commitish invalid` when the lookup missed a
+  # draft release (v4.23.16).
+  target_commitish: "{{ .Commit }}"
   name_template: "{{.Version}}"
 
 dockers:
